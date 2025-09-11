@@ -24,12 +24,23 @@ export interface Course {
 
 export interface Material {
   id: string;
-  course_id: string;
+  course_code: string;
+  course_name?: string;
   title: string;
   type: 'pdf' | 'doc' | 'video' | 'suggestion' | 'past_question';
-  file_url?: string;
+  file_url: string | null;
   video_url?: string;
   description?: string;
+  created_at: string;
+  size?: string;
+}
+
+export interface Notice {
+  id: string;
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  is_active: boolean;
   created_at: string;
 }
 
