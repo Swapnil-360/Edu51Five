@@ -132,7 +132,11 @@ function App() {
 
   // Create welcome notice after notices are loaded
   useEffect(() => {
-    createWelcomeNoticeIfNeeded();
+    // Always try to create welcome notice, especially if we have very few notices
+    if (notices.length <= 1) {
+      console.log('Very few notices detected, ensuring welcome notice exists');
+      createWelcomeNoticeIfNeeded();
+    }
   }, [notices]); // Runs when notices state changes
 
   // Auto-refresh notices every 30 seconds for real-time updates
@@ -247,15 +251,40 @@ FOR ALL USING (true) WITH CHECK (true);
       return;
     }
 
+    // Always check both localStorage and database for welcome notice
+    let welcomeExists = false;
+    
     // Check localStorage for welcome notice
     const localNotices = localStorage.getItem('edu51five_notices');
     if (localNotices) {
       const parsedNotices = JSON.parse(localNotices);
-      const welcomeExists = parsedNotices.find((n: Notice) => n.title.includes('Welcome to Edu51Five'));
+      welcomeExists = parsedNotices.find((n: Notice) => n.title.includes('Welcome to Edu51Five'));
       if (welcomeExists) {
         console.log('Welcome notice already exists in localStorage');
-        return;
       }
+    }
+
+    // Also check database for welcome notice
+    if (!welcomeExists) {
+      try {
+        const { data } = await supabase
+          .from('notices')
+          .select('*')
+          .ilike('title', '%Welcome to Edu51Five%')
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          console.log('Welcome notice found in database');
+          welcomeExists = true;
+        }
+      } catch (error) {
+        console.log('Could not check database for welcome notice');
+      }
+    }
+
+    if (welcomeExists) {
+      console.log('Welcome notice exists somewhere, skipping creation');
+      return;
     }
 
     // Create welcome notice
@@ -373,6 +402,13 @@ Best of luck with your studies!
       }
       
       console.log('Merged notices (DB + localStorage):', mergedNotices.length);
+      console.log('Notice titles:', mergedNotices.map(n => n.title));
+      
+      // If no notices exist at all, create welcome notice immediately
+      if (mergedNotices.length === 0) {
+        console.log('No notices found anywhere, will create welcome notice');
+      }
+      
       setNotices(mergedNotices);
       
       // Save merged notices back to localStorage
