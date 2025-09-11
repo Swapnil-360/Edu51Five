@@ -352,12 +352,32 @@ Best of luck with your studies!
         return;
       }
       
-      console.log('Loaded notices from database:', data?.length || 0);
-      setNotices(data || []);
+      // Merge database notices with localStorage notices (prioritize localStorage for recent uploads)
+      const localNotices = localStorage.getItem('edu51five_notices');
+      let mergedNotices = data || [];
       
-      // Also save to localStorage as backup
-      if (data && data.length > 0) {
-        localStorage.setItem('edu51five_notices', JSON.stringify(data));
+      if (localNotices) {
+        const parsedLocalNotices = JSON.parse(localNotices);
+        // Create a map to avoid duplicates (by id)
+        const noticeMap = new Map();
+        
+        // First add database notices
+        (data || []).forEach(notice => noticeMap.set(notice.id, notice));
+        
+        // Then add/override with local notices (this preserves recent uploads)
+        parsedLocalNotices.forEach((notice: Notice) => noticeMap.set(notice.id, notice));
+        
+        mergedNotices = Array.from(noticeMap.values()).sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
+      
+      console.log('Merged notices (DB + localStorage):', mergedNotices.length);
+      setNotices(mergedNotices);
+      
+      // Save merged notices back to localStorage
+      if (mergedNotices.length > 0) {
+        localStorage.setItem('edu51five_notices', JSON.stringify(mergedNotices));
       }
     } catch (error) {
       console.error('Error loading notices, trying localStorage:', error);
