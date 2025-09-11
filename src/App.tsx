@@ -1817,6 +1817,58 @@ Best of luck with your midterm exams!
           </div>
         )}
 
+        {/* Exam Routine Upload Modal */}
+        {showExamRoutineUpload && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">📅 Upload Exam Routine</h2>
+                <button
+                  onClick={() => setShowExamRoutineUpload(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleExamRoutineUpload} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Exam Routine Image (PNG only)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".png"
+                    onChange={(e) => setExamRoutineFile(e.target.files?.[0] || null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload the midterm exam routine for Section 5 (Starting 14/09/2025)
+                  </p>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowExamRoutineUpload(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !examRoutineFile}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Uploading...' : 'Upload Routine'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
