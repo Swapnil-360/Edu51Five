@@ -1,0 +1,6 @@
+id,course_id,title,type,file_url,video_url,description,created_at,size
+1,1,Network Fundamentals - Chapter 1,pdf,https://example.com/network-fundamentals.pdf,,Introduction to networking concepts and protocols,2024-01-15,2.3 MB
+2,1,Lecture Video: OSI Model Explained,video,,https://youtube.com/watch?v=example,Detailed explanation of the 7-layer OSI model,2024-01-14,45 min
+3,1,Final Exam Suggestions,suggestion,https://example.com/final-exam-suggestions.pdf,,Important topics for final exam preparation,2024-01-12,1.1 MB
+4,1,Past Question Paper - Fall 2024,past_question,https://example.com/past-question-fall-2024.pdf,,Previous semester networking question paper,2024-01-10,850 KB
+5,1,Network Lab Assignment Guidelines,doc,https://example.com/network-lab-assignment.pdf,,Guidelines for networking lab assignments,2024-01-08,1.5 MB

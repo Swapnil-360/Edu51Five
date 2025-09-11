@@ -1,0 +1,17 @@
+-- Since we can't modify storage.objects via SQL, 
+-- we need to use the Supabase Dashboard instead.
+-- 
+-- DASHBOARD STEPS:
+-- 1. Go to Supabase Dashboard
+-- 2. Click "Storage" in left sidebar
+-- 3. Find your "materials" bucket
+-- 4. Click on the bucket name
+-- 5. Go to "Configuration" or "Settings" tab
+-- 6. Look for "Row Level Security" or "Public Access"
+-- 7. Either disable RLS or make bucket fully public
+--
+-- OR try creating storage policies via Dashboard:
+-- Go to Storage > Policies and create a new policy
+
+-- Alternative: Test with a video URL first (no file upload needed)
+-- This will test if the database insert works without storage
