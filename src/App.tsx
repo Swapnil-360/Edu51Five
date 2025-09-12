@@ -1718,12 +1718,12 @@ ${imageContent}`,
               </div>
               <div className="space-y-4">
                 {notices.map((notice) => (
-                  <div key={notice.id} className={`p-4 border rounded-lg ${notice.is_active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+                  <div key={notice.id} className={`p-4 border rounded-lg break-words ${notice.is_active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1 pr-4 overflow-hidden">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="font-medium text-gray-900">{notice.title}</h4>
-                          {notice.title.includes('Midterm Exam Routine') && (
+                          {(notice.title.includes('Exam Routine') || notice.title.includes('exam routine') || notice.content.includes('EXAM_ROUTINE')) && (
                             <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 font-medium">
                               📅 EXAM ROUTINE
                             </span>
@@ -1740,18 +1740,25 @@ ${imageContent}`,
                             {notice.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{notice.content}</p>
+                        {/* Truncate long content to prevent overflow */}
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                          {notice.content.length > 200 
+                            ? notice.content.substring(0, 200) + '...' 
+                            : notice.content}
+                        </p>
                         <p className="text-xs text-gray-400">{new Date(notice.created_at).toLocaleDateString()}</p>
                       </div>
                       {/* Conditional Delete Button - Special handling for exam routines */}
-                      {notice.title.includes('Midterm Exam Routine') ? (
-                        <button
-                          onClick={() => handleDeleteExamRoutine(notice.id)}
-                          className="ml-4 inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete Routine
-                        </button>
+                      {(notice.title.includes('Exam Routine') || notice.title.includes('exam routine') || notice.content.includes('EXAM_ROUTINE')) ? (
+                        <div className="ml-4 flex flex-col space-y-2">
+                          <button
+                            onClick={() => handleDeleteExamRoutine(notice.id)}
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Routine
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => handleDeleteNotice(notice.id)}
