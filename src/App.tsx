@@ -237,68 +237,168 @@ FOR ALL USING (true) WITH CHECK (true);
   };
 
   // Create welcome notice if it doesn't exist
-  // Load notices from database
-  const loadNotices = async () => {
+  // Initialize default notices (Welcome + Exam Routine slots)
+  const initializeDefaultNotices = async () => {
     try {
-      console.log('Loading notices from database...');
-      const { data, error } = await supabase
+      console.log('Checking for default notices...');
+      
+      // Check database for existing welcome and routine notices
+      const { data } = await supabase
         .from('notices')
         .select('*')
+        .in('id', ['welcome-notice', 'exam-routine-notice']);
+
+      let welcomeNotice = null;
+      let routineNotice = null;
+
+      if (data) {
+        welcomeNotice = data.find(n => n.id === 'welcome-notice');
+        routineNotice = data.find(n => n.id === 'exam-routine-notice');
+      }
+
+      const defaultNotices = [];
+
+      // Create default welcome notice if it doesn't exist
+      if (!welcomeNotice) {
+        welcomeNotice = {
+          id: 'welcome-notice',
+          title: '🎉 Welcome to Edu51Five - BUBT Intake 51 Section 5',
+          content: `Dear BUBT Intake 51 Students,
+
+Welcome to Edu51Five, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
+
+🎯 **Your Exam Success Platform:**
+📚 Complete Study Materials • 📝 Past Exam Questions • 🔔 Real-time Updates
+
+This platform is your centralized hub for all Section 5 (Computer Science & Engineering) resources. Use it regularly to stay ahead in your studies and achieve academic excellence!
+
+Best of luck with your studies!
+- Edu51Five Team`,
+          type: 'info',
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+
+        // Try to save to database
+        try {
+          await supabase.from('notices').insert([welcomeNotice]);
+          console.log('Default welcome notice created in database');
+        } catch (dbError) {
+          console.log('Welcome notice saved locally only');
+        }
+      }
+
+      // Create placeholder for exam routine if it doesn't exist
+      if (!routineNotice) {
+        routineNotice = {
+          id: 'exam-routine-notice',
+          title: '📅 Midterm Exam Routine - Section 5',
+          content: `Midterm examination schedule for Section 5 (Computer Science & Engineering).
+
+📋 **Exam Information:**
+• Start Date: Sunday, September 14, 2025
+• All students must check the detailed routine below
+• Arrive 15 minutes early for each exam
+• Bring student ID and necessary materials
+
+⚠️ **Admin Notice:** Use the admin panel to upload the detailed exam routine image. This notice will be automatically updated when the routine is uploaded.
+
+For any queries, contact your course instructors or the department.`,
+          type: 'warning',
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+
+        // Try to save to database
+        try {
+          await supabase.from('notices').insert([routineNotice]);
+          console.log('Default routine notice created in database');
+        } catch (dbError) {
+          console.log('Routine notice saved locally only');
+        }
+      }
+
+      // Always show these 2 notices (welcome + routine)
+      defaultNotices.push(welcomeNotice, routineNotice);
+      
+      // Filter only active notices and limit to 2
+      const activeNotices = defaultNotices.filter(n => n && n.is_active).slice(0, 2);
+      
+      setNotices(activeNotices);
+      localStorage.setItem('edu51five_notices', JSON.stringify(activeNotices));
+      
+      console.log('Initialized with default notices:', activeNotices.length);
+
+    } catch (error) {
+      console.error('Error initializing default notices:', error);
+      // Fallback to empty notices
+      setNotices([]);
+    }
+  };
+
+  // Load notices - Global 2-notice system (Welcome + Exam Routine)
+  const loadNotices = async () => {
+    try {
+      console.log('Loading global notices (Welcome + Exam Routine)...');
+      
+      // Try to load the 2 specific notices from database
+      const { data: dbNotices, error } = await supabase
+        .from('notices')
+        .select('*')
+        .in('id', ['welcome-notice', 'exam-routine-notice'])
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.warn('Could not load notices from database, trying localStorage:', error);
-        // Fallback to localStorage
-        const localNotices = localStorage.getItem('edu51five_notices');
-        if (localNotices) {
-          const parsedNotices = JSON.parse(localNotices);
-          console.log('Loaded notices from localStorage:', parsedNotices.length);
-          setNotices(parsedNotices);
-        } else {
-          console.log('No notices found in localStorage either');
-          setNotices([]);
+      let welcomeNotice = null;
+      let routineNotice = null;
+
+      // If database query successful, extract the notices
+      if (!error && dbNotices) {
+        welcomeNotice = dbNotices.find(n => n.id === 'welcome-notice');
+        routineNotice = dbNotices.find(n => n.id === 'exam-routine-notice');
+        console.log('Database notices found:', { welcome: !!welcomeNotice, routine: !!routineNotice });
+      }
+
+      // Fallback to localStorage if notices not found in database
+      const localNoticesStr = localStorage.getItem('edu51five_notices');
+      if (localNoticesStr && (!welcomeNotice || !routineNotice)) {
+        try {
+          const localNotices = JSON.parse(localNoticesStr);
+          if (!welcomeNotice) {
+            welcomeNotice = localNotices.find((n: Notice) => n.id === 'welcome-notice');
+          }
+          if (!routineNotice) {
+            routineNotice = localNotices.find((n: Notice) => n.id === 'exam-routine-notice');
+          }
+          console.log('Local fallback used for missing notices');
+        } catch (e) {
+          console.error('Error parsing local notices:', e);
         }
-        return;
       }
-      
-      // Merge database notices with localStorage notices (prioritize localStorage for recent uploads)
-      const localNotices = localStorage.getItem('edu51five_notices');
-      let mergedNotices = data || [];
-      
-      if (localNotices) {
-        const parsedLocalNotices = JSON.parse(localNotices);
-        // Create a map to avoid duplicates (by id)
-        const noticeMap = new Map();
-        
-        // First add database notices
-        (data || []).forEach(notice => noticeMap.set(notice.id, notice));
-        
-        // Then add/override with local notices (this preserves recent uploads)
-        parsedLocalNotices.forEach((notice: Notice) => noticeMap.set(notice.id, notice));
-        
-        mergedNotices = Array.from(noticeMap.values()).sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+
+      // If notices still don't exist, initialize defaults
+      if (!welcomeNotice || !routineNotice) {
+        console.log('Initializing missing default notices...');
+        await initializeDefaultNotices();
+        return; // initializeDefaultNotices will handle setting the notices
       }
+
+      // Always show exactly 2 notices: Welcome + Routine
+      const globalNotices = [welcomeNotice, routineNotice].filter(n => n);
       
-      console.log('Merged notices (DB + localStorage):', mergedNotices.length);
-      console.log('Notice titles:', mergedNotices.map(n => n.title));
+      setNotices(globalNotices);
+      localStorage.setItem('edu51five_notices', JSON.stringify(globalNotices));
       
-      setNotices(mergedNotices);
+      console.log('Global notices loaded:', globalNotices.length, 'notices');
       
-      // Save merged notices back to localStorage
-      if (mergedNotices.length > 0) {
-        localStorage.setItem('edu51five_notices', JSON.stringify(mergedNotices));
-      }
-    } catch (error) {
-      console.error('Error loading notices, trying localStorage:', error);
-      // Fallback to localStorage
-      const localNotices = localStorage.getItem('edu51five_notices');
-      if (localNotices) {
-        const parsedNotices = JSON.parse(localNotices);
-        console.log('Loaded notices from localStorage fallback:', parsedNotices.length);
-        setNotices(parsedNotices);
-      } else {
+    } catch (err) {
+      console.error('Error loading global notices:', err);
+      
+      // Final fallback - try to initialize defaults
+      try {
+        await initializeDefaultNotices();
+      } catch (initError) {
+        console.error('Failed to initialize default notices:', initError);
         setNotices([]);
       }
     }
@@ -388,13 +488,13 @@ FOR ALL USING (true) WITH CHECK (true);
         ? `[EXAM_ROUTINE_URL]${imageUrl}[/EXAM_ROUTINE_URL]`
         : `[EXAM_ROUTINE_IMAGE]${base64String}[/EXAM_ROUTINE_IMAGE]`;
 
-      // Create a special notice for exam routine
+      // Update the global exam routine notice
       const routineNotice: Notice = {
-        id: 'exam-routine-' + Date.now(),
-        title: '📅 Midterm Exam Routine - Section 5 (Starting 14/09/2025)',
+        id: 'exam-routine-notice', // Use fixed ID for global system
+        title: '📅 Midterm Exam Routine - Section 5',
         content: `Midterm examinations for Section 5 (Computer Science & Engineering) will commence from Sunday, September 14, 2025.
 
-Important Instructions:
+📋 **Important Instructions:**
 • Please check your exam schedule carefully
 • Arrive at the exam hall 15 minutes early
 • Bring your student ID card and necessary stationery
@@ -403,7 +503,7 @@ Important Instructions:
 
 For any queries regarding the exam schedule, contact your course instructors or the department.
 
-Best of luck with your midterm exams!
+**Best of luck with your midterm exams!**
 
 ${imageContent}`,
         type: 'warning',
@@ -411,30 +511,39 @@ ${imageContent}`,
         created_at: new Date().toISOString()
       };
 
-      // Add to notices
-      const updatedNotices = [routineNotice, ...notices];
+      // Update the specific global notice slot
+      const updatedNotices = [...notices];
+      const routineIndex = updatedNotices.findIndex(n => n.id === 'exam-routine-notice');
+      
+      if (routineIndex >= 0) {
+        updatedNotices[routineIndex] = routineNotice;
+      } else {
+        // If somehow missing, ensure we maintain only 2 notices
+        if (updatedNotices.length >= 2) {
+          updatedNotices[1] = routineNotice; // Replace second slot
+        } else {
+          updatedNotices.push(routineNotice);
+        }
+      }
+
       setNotices(updatedNotices);
-
-      // Save to localStorage
       localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-      console.log('Exam routine uploaded and saved locally');
+      console.log('Global exam routine notice updated locally');
 
-      // Try to save to database (should work better now with URL instead of large base64)
+      // Try to save to database with upsert
       try {
-        console.log('Attempting to save exam routine to database...');
-        console.log('Routine notice size:', JSON.stringify(routineNotice).length, 'characters');
+        console.log('Saving global exam routine to database...');
         
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('notices')
-          .insert([routineNotice])
-          .select();
+          .upsert([routineNotice], { onConflict: 'id' });
         
         if (error) {
           console.error('Database error saving exam routine:', error);
           alert('Exam routine uploaded but may not sync to all devices. Error: ' + error.message);
         } else {
-          console.log('Exam routine saved to database successfully:', data);
-          alert('✅ Exam routine uploaded successfully and synced to all devices!');
+          console.log('Global exam routine saved to database successfully');
+          alert('✅ Exam routine uploaded successfully and synced to all devices!\n\nAll users will now see the updated routine.');
         }
       } catch (dbError) {
         console.error('Exception while saving exam routine to database:', dbError);
@@ -699,43 +808,69 @@ ${imageContent}`,
     }
   };
 
-  // Admin: Create notice
+  // Admin: Update global notices (Welcome or Exam Routine only)
   const handleCreateNotice = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       
+      // Determine which global notice slot this should update
+      let noticeId: string;
+      let noticeTitle: string;
+      
+      if (newNotice.title.toLowerCase().includes('welcome') || 
+          newNotice.title.toLowerCase().includes('intro')) {
+        noticeId = 'welcome-notice';
+        noticeTitle = '🎉 Welcome to Edu51Five - BUBT Intake 51 Section 5';
+      } else if (newNotice.title.toLowerCase().includes('exam') || 
+                 newNotice.title.toLowerCase().includes('routine') ||
+                 newNotice.title.toLowerCase().includes('midterm')) {
+        noticeId = 'exam-routine-notice';
+        noticeTitle = '📅 Midterm Exam Routine - Section 5';
+      } else {
+        // Default to exam routine slot for other admin notices
+        noticeId = 'exam-routine-notice';
+        noticeTitle = newNotice.title;
+      }
+      
       const notice: Notice = {
-        id: Date.now().toString(),
-        title: newNotice.title,
+        id: noticeId,
+        title: noticeTitle,
         content: newNotice.content,
         type: newNotice.type,
         created_at: new Date().toISOString(),
         is_active: newNotice.is_active
       };
 
-      console.log('Creating notice:', notice);
+      console.log('Updating global notice slot:', noticeId);
 
-      // Always add to local state first for immediate UI update
-      const updatedNotices = [notice, ...notices];
+      // Update the specific notice in the global system
+      const updatedNotices = [...notices];
+      const existingIndex = updatedNotices.findIndex(n => n.id === noticeId);
+      
+      if (existingIndex >= 0) {
+        updatedNotices[existingIndex] = notice;
+      } else {
+        // If we somehow don't have this notice, add it
+        updatedNotices.push(notice);
+      }
+
       setNotices(updatedNotices);
-
-      // Save to localStorage for persistence
       localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-      console.log('Notice saved to localStorage');
+      console.log('Global notice updated in localStorage');
 
-      // Try to save to database as backup
+      // Try to save to database
       try {
-        const { data, error } = await supabase
+        // Use upsert to update or insert
+        const { error } = await supabase
           .from('notices')
-          .insert([notice])
-          .select();
+          .upsert([notice], { onConflict: 'id' });
         
         if (error) {
           console.error('Database save failed:', error);
-          console.log('Notice saved locally only. Database might not be set up.');
+          console.log('Notice saved locally only.');
         } else {
-          console.log('Notice saved to database successfully:', data);
+          console.log('Global notice saved to database successfully');
         }
       } catch (dbError) {
         console.warn('Database not available, using local storage:', dbError);
@@ -745,7 +880,7 @@ ${imageContent}`,
       setNewNotice({ title: '', content: '', type: 'info', is_active: true });
       setShowCreateNotice(false);
       
-      alert('Notice created successfully!');
+      alert(`Global ${noticeId === 'welcome-notice' ? 'Welcome' : 'Exam Routine'} notice updated successfully!`);
       
     } catch (error) {
       console.error('Error creating notice:', error);
@@ -757,6 +892,12 @@ ${imageContent}`,
 
   // Admin: Delete notice
   const handleDeleteNotice = async (noticeId: string) => {
+    // Prevent deletion of global system notices
+    if (noticeId === 'welcome-notice' || noticeId === 'exam-routine-notice') {
+      alert('❌ Cannot delete global system notices!\n\nUse "Update Notice" to modify the Welcome or Exam Routine content instead.');
+      return;
+    }
+    
     if (!confirm('Are you sure you want to delete this notice?')) {
       return;
     }
@@ -786,25 +927,23 @@ ${imageContent}`,
     }
   };
 
-  // Admin: Delete exam routine (with storage cleanup)
+  // Admin: Reset exam routine to default content
   const handleDeleteExamRoutine = async (noticeId: string) => {
-    if (!confirm('⚠️ Are you sure you want to delete the exam routine? This action cannot be undone!')) {
+    // Only allow deletion of exam routine notice
+    if (noticeId !== 'exam-routine-notice') {
+      alert('❌ This action is only available for exam routine notices.');
+      return;
+    }
+    
+    if (!confirm('⚠️ This will reset the exam routine to default content and remove any uploaded image. Continue?')) {
       return;
     }
     
     try {
       setLoading(true);
       
-      // Find the notice to get image URL for storage cleanup
-      const routineNotice = notices.find(n => n.id === noticeId);
-      
-      // Update local state first
-      const updatedNotices = notices.filter(n => n.id !== noticeId);
-      setNotices(updatedNotices);
-      
-      // Update localStorage
-      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-      console.log('Exam routine deleted from localStorage');
+      // Find the current routine notice for storage cleanup
+      const routineNotice = notices.find(n => n.id === 'exam-routine-notice');
       
       // Clean up Supabase Storage if the notice used URL-based storage
       if (routineNotice?.content.includes('[EXAM_ROUTINE_URL]')) {
@@ -825,18 +964,58 @@ ${imageContent}`,
         }
       }
       
-      // Try to delete from database
+      // Reset to default exam routine notice
+      const defaultRoutineNotice: Notice = {
+        id: 'exam-routine-notice',
+        title: '📅 Midterm Exam Routine - Section 5',
+        content: `Midterm examination schedule for Section 5 (Computer Science & Engineering).
+
+📋 **Exam Information:**
+• Start Date: Sunday, September 14, 2025
+• All students must check the detailed routine below
+• Arrive 15 minutes early for each exam
+• Bring student ID and necessary materials
+
+⚠️ **Admin Notice:** Use the admin panel to upload the detailed exam routine image. This notice will be automatically updated when the routine is uploaded.
+
+For any queries, contact your course instructors or the department.`,
+        type: 'warning',
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      
+      // Update the global notice slot
+      const updatedNotices = [...notices];
+      const routineIndex = updatedNotices.findIndex(n => n.id === 'exam-routine-notice');
+      
+      if (routineIndex >= 0) {
+        updatedNotices[routineIndex] = defaultRoutineNotice;
+      }
+      
+      setNotices(updatedNotices);
+      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+      console.log('Exam routine reset to default content');
+      
+      // Update in database
       try {
-        await supabase.from('notices').delete().eq('id', noticeId);
-        console.log('Exam routine deleted from database');
-        alert('✅ Exam routine deleted successfully from all devices!');
+        const { error } = await supabase
+          .from('notices')
+          .upsert([defaultRoutineNotice], { onConflict: 'id' });
+        
+        if (error) {
+          console.error('Database update error:', error);
+          alert('Exam routine reset locally but database update failed.');
+        } else {
+          console.log('Exam routine reset in database');
+          alert('✅ Exam routine has been reset to default content.\n\nYou can now upload a new routine image.');
+        }
       } catch (error) {
-        console.warn('Exam routine deleted locally, database cleanup may be needed:', error);
-        alert('Exam routine deleted locally but database cleanup may be needed.');
+        console.warn('Database update failed:', error);
+        alert('Exam routine reset locally but database update may be needed.');
       }
     } catch (error) {
-      console.error('Error deleting exam routine:', error);
-      alert('Error deleting exam routine. Please try again.');
+      console.error('Error resetting exam routine:', error);
+      alert('Error resetting exam routine. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -1582,13 +1761,13 @@ ${imageContent}`,
             {/* Notices Management Section */}
             <div id="notices-section" className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">📢 Notices Management</h3>
+                <h3 className="text-lg font-semibold text-gray-900">📢 Global Notice System (2 Notices)</h3>
                 <button
                   onClick={() => setShowCreateNotice(true)}
                   className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  Create Notice
+                  Update Global Notice
                 </button>
               </div>
               <div className="space-y-4">
@@ -1787,12 +1966,12 @@ ${imageContent}`,
           </div>
         )}
 
-        {/* Create Notice Modal */}
+        {/* Update Global Notice Modal */}
         {showCreateNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Create Notice</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Update Global Notice</h2>
                 <button
                   onClick={() => {
                     setShowCreateNotice(false);
@@ -1802,6 +1981,13 @@ ${imageContent}`,
                 >
                   <X className="h-6 w-6" />
                 </button>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Global Notice System:</strong> All users see exactly 2 notices - Welcome and Exam Routine. 
+                  Your content will update the appropriate global slot based on keywords in the title.
+                </p>
               </div>
               
               <div className="space-y-4">
@@ -1869,7 +2055,7 @@ ${imageContent}`,
                     disabled={!newNotice.title || !newNotice.content}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create Notice
+                    Update Global Notice
                   </button>
                 </div>
               </div>
