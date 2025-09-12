@@ -130,14 +130,8 @@ function App() {
     }
   }, [selectedCourse]);
 
-  // Create welcome notice after notices are loaded
-  useEffect(() => {
-    // Always try to create welcome notice, especially if we have very few notices
-    if (notices.length <= 1) {
-      console.log('Very few notices detected, ensuring welcome notice exists');
-      createWelcomeNoticeIfNeeded();
-    }
-  }, [notices]); // Runs when notices state changes
+  // No longer auto-create welcome notice - Admin must manually create notices
+  // useEffect removed to prevent automatic welcome notice spam
 
   // Auto-refresh notices every 30 seconds for real-time updates
   useEffect(() => {
@@ -243,120 +237,6 @@ FOR ALL USING (true) WITH CHECK (true);
   };
 
   // Create welcome notice if it doesn't exist
-  const createWelcomeNoticeIfNeeded = async () => {
-    // Check if welcome notice already exists
-    const existingWelcome = notices.find(n => n.title.includes('Welcome to Edu51Five'));
-    if (existingWelcome) {
-      console.log('Welcome notice already exists');
-      return;
-    }
-
-    // Always check both localStorage and database for welcome notice
-    let welcomeExists = false;
-    
-    // Check localStorage for welcome notice
-    const localNotices = localStorage.getItem('edu51five_notices');
-    if (localNotices) {
-      const parsedNotices = JSON.parse(localNotices);
-      welcomeExists = parsedNotices.find((n: Notice) => n.title.includes('Welcome to Edu51Five'));
-      if (welcomeExists) {
-        console.log('Welcome notice already exists in localStorage');
-      }
-    }
-
-    // Also check database for welcome notice
-    if (!welcomeExists) {
-      try {
-        const { data } = await supabase
-          .from('notices')
-          .select('*')
-          .ilike('title', '%Welcome to Edu51Five%')
-          .limit(1);
-        
-        if (data && data.length > 0) {
-          console.log('Welcome notice found in database');
-          welcomeExists = true;
-        }
-      } catch (error) {
-        console.log('Could not check database for welcome notice');
-      }
-    }
-
-    if (welcomeExists) {
-      console.log('Welcome notice exists somewhere, skipping creation');
-      return;
-    }
-
-    // Create welcome notice
-    const welcomeNotice: Notice = {
-      id: 'welcome-notice-' + Date.now(),
-      title: '🎉 Welcome to Edu51Five - Your Academic Success Platform!',
-      content: `Dear BUBT Intake 51 Students,
-
-Welcome to Edu51Five, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
-
-🎯 **Why This Platform is Crucial for Your Studies:**
-
-📚 **Centralized Learning Hub**
-• Access all your course materials, lectures, and resources in one place
-• Never miss important announcements or exam schedules
-• Stay organized with structured content by courses and sections
-
-📖 **Exam Preparation Excellence**
-• Download past exam questions and model answers
-• Access comprehensive study materials for each subject
-• Get exam tips and preparation strategies from instructors
-
-🔔 **Stay Updated & Connected**
-• Receive instant notifications about exam dates and schedule changes
-• Get important academic announcements immediately
-• Access emergency updates about classes or exam modifications
-
-💡 **Academic Success Features**
-• Organized course-wise material distribution
-• Video lectures and supplementary content
-• Study guides and exam preparation resources
-• 24/7 access to all learning materials
-
-🎓 **Your Path to Excellence**
-This platform is designed to support your journey through BUBT's Computer Science & Engineering program. Use it regularly to stay ahead in your studies, prepare effectively for exams, and achieve the academic success you deserve!
-
-Start exploring the platform now - check out Section 5 materials and stay tuned for regular updates!
-
-Best of luck with your studies!
-- Edu51Five Team`,
-      type: 'info',
-      is_active: true,
-      created_at: new Date().toISOString()
-    };
-
-    console.log('Creating welcome notice...');
-
-    // Add to current state
-    const updatedNotices = [welcomeNotice, ...notices];
-    setNotices(updatedNotices);
-
-    // Save to localStorage
-    localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-    console.log('Welcome notice saved to localStorage');
-
-    // Try to save to database
-    try {
-      const { data, error } = await supabase
-        .from('notices')
-        .insert([welcomeNotice])
-        .select();
-      
-      if (error) {
-        console.log('Welcome notice saved locally only');
-      } else {
-        console.log('Welcome notice saved to database successfully:', data);
-      }
-    } catch (dbError) {
-      console.log('Database not available, welcome notice saved locally');
-    }
-  };
-
   // Load notices from database
   const loadNotices = async () => {
     try {
@@ -403,11 +283,6 @@ Best of luck with your studies!
       
       console.log('Merged notices (DB + localStorage):', mergedNotices.length);
       console.log('Notice titles:', mergedNotices.map(n => n.title));
-      
-      // If no notices exist at all, create welcome notice immediately
-      if (mergedNotices.length === 0) {
-        console.log('No notices found anywhere, will create welcome notice');
-      }
       
       setNotices(mergedNotices);
       
