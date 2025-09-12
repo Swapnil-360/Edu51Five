@@ -460,16 +460,64 @@ Best of luck with your studies!
     try {
       setLoading(true);
 
-      // Convert file to base64 for localStorage storage
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64String = reader.result as string;
+      // First, try to upload image to Supabase Storage
+      let imageUrl = '';
+      let base64String = '';
+      
+      try {
+        // Generate unique filename
+        const fileExt = examRoutineFile.name.split('.').pop();
+        const fileName = `exam-routine-${Date.now()}.${fileExt}`;
         
-        // Create a special notice for exam routine with image
-        const routineNotice: Notice = {
-          id: 'exam-routine-' + Date.now(),
-          title: '📅 Midterm Exam Routine - Section 5 (Starting 14/09/2025)',
-          content: `Midterm examinations for Section 5 (Computer Science & Engineering) will commence from Sunday, September 14, 2025.
+        console.log('Uploading image to Supabase Storage...');
+        
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('exam-routines')
+          .upload(fileName, examRoutineFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.warn('Supabase Storage upload failed:', uploadError);
+          console.log('Falling back to base64 storage...');
+        } else {
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from('exam-routines')
+            .getPublicUrl(fileName);
+          
+          imageUrl = urlData.publicUrl;
+          console.log('Image uploaded to storage successfully:', imageUrl);
+        }
+      } catch (storageError) {
+        console.warn('Storage upload failed, using base64 fallback:', storageError);
+      }
+
+      // If storage upload failed, fall back to base64
+      if (!imageUrl) {
+        console.log('Using base64 fallback for image storage...');
+        const reader = new FileReader();
+        await new Promise((resolve) => {
+          reader.onload = () => {
+            base64String = reader.result as string;
+            resolve(true);
+          };
+          reader.readAsDataURL(examRoutineFile);
+        });
+      }
+
+      // Create notice content based on available storage method
+      const imageContent = imageUrl 
+        ? `[EXAM_ROUTINE_URL]${imageUrl}[/EXAM_ROUTINE_URL]`
+        : `[EXAM_ROUTINE_IMAGE]${base64String}[/EXAM_ROUTINE_IMAGE]`;
+
+      // Create a special notice for exam routine
+      const routineNotice: Notice = {
+        id: 'exam-routine-' + Date.now(),
+        title: '📅 Midterm Exam Routine - Section 5 (Starting 14/09/2025)',
+        content: `Midterm examinations for Section 5 (Computer Science & Engineering) will commence from Sunday, September 14, 2025.
 
 Important Instructions:
 • Please check your exam schedule carefully
@@ -482,49 +530,45 @@ For any queries regarding the exam schedule, contact your course instructors or 
 
 Best of luck with your midterm exams!
 
-[EXAM_ROUTINE_IMAGE]${base64String}[/EXAM_ROUTINE_IMAGE]`,
-          type: 'warning',
-          is_active: true,
-          created_at: new Date().toISOString()
-        };
-
-        // Add to notices
-        const updatedNotices = [routineNotice, ...notices];
-        setNotices(updatedNotices);
-
-        // Save to localStorage
-        localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-        console.log('Exam routine uploaded and saved');
-
-        // Try to save to database
-        try {
-          console.log('Attempting to save exam routine to database...');
-          console.log('Routine notice size:', JSON.stringify(routineNotice).length, 'characters');
-          
-          const { data, error } = await supabase
-            .from('notices')
-            .insert([routineNotice])
-            .select();
-          
-          if (error) {
-            console.error('Database error saving exam routine:', error);
-            console.log('Error details:', error.message, error.details, error.code);
-            alert('Exam routine uploaded locally but failed to sync to database. It may not be visible on other devices.');
-          } else {
-            console.log('Exam routine saved to database successfully:', data);
-            alert('Exam routine uploaded successfully and synced to all devices!');
-          }
-        } catch (dbError) {
-          console.error('Exception while saving exam routine to database:', dbError);
-          alert('Exam routine uploaded locally but database sync failed. It may not be visible on other devices.');
-        }
-
-        // Reset form
-        setExamRoutineFile(null);
-        setShowExamRoutineUpload(false);
+${imageContent}`,
+        type: 'warning',
+        is_active: true,
+        created_at: new Date().toISOString()
       };
 
-      reader.readAsDataURL(examRoutineFile);
+      // Add to notices
+      const updatedNotices = [routineNotice, ...notices];
+      setNotices(updatedNotices);
+
+      // Save to localStorage
+      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+      console.log('Exam routine uploaded and saved locally');
+
+      // Try to save to database (should work better now with URL instead of large base64)
+      try {
+        console.log('Attempting to save exam routine to database...');
+        console.log('Routine notice size:', JSON.stringify(routineNotice).length, 'characters');
+        
+        const { data, error } = await supabase
+          .from('notices')
+          .insert([routineNotice])
+          .select();
+        
+        if (error) {
+          console.error('Database error saving exam routine:', error);
+          alert('Exam routine uploaded but may not sync to all devices. Error: ' + error.message);
+        } else {
+          console.log('Exam routine saved to database successfully:', data);
+          alert('✅ Exam routine uploaded successfully and synced to all devices!');
+        }
+      } catch (dbError) {
+        console.error('Exception while saving exam routine to database:', dbError);
+        alert('Exam routine uploaded locally but database sync failed. It may not be visible on other devices.');
+      }
+
+      // Reset form
+      setExamRoutineFile(null);
+      setShowExamRoutineUpload(false);
 
     } catch (error) {
       console.error('Error uploading exam routine:', error);
@@ -1986,11 +2030,16 @@ Best of luck with your midterm exams!
                 <div className="prose prose-gray max-w-none">
                   {(() => {
                     const content = selectedNotice.content;
+                    
+                    // Check for both URL and base64 image formats
+                    const urlMatch = content.match(/\[EXAM_ROUTINE_URL\](.*?)\[\/EXAM_ROUTINE_URL\]/);
                     const imageMatch = content.match(/\[EXAM_ROUTINE_IMAGE\](.*?)\[\/EXAM_ROUTINE_IMAGE\]/);
                     
-                    if (imageMatch) {
-                      const imageData = imageMatch[1];
-                      const textContent = content.replace(/\[EXAM_ROUTINE_IMAGE\].*?\[\/EXAM_ROUTINE_IMAGE\]/g, '');
+                    if (urlMatch || imageMatch) {
+                      const imageData = urlMatch ? urlMatch[1] : (imageMatch ? imageMatch[1] : '');
+                      const textContent = content
+                        .replace(/\[EXAM_ROUTINE_URL\].*?\[\/EXAM_ROUTINE_URL\]/g, '')
+                        .replace(/\[EXAM_ROUTINE_IMAGE\].*?\[\/EXAM_ROUTINE_IMAGE\]/g, '');
                       
                       return (
                         <div>
