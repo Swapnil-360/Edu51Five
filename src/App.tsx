@@ -498,24 +498,30 @@ Best of luck with your midterm exams!
 
         // Try to save to database
         try {
-          const { error } = await supabase
+          console.log('Attempting to save exam routine to database...');
+          console.log('Routine notice size:', JSON.stringify(routineNotice).length, 'characters');
+          
+          const { data, error } = await supabase
             .from('notices')
-            .insert([routineNotice]);
+            .insert([routineNotice])
+            .select();
           
           if (error) {
-            console.log('Exam routine saved locally only');
+            console.error('Database error saving exam routine:', error);
+            console.log('Error details:', error.message, error.details, error.code);
+            alert('Exam routine uploaded locally but failed to sync to database. It may not be visible on other devices.');
           } else {
-            console.log('Exam routine saved to database');
+            console.log('Exam routine saved to database successfully:', data);
+            alert('Exam routine uploaded successfully and synced to all devices!');
           }
         } catch (dbError) {
-          console.log('Database not available, exam routine saved locally');
+          console.error('Exception while saving exam routine to database:', dbError);
+          alert('Exam routine uploaded locally but database sync failed. It may not be visible on other devices.');
         }
 
         // Reset form
         setExamRoutineFile(null);
         setShowExamRoutineUpload(false);
-        
-        alert('Exam routine uploaded successfully! Students can now view it in the notice board.');
       };
 
       reader.readAsDataURL(examRoutineFile);
