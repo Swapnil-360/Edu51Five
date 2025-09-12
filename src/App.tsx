@@ -911,6 +911,62 @@ ${imageContent}`,
     }
   };
 
+  // Admin: Delete exam routine (with storage cleanup)
+  const handleDeleteExamRoutine = async (noticeId: string) => {
+    if (!confirm('⚠️ Are you sure you want to delete the exam routine? This action cannot be undone!')) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Find the notice to get image URL for storage cleanup
+      const routineNotice = notices.find(n => n.id === noticeId);
+      
+      // Update local state first
+      const updatedNotices = notices.filter(n => n.id !== noticeId);
+      setNotices(updatedNotices);
+      
+      // Update localStorage
+      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+      console.log('Exam routine deleted from localStorage');
+      
+      // Clean up Supabase Storage if the notice used URL-based storage
+      if (routineNotice?.content.includes('[EXAM_ROUTINE_URL]')) {
+        try {
+          const urlMatch = routineNotice.content.match(/\[EXAM_ROUTINE_URL\](.*?)\[\/EXAM_ROUTINE_URL\]/);
+          if (urlMatch) {
+            const imageUrl = urlMatch[1];
+            // Extract filename from URL
+            const filename = imageUrl.split('/').pop();
+            if (filename) {
+              console.log('Attempting to delete image from storage:', filename);
+              await supabase.storage.from('exam-routines').remove([filename]);
+              console.log('Image deleted from Supabase Storage');
+            }
+          }
+        } catch (storageError) {
+          console.warn('Could not delete image from storage:', storageError);
+        }
+      }
+      
+      // Try to delete from database
+      try {
+        await supabase.from('notices').delete().eq('id', noticeId);
+        console.log('Exam routine deleted from database');
+        alert('✅ Exam routine deleted successfully from all devices!');
+      } catch (error) {
+        console.warn('Exam routine deleted locally, database cleanup may be needed:', error);
+        alert('Exam routine deleted locally but database cleanup may be needed.');
+      }
+    } catch (error) {
+      console.error('Error deleting exam routine:', error);
+      alert('Error deleting exam routine. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Show admin login screen if needed (single block)
   if (showAdminLogin && !isAdmin) {
     return (
@@ -1667,6 +1723,11 @@ ${imageContent}`,
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="font-medium text-gray-900">{notice.title}</h4>
+                          {notice.title.includes('Midterm Exam Routine') && (
+                            <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 font-medium">
+                              📅 EXAM ROUTINE
+                            </span>
+                          )}
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             notice.type === 'info' ? 'bg-blue-100 text-blue-800' :
                             notice.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
@@ -1682,13 +1743,24 @@ ${imageContent}`,
                         <p className="text-sm text-gray-600 mb-2">{notice.content}</p>
                         <p className="text-xs text-gray-400">{new Date(notice.created_at).toLocaleDateString()}</p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteNotice(notice.id)}
-                        className="ml-4 inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </button>
+                      {/* Conditional Delete Button - Special handling for exam routines */}
+                      {notice.title.includes('Midterm Exam Routine') ? (
+                        <button
+                          onClick={() => handleDeleteExamRoutine(notice.id)}
+                          className="ml-4 inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete Routine
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteNotice(notice.id)}
+                          className="ml-4 inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
