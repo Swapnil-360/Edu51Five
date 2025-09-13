@@ -1082,7 +1082,7 @@ For any queries, contact your course instructors or the department.`,
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <img src="/image.png" alt="Edu51Five Logo" className="h-10 w-10 object-contain" />
+              <img src="/Edu_51_Logo.png" alt="Edu51Five Logo" className="h-10 w-10 object-contain" />
               <div>
                 <h1 className="text-xl font-bold">Edu51Five</h1>
                 <p className="text-sm text-blue-200">Intake 51</p>
