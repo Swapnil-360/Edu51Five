@@ -28,6 +28,7 @@ export interface Material {
   course_name?: string;
   title: string;
   type: 'pdf' | 'doc' | 'video' | 'suggestion' | 'past_question';
+  category: 'notes' | 'suggestions' | 'super-tips' | 'slides' | 'ct-questions' | 'videos' | 'other';
   file_url: string | null;
   video_url?: string;
   description?: string;

@@ -6,6 +6,7 @@ export interface Material {
   course_id: string;
   title: string;
   type: 'pdf' | 'doc' | 'video' | 'suggestion' | 'past_question';
+  category: 'notes' | 'suggestions' | 'super-tips' | 'slides' | 'ct-questions' | 'videos' | 'other';
   file_url?: string;
   video_url?: string;
   description?: string;
