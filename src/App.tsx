@@ -88,6 +88,7 @@ function App() {
   const [adminError, setAdminError] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(0);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(false);
@@ -132,6 +133,13 @@ function App() {
       loadMaterials(selectedCourse.code);
     }
   }, [selectedCourse]);
+
+  // Load total materials count when accessing admin panel
+  useEffect(() => {
+    if (currentView === 'admin' && isAdmin) {
+      loadTotalMaterialsCount();
+    }
+  }, [currentView, isAdmin]);
 
   // No longer auto-create welcome notice - Admin must manually create notices
   // useEffect removed to prevent automatic welcome notice spam
@@ -236,6 +244,21 @@ FOR ALL USING (true) WITH CHECK (true);
       setMaterials([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load total materials count for admin dashboard
+  const loadTotalMaterialsCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('materials')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      setTotalMaterialsCount(count || 0);
+    } catch (error) {
+      console.error('Error loading total materials count:', error);
+      setTotalMaterialsCount(0);
     }
   };
 
@@ -745,6 +768,7 @@ ${imageContent}`,
       if (selectedCourse) {
         loadMaterials(selectedCourse.code);
       }
+      loadTotalMaterialsCount(); // Update total count
       
       alert('Material uploaded successfully!');
       
@@ -785,6 +809,7 @@ ${imageContent}`,
       setIsAdmin(true);
       setShowAdminLogin(false);
       setAdminError('');
+      loadTotalMaterialsCount(); // Load total materials count for dashboard
       goToView('admin');
     } else {
       setAdminError('Incorrect password');
@@ -817,6 +842,7 @@ ${imageContent}`,
 
       // Remove from local state
       setMaterials(materials.filter(m => m.id !== materialId));
+      loadTotalMaterialsCount(); // Update total count
       
       alert('Material deleted successfully!');
       
@@ -1075,7 +1101,7 @@ For any queries, contact your course instructors or the department.`,
             )}
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors no-select"
             >
               Login
             </button>
@@ -1249,38 +1275,38 @@ For any queries, contact your course instructors or the department.`,
                   alt="Edu51Five Logo" 
                   className="h-16 w-16 md:h-20 md:w-20 mx-auto mb-4 md:mb-6 object-contain" 
                 />
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 no-select">
                   Welcome to Edu51Five!
                 </h2>
-                <p className="text-gray-600 mb-4 text-base md:text-lg max-w-3xl mx-auto">
+                <p className="text-gray-600 mb-4 text-base md:text-lg max-w-3xl mx-auto no-select">
                   BUBT Intake 51 Learning Platform - Department of CSE
                 </p>
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 mb-6">
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 text-center">🎯 Your Exam Success Platform</h3>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 text-center no-select"><span className="no-select">🎯</span> Your Exam Success Platform</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-sm md:text-base">
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-blue-600 text-lg">📚</span>
-                      <span className="text-gray-700">Complete Study Materials</span>
+                      <span className="text-blue-600 text-lg no-select">📚</span>
+                      <span className="text-gray-700 no-select">Complete Study Materials</span>
                     </div>
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-green-600 text-lg">📝</span>
-                      <span className="text-gray-700">Past Exam Questions</span>
+                      <span className="text-green-600 text-lg no-select">📝</span>
+                      <span className="text-gray-700 no-select">Past Exam Questions</span>
                     </div>
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-purple-600 text-lg">🔔</span>
-                      <span className="text-gray-700">Real-time Updates</span>
+                      <span className="text-purple-600 text-lg no-select">🔔</span>
+                      <span className="text-gray-700 no-select">Real-time Updates</span>
                     </div>
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-orange-600 text-lg">🎥</span>
-                      <span className="text-gray-700">Video Lectures</span>
+                      <span className="text-orange-600 text-lg no-select">🎥</span>
+                      <span className="text-gray-700 no-select">Video Lectures</span>
                     </div>
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-red-600 text-lg">⏰</span>
-                      <span className="text-gray-700">Exam Schedules</span>
+                      <span className="text-red-600 text-lg no-select">⏰</span>
+                      <span className="text-gray-700 no-select">Exam Schedules</span>
                     </div>
                     <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-teal-600 text-lg">💡</span>
-                      <span className="text-gray-700">Study Tips & Guides</span>
+                      <span className="text-teal-600 text-lg no-select">💡</span>
+                      <span className="text-gray-700 no-select">Study Tips & Guides</span>
                     </div>
                   </div>
                 </div>
@@ -1291,20 +1317,20 @@ For any queries, contact your course instructors or the department.`,
                   className="border border-gray-200 rounded-xl p-6 md:p-8 hover:shadow-lg cursor-pointer hover:border-blue-300 transition-all text-center bg-white"
                   onClick={() => goToView('section5')}
                 >
-                  <div className="text-4xl md:text-5xl mb-4">📚</div>
-                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2">Section 5</h3>
+                  <div className="text-4xl md:text-5xl mb-4 no-select">📚</div>
+                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2 no-select">Section 5</h3>
                   <p className="text-gray-600 mb-3 text-sm md:text-base">
                     Computer Science & Engineering
                   </p>
                   <p className="text-gray-500 text-sm mb-4">
                     {courses.length} courses available
                   </p>
-                  <p className="text-blue-600 text-lg font-medium">Click to Access →</p>
+                  <p className="text-blue-600 text-lg font-medium no-select">Click to Access →</p>
                 </div>
                 
                 <div className="border border-gray-200 rounded-xl p-6 md:p-8 opacity-50 text-center bg-white">
-                  <div className="text-4xl md:text-5xl mb-4">🚧</div>
-                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2">Other Sections</h3>
+                  <div className="text-4xl md:text-5xl mb-4 no-select">🚧</div>
+                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2 no-select">Other Sections</h3>
                   <p className="text-gray-600 mb-3 text-sm md:text-base">
                     Coming Soon...
                   </p>
@@ -1368,8 +1394,8 @@ For any queries, contact your course instructors or the department.`,
                 >
                   <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">{course.name}</h3>
                   <p className="text-blue-600 font-medium mb-2 text-sm md:text-base">{course.code}</p>
-                  <p className="text-gray-600 text-sm md:text-base mb-3 md:mb-4">{course.description}</p>
-                  <p className="text-blue-600 text-sm md:text-base font-medium">Access Materials →</p>
+                  <p className="text-gray-600 text-sm md:text-base mb-3 md:mb-4 select-text">{course.description}</p>
+                  <p className="text-blue-600 text-sm md:text-base font-medium no-select">Access Materials →</p>
                 </div>
               ))}
             </div>
@@ -1385,7 +1411,7 @@ For any queries, contact your course instructors or the department.`,
                 {selectedCourse.code}
               </span>
             </div>
-            <p className="text-gray-600 text-sm md:text-base">{selectedCourse.description}</p>
+            <p className="text-gray-600 text-sm md:text-base select-text">{selectedCourse.description}</p>
 
             {/* Google Drive Resources */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 border border-blue-200">
@@ -1396,7 +1422,7 @@ For any queries, contact your course instructors or the department.`,
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base md:text-lg font-semibold text-gray-900">📂 Google Drive Resources</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900"><span className="no-select">📂</span> Google Drive Resources</h3>
                   <p className="text-xs md:text-sm text-gray-600">Access organized course materials by category</p>
                 </div>
               </div>
@@ -1414,7 +1440,7 @@ For any queries, contact your course instructors or the department.`,
                       rel="noopener noreferrer"
                       className="group flex flex-col items-center p-3 md:p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-1"
                     >
-                      <div className="text-lg md:text-2xl mb-1 md:mb-2 group-hover:scale-110 transition-transform duration-200">
+                      <div className="text-lg md:text-2xl mb-1 md:mb-2 group-hover:scale-110 transition-transform duration-200 no-select">
                         {categoryInfo.icon}
                       </div>
                       <div className="text-center">
@@ -1670,7 +1696,7 @@ For any queries, contact your course instructors or the department.`,
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-emerald-100 text-sm font-medium">Total Materials</p>
-                      <p className="text-3xl font-bold mt-1">{materials.length}</p>
+                      <p className="text-3xl font-bold mt-1">{totalMaterialsCount}</p>
                     </div>
                     <div className="w-12 h-12 bg-emerald-400 bg-opacity-50 rounded-xl flex items-center justify-center">
                       <span className="text-2xl">📁</span>
@@ -2260,11 +2286,11 @@ For any queries, contact your course instructors or the department.`,
                       
                       return (
                         <div>
-                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-6">
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-6 select-text">
                             {textContent}
                           </p>
                           <div className="bg-gray-50 rounded-xl p-4 text-center">
-                            <h4 className="font-semibold text-gray-900 mb-3">📋 Exam Routine</h4>
+                            <h4 className="font-semibold text-gray-900 mb-3"><span className="no-select">📋</span> Exam Routine</h4>
                             <img 
                               src={imageData} 
                               alt="Midterm Exam Routine - Section 5" 
@@ -2279,7 +2305,7 @@ For any queries, contact your course instructors or the department.`,
                       );
                     } else {
                       return (
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap select-text">
                           {content}
                         </p>
                       );
