@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Notice } from './types';
-import { getGoogleDriveLink, getCourseCategories, getCategoryInfo } from './config/googleDrive';
+import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFiles } from './config/googleDrive';
 import { 
   FileText, 
   Play, 
@@ -101,6 +101,12 @@ function App() {
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   const [showExamRoutineUpload, setShowExamRoutineUpload] = useState(false);
   const [examRoutineFile, setExamRoutineFile] = useState<File | null>(null);
+  
+  // File viewer modal states
+  const [showFileViewer, setShowFileViewer] = useState(false);
+  const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
+  const [currentFileName, setCurrentFileName] = useState<string>('');
+  
   const [newCourse, setNewCourse] = useState({
     name: '',
     code: '',
@@ -447,6 +453,36 @@ For any queries, contact your course instructors or the department.`,
   const closeNoticeModal = () => {
     setSelectedNotice(null);
     setShowNoticeModal(false);
+  };
+
+  // File viewer functions
+  const openFileViewer = (fileUrl: string, fileName: string) => {
+    // Convert Google Drive URL to embeddable format
+    let embedUrl = fileUrl;
+    
+    // Handle different Google Drive URL formats
+    if (fileUrl.includes('drive.google.com')) {
+      // Extract file ID from various Google Drive URL formats
+      const fileIdMatch = fileUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (fileIdMatch) {
+        const fileId = fileIdMatch[1];
+        embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      } else {
+        // Fallback for folder URLs - open in new tab
+        window.open(fileUrl, '_blank');
+        return;
+      }
+    }
+    
+    setCurrentFileUrl(embedUrl);
+    setCurrentFileName(fileName);
+    setShowFileViewer(true);
+  };
+
+  const closeFileViewer = () => {
+    setShowFileViewer(false);
+    setCurrentFileUrl('');
+    setCurrentFileName('');
   };
 
   // Toggle notice panel
@@ -1127,21 +1163,27 @@ For any queries, contact your course instructors or the department.`,
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-blue-900 text-white shadow-lg z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="responsive-container">
           <div className="flex items-center justify-between h-16 md:h-20">
-            <div className="flex items-center space-x-3 md:space-x-4">
-              <img 
-                src="/Edu_51_Logo.png" 
-                alt="Edu51Five Logo" 
-                className="h-12 w-12 md:h-16 md:w-16 object-contain" 
-              />
-              <div className="hidden sm:block">
-                <h1 className="text-lg md:text-2xl font-bold">Edu51Five</h1>
-                <p className="text-xs md:text-sm text-blue-200">Intake 51</p>
-              </div>
-              <div className="sm:hidden">
-                <h1 className="text-lg font-bold">Edu51Five</h1>
-              </div>
+            <div className="flex items-center space-responsive">
+              <button
+                onClick={() => setCurrentView('home')}
+                className="flex items-center space-responsive smooth-button transition-smooth ui-element focus:outline-none"
+                title="Go to Home"
+              >
+                <img 
+                  src="/Edu_51_Logo.png" 
+                  alt="Edu51Five Logo" 
+                  className="h-12 w-12 md:h-16 md:w-16 object-contain no-select" 
+                />
+                <div className="hidden sm:block">
+                  <h1 className="responsive-text-lg font-bold no-select">Edu51Five</h1>
+                  <p className="responsive-text-xs text-blue-200 no-select">Intake 51</p>
+                </div>
+                <div className="sm:hidden">
+                  <h1 className="responsive-text-lg font-bold no-select">Edu51Five</h1>
+                </div>
+              </button>
             </div>
             
             <div className="flex items-center space-x-3 md:space-x-5">
@@ -1414,54 +1456,156 @@ For any queries, contact your course instructors or the department.`,
             <p className="text-gray-600 text-sm md:text-base select-text">{selectedCourse.description}</p>
 
             {/* Google Drive Resources */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 border border-blue-200">
-              <div className="flex items-start sm:items-center space-x-3 mb-4">
-                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base md:text-lg font-semibold text-gray-900"><span className="no-select">📂</span> Google Drive Resources</h3>
-                  <p className="text-xs md:text-sm text-gray-600">Access organized course materials by category</p>
+                  <h3 className="text-xl font-semibold text-gray-900">Course Materials</h3>
+                  <p className="text-sm text-gray-600">Access organized study materials by category</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+              <div className="grid-responsive">
                 {getCourseCategories(selectedCourse.code).map((category) => {
                   const categoryInfo = getCategoryInfo(category);
                   const driveLink = getGoogleDriveLink(selectedCourse.code, category);
+                  const files = getCourseFiles(selectedCourse.code, category);
                   
                   return (
-                    <a
-                      key={category}
-                      href={driveLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex flex-col items-center p-3 md:p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-1"
-                    >
-                      <div className="text-lg md:text-2xl mb-1 md:mb-2 group-hover:scale-110 transition-transform duration-200 no-select">
-                        {categoryInfo.icon}
+                    <div key={category} className="bg-white rounded-lg border border-gray-200 overflow-hidden smooth-card transition-smooth ui-element">
+                      {/* Compact Category Header */}
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg no-select" style={{backgroundColor: `var(--color-${categoryInfo.color}-100)`}}>
+                            {categoryInfo.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 responsive-text-sm no-select">
+                              {categoryInfo.label}
+                            </h4>
+                            <p className="responsive-text-xs text-gray-500 no-select">
+                              {files.length} files
+                            </p>
+                          </div>
+                        </div>
+                        {/* Folder Icon */}
+                        <a
+                          href={driveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded smooth-button transition-smooth ui-element"
+                          title="Open folder in Google Drive"
+                        >
+                          <svg className="w-5 h-5 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                          </svg>
+                        </a>
                       </div>
-                      <div className="text-center">
-                        <p className="font-medium text-gray-900 text-xs md:text-sm group-hover:text-blue-700 transition-colors leading-tight">
-                          {categoryInfo.label}
-                        </p>
+                      
+                      {/* Compact Files List */}
+                      <div className="p-3">
+                        {files.length > 0 ? (
+                          <div className="space-y-2">
+                            {files.slice(0, 3).map((file) => (
+                              <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-blue-50 transition-all duration-200 group">
+                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                  {/* Compact File Type Icon */}
+                                  <div className="flex-shrink-0">
+                                    {file.name.toLowerCase().includes('.pdf') ? (
+                                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.5,8.5H10.5A2,2 0 0,1 12.5,10.5V11.5A2,2 0 0,1 10.5,13.5H8.5V16.5H7.5V8.5M8.5,9.5V12.5H10.5A1,1 0 0,0 11.5,11.5V10.5A1,1 0 0,0 10.5,9.5H8.5M13.5,8.5H15.43C16.47,8.5 17,9 17,10V11.2C17,12.2 16.47,12.7 15.43,12.7H14.5V16.5H13.5V8.5M14.5,9.5V11.7H15.43C15.73,11.7 16,11.47 16,11.2V10C16,9.73 15.73,9.5 15.43,9.5H14.5Z"/>
+                                      </svg>
+                                    ) : file.name.toLowerCase().includes('.ppt') ? (
+                                      <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M8,8H10.5A2.5,2.5 0 0,1 13,10.5A2.5,2.5 0 0,1 10.5,13H9V16H8V8M9,9V12H10.5A1.5,1.5 0 0,0 12,10.5A1.5,1.5 0 0,0 10.5,9H9Z"/>
+                                      </svg>
+                                    ) : file.name.toLowerCase().includes('.mp4') ? (
+                                      <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/>
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 2C4.89 2 4 2.9 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2H6Z"/>
+                                      </svg>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Compact File Name */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                                      {file.name}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                {/* Compact Action Buttons */}
+                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-smooth-slow">
+                                  <button
+                                    onClick={() => openFileViewer(file.embedUrl || file.url, file.name)}
+                                    className="p-1 text-gray-400 hover:text-blue-600 rounded smooth-button transition-smooth ui-element"
+                                    title="Preview"
+                                  >
+                                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </button>
+                                  
+                                  <a
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 text-gray-400 hover:text-green-600 rounded smooth-button transition-smooth ui-element"
+                                    title="Open in Drive"
+                                  >
+                                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                            {files.length > 3 && (
+                              <div className="text-xs text-gray-500 text-center py-1">
+                                +{files.length - 3} more files
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            <p className="text-xs text-gray-500 mb-2">No files</p>
+                            <a
+                              href={driveLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
+                            >
+                              Browse
+                            </a>
+                          </div>
+                        )}
                       </div>
-                    </a>
+                    </div>
                   );
                 })}
               </div>
               
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-2 text-blue-600">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between responsive-text-sm text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-green-500 no-select" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    <span className="font-medium">Direct access to organized materials</span>
+                    <span className="no-select">👁️ Preview files • 📁 Browse complete folders • Real file counts</span>
                   </div>
-                  <span className="text-gray-500">Click any category to open Google Drive folder</span>
+                  <span className="text-gray-400 no-select">Google Drive Integration</span>
                 </div>
               </div>
             </div>
@@ -1717,23 +1861,23 @@ For any queries, contact your course instructors or the department.`,
               </div>
 
               {/* Courses List */}
-              <div id="courses-section" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              <div id="courses-section" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 lg:p-8 responsive-container">
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <span className="text-blue-600 font-bold">📚</span>
+                  <div className="flex items-center space-responsive">
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center ui-element">
+                      <span className="text-blue-600 font-bold no-select">📚</span>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800">Course Management</h3>
+                    <h3 className="responsive-text-lg font-semibold text-gray-800 no-select">Course Management</h3>
                   </div>
                 </div>
                 <div className="space-y-4">
                   {courses.map((course) => (
-                    <div key={course.id} className="group p-6 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-lg transition-all duration-200">
+                    <div key={course.id} className="group p-4 md:p-6 border border-gray-200 rounded-xl smooth-card ui-element hover:border-blue-300 transition-smooth">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 text-lg group-hover:text-blue-600">{course.name}</h4>
-                          <p className="text-blue-600 font-medium mt-1">{course.code}</p>
-                          <p className="text-gray-600 text-sm mt-2">{course.description}</p>
+                          <h4 className="font-semibold text-gray-900 responsive-text-lg group-hover:text-blue-600 transition-smooth no-select">{course.name}</h4>
+                          <p className="text-blue-600 font-medium mt-1 no-select">{course.code}</p>
+                          <p className="text-gray-600 responsive-text-sm mt-2 select-text">{course.description}</p>
                         </div>
                         <div className="text-right ml-6">
                           <div className="flex items-center space-x-2 mb-3">
@@ -2323,6 +2467,63 @@ For any queries, contact your course instructors or the department.`,
                     Close
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* File Viewer Modal */}
+        {showFileViewer && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 modal-overlay">
+            <div className="bg-white rounded-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col shadow-2xl border border-gray-200 modal-content transition-smooth ui-element">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+                <div className="flex items-center space-responsive">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-600 no-select" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="responsive-text-lg font-semibold text-gray-900 truncate max-w-md no-select">
+                      {currentFileName}
+                    </h3>
+                    <p className="responsive-text-sm text-gray-600 no-select">File Preview</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-responsive">
+                  <a
+                    href={currentFileUrl.replace('/preview', '/view')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 md:px-4 py-2 responsive-text-sm bg-blue-600 text-white rounded-lg smooth-button transition-smooth shadow-sm ui-element"
+                  >
+                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span className="no-select">Open in Drive</span>
+                  </a>
+                  <button
+                    onClick={closeFileViewer}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg smooth-button transition-smooth ui-element"
+                    title="Close viewer"
+                  >
+                    <svg className="w-6 h-6 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Modal Content */}
+              <div className="flex-1 bg-gray-50 rounded-b-2xl overflow-hidden">
+                <iframe
+                  src={currentFileUrl}
+                  className="w-full h-full border-0"
+                  title={currentFileName}
+                  allow="autoplay"
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
