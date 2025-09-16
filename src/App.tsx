@@ -1202,17 +1202,17 @@ For any queries, contact your course instructors or the department.`,
       {/* Fixed Header with Perfect Mobile Scaling */}
       <header className="fixed top-0 left-0 right-0 bg-blue-900 text-white shadow-lg z-40">
         <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
-            <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center justify-between h-14 sm:h-16 md:h-18 lg:h-20 xl:h-22">
+            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
               <button
                 onClick={() => setCurrentView('home')}
-                className="flex items-center space-x-2 sm:space-x-3 smooth-button transition-smooth ui-element focus:outline-none"
+                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 smooth-button transition-smooth ui-element focus:outline-none"
                 title="Go to Home"
               >
                 <img 
                   src="/Edu_51_Logo.png" 
                   alt="Edu51Five Logo" 
-                  className="h-8 w-8 sm:h-10 sm:w-10 md:h-16 md:w-16 object-contain no-select" 
+                  className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-16 xl:w-16 object-contain no-select" 
                 />
                 <div className="hidden sm:block">
                   <h1 className="text-sm md:text-lg font-bold no-select">Edu51Five</h1>
@@ -1292,86 +1292,72 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* Mobile Semester Info - Fully Responsive Design */}
-            <div className="lg:hidden flex items-center justify-between w-full max-w-sm glass-card rounded-lg px-2 py-1.5 transition-all duration-200 shadow-md">
-              {/* Left: Clock Icon + Time */}
+            {/* Mobile Semester Info - Simplified Essential Info Only */}
+            <div className="lg:hidden flex items-center justify-between w-full max-w-sm glass-card rounded-lg px-3 py-2 transition-all duration-200 shadow-sm">
+              {/* Left: Date Only */}
               <div className="flex items-center space-x-2 min-w-0">
                 <div className="p-1 bg-blue-600 bg-opacity-30 rounded transition-all duration-300 flex-shrink-0">
-                  <Clock className="h-3 w-3 text-blue-200 transition-colors duration-300" />
+                  <Calendar className="h-3 w-3 text-blue-200 transition-colors duration-300" />
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-xs text-blue-200 no-select font-medium transition-colors duration-300 truncate">
-                    {currentTime.toLocaleDateString('en-BD', {
-                      timeZone: 'Asia/Dhaka',
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </div>
-                  <div className="text-xs text-blue-300 no-select font-medium transition-colors duration-300 truncate">
-                    {currentTime.toLocaleTimeString('en-BD', {
-                      timeZone: 'Asia/Dhaka',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })} BST
-                  </div>
+                <div className="text-sm text-white no-select font-medium transition-colors duration-300">
+                  {currentTime.toLocaleDateString('en-BD', {
+                    timeZone: 'Asia/Dhaka',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
                 </div>
               </div>
               
-              {/* Center: Progress */}
+              {/* Center: Progress Bar with Week */}
               <div className="flex flex-col items-center justify-center flex-shrink-0 px-2">
-                <div className="w-8 bg-blue-800 bg-opacity-50 rounded-full h-1.5 overflow-hidden shadow-inner">
+                <div className="w-16 bg-blue-800 bg-opacity-50 rounded-full h-2 overflow-hidden shadow-inner mb-1">
                   <div 
                     className="h-full semester-progress-bar transition-all duration-500 progress-glow"
                     style={{ width: `${semesterStatus.progressPercentage}%` }}
                   ></div>
                 </div>
-                <span className="text-xs text-blue-200 mt-0.5 no-select font-bold transition-colors duration-300">
+                <span className="text-xs text-blue-200 no-select font-bold transition-colors duration-300">
                   W{semesterStatus.semesterWeek}
                 </span>
               </div>
 
-              {/* Right: Phase + Days */}
-              <div className="flex flex-col items-end min-w-0">
-                <div className="text-xs text-blue-200 no-select font-medium transition-colors duration-300 truncate">
-                  {semesterStatus.currentPhase.split(' ')[0]}
-                </div>
-                <div className="text-xs text-blue-300 no-select font-medium transition-colors duration-300">
-                  {semesterStatus.daysToMilestone}d left
+              {/* Right: Current Phase Only */}
+              <div className="flex items-center min-w-0">
+                <div className="text-sm text-orange-200 no-select font-bold transition-colors duration-300 truncate">
+                  {semesterStatus.currentPhase === 'Mid-term Examinations' ? 'Mid-term' : semesterStatus.currentPhase.split(' ')[0]}
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-5">
+            <div className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 lg:space-x-4 xl:space-x-5">
               {/* Exam Materials Button */}
               <button
                 onClick={() => goToView('examMaterials')}
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 transition-all duration-300 shadow-lg group"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 transition-all duration-300 shadow-lg group"
                 title="Smart Exam Materials"
               >
-                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white group-hover:scale-110 transition-transform" />
+                <BookOpen className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform" />
               </button>
 
               {/* Semester Tracker Button */}
               <button
                 onClick={() => goToView('semester')}
-                className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors shadow-lg group"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors shadow-lg group"
                 title="Semester Tracker"
               >
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white group-hover:scale-110 transition-transform" />
+                <Calendar className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform" />
               </button>
 
               {/* Notice Bell Icon */}
               <div className="relative">
                 <button
                   onClick={toggleNoticePanel}
-                  className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors relative shadow-lg"
+                  className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors relative shadow-lg"
                   title="Notifications"
                 >
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
+                  <Bell className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white" />
                   {getUnreadNoticeCount() > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 md:-top-2 md:-right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 flex items-center justify-center font-bold shadow-md">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-md">
                       {getUnreadNoticeCount()}
                     </span>
                   )}
@@ -1480,7 +1466,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Hidden when semester tracker is active */}
       {currentView !== 'semester' && (
-        <main className="pt-14 sm:pt-16 md:pt-20 min-h-screen">
+        <main className="pt-14 sm:pt-16 md:pt-18 lg:pt-20 xl:pt-22 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Home Page */}
         {currentView === 'home' && (
