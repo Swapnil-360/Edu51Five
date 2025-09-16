@@ -1097,11 +1097,15 @@ For any queries, contact your course instructors or the department.`,
                   className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-18 xl:w-18 object-contain no-select" 
                 />
                 <div className="hidden sm:block">
-                  <h1 className="text-base md:text-xl font-bold no-select">Edu51Five</h1>
+                  <h1 className="text-base md:text-xl font-bold no-select">
+                    Edu<span className="text-red-500">51</span>Five
+                  </h1>
                   <p className="text-xs text-blue-200 no-select">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-sm font-bold no-select">Edu51Five</h1>
+                  <h1 className="text-sm font-bold no-select">
+                    Edu<span className="text-red-500">51</span>Five
+                  </h1>
                 </div>
               </button>
             </div>
