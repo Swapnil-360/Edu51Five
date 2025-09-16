@@ -111,8 +111,6 @@ function App() {
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [showNoticePanel, setShowNoticePanel] = useState(false);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
-  const [showExamRoutineUpload, setShowExamRoutineUpload] = useState(false);
-  const [examRoutineFile, setExamRoutineFile] = useState<File | null>(null);
   
   // File viewer modal states
   const [showFileViewer, setShowFileViewer] = useState(false);
@@ -137,6 +135,10 @@ function App() {
     title: '',
     content: '',
     type: 'info' as 'info' | 'warning' | 'success' | 'error',
+    category: 'announcement' as 'random' | 'exam' | 'event' | 'information' | 'academic' | 'announcement',
+    priority: 'normal' as 'low' | 'normal' | 'high' | 'urgent',
+    exam_type: null as 'midterm' | 'final' | null,
+    event_date: '',
     is_active: true
   });
 
@@ -218,6 +220,10 @@ CREATE TABLE notices (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   type TEXT CHECK (type IN ('info', 'warning', 'success', 'error')) NOT NULL,
+  category TEXT CHECK (category IN ('random', 'exam', 'event', 'information', 'academic', 'announcement')) DEFAULT 'announcement',
+  priority TEXT CHECK (priority IN ('low', 'normal', 'high', 'urgent')) DEFAULT 'normal',
+  exam_type TEXT CHECK (exam_type IN ('midterm', 'final')) DEFAULT NULL,
+  event_date DATE DEFAULT NULL,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -542,144 +548,7 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
-  // Handle exam routine upload
-  const handleExamRoutineUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!examRoutineFile) {
-      alert('Please select a PNG file for the exam routine');
-      return;
-    }
 
-    try {
-      setLoading(true);
-
-      // First, try to upload image to Supabase Storage
-      let imageUrl = '';
-      let base64String = '';
-      
-      try {
-        // Generate unique filename
-        const fileExt = examRoutineFile.name.split('.').pop();
-        const fileName = `exam-routine-${Date.now()}.${fileExt}`;
-        
-        console.log('Uploading image to Supabase Storage...');
-        
-        // Upload to Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('exam-routines')
-          .upload(fileName, examRoutineFile, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.warn('Supabase Storage upload failed:', uploadError);
-          console.log('Falling back to base64 storage...');
-        } else {
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from('exam-routines')
-            .getPublicUrl(fileName);
-          
-          imageUrl = urlData.publicUrl;
-          console.log('Image uploaded to storage successfully:', imageUrl);
-        }
-      } catch (storageError) {
-        console.warn('Storage upload failed, using base64 fallback:', storageError);
-      }
-
-      // If storage upload failed, fall back to base64
-      if (!imageUrl) {
-        console.log('Using base64 fallback for image storage...');
-        const reader = new FileReader();
-        await new Promise((resolve) => {
-          reader.onload = () => {
-            base64String = reader.result as string;
-            resolve(true);
-          };
-          reader.readAsDataURL(examRoutineFile);
-        });
-      }
-
-      // Create notice content based on available storage method
-      const imageContent = imageUrl 
-        ? `[EXAM_ROUTINE_URL]${imageUrl}[/EXAM_ROUTINE_URL]`
-        : `[EXAM_ROUTINE_IMAGE]${base64String}[/EXAM_ROUTINE_IMAGE]`;
-
-      // Update the global exam routine notice
-      const routineNotice: Notice = {
-        id: 'exam-routine-notice', // Use fixed ID for global system
-        title: '📅 Midterm Exam Routine - Section 5',
-        content: `Midterm examinations for Section 5 (Computer Science & Engineering) will commence from Sunday, September 14, 2025.
-
-📋 **Important Instructions:**
-• Please check your exam schedule carefully
-• Arrive at the exam hall 15 minutes early
-• Bring your student ID card and necessary stationery
-• Mobile phones are strictly prohibited in exam halls
-• Follow all university exam regulations
-
-For any queries regarding the exam schedule, contact your course instructors or the department.
-
-**Best of luck with your midterm exams!**
-
-${imageContent}`,
-        type: 'warning',
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-
-      // Update the specific global notice slot
-      const updatedNotices = [...notices];
-      const routineIndex = updatedNotices.findIndex(n => n.id === 'exam-routine-notice');
-      
-      if (routineIndex >= 0) {
-        updatedNotices[routineIndex] = routineNotice;
-      } else {
-        // If somehow missing, ensure we maintain only 2 notices
-        if (updatedNotices.length >= 2) {
-          updatedNotices[1] = routineNotice; // Replace second slot
-        } else {
-          updatedNotices.push(routineNotice);
-        }
-      }
-
-      setNotices(updatedNotices);
-      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-      console.log('Global exam routine notice updated locally');
-
-      // Try to save to database with upsert
-      try {
-        console.log('Saving global exam routine to database...');
-        
-        const { error } = await supabase
-          .from('notices')
-          .upsert([routineNotice], { onConflict: 'id' });
-        
-        if (error) {
-          console.error('Database error saving exam routine:', error);
-          alert('Exam routine uploaded but may not sync to all devices. Error: ' + error.message);
-        } else {
-          console.log('Global exam routine saved to database successfully');
-          alert('✅ Exam routine uploaded successfully and synced to all devices!\n\nAll users will now see the updated routine.');
-        }
-      } catch (dbError) {
-        console.error('Exception while saving exam routine to database:', dbError);
-        alert('Exam routine uploaded locally but database sync failed. It may not be visible on other devices.');
-      }
-
-      // Reset form
-      setExamRoutineFile(null);
-      setShowExamRoutineUpload(false);
-
-    } catch (error) {
-      console.error('Error uploading exam routine:', error);
-      alert('Error uploading exam routine. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Handle Facebook link - open in app on mobile, new tab on PC
   const handleFacebookClick = (e: React.MouseEvent) => {
@@ -960,6 +829,10 @@ ${imageContent}`,
         title: noticeTitle,
         content: newNotice.content,
         type: newNotice.type,
+        category: newNotice.category,
+        priority: newNotice.priority,
+        exam_type: newNotice.exam_type,
+        event_date: newNotice.event_date,
         created_at: new Date().toISOString(),
         is_active: newNotice.is_active
       };
@@ -999,7 +872,16 @@ ${imageContent}`,
       }
       
       // Reset form
-      setNewNotice({ title: '', content: '', type: 'info', is_active: true });
+      setNewNotice({ 
+        title: '', 
+        content: '', 
+        type: 'info', 
+        category: 'announcement',
+        priority: 'normal',
+        exam_type: null,
+        event_date: '',
+        is_active: true 
+      });
       setShowCreateNotice(false);
       
       alert(`Global ${noticeId === 'welcome-notice' ? 'Welcome' : 'Exam Routine'} notice updated successfully!`);
@@ -1201,8 +1083,8 @@ For any queries, contact your course instructors or the department.`,
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Header with Perfect Mobile Scaling */}
       <header className="fixed top-0 left-0 right-0 bg-blue-900 text-white shadow-lg z-40">
-        <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-18 lg:h-20 xl:h-22">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
             <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
               <button
                 onClick={() => setCurrentView('home')}
@@ -1212,14 +1094,14 @@ For any queries, contact your course instructors or the department.`,
                 <img 
                   src="/Edu_51_Logo.png" 
                   alt="Edu51Five Logo" 
-                  className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-16 xl:w-16 object-contain no-select" 
+                  className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-18 xl:w-18 object-contain no-select" 
                 />
                 <div className="hidden sm:block">
-                  <h1 className="text-sm md:text-lg font-bold no-select">Edu51Five</h1>
+                  <h1 className="text-base md:text-xl font-bold no-select">Edu51Five</h1>
                   <p className="text-xs text-blue-200 no-select">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-xs font-bold no-select">Edu51Five</h1>
+                  <h1 className="text-sm font-bold no-select">Edu51Five</h1>
                 </div>
               </button>
             </div>
@@ -1292,14 +1174,14 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* Mobile Semester Info - Simplified Essential Info Only */}
-            <div className="lg:hidden flex items-center justify-between w-full max-w-sm glass-card rounded-lg px-3 py-2 transition-all duration-200 shadow-sm">
-              {/* Left: Date Only */}
-              <div className="flex items-center space-x-2 min-w-0">
-                <div className="p-1 bg-blue-600 bg-opacity-30 rounded transition-all duration-300 flex-shrink-0">
-                  <Calendar className="h-3 w-3 text-blue-200 transition-colors duration-300" />
+            {/* Mobile Semester Info - Ultra Compact Redesigned */}
+            <div className="lg:hidden flex items-center space-x-1 glass-card rounded-md px-2 py-1 transition-all duration-200 shadow-sm">
+              {/* Left: Date */}
+              <div className="flex items-center space-x-1 min-w-0">
+                <div className="p-0.5 bg-blue-600 bg-opacity-30 rounded transition-all duration-300 flex-shrink-0">
+                  <Calendar className="h-2.5 w-2.5 text-blue-200 transition-colors duration-300" />
                 </div>
-                <div className="text-sm text-white no-select font-medium transition-colors duration-300">
+                <div className="text-xs text-white no-select font-medium transition-colors duration-300">
                   {currentTime.toLocaleDateString('en-BD', {
                     timeZone: 'Asia/Dhaka',
                     month: 'short',
@@ -1308,24 +1190,23 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
               
-              {/* Center: Progress Bar with Week */}
-              <div className="flex flex-col items-center justify-center flex-shrink-0 px-2">
-                <div className="w-16 bg-blue-800 bg-opacity-50 rounded-full h-2 overflow-hidden shadow-inner mb-1">
+              {/* Center: Phase above Progress Bar with Week */}
+              <div className="flex flex-col items-center justify-center flex-shrink-0">
+                {/* Phase text above */}
+                <div className="text-xs text-orange-200 no-select font-bold transition-colors duration-300 mb-0.5">
+                  {semesterStatus.currentPhase === 'Mid-term Examinations' ? 'Mid-term' : semesterStatus.currentPhase.split(' ')[0]}
+                </div>
+                {/* Progress bar */}
+                <div className="w-10 bg-blue-800 bg-opacity-50 rounded-full h-1 overflow-hidden shadow-inner mb-0.5">
                   <div 
                     className="h-full semester-progress-bar transition-all duration-500 progress-glow"
                     style={{ width: `${semesterStatus.progressPercentage}%` }}
                   ></div>
                 </div>
+                {/* Week below */}
                 <span className="text-xs text-blue-200 no-select font-bold transition-colors duration-300">
                   W{semesterStatus.semesterWeek}
                 </span>
-              </div>
-
-              {/* Right: Current Phase Only */}
-              <div className="flex items-center min-w-0">
-                <div className="text-sm text-orange-200 no-select font-bold transition-colors duration-300 truncate">
-                  {semesterStatus.currentPhase === 'Mid-term Examinations' ? 'Mid-term' : semesterStatus.currentPhase.split(' ')[0]}
-                </div>
               </div>
             </div>
             
@@ -1430,31 +1311,87 @@ For any queries, contact your course instructors or the department.`,
                   }}
                 >
                   <div className="flex items-start space-x-2 md:space-x-3">
-                    <div className={`p-1 md:p-1.5 rounded-full flex-shrink-0 ${
+                    {/* Category & Priority Icon */}
+                    <div className={`p-1 md:p-1.5 rounded-full flex-shrink-0 relative ${
                       notice.type === 'info' ? 'bg-blue-100' :
                       notice.type === 'warning' ? 'bg-yellow-100' :
                       notice.type === 'success' ? 'bg-green-100' :
                       'bg-red-100'
                     }`}>
-                      <Bell className={`h-3 w-3 md:h-4 md:w-4 ${
-                        notice.type === 'info' ? 'text-blue-600' :
-                        notice.type === 'warning' ? 'text-yellow-600' :
-                        notice.type === 'success' ? 'text-green-600' :
-                        'text-red-600'
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-medium text-gray-900 line-clamp-2">
-                        {notice.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(notice.created_at).toLocaleDateString()}
-                      </p>
-                      {!unreadNotices.includes(notice.id) && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1">
-                          New
-                        </span>
+                      {/* Category-based icons */}
+                      {notice.category === 'exam' ? (
+                        <span className="text-sm">📚</span>
+                      ) : notice.category === 'event' ? (
+                        <span className="text-sm">🎉</span>
+                      ) : notice.category === 'academic' ? (
+                        <span className="text-sm">🎓</span>
+                      ) : notice.category === 'information' ? (
+                        <span className="text-sm">ℹ️</span>
+                      ) : notice.category === 'random' ? (
+                        <span className="text-sm">🎲</span>
+                      ) : (
+                        <Bell className={`h-3 w-3 md:h-4 md:w-4 ${
+                          notice.type === 'info' ? 'text-blue-600' :
+                          notice.type === 'warning' ? 'text-yellow-600' :
+                          notice.type === 'success' ? 'text-green-600' :
+                          'text-red-600'
+                        }`} />
                       )}
+                      
+                      {/* Priority indicator */}
+                      {notice.priority === 'urgent' && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                      )}
+                      {notice.priority === 'high' && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Title with category badge */}
+                      <div className="flex items-center space-x-2 mb-1">
+                        <p className="text-xs md:text-sm font-medium text-gray-900 line-clamp-2 flex-1">
+                          {notice.title}
+                        </p>
+                        {notice.category === 'exam' && notice.exam_type && (
+                          <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                            {notice.exam_type === 'midterm' ? '📝 Mid' : '🎯 Final'}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Date and badges */}
+                      <div className="flex items-center space-x-2 mt-1">
+                        <p className="text-xs text-gray-500">
+                          {new Date(notice.created_at).toLocaleDateString()}
+                        </p>
+                        
+                        {/* Priority badge */}
+                        {notice.priority === 'urgent' && (
+                          <span className="text-[9px] bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium animate-pulse">
+                            🔴 URGENT
+                          </span>
+                        )}
+                        {notice.priority === 'high' && (
+                          <span className="text-[9px] bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded-full font-medium">
+                            🟡 HIGH
+                          </span>
+                        )}
+                        
+                        {/* Event date */}
+                        {notice.category === 'event' && notice.event_date && (
+                          <span className="text-[9px] bg-purple-100 text-purple-800 px-1 py-0.5 rounded-full">
+                            📅 {new Date(notice.event_date).toLocaleDateString('en-BD', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                        
+                        {/* New indicator */}
+                        {!unreadNotices.includes(notice.id) && (
+                          <span className="text-[9px] bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium">
+                            NEW
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1466,7 +1403,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Hidden when semester tracker is active */}
       {currentView !== 'semester' && (
-        <main className="pt-14 sm:pt-16 md:pt-18 lg:pt-20 xl:pt-22 min-h-screen">
+        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Home Page */}
         {currentView === 'home' && (
@@ -1926,11 +1863,11 @@ For any queries, contact your course instructors or the department.`,
                       <span className="font-medium">Upload Material</span>
                     </button>
                     <button
-                      onClick={() => setShowExamRoutineUpload(true)}
-                      className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-700 text-white rounded-xl hover:from-orange-700 hover:to-red-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      onClick={() => setShowCreateNotice(true)}
+                      className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-700 text-white rounded-xl hover:from-purple-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
-                      <Calendar className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="font-medium">Upload Exam Routine</span>
+                      <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium">Create Smart Notice</span>
                     </button>
                   </div>
                 </div>
@@ -2166,79 +2103,6 @@ For any queries, contact your course instructors or the department.`,
                 )}
               </div>
             </div>
-
-            {/* Notices Management Section */}
-            <div id="notices-section" className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">📢 Global Notice System (2 Notices)</h3>
-                <button
-                  onClick={() => setShowCreateNotice(true)}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Update Global Notice
-                </button>
-              </div>
-              <div className="space-y-4">
-                {notices.map((notice) => (
-                  <div key={notice.id} className={`p-4 border rounded-lg break-words ${notice.is_active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 pr-4 overflow-hidden">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-medium text-gray-900">{notice.title}</h4>
-                          {(notice.title.includes('Exam Routine') || notice.title.includes('exam routine') || notice.content.includes('EXAM_ROUTINE')) && (
-                            <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 font-medium">
-                              📅 EXAM ROUTINE
-                            </span>
-                          )}
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            notice.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                            notice.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                            notice.type === 'success' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {notice.type}
-                          </span>
-                          <span className={`px-2 py-1 text-xs rounded-full ${notice.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {notice.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        {/* Truncate long content to prevent overflow */}
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-3">
-                          {notice.content.length > 200 
-                            ? notice.content.substring(0, 200) + '...' 
-                            : notice.content}
-                        </p>
-                        <p className="text-xs text-gray-400">{new Date(notice.created_at).toLocaleDateString()}</p>
-                      </div>
-                      {/* Conditional Delete Button - Special handling for exam routines */}
-                      {(notice.title.includes('Exam Routine') || notice.title.includes('exam routine') || notice.content.includes('EXAM_ROUTINE')) ? (
-                        <div className="ml-4 flex flex-col space-y-2">
-                          <button
-                            onClick={() => handleDeleteExamRoutine(notice.id)}
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete Routine
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleDeleteNotice(notice.id)}
-                          className="ml-4 inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {notices.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No notices found</p>
-                )}
-              </div>
-            </div>
             </div>
           </div>
         )}
@@ -2375,154 +2239,250 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* Update Global Notice Modal */}
+        {/* Enhanced Categorized Notice Creation Modal */}
         {showCreateNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Update Global Notice</h2>
+            <div className="bg-white p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">📢 Create Smart Notice</h2>
+                  <p className="text-sm text-gray-600">Choose a category and let the system help you create targeted notices</p>
+                </div>
                 <button
                   onClick={() => {
                     setShowCreateNotice(false);
-                    setNewNotice({ title: '', content: '', type: 'info', is_active: true });
+                    setNewNotice({ 
+                      title: '', 
+                      content: '', 
+                      type: 'info', 
+                      category: 'announcement',
+                      priority: 'normal',
+                      exam_type: null,
+                      event_date: '',
+                      is_active: true 
+                    });
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <X className="h-6 w-6" />
                 </button>
               </div>
               
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Global Notice System:</strong> All users see exactly 2 notices - Welcome and Exam Routine. 
-                  Your content will update the appropriate global slot based on keywords in the title.
-                </p>
+              {/* Category Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Notice Category</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { value: 'announcement', icon: '📢', label: 'General', desc: 'Regular announcements' },
+                    { value: 'exam', icon: '📚', label: 'Exam', desc: 'Exam schedules & updates' },
+                    { value: 'event', icon: '🎉', label: 'Event', desc: 'Events & activities' },
+                    { value: 'information', icon: 'ℹ️', label: 'Information', desc: 'Important information' },
+                    { value: 'academic', icon: '🎓', label: 'Academic', desc: 'Academic calendar' },
+                    { value: 'random', icon: '🎲', label: 'Other', desc: 'Miscellaneous' }
+                  ].map((category) => (
+                    <button
+                      key={category.value}
+                      onClick={() => setNewNotice({ ...newNotice, category: category.value as any })}
+                      className={`p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                        newNotice.category === category.value
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-lg">{category.icon}</span>
+                        <span className="font-semibold text-gray-900">{category.label}</span>
+                      </div>
+                      <p className="text-xs text-gray-600">{category.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={newNotice.title}
-                    onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Notice title..."
-                  />
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  {/* Title with smart suggestions */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Title
+                      {newNotice.category === 'exam' && (
+                        <span className="text-xs text-blue-600 ml-2">(Exam notices get priority display)</span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={newNotice.title}
+                      onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={
+                        newNotice.category === 'exam' ? 'Mid-term Exam Schedule Update' :
+                        newNotice.category === 'event' ? 'Upcoming Cultural Event' :
+                        newNotice.category === 'academic' ? 'Academic Calendar Update' :
+                        newNotice.category === 'information' ? 'Important Class Information' :
+                        'Enter notice title...'
+                      }
+                    />
+                  </div>
+
+                  {/* Priority Level */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'low', icon: '🟢', label: 'Low', color: 'text-green-600' },
+                        { value: 'normal', icon: '🔵', label: 'Normal', color: 'text-blue-600' },
+                        { value: 'high', icon: '🟡', label: 'High', color: 'text-yellow-600' },
+                        { value: 'urgent', icon: '🔴', label: 'Urgent', color: 'text-red-600' }
+                      ].map((priority) => (
+                        <button
+                          key={priority.value}
+                          onClick={() => setNewNotice({ ...newNotice, priority: priority.value as any })}
+                          className={`p-2 rounded-lg border text-sm transition-all ${
+                            newNotice.priority === priority.value
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className="mr-1">{priority.icon}</span>
+                          <span className={priority.color}>{priority.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Notice Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Visual Style</label>
+                    <select
+                      value={newNotice.type}
+                      onChange={(e) => setNewNotice({ ...newNotice, type: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="info">🔵 Info (Blue)</option>
+                      <option value="success">🟢 Success (Green)</option>
+                      <option value="warning">🟡 Warning (Yellow)</option>
+                      <option value="error">🔴 Error (Red)</option>
+                    </select>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                  <textarea
-                    value={newNotice.content}
-                    onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={4}
-                    placeholder="Notice content..."
-                  />
+
+                <div className="space-y-4">
+                  {/* Exam-specific fields */}
+                  {newNotice.category === 'exam' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Exam Type</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { value: 'midterm', label: 'Mid-term', icon: '📝' },
+                          { value: 'final', label: 'Final', icon: '🎯' }
+                        ].map((examType) => (
+                          <button
+                            key={examType.value}
+                            onClick={() => setNewNotice({ ...newNotice, exam_type: examType.value as any })}
+                            className={`p-2 rounded-lg border text-sm transition-all ${
+                              newNotice.exam_type === examType.value
+                                ? 'border-orange-500 bg-orange-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <span className="mr-1">{examType.icon}</span>
+                            {examType.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Event-specific fields */}
+                  {newNotice.category === 'event' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Event Date</label>
+                      <input
+                        type="date"
+                        value={newNotice.event_date || ''}
+                        onChange={(e) => setNewNotice({ ...newNotice, event_date: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Active toggle */}
+                  <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="is_active"
+                      checked={newNotice.is_active}
+                      onChange={(e) => setNewNotice({ ...newNotice, is_active: e.target.checked })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                      📢 Publish immediately (visible to all students)
+                    </label>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    value={newNotice.type}
-                    onChange={(e) => setNewNotice({ ...newNotice, type: e.target.value as Notice['type'] })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="info">Info</option>
-                    <option value="warning">Warning</option>
-                    <option value="error">Error</option>
-                    <option value="success">Success</option>
-                  </select>
+              </div>
+
+              {/* Content */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notice Content</label>
+                <textarea
+                  value={newNotice.content}
+                  onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
+                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={4}
+                  placeholder={
+                    newNotice.category === 'exam' ? 
+                    'Mid-term examinations will be held from September 14-24, 2025. Please check your individual exam schedules and prepare accordingly. Good luck!' :
+                    newNotice.category === 'event' ?
+                    'Join us for an exciting event! More details will be shared soon.' :
+                    'Enter the detailed content of your notice here...'
+                  }
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-gray-500">
+                    {newNotice.content.length} characters
+                  </span>
+                  {newNotice.category === 'exam' && newNotice.exam_type && (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                      🎯 {newNotice.exam_type === 'midterm' ? 'Mid-term' : 'Final'} Exam Notice
+                    </span>
+                  )}
                 </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={newNotice.is_active}
-                    onChange={(e) => setNewNotice({ ...newNotice, is_active: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                    Active (show to students)
-                  </label>
-                </div>
-                
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => {
-                      setShowCreateNotice(false);
-                      setNewNotice({ title: '', content: '', type: 'info', is_active: true });
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateNotice}
-                    disabled={!newNotice.title || !newNotice.content}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Update Global Notice
-                  </button>
-                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex space-x-3 pt-6 border-t">
+                <button
+                  onClick={() => {
+                    setShowCreateNotice(false);
+                    setNewNotice({ 
+                      title: '', 
+                      content: '', 
+                      type: 'info', 
+                      category: 'announcement',
+                      priority: 'normal',
+                      exam_type: null,
+                      event_date: '',
+                      is_active: true 
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateNotice}
+                  disabled={!newNotice.title || !newNotice.content}
+                  className="flex-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+                >
+                  🚀 Create {newNotice.priority === 'urgent' ? 'Urgent' : newNotice.category === 'exam' ? 'Exam' : 'Smart'} Notice
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Exam Routine Upload Modal */}
-        {showExamRoutineUpload && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">📅 Upload Exam Routine</h2>
-                <button
-                  onClick={() => setShowExamRoutineUpload(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              
-              <form onSubmit={handleExamRoutineUpload} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Exam Routine Image (PNG only)
-                  </label>
-                  <input
-                    type="file"
-                    accept=".png"
-                    onChange={(e) => setExamRoutineFile(e.target.files?.[0] || null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Upload the midterm exam routine for Section 5 (Starting 14/09/2025)
-                  </p>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowExamRoutineUpload(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading || !examRoutineFile}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Uploading...' : 'Upload Routine'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+
 
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (

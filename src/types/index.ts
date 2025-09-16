@@ -41,6 +41,10 @@ export interface Notice {
   title: string;
   content: string;
   type: 'info' | 'warning' | 'success' | 'error';
+  category: 'random' | 'exam' | 'event' | 'information' | 'academic' | 'announcement';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  exam_type?: 'midterm' | 'final' | null;
+  event_date?: string;
   is_active: boolean;
   created_at: string;
 }

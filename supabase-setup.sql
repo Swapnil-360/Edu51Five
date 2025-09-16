@@ -1,12 +1,16 @@
 -- Supabase Database Setup for Edu51Five
 -- Run these SQL commands in your Supabase SQL Editor
 
--- 1. Create notices table (MISSING - this is why exam routines don't sync!)
+-- 1. Create enhanced notices table with categories
 CREATE TABLE IF NOT EXISTS notices (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    type TEXT NOT NULL DEFAULT 'info',
+    type TEXT CHECK (type IN ('info', 'warning', 'success', 'error')) NOT NULL DEFAULT 'info',
+    category TEXT CHECK (category IN ('random', 'exam', 'event', 'information', 'academic', 'announcement')) DEFAULT 'announcement',
+    priority TEXT CHECK (priority IN ('low', 'normal', 'high', 'urgent')) DEFAULT 'normal',
+    exam_type TEXT CHECK (exam_type IN ('midterm', 'final')) DEFAULT NULL,
+    event_date DATE DEFAULT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
