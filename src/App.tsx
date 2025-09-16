@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { Notice } from './types';
 import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFiles } from './config/googleDrive';
+import { getCurrentSemesterStatus } from './config/semester';
+import SemesterTracker from './components/SemesterTracker';
 import { 
   FileText, 
   Play, 
@@ -18,7 +20,8 @@ import {
   BookOpen,
   Calendar,
   ExternalLink,
-  ImageIcon
+  ImageIcon,
+  Clock
 } from 'lucide-react';
 
 interface Course {
@@ -44,19 +47,21 @@ interface Material {
 function App() {
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
-  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home'>(() => {
+  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester'>(() => {
     const path = window.location.pathname;
     if (path === '/admin') return 'admin';
     if (path === '/section5') return 'section5';
+    if (path === '/semester') return 'semester';
     if (path.startsWith('/course/')) return 'course';
     return 'home';
   });
 
   // Helper to change view and update browser history
-  const goToView = (view: 'admin' | 'section5' | 'course' | 'home', extra?: string | null) => {
+  const goToView = (view: 'admin' | 'section5' | 'course' | 'home' | 'semester', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
     else if (view === 'section5') path = '/section5';
+    else if (view === 'semester') path = '/semester';
     else if (view === 'course' && extra) path = `/course/${extra}`;
     window.history.pushState({}, '', path);
     setCurrentView(view);
@@ -68,6 +73,7 @@ function App() {
       const path = window.location.pathname;
       if (path === '/admin') setCurrentView('admin');
       else if (path === '/section5') setCurrentView('section5');
+      else if (path === '/semester') setCurrentView('semester');
       else if (path.startsWith('/course/')) setCurrentView('course');
       else setCurrentView('home');
     };
@@ -106,6 +112,10 @@ function App() {
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
+  
+  // Real-time semester tracking states
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
   
   const [newCourse, setNewCourse] = useState({
     name: '',
@@ -156,6 +166,16 @@ function App() {
       console.log('Auto-refreshing notices...');
       loadNotices();
     }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Real-time semester tracking - update every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+      setSemesterStatus(getCurrentSemesterStatus());
+    }, 1000); // Update every second for live clock
 
     return () => clearInterval(interval);
   }, []);
@@ -1185,8 +1205,127 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </button>
             </div>
+
+            {/* Real-time Semester Dashboard */}
+            <button 
+              onClick={() => goToView('semester')}
+              className="hidden lg:flex items-center space-x-4 glass-card px-6 py-3 hover:bg-blue-600 hover:bg-opacity-20 transition-all duration-300 cursor-pointer group hover-lift shadow-lg"
+            >
+              {/* Live Clock with Animation */}
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-600 bg-opacity-30 rounded-lg group-hover:bg-opacity-50 transition-all duration-300">
+                  <Clock className="h-4 w-4 text-blue-200 semester-clock-pulse group-hover:text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="responsive-text-sm font-bold text-white group-hover:text-blue-100 no-select transition-colors duration-300">
+                    {currentTime.toLocaleDateString('en-BD', {
+                      timeZone: 'Asia/Dhaka',
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </div>
+                  <div className="responsive-text-xs text-blue-200 no-select font-medium">
+                    {currentTime.toLocaleTimeString('en-BD', {
+                      timeZone: 'Asia/Dhaka',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                      hour12: true
+                    })} BST
+                  </div>
+                </div>
+              </div>
+
+              {/* Semester Progress with Modern Design */}
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="responsive-text-sm font-bold text-white group-hover:text-blue-100 no-select transition-colors duration-300">
+                    {semesterStatus.semesterName} - Week {semesterStatus.semesterWeek}
+                  </div>
+                  <div className="responsive-text-xs text-blue-200 no-select font-medium">
+                    {semesterStatus.currentPhase}
+                  </div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-20 bg-blue-800 bg-opacity-50 rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div 
+                      className="h-full semester-progress-bar transition-all duration-500 progress-glow"
+                      style={{ width: `${semesterStatus.progressPercentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="responsive-text-xs text-blue-200 mt-1.5 no-select font-bold group-hover:text-white transition-colors duration-300">
+                    {semesterStatus.progressPercentage}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Next Milestone with Enhanced Style */}
+              <div className="text-right">
+                <div className={`responsive-text-sm font-bold no-select milestone-indicator transition-colors duration-300 ${
+                  semesterStatus.daysToMilestone <= 7 ? 'urgent text-orange-200' : 'text-white group-hover:text-blue-100'
+                }`}>
+                  {semesterStatus.nextMilestone}
+                </div>
+                <div className="responsive-text-xs text-blue-200 no-select font-medium">
+                  {semesterStatus.daysToMilestone > 0 
+                    ? `${semesterStatus.daysToMilestone} days left`
+                    : 'Active now'
+                  }
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="flex items-center space-x-1 text-blue-300 group-hover:text-white transition-colors duration-300">
+                <span className="responsive-text-xs font-medium">Click for details</span>
+                <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Mobile Semester Info - Enhanced Design */}
+            <button 
+              onClick={() => goToView('semester')}
+              className="lg:hidden flex items-center space-x-3 glass-card hover:bg-blue-600 hover:bg-opacity-20 rounded-lg px-3 py-2 transition-all duration-200 group shadow-md"
+            >
+              <div className="p-1 bg-blue-600 bg-opacity-30 rounded group-hover:bg-opacity-50 transition-all duration-300">
+                <Clock className="h-3 w-3 text-blue-200 group-hover:text-white transition-colors duration-300" />
+              </div>
+              <div className="flex flex-col">
+                <div className="text-xs text-blue-200 no-select font-medium group-hover:text-white transition-colors duration-300">
+                  {currentTime.toLocaleDateString('en-BD', {
+                    timeZone: 'Asia/Dhaka',
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                  })} • {currentTime.toLocaleTimeString('en-BD', {
+                    timeZone: 'Asia/Dhaka',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </div>
+                <div className="text-xs text-blue-300 no-select font-medium group-hover:text-blue-100 transition-colors duration-300">
+                  Week {semesterStatus.semesterWeek} • {semesterStatus.daysToMilestone}d to {semesterStatus.nextMilestone.split(' ')[0]}
+                </div>
+              </div>
+              <svg className="w-2.5 h-2.5 text-blue-300 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
             
             <div className="flex items-center space-x-3 md:space-x-5">
+              {/* Semester Tracker Button */}
+              <button
+                onClick={() => goToView('semester')}
+                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors shadow-lg group"
+                title="Semester Tracker"
+              >
+                <Calendar className="h-5 w-5 md:h-6 md:w-6 text-white group-hover:scale-110 transition-transform" />
+              </button>
+
               {/* Notice Bell Icon */}
               <div className="relative">
                 <button
@@ -1303,9 +1442,10 @@ For any queries, contact your course instructors or the department.`,
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="pt-16 md:pt-20 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      {/* Main Content - Hidden when semester tracker is active */}
+      {currentView !== 'semester' && (
+        <main className="pt-16 md:pt-20 min-h-screen">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Home Page */}
         {currentView === 'home' && (
           <div className="space-y-6 md:space-y-8">
@@ -2530,6 +2670,14 @@ For any queries, contact your course instructors or the department.`,
         )}
         </div>
       </main>
+      )}
+
+      {/* Semester Tracker Page */}
+      {currentView === 'semester' && (
+        <div className="fixed inset-0 z-50">
+          <SemesterTracker onClose={() => goToView('home')} />
+        </div>
+      )}
     </div>
   );
 }

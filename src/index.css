@@ -303,4 +303,84 @@
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
+
+/* Semester Dashboard Animations */
+@keyframes shimmer {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; transform: scaleX(1.02); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+  @keyframes urgent-blink {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.7; }
+  }
+
+  /* Additional Semester Tracker Styles */
+  .semester-gradient {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af, #3b82f6);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+  }
+
+  .progress-glow {
+    animation: progress-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes progress-glow {
+    0%, 100% { 
+      box-shadow: 0 0 5px rgba(96, 165, 250, 0.3);
+    }
+    50% { 
+      box-shadow: 0 0 20px rgba(96, 165, 250, 0.6);
+    }
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }.semester-progress-bar {
+  background: linear-gradient(to right, #60a5fa, #93c5fd, #ffffff);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.semester-clock-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.milestone-indicator.urgent {
+  color: #fed7aa;
+  animation: urgent-blink 2s ease-in-out infinite;
+}
+
+.semester-dashboard {
+  background: linear-gradient(to right, rgb(30 58 138 / 0.8), rgb(30 64 175 / 0.8));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgb(59 130 246 / 0.3);
+  transition: all 0.3s ease;
+}
+
+.semester-dashboard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  border-color: rgb(59 130 246 / 0.6);
+}
 }
