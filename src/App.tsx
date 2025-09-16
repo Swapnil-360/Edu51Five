@@ -5,6 +5,7 @@ import { Notice } from './types';
 import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFiles } from './config/googleDrive';
 import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
+import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
 import { 
   FileText, 
   Play, 
@@ -47,21 +48,23 @@ interface Material {
 function App() {
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
-  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester'>(() => {
+  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester' | 'examMaterials'>(() => {
     const path = window.location.pathname;
     if (path === '/admin') return 'admin';
     if (path === '/section5') return 'section5';
     if (path === '/semester') return 'semester';
+    if (path === '/exam-materials') return 'examMaterials';
     if (path.startsWith('/course/')) return 'course';
     return 'home';
   });
 
   // Helper to change view and update browser history
-  const goToView = (view: 'admin' | 'section5' | 'course' | 'home' | 'semester', extra?: string | null) => {
+  const goToView = (view: 'admin' | 'section5' | 'course' | 'home' | 'semester' | 'examMaterials', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
     else if (view === 'section5') path = '/section5';
     else if (view === 'semester') path = '/semester';
+    else if (view === 'examMaterials') path = '/exam-materials';
     else if (view === 'course' && extra) path = `/course/${extra}`;
     window.history.pushState({}, '', path);
     setCurrentView(view);
@@ -74,6 +77,7 @@ function App() {
       if (path === '/admin') setCurrentView('admin');
       else if (path === '/section5') setCurrentView('section5');
       else if (path === '/semester') setCurrentView('semester');
+      else if (path === '/exam-materials') setCurrentView('examMaterials');
       else if (path.startsWith('/course/')) setCurrentView('course');
       else setCurrentView('home');
     };
@@ -99,6 +103,8 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
   const [showUploadFile, setShowUploadFile] = useState(false);
   const [showCreateNotice, setShowCreateNotice] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
@@ -112,10 +118,6 @@ function App() {
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
-  
-  // Real-time semester tracking states
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
   
   const [newCourse, setNewCourse] = useState({
     name: '',
@@ -156,6 +158,22 @@ function App() {
       loadTotalMaterialsCount();
     }
   }, [currentView, isAdmin]);
+
+  // Real-time clock and semester status updates
+  useEffect(() => {
+    const updateTimeAndStatus = () => {
+      setCurrentTime(new Date());
+      setSemesterStatus(getCurrentSemesterStatus());
+    };
+
+    // Update immediately
+    updateTimeAndStatus();
+    
+    // Update every second for real-time display
+    const interval = setInterval(updateTimeAndStatus, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // No longer auto-create welcome notice - Admin must manually create notices
   // useEffect removed to prevent automatic welcome notice spam
@@ -1206,18 +1224,15 @@ For any queries, contact your course instructors or the department.`,
               </button>
             </div>
 
-            {/* Real-time Semester Dashboard */}
-            <button 
-              onClick={() => goToView('semester')}
-              className="hidden lg:flex items-center space-x-4 glass-card px-6 py-3 hover:bg-blue-600 hover:bg-opacity-20 transition-all duration-300 cursor-pointer group hover-lift shadow-lg"
-            >
+            {/* Real-time Semester Dashboard - Beautiful Display (Non-clickable) */}
+            <div className="hidden lg:flex items-center space-x-4 glass-card px-6 py-3 transition-all duration-300 shadow-lg">
               {/* Live Clock with Animation */}
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-600 bg-opacity-30 rounded-lg group-hover:bg-opacity-50 transition-all duration-300">
-                  <Clock className="h-4 w-4 text-blue-200 semester-clock-pulse group-hover:text-white" />
+                <div className="p-2 bg-blue-600 bg-opacity-30 rounded-lg transition-all duration-300">
+                  <Clock className="h-4 w-4 text-blue-200 semester-clock-pulse" />
                 </div>
                 <div className="text-right">
-                  <div className="responsive-text-sm font-bold text-white group-hover:text-blue-100 no-select transition-colors duration-300">
+                  <div className="responsive-text-sm font-bold text-white no-select transition-colors duration-300">
                     {currentTime.toLocaleDateString('en-BD', {
                       timeZone: 'Asia/Dhaka',
                       weekday: 'short',
@@ -1241,7 +1256,7 @@ For any queries, contact your course instructors or the department.`,
               {/* Semester Progress with Modern Design */}
               <div className="flex items-center space-x-4">
                 <div className="text-right">
-                  <div className="responsive-text-sm font-bold text-white group-hover:text-blue-100 no-select transition-colors duration-300">
+                  <div className="responsive-text-sm font-bold text-white no-select transition-colors duration-300">
                     {semesterStatus.semesterName} - Week {semesterStatus.semesterWeek}
                   </div>
                   <div className="responsive-text-xs text-blue-200 no-select font-medium">
@@ -1255,7 +1270,7 @@ For any queries, contact your course instructors or the department.`,
                       style={{ width: `${semesterStatus.progressPercentage}%` }}
                     ></div>
                   </div>
-                  <span className="responsive-text-xs text-blue-200 mt-1.5 no-select font-bold group-hover:text-white transition-colors duration-300">
+                  <span className="responsive-text-xs text-blue-200 mt-1.5 no-select font-bold transition-colors duration-300">
                     {semesterStatus.progressPercentage}%
                   </span>
                 </div>
@@ -1264,7 +1279,7 @@ For any queries, contact your course instructors or the department.`,
               {/* Next Milestone with Enhanced Style */}
               <div className="text-right">
                 <div className={`responsive-text-sm font-bold no-select milestone-indicator transition-colors duration-300 ${
-                  semesterStatus.daysToMilestone <= 7 ? 'urgent text-orange-200' : 'text-white group-hover:text-blue-100'
+                  semesterStatus.daysToMilestone <= 7 ? 'urgent text-orange-200' : 'text-white'
                 }`}>
                   {semesterStatus.nextMilestone}
                 </div>
@@ -1275,26 +1290,15 @@ For any queries, contact your course instructors or the department.`,
                   }
                 </div>
               </div>
+            </div>
 
-              {/* Click Indicator */}
-              <div className="flex items-center space-x-1 text-blue-300 group-hover:text-white transition-colors duration-300">
-                <span className="responsive-text-xs font-medium">Click for details</span>
-                <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-
-            {/* Mobile Semester Info - Enhanced Design */}
-            <button 
-              onClick={() => goToView('semester')}
-              className="lg:hidden flex items-center space-x-3 glass-card hover:bg-blue-600 hover:bg-opacity-20 rounded-lg px-3 py-2 transition-all duration-200 group shadow-md"
-            >
-              <div className="p-1 bg-blue-600 bg-opacity-30 rounded group-hover:bg-opacity-50 transition-all duration-300">
-                <Clock className="h-3 w-3 text-blue-200 group-hover:text-white transition-colors duration-300" />
+            {/* Mobile Semester Info - Non-clickable Display */}
+            <div className="lg:hidden flex items-center space-x-3 glass-card rounded-lg px-3 py-2 transition-all duration-200 shadow-md">
+              <div className="p-1 bg-blue-600 bg-opacity-30 rounded transition-all duration-300">
+                <Clock className="h-3 w-3 text-blue-200 transition-colors duration-300" />
               </div>
               <div className="flex flex-col">
-                <div className="text-xs text-blue-200 no-select font-medium group-hover:text-white transition-colors duration-300">
+                <div className="text-xs text-blue-200 no-select font-medium transition-colors duration-300">
                   {currentTime.toLocaleDateString('en-BD', {
                     timeZone: 'Asia/Dhaka',
                     weekday: 'short',
@@ -1305,18 +1309,24 @@ For any queries, contact your course instructors or the department.`,
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: true
-                  })}
+                  })} BST
                 </div>
-                <div className="text-xs text-blue-300 no-select font-medium group-hover:text-blue-100 transition-colors duration-300">
+                <div className="text-xs text-blue-300 no-select font-medium transition-colors duration-300">
                   Week {semesterStatus.semesterWeek} • {semesterStatus.daysToMilestone}d to {semesterStatus.nextMilestone.split(' ')[0]}
                 </div>
               </div>
-              <svg className="w-2.5 h-2.5 text-blue-300 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            </div>
             
             <div className="flex items-center space-x-3 md:space-x-5">
+              {/* Exam Materials Button */}
+              <button
+                onClick={() => goToView('examMaterials')}
+                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 transition-all duration-300 shadow-lg group"
+                title="Smart Exam Materials"
+              >
+                <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-white group-hover:scale-110 transition-transform" />
+              </button>
+
               {/* Semester Tracker Button */}
               <button
                 onClick={() => goToView('semester')}
@@ -2676,6 +2686,22 @@ For any queries, contact your course instructors or the department.`,
       {currentView === 'semester' && (
         <div className="fixed inset-0 z-50">
           <SemesterTracker onClose={() => goToView('home')} />
+        </div>
+      )}
+
+      {/* Exam Materials Dashboard */}
+      {currentView === 'examMaterials' && (
+        <div className="fixed inset-0 z-50">
+          <div className="relative h-full">
+            <button
+              onClick={() => goToView('home')}
+              className="fixed top-4 right-4 z-60 flex items-center justify-center w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+              title="Close"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <ExamMaterialsDashboard />
+          </div>
         </div>
       )}
     </div>
