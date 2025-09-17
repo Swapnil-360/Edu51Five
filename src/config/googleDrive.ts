@@ -230,7 +230,9 @@ export const getCourseFiles = (courseCode: string, category: string) => {
         // Files will be updated later when uploaded to Google Drive
       ],
       "notes": [
-        { id: "cse407_notes1", name: "Project Management Notes.pdf", url: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/view", embedUrl: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/preview" },
+        { id: "cse407_notes1", name: "CSE-407 by Intake-49.pdf", url: "https://drive.google.com/file/d/1kX3PLSVju_sxIOifprP-miybjVkTYE0p/view", embedUrl: "https://drive.google.com/file/d/1kX3PLSVju_sxIOifprP-miybjVkTYE0p/preview" },
+        { id: "cse407_notes2", name: "Mid Note for CSE-407.pdf", url: "https://drive.google.com/file/d/1YnT7upyRTH9UbZi_QpiAB3EcUA9Ra70s/view", embedUrl: "https://drive.google.com/file/d/1YnT7upyRTH9UbZi_QpiAB3EcUA9Ra70s/preview" },
+        { id: "cse407_notes3", name: "Chapter 1 - Introduction to Project Management.pdf", url: "https://drive.google.com/file/d/18zvvs3UCIH__-eEZoeSmcr1CtkkHEzmN/view", embedUrl: "https://drive.google.com/file/d/18zvvs3UCIH__-eEZoeSmcr1CtkkHEzmN/preview" },
         // More files available in the drive folder - will be updated when uploaded
       ],
       "slides": [

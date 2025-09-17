@@ -3093,7 +3093,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Semester Tracker Page */}
       {currentView === 'semester' && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 overflow-hidden">
           <SemesterTracker onClose={() => goToView('home')} />
         </div>
       )}

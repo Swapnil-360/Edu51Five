@@ -73,3 +73,102 @@ export const getUpcomingExam = (currentDate = new Date()) => {
   
   return null;
 };
+
+// Get the next exam with precise countdown information
+export const getNextExamCountdown = (currentDate = new Date()) => {
+  const today = currentDate.toISOString().split('T')[0];
+  
+  for (const [courseCode, exam] of Object.entries(MID_TERM_SCHEDULE)) {
+    if (exam.date >= today) {
+      // Create exam datetime (assuming 10:00 AM start time)
+      const examDateTime = new Date(`${exam.date}T10:00:00+06:00`); // Bangladesh time
+      const now = currentDate;
+      
+      const timeDiff = examDateTime.getTime() - now.getTime();
+      
+      if (timeDiff > 0) {
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+        
+        const isToday = exam.date === today;
+        const isTomorrow = days === 0 && !isToday;
+        
+        return {
+          courseCode,
+          ...exam,
+          countdown: {
+            days,
+            hours,
+            minutes,
+            seconds,
+            totalMs: timeDiff,
+            isToday,
+            isTomorrow,
+            isUrgent: days <= 1, // Within 24 hours
+            isCritical: hours <= 3 && days === 0 // Within 3 hours
+          }
+        };
+      }
+    }
+  }
+  
+  return null;
+};
+
+// Check if we're currently in exam period
+export const isExamPeriod = (currentDate = new Date()) => {
+  const examDates = Object.values(MID_TERM_SCHEDULE).map(exam => exam.date);
+  const firstExam = Math.min(...examDates.map(date => new Date(date).getTime()));
+  const lastExam = Math.max(...examDates.map(date => new Date(date).getTime()));
+  const currentTime = currentDate.getTime();
+  
+  // Exam period starts 3 days before first exam and ends on last exam day
+  const examPeriodStart = firstExam - (3 * 24 * 60 * 60 * 1000);
+  const examPeriodEnd = lastExam + (24 * 60 * 60 * 1000);
+  
+  return currentTime >= examPeriodStart && currentTime <= examPeriodEnd;
+};
+
+// Check if all mid-term exams are completed
+export const areMidTermExamsCompleted = (currentDate = new Date()) => {
+  const today = currentDate.toISOString().split('T')[0];
+  const examDates = Object.values(MID_TERM_SCHEDULE).map(exam => exam.date);
+  const lastExamDate = Math.max(...examDates.map(date => new Date(date).getTime()));
+  const lastExamString = new Date(lastExamDate).toISOString().split('T')[0];
+  
+  return today > lastExamString;
+};
+
+// Get exam status message
+export const getExamStatusMessage = (currentDate = new Date()) => {
+  const midTermCompleted = areMidTermExamsCompleted(currentDate);
+  const inExamPeriod = isExamPeriod(currentDate);
+  
+  if (midTermCompleted) {
+    return {
+      type: 'completed',
+      title: '✅ Mid-term Exams Completed',
+      message: 'All mid-term examinations have been completed successfully!',
+      subMessage: 'Final exam schedule will be shown when the updated routine is available.',
+      showPanel: true
+    };
+  } else if (inExamPeriod) {
+    return {
+      type: 'active',
+      title: '📅 Next Exam',
+      message: '',
+      subMessage: '',
+      showPanel: true
+    };
+  } else {
+    return {
+      type: 'none',
+      title: '',
+      message: '',
+      subMessage: '',
+      showPanel: false
+    };
+  }
+};

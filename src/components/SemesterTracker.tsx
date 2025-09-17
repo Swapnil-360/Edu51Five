@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp, Timer } from 'lucide-react';
 import { getCurrentSemesterStatus } from '../config/semester';
-import { MID_TERM_SCHEDULE, getTodaysExam, getUpcomingExam } from '../config/examSchedule';
+import { MID_TERM_SCHEDULE, getTodaysExam, getUpcomingExam, getNextExamCountdown } from '../config/examSchedule';
 
 interface SemesterTrackerProps {
   onClose?: () => void;
@@ -10,12 +10,14 @@ interface SemesterTrackerProps {
 const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
+  const [nextExam, setNextExam] = useState(getNextExamCountdown());
   
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
       setSemesterStatus(getCurrentSemesterStatus());
+      setNextExam(getNextExamCountdown(now));
     }, 1000);
 
     return () => clearInterval(interval);
@@ -45,9 +47,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="min-h-screen semester-gradient p-2 sm:p-4">
-      {/* Enhanced Mobile-Responsive Header */}
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen semester-gradient overflow-hidden">
+      <div className="h-full overflow-y-auto p-2 sm:p-4">
+        {/* Enhanced Mobile-Responsive Header */}
+        <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 p-2 sm:p-0">
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
             <div className="p-2 sm:p-3 glass-card rounded-lg sm:rounded-xl hover-lift flex-shrink-0">
@@ -182,15 +185,15 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Today's/Upcoming Exam Alert */}
-        {(todaysExam || upcomingExam) && (
+        {/* Today's/Upcoming Exam Alert with Countdown */}
+        {(todaysExam || upcomingExam || nextExam) && (
           <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-6 mb-8 border border-red-400 border-opacity-30 shadow-xl">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-white bg-opacity-20 rounded-lg">
-                <Target className="h-6 w-6 text-white animate-pulse" />
+                <Timer className="h-6 w-6 text-white animate-pulse" />
               </div>
               <h2 className="text-xl font-bold text-white">
-                {todaysExam ? '🔥 Today\'s Exam' : '📅 Next Exam'}
+                {todaysExam ? '� EXAM TODAY!' : nextExam?.countdown.isToday ? '🚨 EXAM TODAY!' : '📅 Next Exam'}
               </h2>
             </div>
 
@@ -210,6 +213,71 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
                     <div className="text-white font-semibold">{todaysExam.time}</div>
                     <div className="text-red-200 text-sm">Room {todaysExam.room}</div>
                   </div>
+                </div>
+              </div>
+            ) : nextExam ? (
+              <div className="space-y-4">
+                {/* Course Info */}
+                <div className="bg-white bg-opacity-10 rounded-xl p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-red-100 text-sm">Course</div>
+                      <div className="text-white text-lg font-bold">{nextExam.courseCode}</div>
+                    </div>
+                    <div>
+                      <div className="text-red-100 text-sm">Date & Teacher</div>
+                      <div className="text-white font-semibold">{nextExam.day}, {nextExam.date.split('-').reverse().join('/')}</div>
+                      <div className="text-red-200 text-sm">Teacher: {nextExam.teacher}</div>
+                    </div>
+                    <div>
+                      <div className="text-red-100 text-sm">Time & Room</div>
+                      <div className="text-white font-semibold">{nextExam.time}</div>
+                      <div className="text-red-200 text-sm">Room {nextExam.room}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="bg-white bg-opacity-10 rounded-xl p-4">
+                  <div className="text-center mb-4">
+                    <div className="text-red-100 text-sm mb-2">Time Remaining</div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">
+                        {nextExam.countdown.days}
+                      </div>
+                      <div className="text-red-200 text-xs font-semibold">Days</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">
+                        {nextExam.countdown.hours}
+                      </div>
+                      <div className="text-red-200 text-xs font-semibold">Hours</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">
+                        {nextExam.countdown.minutes}
+                      </div>
+                      <div className="text-red-200 text-xs font-semibold">Minutes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white animate-pulse">
+                        {nextExam.countdown.seconds}
+                      </div>
+                      <div className="text-red-200 text-xs font-semibold">Seconds</div>
+                    </div>
+                  </div>
+
+                  {/* Status Message */}
+                  {(nextExam.countdown.isCritical || nextExam.countdown.isUrgent) && (
+                    <div className="mt-4 text-center">
+                      <div className="inline-block px-4 py-2 rounded-lg text-sm font-semibold bg-red-500/40 text-red-100">
+                        {nextExam.countdown.isCritical && '⚡ Critical: Exam starting very soon!'}
+                        {nextExam.countdown.isUrgent && !nextExam.countdown.isCritical && '⚠️ Urgent: Exam within 24 hours!'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : upcomingExam && (
@@ -293,6 +361,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </div>
     </div>
