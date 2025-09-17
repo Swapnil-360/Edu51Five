@@ -21,29 +21,28 @@ export function Header({
   websiteName = "Edu51Five"
 }: HeaderProps) {
   return (
-    <header className="header-professional bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white shadow-xl border-b border-blue-700/30 sticky top-0 z-50">
-      <div className="responsive-container">
-        <div className="flex items-center justify-between h-16 lg:h-18">
+    <header className="header-professional bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 sticky top-0 z-50">
+      <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+        <div className="flex items-center justify-between h-20 sm:h-20 md:h-22 lg:h-24 xl:h-26">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
+          <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5 flex-shrink-0">
             <div className="relative">
               <img 
                 src="/Edu_51_Logo.png" 
                 alt="Edu51Five Logo" 
-                className="h-10 w-10 lg:h-12 lg:w-12 object-contain logo-enhanced modern-icon transition-transform duration-300 hover:scale-110"
+                className="h-12 w-12 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 xl:h-18 xl:w-18 object-contain no-select rounded-xl shadow-lg bg-white p-2 border-2 border-slate-300"
               />
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
             </div>
             <div>
-              <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                {websiteName}
+              <h1 className="text-base md:text-xl lg:text-2xl font-bold no-select text-white">
+                Edu<span className="text-red-400">51</span>Five
               </h1>
-              <p className="text-xs lg:text-sm text-blue-200 font-medium">BUBT Intake 51</p>
+              <p className="text-xs md:text-sm text-gray-300 no-select">BUBT Intake 51</p>
             </div>
           </div>
           
           {/* Desktop Search */}
-          <div className="hidden md:flex items-center space-x-4 flex-1 max-w-lg mx-8">
+          <div className="hidden md:flex items-center space-x-5 xl:space-x-6 flex-1 max-w-lg mx-8">
             <div className="relative w-full">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5 transition-colors duration-200" />
               <input
@@ -57,7 +56,7 @@ export function Header({
           </div>
 
           {/* Right Side Controls */}
-          <div className="flex items-center space-x-2 lg:space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7">
             {/* Admin Status Indicator */}
             {isAdmin && (
               <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full">
