@@ -944,12 +944,82 @@
 }
 
 .header-professional {
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, 
+    rgba(30, 58, 138, 0.95), 
+    rgba(30, 64, 175, 0.95), 
+    rgba(30, 58, 138, 0.95)
+  );
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .notification-professional {
   background: linear-gradient(135deg, #374151, #1f2937, #374151);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced Header Animations */
+@keyframes header-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.header-professional:hover {
+  animation: header-glow 3s ease-in-out infinite;
+}
+
+/* Responsive Header Heights */
+@media (min-width: 1024px) {
+  .header-professional {
+    min-height: 72px;
+  }
+}
+
+/* Mobile Menu Animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-menu-enter {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+/* Search Input Enhancements */
+.search-input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2),
+              0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+/* Professional Button Hover Effects */
+.professional-button-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.professional-button-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.professional-button-hover:hover::before {
+  left: 100%;
 }
 }
