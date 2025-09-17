@@ -1160,26 +1160,26 @@ For any queries, contact your course instructors or the department.`,
             <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
               <button
                 onClick={() => setCurrentView('home')}
-                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 bg-white/15 hover:bg-white/25 rounded-2xl px-3 py-2 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-white/30 hover:border-white/50 group focus:outline-none"
+                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 bg-slate-800/90 hover:bg-slate-700/95 rounded-2xl px-3 py-2 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-600/50 hover:border-slate-500/70 group focus:outline-none"
                 title="Go to Home"
               >
                 <div className="relative">
                   <img 
                     src="/Edu_51_Logo.png" 
                     alt="Edu51Five Logo" 
-                    className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 object-contain no-select rounded-xl shadow-2xl bg-white p-1.5 transition-all duration-300 group-hover:shadow-3xl group-hover:bg-gray-50 border border-gray-200" 
+                    className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 object-contain no-select rounded-xl shadow-xl bg-white p-2 transition-all duration-300 group-hover:shadow-2xl group-hover:bg-gray-50 border-2 border-slate-300 group-hover:border-blue-300" 
                   />
-                  <div className="absolute inset-0 rounded-xl ring-2 ring-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-blue-400/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-base md:text-xl font-bold no-select text-white drop-shadow-lg group-hover:text-blue-100 transition-colors duration-300">
-                    Edu<span className="text-orange-400 group-hover:text-orange-300 drop-shadow-lg">51</span>Five
+                  <h1 className="text-base md:text-xl font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
+                    Edu<span className="text-red-400 group-hover:text-red-300">51</span>Five
                   </h1>
-                  <p className="text-xs text-gray-300 no-select group-hover:text-gray-200 transition-colors duration-300 drop-shadow">Intake 51</p>
+                  <p className="text-xs text-gray-300 no-select group-hover:text-gray-200 transition-colors duration-300">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-sm font-bold no-select text-white drop-shadow-lg group-hover:text-blue-100 transition-colors duration-300">
-                    Edu<span className="text-orange-400 group-hover:text-orange-300 drop-shadow-lg">51</span>Five
+                  <h1 className="text-sm font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
+                    Edu<span className="text-red-400 group-hover:text-red-300">51</span>Five
                   </h1>
                 </div>
               </button>
@@ -1582,8 +1582,12 @@ For any queries, contact your course instructors or the department.`,
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="relative z-10">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-3xl text-white no-select">📚</span>
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-3 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <img 
+                          src="/sec5.png" 
+                          alt="Section 5 CSE" 
+                          className="w-10 h-10 object-contain filter brightness-0 invert"
+                        />
                       </div>
                       <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-blue-700 transition-colors duration-300 no-select">
                         Section 5 - CSE
@@ -1676,8 +1680,12 @@ For any queries, contact your course instructors or the department.`,
                     {/* Developer Info */}
                     <div className="text-center md:text-left">
                       <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
-                          <span className="text-white font-bold text-sm">S</span>
+                        <div className="w-8 h-8 rounded-full overflow-hidden shadow-md border-2 border-blue-400/50">
+                          <img 
+                            src="/Swapnil.png" 
+                            alt="Swapnil" 
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div>
                           <p className="text-slate-200 text-sm">
