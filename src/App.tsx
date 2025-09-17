@@ -55,6 +55,7 @@ function App() {
     if (path === '/semester') return 'semester';
     if (path === '/exam-materials') return 'examMaterials';
     if (path.startsWith('/course/')) return 'course';
+    if (path === '/home') return 'home';
     return 'home';
   });
 
@@ -66,6 +67,7 @@ function App() {
     else if (view === 'semester') path = '/semester';
     else if (view === 'examMaterials') path = '/exam-materials';
     else if (view === 'course' && extra) path = `/course/${extra}`;
+    else if (view === 'home') path = '/home';
     window.history.pushState({}, '', path);
     setCurrentView(view);
   };
@@ -79,6 +81,7 @@ function App() {
       else if (path === '/semester') setCurrentView('semester');
       else if (path === '/exam-materials') setCurrentView('examMaterials');
       else if (path.startsWith('/course/')) setCurrentView('course');
+      else if (path === '/home') setCurrentView('home');
       else setCurrentView('home');
     };
     window.addEventListener('popstate', handlePopState);
@@ -1159,7 +1162,7 @@ For any queries, contact your course instructors or the department.`,
           <div className="flex items-center justify-between h-20 sm:h-20 md:h-22 lg:h-24 xl:h-26">
             <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => goToView('home')}
                 className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 bg-slate-800/90 hover:bg-slate-700/95 rounded-2xl px-3 py-2.5 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-600/50 hover:border-slate-500/70 group focus:outline-none"
                 title="Go to Home"
               >
@@ -1754,7 +1757,7 @@ For any queries, contact your course instructors or the department.`,
                     onClick={() => handleCourseClick(course)}
                     className={`bg-gradient-to-br ${colorScheme.bgGradient} p-6 md:p-8 rounded-2xl shadow-xl border border-white/30 backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:${colorScheme.border} group`}
                   >
-                    <h3 className={`text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300`}>{course.name}</h3>
+                    <h3 className={`text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300`}>{course.name}</h3>
                     <p className={`font-semibold mb-3 text-sm md:text-base ${colorScheme.badge} px-3 py-1 rounded-full inline-block`}>{course.code}</p>
                     <p className="text-gray-700 text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed">{course.description}</p>
                     <p className={`text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300`}>
@@ -2214,7 +2217,7 @@ For any queries, contact your course instructors or the department.`,
                       <div key={course.id} className={`group bg-gradient-to-r ${colorScheme.bgGradient} p-6 md:p-8 border-l-4 border-${colorScheme.accent} rounded-2xl shadow-lg hover:shadow-2xl smooth-card ui-element hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1`}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className={`font-bold text-gray-900 responsive-text-xl group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300 no-select`}>{course.name}</h4>
+                            <h4 className={`font-bold text-gray-900 responsive-text-xl group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300 no-select`}>{course.name}</h4>
                             <p className={`font-semibold mt-2 no-select ${colorScheme.badge} px-3 py-1 rounded-full inline-block text-sm`}>{course.code}</p>
                             <p className="text-gray-700 responsive-text-base mt-3 select-text leading-relaxed">{course.description}</p>
                           </div>
