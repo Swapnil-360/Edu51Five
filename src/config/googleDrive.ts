@@ -78,17 +78,73 @@ export const getCourseCategories = (courseCode: string) => {
   return course ? Object.keys(course.folders) : [];
 };
 
-// Helper function to get category display info
+// Helper function to get category display info with sophisticated professional colors
 export const getCategoryInfo = (category: string) => {
-  const categoryMap: Record<string, { icon: string; label: string; color: string }> = {
-    'notes': { icon: '📝', label: 'Notes', color: 'blue' },
-    'suggestions': { icon: '💡', label: 'Suggestions', color: 'yellow' },
-    'super-tips': { icon: '⚡', label: 'Super Tips (One Night Before Exam)', color: 'purple' },
-    'slides': { icon: '📊', label: 'Slides', color: 'green' },
-    'ct-questions': { icon: '❓', label: 'CT Questions', color: 'red' },
-    'videos': { icon: '🎥', label: 'Videos', color: 'pink' }
+  const categoryMap: Record<string, { icon: string; label: string; color: string; bgGradient: string; textColor: string; borderColor: string; iconBg: string }> = {
+    'notes': { 
+      icon: '📝', 
+      label: 'Notes', 
+      color: 'blue',
+      bgGradient: 'from-slate-50 to-blue-50',
+      textColor: 'text-slate-700',
+      borderColor: 'border-slate-200',
+      iconBg: 'bg-blue-100'
+    },
+    'suggestions': { 
+      icon: '💡', 
+      label: 'Suggestions', 
+      color: 'yellow',
+      bgGradient: 'from-amber-50 to-orange-50',
+      textColor: 'text-amber-800',
+      borderColor: 'border-amber-200',
+      iconBg: 'bg-amber-100'
+    },
+    'super-tips': { 
+      icon: '⚡', 
+      label: 'Super Tips (One Night Before Exam)', 
+      color: 'purple',
+      bgGradient: 'from-violet-50 to-purple-50',
+      textColor: 'text-violet-800',
+      borderColor: 'border-violet-200',
+      iconBg: 'bg-violet-100'
+    },
+    'slides': { 
+      icon: '📊', 
+      label: 'Slides', 
+      color: 'green',
+      bgGradient: 'from-emerald-50 to-teal-50',
+      textColor: 'text-emerald-800',
+      borderColor: 'border-emerald-200',
+      iconBg: 'bg-emerald-100'
+    },
+    'ct-questions': { 
+      icon: '❓', 
+      label: 'CT Questions', 
+      color: 'red',
+      bgGradient: 'from-red-50 to-rose-50',
+      textColor: 'text-red-800',
+      borderColor: 'border-red-200',
+      iconBg: 'bg-red-100'
+    },
+    'videos': { 
+      icon: '🎥', 
+      label: 'Videos', 
+      color: 'pink',
+      bgGradient: 'from-pink-50 to-rose-50',
+      textColor: 'text-pink-800',
+      borderColor: 'border-pink-200',
+      iconBg: 'bg-pink-100'
+    }
   };
-  return categoryMap[category] || { icon: '📄', label: category, color: 'gray' };
+  return categoryMap[category] || { 
+    icon: '📄', 
+    label: category, 
+    color: 'gray',
+    bgGradient: 'from-gray-50 to-slate-50',
+    textColor: 'text-gray-800',
+    borderColor: 'border-gray-200',
+    iconBg: 'bg-gray-100'
+  };
 };
 
 // Real file structure for each course and category

@@ -746,6 +746,76 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
+  // Course color schemes for unique visual identity
+  const getCourseColorScheme = (courseCode: string, index: number) => {
+    const colorSchemes = [
+      {
+        gradient: 'from-blue-500 to-purple-600',
+        bgGradient: 'from-blue-50 via-purple-50 to-indigo-100',
+        accent: 'blue-500',
+        textGradient: 'from-blue-600 to-purple-600',
+        badge: 'bg-blue-100 text-blue-700',
+        border: 'border-blue-300'
+      },
+      {
+        gradient: 'from-emerald-500 to-teal-600', 
+        bgGradient: 'from-emerald-50 via-teal-50 to-cyan-100',
+        accent: 'emerald-500',
+        textGradient: 'from-emerald-600 to-teal-600',
+        badge: 'bg-emerald-100 text-emerald-700',
+        border: 'border-emerald-300'
+      },
+      {
+        gradient: 'from-orange-500 to-red-600',
+        bgGradient: 'from-orange-50 via-red-50 to-pink-100', 
+        accent: 'orange-500',
+        textGradient: 'from-orange-600 to-red-600',
+        badge: 'bg-orange-100 text-orange-700',
+        border: 'border-orange-300'
+      },
+      {
+        gradient: 'from-violet-500 to-fuchsia-600',
+        bgGradient: 'from-violet-50 via-fuchsia-50 to-pink-100',
+        accent: 'violet-500', 
+        textGradient: 'from-violet-600 to-fuchsia-600',
+        badge: 'bg-violet-100 text-violet-700',
+        border: 'border-violet-300'
+      },
+      {
+        gradient: 'from-cyan-500 to-blue-600',
+        bgGradient: 'from-cyan-50 via-blue-50 to-indigo-100',
+        accent: 'cyan-500',
+        textGradient: 'from-cyan-600 to-blue-600', 
+        badge: 'bg-cyan-100 text-cyan-700',
+        border: 'border-cyan-300'
+      },
+      {
+        gradient: 'from-rose-500 to-pink-600',
+        bgGradient: 'from-rose-50 via-pink-50 to-fuchsia-100',
+        accent: 'rose-500',
+        textGradient: 'from-rose-600 to-pink-600',
+        badge: 'bg-rose-100 text-rose-700', 
+        border: 'border-rose-300'
+      }
+    ];
+    
+    return colorSchemes[index % colorSchemes.length];
+  };
+
+  // Material color schemes for diversity
+  const getMaterialColorScheme = (materialId: string, index: number) => {
+    const materialSchemes = [
+      { bg: 'from-white via-blue-50 to-indigo-100', accent: 'from-blue-500 to-indigo-600' },
+      { bg: 'from-white via-green-50 to-emerald-100', accent: 'from-green-500 to-emerald-600' },
+      { bg: 'from-white via-purple-50 to-violet-100', accent: 'from-purple-500 to-violet-600' },
+      { bg: 'from-white via-orange-50 to-amber-100', accent: 'from-orange-500 to-amber-600' },
+      { bg: 'from-white via-pink-50 to-rose-100', accent: 'from-pink-500 to-rose-600' },
+      { bg: 'from-white via-teal-50 to-cyan-100', accent: 'from-teal-500 to-cyan-600' }
+    ];
+    
+    return materialSchemes[index % materialSchemes.length];
+  };
+
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminPassword === ADMIN_PASSWORD) {
@@ -984,6 +1054,8 @@ For any queries, contact your course instructors or the department.`,
 
 For any queries, contact your course instructors or the department.`,
         type: 'warning',
+        category: 'exam',
+        priority: 'high',
         is_active: true,
         created_at: new Date().toISOString()
       };
@@ -1080,31 +1152,34 @@ For any queries, contact your course instructors or the department.`,
 
   // Main return for all other views
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header with Perfect Mobile Scaling */}
-      <header className="fixed top-0 left-0 right-0 bg-blue-900 text-white shadow-lg z-40">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+      {/* Modern Professional Header with Enhanced Logo Clarity */}
+      <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 z-40">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
             <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
               <button
                 onClick={() => setCurrentView('home')}
-                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 smooth-button transition-smooth ui-element focus:outline-none"
+                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 bg-white/15 hover:bg-white/25 rounded-2xl px-3 py-2 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-white/30 hover:border-white/50 group focus:outline-none"
                 title="Go to Home"
               >
-                <img 
-                  src="/Edu_51_Logo.png" 
-                  alt="Edu51Five Logo" 
-                  className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-18 xl:w-18 object-contain no-select" 
-                />
+                <div className="relative">
+                  <img 
+                    src="/Edu_51_Logo.png" 
+                    alt="Edu51Five Logo" 
+                    className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 object-contain no-select rounded-xl shadow-2xl bg-white p-1.5 transition-all duration-300 group-hover:shadow-3xl group-hover:bg-gray-50 border border-gray-200" 
+                  />
+                  <div className="absolute inset-0 rounded-xl ring-2 ring-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-base md:text-xl font-bold no-select">
-                    Edu<span className="text-red-500">51</span>Five
+                  <h1 className="text-base md:text-xl font-bold no-select text-white drop-shadow-lg group-hover:text-blue-100 transition-colors duration-300">
+                    Edu<span className="text-orange-400 group-hover:text-orange-300 drop-shadow-lg">51</span>Five
                   </h1>
-                  <p className="text-xs text-blue-200 no-select">Intake 51</p>
+                  <p className="text-xs text-gray-300 no-select group-hover:text-gray-200 transition-colors duration-300 drop-shadow">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-sm font-bold no-select">
-                    Edu<span className="text-red-500">51</span>Five
+                  <h1 className="text-sm font-bold no-select text-white drop-shadow-lg group-hover:text-blue-100 transition-colors duration-300">
+                    Edu<span className="text-orange-400 group-hover:text-orange-300 drop-shadow-lg">51</span>Five
                   </h1>
                 </div>
               </button>
@@ -1215,34 +1290,34 @@ For any queries, contact your course instructors or the department.`,
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 lg:space-x-4 xl:space-x-5">
-              {/* Exam Materials Button */}
+              {/* Modern Exam Materials Button */}
               <button
                 onClick={() => goToView('examMaterials')}
-                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 transition-all duration-300 shadow-lg group"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Smart Exam Materials"
               >
-                <BookOpen className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform" />
+                <BookOpen className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
-              {/* Semester Tracker Button */}
+              {/* Modern Semester Tracker Button */}
               <button
                 onClick={() => goToView('semester')}
-                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors shadow-lg group"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Semester Tracker"
               >
-                <Calendar className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform" />
+                <Calendar className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
-              {/* Notice Bell Icon */}
+              {/* Professional Notice Bell Icon */}
               <div className="relative">
                 <button
                   onClick={toggleNoticePanel}
-                  className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-full bg-blue-800 hover:bg-blue-700 transition-colors relative shadow-lg"
+                  className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
                   title="Notifications"
                 >
-                  <Bell className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white" />
+                  <Bell className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                   {getUnreadNoticeCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-md">
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
                       {getUnreadNoticeCount()}
                     </span>
                   )}
@@ -1252,9 +1327,9 @@ For any queries, contact your course instructors or the department.`,
               {currentView === 'course' && selectedCourse && (
                 <button
                   onClick={handleBackToSection}
-                  className="hidden sm:flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-800 hover:bg-blue-700 transition-colors text-sm"
+                  className="hidden sm:flex items-center space-x-1 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300 text-sm hover:shadow-xl hover:scale-105 group"
                 >
-                  <span>← Back to Courses</span>
+                  <span className="text-white group-hover:text-blue-100 transition-colors duration-300">← Back to Courses</span>
                 </button>
               )}
               
@@ -1281,60 +1356,69 @@ For any queries, contact your course instructors or the department.`,
         </div>
       </header>
 
-      {/* Notice Panel */}
+      {/* Modern Notice Panel with Glassmorphism */}
       {showNoticePanel && (
-        <div className="fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-80 md:max-h-96 overflow-hidden">
-          <div className="bg-blue-900 text-white px-3 md:px-4 py-2 md:py-3 rounded-t-lg">
+        <div className="fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] backdrop-blur-xl bg-white/90 rounded-3xl shadow-2xl border border-white/30 z-50 max-h-80 md:max-h-96 overflow-hidden">
+          {/* Professional Header with Enhanced Gradient */}
+          <div className="bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 text-white px-4 md:px-6 py-3 md:py-4 rounded-t-3xl shadow-lg">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center text-sm md:text-base">
-                <Bell className="h-4 w-4 mr-2" />
-                Notifications
+              <h3 className="font-bold flex items-center text-sm md:text-base">
+                <div className="p-2 bg-white/20 rounded-xl mr-3 shadow-lg border border-white/30">
+                  <Bell className="h-4 w-4 text-white drop-shadow-lg" />
+                </div>
+                <span className="text-white drop-shadow-sm">Notifications</span>
               </h3>
               <button
                 onClick={() => setShowNoticePanel(false)}
-                className="text-white hover:text-gray-300 transition-colors p-1"
+                className="text-white/80 hover:text-white hover:bg-white/20 transition-all duration-300 p-2 rounded-2xl shadow-md border border-white/20 hover:border-white/30"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
-          <div className="max-h-56 md:max-h-64 overflow-y-auto">
+          
+          {/* Content Area with Modern Scrollbar */}
+          <div className="max-h-56 md:max-h-64 overflow-y-auto scrollbar-modern">
             {notices.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
-                No notifications
+              <div className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl mb-4">
+                  <Bell className="h-8 w-8 text-blue-500" />
+                </div>
+                <p className="text-gray-500 text-sm font-medium">No notifications yet</p>
+                <p className="text-gray-400 text-xs mt-1">Stay tuned for updates!</p>
               </div>
             ) : (
-              notices.filter(notice => notice.is_active).map((notice) => (
+              notices.filter(notice => notice.is_active).map((notice, index) => (
                 <div
                   key={notice.id}
-                  className="p-3 md:p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="p-4 md:p-5 border-b border-gray-100/50 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm"
                   onClick={() => {
                     handleNoticeClick(notice);
                     markNoticeAsRead(notice.id);
                     setShowNoticePanel(false);
                   }}
                 >
-                  <div className="flex items-start space-x-2 md:space-x-3">
-                    {/* Category & Priority Icon */}
-                    <div className={`p-1 md:p-1.5 rounded-full flex-shrink-0 relative ${
-                      notice.type === 'info' ? 'bg-blue-100' :
-                      notice.type === 'warning' ? 'bg-yellow-100' :
-                      notice.type === 'success' ? 'bg-green-100' :
-                      'bg-red-100'
+                  <div className="flex items-start space-x-3 md:space-x-4">
+                    {/* Modern Category & Priority Icon */}
+                    <div className={`p-2 md:p-3 rounded-2xl flex-shrink-0 relative shadow-lg transition-all duration-300 ${
+                      notice.type === 'info' ? 'bg-gradient-to-r from-blue-100 to-blue-200' :
+                      notice.type === 'warning' ? 'bg-gradient-to-r from-yellow-100 to-orange-200' :
+                      notice.type === 'success' ? 'bg-gradient-to-r from-green-100 to-emerald-200' :
+                      'bg-gradient-to-r from-red-100 to-pink-200'
                     }`}>
-                      {/* Category-based icons */}
+                      {/* Category-based icons with modern styling */}
                       {notice.category === 'exam' ? (
-                        <span className="text-sm">📚</span>
+                        <span className="text-lg drop-shadow-sm">📚</span>
                       ) : notice.category === 'event' ? (
-                        <span className="text-sm">🎉</span>
+                        <span className="text-lg drop-shadow-sm">🎉</span>
                       ) : notice.category === 'academic' ? (
-                        <span className="text-sm">🎓</span>
+                        <span className="text-lg drop-shadow-sm">🎓</span>
                       ) : notice.category === 'information' ? (
-                        <span className="text-sm">ℹ️</span>
+                        <span className="text-lg drop-shadow-sm">ℹ️</span>
                       ) : notice.category === 'random' ? (
-                        <span className="text-sm">🎲</span>
+                        <span className="text-lg drop-shadow-sm">🎲</span>
                       ) : (
-                        <Bell className={`h-3 w-3 md:h-4 md:w-4 ${
+                        <Bell className={`h-4 w-4 md:h-5 md:w-5 drop-shadow-sm ${
                           notice.type === 'info' ? 'text-blue-600' :
                           notice.type === 'warning' ? 'text-yellow-600' :
                           notice.type === 'success' ? 'text-green-600' :
@@ -1342,56 +1426,58 @@ For any queries, contact your course instructors or the department.`,
                         }`} />
                       )}
                       
-                      {/* Priority indicator */}
+                      {/* Modern Priority indicator */}
                       {notice.priority === 'urgent' && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-lg border border-white"></div>
                       )}
                       {notice.priority === 'high' && (
-                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full shadow-md border border-white"></div>
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      {/* Title with category badge */}
-                      <div className="flex items-center space-x-2 mb-1">
-                        <p className="text-xs md:text-sm font-medium text-gray-900 line-clamp-2 flex-1">
+                      {/* Modern Title with category badge */}
+                      <div className="flex items-center space-x-2 mb-2">
+                        <p className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 flex-1 leading-relaxed">
                           {notice.title}
                         </p>
                         {notice.category === 'exam' && notice.exam_type && (
-                          <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="text-xs bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 px-2 py-1 rounded-full whitespace-nowrap font-medium shadow-sm">
                             {notice.exam_type === 'midterm' ? '📝 Mid' : '🎯 Final'}
                           </span>
                         )}
                       </div>
                       
-                      {/* Date and badges */}
-                      <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-xs text-gray-500">
-                          {new Date(notice.created_at).toLocaleDateString()}
-                        </p>
+                      {/* Modern Date and badges */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-xs text-gray-500 font-medium">
+                            {new Date(notice.created_at).toLocaleDateString()}
+                          </p>
                         
-                        {/* Priority badge */}
+                        {/* Modern Priority badges */}
                         {notice.priority === 'urgent' && (
-                          <span className="text-[9px] bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium animate-pulse">
+                          <span className="text-xs bg-gradient-to-r from-red-100 to-pink-100 text-red-800 px-2 py-1 rounded-full font-bold animate-pulse shadow-sm">
                             🔴 URGENT
                           </span>
                         )}
                         {notice.priority === 'high' && (
-                          <span className="text-[9px] bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded-full font-medium">
+                          <span className="text-xs bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 px-2 py-1 rounded-full font-semibold shadow-sm">
                             🟡 HIGH
                           </span>
                         )}
                         
-                        {/* Event date */}
+                        {/* Modern Event date */}
                         {notice.category === 'event' && notice.event_date && (
-                          <span className="text-[9px] bg-purple-100 text-purple-800 px-1 py-0.5 rounded-full">
+                          <span className="text-xs bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 px-2 py-1 rounded-full font-medium shadow-sm">
                             📅 {new Date(notice.event_date).toLocaleDateString('en-BD', { month: 'short', day: 'numeric' })}
                           </span>
                         )}
+                        </div>
                         
-                        {/* New indicator */}
+                        {/* Modern New indicator */}
                         {!unreadNotices.includes(notice.id) && (
-                          <span className="text-[9px] bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium">
+                          <span className="text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full font-bold shadow-lg animate-pulse">
                             NEW
                           </span>
                         )}
@@ -1402,6 +1488,15 @@ For any queries, contact your course instructors or the department.`,
               ))
             )}
           </div>
+          
+          {/* Professional Footer */}
+          {notices.length > 0 && (
+            <div className="bg-gradient-to-r from-gray-100/90 to-slate-100/90 px-4 py-3 rounded-b-3xl border-t border-gray-200/60 shadow-inner">
+              <p className="text-xs text-center text-gray-700 font-medium">
+                💡 Click any notification to view details
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -1411,111 +1506,220 @@ For any queries, contact your course instructors or the department.`,
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Home Page */}
         {currentView === 'home' && (
-          <div className="space-y-6 md:space-y-8">
-            {/* Welcome Section - Always on Top */}
-            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-xl shadow-sm border border-gray-200">
-              <div className="text-center mb-6 md:mb-8">
-                <img 
-                  src="/image.png" 
-                  alt="Edu51Five Logo" 
-                  className="h-16 w-16 md:h-20 md:w-20 mx-auto mb-4 md:mb-6 object-contain" 
-                />
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 no-select">
-                  Welcome to Edu51Five!
-                </h2>
-                <p className="text-gray-600 mb-4 text-base md:text-lg max-w-3xl mx-auto no-select">
-                  BUBT Intake 51 Learning Platform - Department of CSE
-                </p>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 mb-6">
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 text-center no-select"><span className="no-select">🎯</span> Your Exam Success Platform</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-sm md:text-base">
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-blue-600 text-lg no-select">📚</span>
-                      <span className="text-gray-700 no-select">Complete Study Materials</span>
+          <div className="space-y-8 md:space-y-12">
+            {/* Hero Section - Modern Professional Design */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-indigo-100/30 rounded-3xl shadow-2xl border border-white/60 backdrop-blur-sm">
+              {/* Decorative Background Elements */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-400/20 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
+              </div>
+              
+              <div className="relative z-10 p-8 md:p-12 lg:p-16">
+                <div className="text-center mb-12 md:mb-16">
+                  {/* Enhanced Logo with Professional Styling */}
+                  <div className="relative mb-8 md:mb-10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl w-24 h-24 md:w-28 md:h-28 mx-auto"></div>
+                    <img 
+                      src="/image.png" 
+                      alt="Edu51Five Logo" 
+                      className="relative h-20 w-20 md:h-24 md:w-24 mx-auto object-contain shadow-2xl rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 p-2" 
+                    />
+                  </div>
+                  
+                  {/* Professional Typography */}
+                  <div className="space-y-4 md:space-y-6 mb-10 md:mb-12">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent no-select leading-tight">
+                      Welcome to Edu<span className="text-red-500">51</span>Five
+                    </h1>
+                    <div className="relative">
+                      <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-700 no-select">
+                        BUBT Intake 51 Excellence Platform
+                      </h2>
+                      <p className="text-lg md:text-xl text-gray-600 mt-2 font-medium no-select">
+                        Department of Computer Science & Engineering
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-green-600 text-lg no-select">📝</span>
-                      <span className="text-gray-700 no-select">Past Exam Questions</span>
+                  </div>
+
+                  {/* Platform Features - Realistic & Compact */}
+                  <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 mb-10">
+                    <div className="text-center mb-6">
+                      <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 p-2 rounded-xl shadow-lg mb-3">
+                        <span className="text-lg text-white no-select">🎯</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-800 no-select">Platform Features</h3>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-purple-600 text-lg no-select">🔔</span>
-                      <span className="text-gray-700 no-select">Real-time Updates</span>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                      {[
+                        { icon: "📚", text: "Course Materials", desc: "Study resources" },
+                        { icon: "📝", text: "Past Questions", desc: "Previous exams" },
+                        { icon: "🔔", text: "Smart Notices", desc: "Important updates" },
+                        { icon: "📁", text: "Google Drive", desc: "Cloud storage" },
+                        { icon: "⏰", text: "Semester Tracker", desc: "Progress timeline" },
+                        { icon: "�", text: "Mobile Ready", desc: "Responsive design" }
+                      ].map((feature, index) => (
+                        <div key={index} className="bg-white/70 backdrop-blur-sm p-3 rounded-lg border border-white/40 hover:bg-white/80 transition-colors duration-200">
+                          <div className="text-center">
+                            <span className="text-lg mb-2 block no-select">{feature.icon}</span>
+                            <h4 className="text-sm font-semibold text-gray-800 no-select">{feature.text}</h4>
+                            <p className="text-xs text-gray-600 no-select mt-1">{feature.desc}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-orange-600 text-lg no-select">🎥</span>
-                      <span className="text-gray-700 no-select">Video Lectures</span>
+                  </div>
+                </div>
+                
+                {/* Enhanced Section Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 mb-12 md:mb-16">
+                  {/* Active Section Card */}
+                  <div 
+                    className="group relative overflow-hidden bg-gradient-to-br from-white to-blue-50/80 backdrop-blur-md rounded-2xl p-8 md:p-10 shadow-2xl border border-white/60 hover:shadow-3xl cursor-pointer transition-all duration-500 transform hover:-translate-y-3 hover:border-blue-400/60"
+                    onClick={() => goToView('section5')}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative z-10">
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-3xl text-white no-select">📚</span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-blue-700 transition-colors duration-300 no-select">
+                        Section 5 - CSE
+                      </h3>
+                      <p className="text-gray-600 mb-4 text-base md:text-lg leading-relaxed">
+                        Computer Science & Engineering Department - Your gateway to academic excellence
+                      </p>
+                      <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-3 mb-6 border border-blue-200/50">
+                        <p className="text-blue-800 font-semibold text-center">
+                          <span className="text-2xl font-bold text-blue-600">{courses.length}</span> Active Courses Available
+                        </p>
+                      </div>
+                      <div className="flex items-center text-blue-600 font-bold text-lg group-hover:text-blue-700 transition-colors duration-300">
+                        <span className="no-select">Enter Learning Portal</span>
+                        <svg className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-red-600 text-lg no-select">⏰</span>
-                      <span className="text-gray-700 no-select">Exam Schedules</span>
-                    </div>
-                    <div className="flex items-center space-x-2 p-2 bg-white/50 rounded-lg">
-                      <span className="text-teal-600 text-lg no-select">💡</span>
-                      <span className="text-gray-700 no-select">Study Tips & Guides</span>
+                  </div>
+                  
+                  {/* Coming Soon Card */}
+                  <div className="relative overflow-hidden bg-gradient-to-br from-white to-gray-50/80 backdrop-blur-md rounded-2xl p-8 md:p-10 shadow-2xl border border-white/60 opacity-75">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-slate-500/10"></div>
+                    <div className="relative z-10">
+                      <div className="bg-gradient-to-r from-gray-400 to-slate-500 p-4 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6">
+                        <span className="text-3xl text-white no-select">�</span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-700 mb-4 no-select">
+                        Other Sections
+                      </h3>
+                      <p className="text-gray-500 mb-4 text-base md:text-lg leading-relaxed">
+                        Additional departments and sections - Expanding the educational ecosystem
+                      </p>
+                      <div className="bg-gradient-to-r from-gray-100 to-slate-100 rounded-lg p-3 mb-6 border border-gray-200/50">
+                        <p className="text-gray-600 font-semibold text-center">
+                          More Sections Coming Soon...
+                        </p>
+                      </div>
+                      <p className="text-gray-400 font-medium text-base">
+                        🔔 Stay tuned for updates
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
-                <div 
-                  className="border border-gray-200 rounded-xl p-6 md:p-8 hover:shadow-lg cursor-pointer hover:border-blue-300 transition-all text-center bg-white"
-                  onClick={() => goToView('section5')}
-                >
-                  <div className="text-4xl md:text-5xl mb-4 no-select">📚</div>
-                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2 no-select">Section 5</h3>
-                  <p className="text-gray-600 mb-3 text-sm md:text-base">
-                    Computer Science & Engineering
+            </div>
+
+            {/* Professional Footer Section */}
+            <div className="bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 rounded-2xl shadow-lg border border-slate-700/50 overflow-hidden">
+              <div className="relative z-10 p-6 md:p-8">
+                {/* Contact & Connect Section */}
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    Connect & Support
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-6 max-w-xl mx-auto">
+                    Found a bug? Have suggestions? Let's connect and improve together.
                   </p>
-                  <p className="text-gray-500 text-sm mb-4">
-                    {courses.length} courses available
-                  </p>
-                  <p className="text-blue-600 text-lg font-medium no-select">Click to Access →</p>
+                  
+                  {/* Professional Contact Buttons */}
+                  <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mb-6">
+                    <a
+                      href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
+                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-medium rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md"
+                      target="_blank" rel="noopener noreferrer"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                      </svg>
+                      Professional Email
+                    </a>
+                    <a
+                      href="https://wa.me/8801318090383?text=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
+                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-medium rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md"
+                      target="_blank" rel="noopener noreferrer"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                      </svg>
+                      WhatsApp Direct
+                    </a>
+                  </div>
                 </div>
-                
-                <div className="border border-gray-200 rounded-xl p-6 md:p-8 opacity-50 text-center bg-white">
-                  <div className="text-4xl md:text-5xl mb-4 no-select">🚧</div>
-                  <h3 className="text-gray-900 font-semibold text-xl md:text-2xl mb-2 no-select">Other Sections</h3>
-                  <p className="text-gray-600 mb-3 text-sm md:text-base">
-                    Coming Soon...
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    More sections will be added
-                  </p>
+
+                {/* Developer & Copyright Section */}
+                <div className="border-t border-slate-700/50 pt-6">
+                  <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    {/* Developer Info */}
+                    <div className="text-center md:text-left">
+                      <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
+                          <span className="text-white font-bold text-sm">S</span>
+                        </div>
+                        <div>
+                          <p className="text-slate-200 text-sm">
+                            Developed by{' '}
+                            <a 
+                              href="https://www.facebook.com/mr.swapnil360" 
+                              onClick={handleFacebookClick}
+                              className="text-blue-400 hover:text-blue-300 transition-colors duration-200 font-semibold hover:underline inline-flex items-center space-x-1"
+                              title="Connect with Swapnil on Facebook"
+                            >
+                              <span>Swapnil</span>
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                              </svg>
+                            </a>
+                          </p>
+                          <p className="text-slate-400 text-xs">CSE Student</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Copyright & Legal */}
+                    <div className="text-center md:text-right">
+                      <p className="text-slate-300 text-sm font-medium">
+                        © {new Date().getFullYear()} Edu51Five
+                      </p>
+                      <p className="text-slate-400 text-xs">
+                        BUBT Intake 51 • All rights reserved
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Platform Info */}
+                  <div className="mt-4 pt-4 border-t border-slate-700/30 text-center">
+                    <div className="flex justify-center items-center space-x-4 text-xs text-slate-500">
+                      <span>🔒 Secure</span>
+                      <span>📱 Mobile Ready</span>
+                      <span>🚀 Fast</span>
+                      <span>💡 Updated</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg text-center border mt-8 flex flex-col items-center">
-                <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-2">
-                  <a
-                    href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
-                    className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow"
-                    target="_blank" rel="noopener noreferrer"
-                  >
-                    Gmail
-                  </a>
-                  <a
-                    href="https://wa.me/8801318090383?text=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
-                    className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow"
-                    target="_blank" rel="noopener noreferrer"
-                  >
-                    WhatsApp
-                  </a>
-                </div>
-                <p className="text-gray-700 font-medium mt-2">
-                  Developed by <a 
-                    href="https://www.facebook.com/mr.swapnil360" 
-                    onClick={handleFacebookClick}
-                    className="font-bold text-blue-600 hover:text-blue-800 transition-all duration-200 cursor-pointer hover:underline hover:scale-105 inline-flex items-center space-x-1"
-                    title="Connect with Swapnil on Facebook"
-                  >
-                    <span>Swapnil</span>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                  </a>
-                </p>
-                <p className="text-gray-500 text-xs mt-1">If you find any bug or want to connect, feel free to contact me!</p>
               </div>
             </div>
           </div>
@@ -1523,26 +1727,37 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Section 5 Courses */}
         {currentView === 'section5' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="text-center">
-              <img src="/image.png" alt="Edu51Five Logo" className="h-16 w-16 mx-auto mb-4 object-contain" />
-              <h2 className="text-2xl font-bold text-gray-900">Section 5 - Department of CSE</h2>
-              <p className="text-gray-600 mt-2">Choose your course to access materials</p>
+              <div className="relative inline-block mb-6">
+                <img src="/image.png" alt="Edu51Five Logo" className="h-20 w-20 mx-auto object-contain" />
+                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
+              </div>
+              <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text mb-4">Section 5 - Department of CSE</h2>
+              <p className="text-gray-700 text-lg">Choose your course to access materials</p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  onClick={() => handleCourseClick(course)}
-                  className="bg-white p-4 md:p-6 rounded-xl shadow-sm border hover:shadow-md cursor-pointer transition-all hover:border-blue-300"
-                >
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">{course.name}</h3>
-                  <p className="text-blue-600 font-medium mb-2 text-sm md:text-base">{course.code}</p>
-                  <p className="text-gray-600 text-sm md:text-base mb-3 md:mb-4 select-text">{course.description}</p>
-                  <p className="text-blue-600 text-sm md:text-base font-medium no-select">Access Materials →</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {courses.map((course, index) => {
+                const colorScheme = getCourseColorScheme(course.code, index);
+                return (
+                  <div
+                    key={course.id}
+                    onClick={() => handleCourseClick(course)}
+                    className={`bg-gradient-to-br ${colorScheme.bgGradient} p-6 md:p-8 rounded-2xl shadow-xl border border-white/30 backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:${colorScheme.border} group`}
+                  >
+                    <h3 className={`text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300`}>{course.name}</h3>
+                    <p className={`font-semibold mb-3 text-sm md:text-base ${colorScheme.badge} px-3 py-1 rounded-full inline-block`}>{course.code}</p>
+                    <p className="text-gray-700 text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed">{course.description}</p>
+                    <p className={`text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300`}>
+                      Access Materials 
+                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1579,28 +1794,28 @@ For any queries, contact your course instructors or the department.`,
                   const files = getCourseFiles(selectedCourse.code, category);
                   
                   return (
-                    <div key={category} className="bg-white rounded-lg border border-gray-200 overflow-hidden smooth-card transition-smooth ui-element">
-                      {/* Compact Category Header */}
-                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg no-select" style={{backgroundColor: `var(--color-${categoryInfo.color}-100)`}}>
+                    <div key={category} className={`bg-gradient-to-br ${categoryInfo.bgGradient} rounded-xl ${categoryInfo.borderColor} border overflow-hidden smooth-card transition-all duration-300 ui-element hover:shadow-lg transform hover:-translate-y-1 group`}>
+                      {/* Professional Category Header */}
+                      <div className={`flex items-center justify-between p-4 bg-white/40 backdrop-blur-sm border-b ${categoryInfo.borderColor}`}>
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 ${categoryInfo.iconBg} rounded-lg flex items-center justify-center text-lg no-select shadow-sm`}>
                             {categoryInfo.icon}
                           </div>
                           <div>
-                            <h4 className="font-medium text-gray-900 responsive-text-sm no-select">
+                            <h4 className={`font-semibold ${categoryInfo.textColor} responsive-text-base no-select`}>
                               {categoryInfo.label}
                             </h4>
-                            <p className="responsive-text-xs text-gray-500 no-select">
+                            <p className={`responsive-text-sm ${categoryInfo.textColor} opacity-70 no-select font-medium`}>
                               {files.length} files
                             </p>
                           </div>
                         </div>
-                        {/* Folder Icon */}
+                        {/* Elegant Folder Icon */}
                         <a
                           href={driveLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded smooth-button transition-smooth ui-element"
+                          className={`p-2 ${categoryInfo.textColor} opacity-70 hover:opacity-100 hover:bg-white/30 rounded-lg smooth-button transition-all duration-300 ui-element group-hover:scale-105 transform`}
                           title="Open folder in Google Drive"
                         >
                           <svg className="w-5 h-5 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1609,47 +1824,55 @@ For any queries, contact your course instructors or the department.`,
                         </a>
                       </div>
                       
-                      {/* Compact Files List */}
-                      <div className="p-3">
+                      {/* Professional Files List */}
+                      <div className="p-4">
                         {files.length > 0 ? (
                           <div className="space-y-2">
                             {files.slice(0, 3).map((file) => (
-                              <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-blue-50 transition-all duration-200 group">
-                                <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                  {/* Compact File Type Icon */}
+                              <div key={file.id} className={`flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-lg hover:bg-white/70 transition-all duration-200 group border ${categoryInfo.borderColor} border-opacity-30`}>
+                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                  {/* Professional File Type Icons */}
                                   <div className="flex-shrink-0">
                                     {file.name.toLowerCase().includes('.pdf') ? (
-                                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.5,8.5H10.5A2,2 0 0,1 12.5,10.5V11.5A2,2 0 0,1 10.5,13.5H8.5V16.5H7.5V8.5M8.5,9.5V12.5H10.5A1,1 0 0,0 11.5,11.5V10.5A1,1 0 0,0 10.5,9.5H8.5M13.5,8.5H15.43C16.47,8.5 17,9 17,10V11.2C17,12.2 16.47,12.7 15.43,12.7H14.5V16.5H13.5V8.5M14.5,9.5V11.7H15.43C15.73,11.7 16,11.47 16,11.2V10C16,9.73 15.73,9.5 15.43,9.5H14.5Z"/>
-                                      </svg>
+                                      <div className="w-7 h-7 bg-red-50 rounded-md flex items-center justify-center border border-red-100">
+                                        <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.5,8.5H10.5A2,2 0 0,1 12.5,10.5V11.5A2,2 0 0,1 10.5,13.5H8.5V16.5H7.5V8.5M8.5,9.5V12.5H10.5A1,1 0 0,0 11.5,11.5V10.5A1,1 0 0,0 10.5,9.5H8.5M13.5,8.5H15.43C16.47,8.5 17,9 17,10V11.2C17,12.2 16.47,12.7 15.43,12.7H14.5V16.5H13.5V8.5M14.5,9.5V11.7H15.43C15.73,11.7 16,11.47 16,11.2V10C16,9.73 15.73,9.5 15.43,9.5H14.5Z"/>
+                                        </svg>
+                                      </div>
                                     ) : file.name.toLowerCase().includes('.ppt') ? (
-                                      <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M8,8H10.5A2.5,2.5 0 0,1 13,10.5A2.5,2.5 0 0,1 10.5,13H9V16H8V8M9,9V12H10.5A1.5,1.5 0 0,0 12,10.5A1.5,1.5 0 0,0 10.5,9H9Z"/>
-                                      </svg>
+                                      <div className="w-7 h-7 bg-orange-50 rounded-md flex items-center justify-center border border-orange-100">
+                                        <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M8,8H10.5A2.5,2.5 0 0,1 13,10.5A2.5,2.5 0 0,1 10.5,13H9V16H8V8M9,9V12H10.5A1.5,1.5 0 0,0 12,10.5A1.5,1.5 0 0,0 10.5,9H9Z"/>
+                                        </svg>
+                                      </div>
                                     ) : file.name.toLowerCase().includes('.mp4') ? (
-                                      <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/>
-                                      </svg>
+                                      <div className="w-7 h-7 bg-purple-50 rounded-md flex items-center justify-center border border-purple-100">
+                                        <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/>
+                                        </svg>
+                                      </div>
                                     ) : (
-                                      <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M6 2C4.89 2 4 2.9 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2H6Z"/>
-                                      </svg>
+                                      <div className="w-7 h-7 bg-blue-50 rounded-md flex items-center justify-center border border-blue-100">
+                                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M6 2C4.89 2 4 2.9 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2H6Z"/>
+                                        </svg>
+                                      </div>
                                     )}
                                   </div>
                                   
-                                  {/* Compact File Name */}
+                                  {/* Professional File Name */}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                                    <p className={`text-sm font-medium ${categoryInfo.textColor} truncate group-hover:text-gray-900 transition-colors`}>
                                       {file.name}
                                     </p>
                                   </div>
                                 </div>
                                 
-                                {/* Compact Action Buttons */}
-                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-smooth-slow">
+                                {/* Professional Action Buttons */}
+                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                                   <button
                                     onClick={() => openFileViewer(file.embedUrl || file.url, file.name)}
-                                    className="p-1 text-gray-400 hover:text-blue-600 rounded smooth-button transition-smooth ui-element"
+                                    className={`p-1.5 ${categoryInfo.textColor} opacity-70 hover:opacity-100 hover:bg-white/50 rounded-md smooth-button transition-all duration-200 ui-element`}
                                     title="Preview"
                                   >
                                     <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1736,33 +1959,35 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </div>
                 
-                {materials.map((material) => (
-                  <div key={material.id} className="bg-white rounded-lg shadow-sm border p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className={`p-3 rounded-full ${getTypeColor(material.type)}`}>
-                          {getTypeIcon(material.type)}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {material.title}
-                          </h3>
-                          <p className="text-gray-600 text-sm mb-3">{material.description}</p>
+                {materials.map((material, index) => {
+                  const materialScheme = getMaterialColorScheme(material.id, index);
+                  return (
+                    <div key={material.id} className={`bg-gradient-to-br ${materialScheme.bg} rounded-2xl shadow-xl border border-white/20 backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-6 flex-1">
+                          <div className={`p-4 rounded-2xl shadow-lg transform rotate-3 bg-gradient-to-r ${materialScheme.accent} text-white`}>
+                            {getTypeIcon(material.type)}
+                          </div>
                           
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <div>
-                              Type: {material.type}
-                            </div>
-                            {material.size && (
-                              <div>Size: {material.size}</div>
-                            )}
-                            <div>
-                              {new Date(material.created_at).toLocaleDateString()}
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`text-xl font-bold text-gray-900 mb-2 hover:text-transparent hover:bg-gradient-to-r hover:${materialScheme.accent} hover:bg-clip-text transition-all cursor-pointer`}>
+                              {material.title}
+                            </h3>
+                            <p className="text-gray-700 text-base mb-4 leading-relaxed">{material.description}</p>
+                            
+                            <div className="flex items-center space-x-4 text-sm">
+                              <div className={`bg-gradient-to-r ${materialScheme.accent} bg-opacity-20 px-4 py-2 rounded-xl font-semibold text-gray-800`}>
+                                Type: {material.type}
+                              </div>
+                              {material.size && (
+                                <div className="bg-gradient-to-r from-gray-100 to-slate-200 px-4 py-2 rounded-xl font-semibold text-gray-800">Size: {material.size}</div>
+                              )}
+                              <div className="bg-gradient-to-r from-emerald-100 to-teal-100 px-4 py-2 rounded-xl font-semibold text-emerald-800">
+                                {new Date(material.created_at).toLocaleDateString()}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
                       
                       <div className="flex items-center space-x-3">
                         {/* Preview Button */}
@@ -1818,7 +2043,8 @@ For any queries, contact your course instructors or the department.`,
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1963,47 +2189,50 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
 
-              {/* Courses List */}
-              <div id="courses-section" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 lg:p-8 responsive-container">
-                <div className="flex items-center justify-between mb-6">
+              {/* Courses List - Modern Design */}
+              <div id="courses-section" className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-3xl shadow-xl border border-white/20 backdrop-blur-sm p-6 md:p-8 lg:p-10 responsive-container">
+                <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-responsive">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center ui-element">
-                      <span className="text-blue-600 font-bold no-select">📚</span>
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 ui-element">
+                      <span className="text-white font-bold no-select text-lg">📚</span>
                     </div>
-                    <h3 className="responsive-text-lg font-semibold text-gray-800 no-select">Course Management</h3>
+                    <h3 className="responsive-text-xl font-bold text-gray-800 no-select ml-4">Course Management</h3>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {courses.map((course) => (
-                    <div key={course.id} className="group p-4 md:p-6 border border-gray-200 rounded-xl smooth-card ui-element hover:border-blue-300 transition-smooth">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 responsive-text-lg group-hover:text-blue-600 transition-smooth no-select">{course.name}</h4>
-                          <p className="text-blue-600 font-medium mt-1 no-select">{course.code}</p>
-                          <p className="text-gray-600 responsive-text-sm mt-2 select-text">{course.description}</p>
-                        </div>
-                        <div className="text-right ml-6">
-                          <div className="flex items-center space-x-2 mb-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                              <span className="text-gray-600 text-sm font-medium">
-                                {materials.filter(m => m.course_code === course.code).length}
-                              </span>
-                            </div>
-                            <span className="text-gray-700 font-medium">materials</span>
+                <div className="space-y-6">
+                  {courses.map((course, index) => {
+                    const colorScheme = getCourseColorScheme(course.code, index);
+                    return (
+                      <div key={course.id} className={`group bg-gradient-to-r ${colorScheme.bgGradient} p-6 md:p-8 border-l-4 border-${colorScheme.accent} rounded-2xl shadow-lg hover:shadow-2xl smooth-card ui-element hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className={`font-bold text-gray-900 responsive-text-xl group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300 no-select`}>{course.name}</h4>
+                            <p className={`font-semibold mt-2 no-select ${colorScheme.badge} px-3 py-1 rounded-full inline-block text-sm`}>{course.code}</p>
+                            <p className="text-gray-700 responsive-text-base mt-3 select-text leading-relaxed">{course.description}</p>
                           </div>
-                          <button
-                            onClick={() => handleCourseClick(course)}
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                          >
-                            View Materials
-                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
+                          <div className="text-right ml-8">
+                            <div className="flex items-center space-x-3 mb-4">
+                              <div className={`w-10 h-10 bg-gradient-to-r ${colorScheme.gradient} rounded-2xl flex items-center justify-center shadow-lg`}>
+                                <span className="text-white text-sm font-bold">
+                                  {materials.filter(m => m.course_code === course.code).length}
+                                </span>
+                              </div>
+                              <span className="text-gray-700 font-semibold">materials</span>
+                            </div>
+                            <button
+                              onClick={() => handleCourseClick(course)}
+                              className={`inline-flex items-center px-6 py-3 bg-gradient-to-r ${colorScheme.gradient} text-white rounded-xl hover:shadow-xl transition-all duration-300 text-sm font-semibold shadow-lg transform hover:scale-105`}
+                            >
+                              View Materials
+                              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {courses.length === 0 && (
                     <div className="text-center py-12">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

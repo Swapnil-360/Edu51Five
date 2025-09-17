@@ -74,6 +74,7 @@
 
 .glass-morphism {
   background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -473,6 +474,7 @@
 
   .glass-card {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
   }
@@ -518,6 +520,7 @@
 
 .semester-dashboard {
   background: linear-gradient(to right, rgb(30 58 138 / 0.8), rgb(30 64 175 / 0.8));
+  backdrop-filter: blur(12px);
   border: 1px solid rgb(59 130 246 / 0.3);
   transition: all 0.3s ease;
 }
@@ -842,6 +845,7 @@
 
   .glass-card {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
   }
@@ -887,6 +891,7 @@
 
 .semester-dashboard {
   background: linear-gradient(to right, rgb(30 58 138 / 0.8), rgb(30 64 175 / 0.8));
+  backdrop-filter: blur(12px);
   border: 1px solid rgb(59 130 246 / 0.3);
   transition: all 0.3s ease;
 }
@@ -931,25 +936,5 @@
 .modern-icon:hover {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15)) brightness(1.1);
   transform: translateY(-1px) scale(1.05);
-}
-}
-
-/* Enhanced Logo Clarity and Professional Styling */
-.logo-enhanced {
-  image-rendering: crisp-edges;
-  image-rendering: -webkit-crisp-edges;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -o-crisp-edges;
-  filter: contrast(1.1) brightness(1.05);
-}
-
-.header-professional {
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.notification-professional {
-  background: linear-gradient(135deg, #374151, #1f2937, #374151);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 }
