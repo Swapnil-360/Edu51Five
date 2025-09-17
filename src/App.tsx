@@ -6,6 +6,7 @@ import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFile
 import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
+import PDFViewer from './components/PDFViewer';
 import { 
   FileText, 
   Play, 
@@ -2973,120 +2974,13 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* File Viewer Modal - Enhanced Mobile Responsive Design */}
-        {showFileViewer && (
-          <div 
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-2 md:p-4 modal-overlay"
-            onClick={(e) => {
-              // Close modal when clicking outside on mobile
-              if (e.target === e.currentTarget) {
-                closeFileViewer();
-              }
-            }}
-          >
-            <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl w-full h-full sm:max-w-[95vw] md:max-w-7xl sm:max-h-[95vh] md:max-h-[95vh] flex flex-col shadow-2xl border border-gray-200 modal-content transition-smooth ui-element overflow-hidden">
-              {/* Mobile-Optimized Modal Header */}
-              <div className="flex items-center justify-between p-2 sm:p-3 md:p-4 lg:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg sm:rounded-t-xl md:rounded-t-2xl flex-shrink-0">
-                <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
-                  <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 no-select" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 truncate no-select">
-                      {currentFileName}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 no-select hidden sm:block">File Preview</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                  <a
-                    href={currentFileUrl.replace('/preview', '/view')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg smooth-button transition-smooth shadow-sm ui-element"
-                    title="Open in Google Drive"
-                  >
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    <span className="no-select hidden sm:inline">Open</span>
-                    <span className="no-select sm:hidden">Drive</span>
-                  </a>
-                  <button
-                    onClick={closeFileViewer}
-                    className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md sm:rounded-lg smooth-button transition-smooth ui-element"
-                    title="Close viewer"
-                  >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              {/* Enhanced Mobile-Responsive Modal Content */}
-              <div className="flex-1 bg-gray-50 rounded-b-lg sm:rounded-b-xl md:rounded-b-2xl overflow-hidden relative">
-                {/* Loading overlay for better mobile experience */}
-                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10" id="iframe-loading">
-                  <div className="flex flex-col items-center space-y-2 sm:space-y-3">
-                    <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-blue-600 border-t-transparent"></div>
-                    <p className="text-xs sm:text-sm text-gray-600">Loading document...</p>
-                  </div>
-                </div>
-                
-                {/* Mobile-Optimized Iframe */}
-                <iframe
-                  src={currentFileUrl}
-                  className="w-full h-full border-0 bg-white"
-                  title={currentFileName}
-                  allow="autoplay"
-                  loading="lazy"
-                  onLoad={() => {
-                    const loadingEl = document.getElementById('iframe-loading');
-                    if (loadingEl) loadingEl.style.display = 'none';
-                  }}
-                  style={{
-                    minHeight: '300px',
-                    WebkitOverflowScrolling: 'touch',
-                    transform: 'translateZ(0)', // Hardware acceleration for smooth scrolling
-                  }}
-                />
-                
-                {/* Mobile-friendly touch area for closing */}
-                <div 
-                  className="absolute top-0 left-0 w-full h-12 sm:hidden bg-transparent z-20"
-                  onTouchStart={(e) => {
-                    let startY = e.touches[0].clientY;
-                    const handleTouchMove = (e: TouchEvent) => {
-                      const currentY = e.touches[0].clientY;
-                      if (currentY - startY > 50) { // Swipe down to close
-                        closeFileViewer();
-                        document.removeEventListener('touchmove', handleTouchMove);
-                      }
-                    };
-                    document.addEventListener('touchmove', handleTouchMove);
-                    document.addEventListener('touchend', () => {
-                      document.removeEventListener('touchmove', handleTouchMove);
-                    }, { once: true });
-                  }}
-                />
-                
-                {/* Mobile-specific floating close button */}
-                <button
-                  onClick={closeFileViewer}
-                  className="absolute bottom-4 right-4 sm:hidden w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-30 transition-all duration-300 hover:scale-110"
-                  title="Close file preview"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Enhanced PDF Viewer */}
+        <PDFViewer
+          fileUrl={currentFileUrl}
+          fileName={currentFileName}
+          isOpen={showFileViewer}
+          onClose={closeFileViewer}
+        />
         </div>
       </main>
       )}
