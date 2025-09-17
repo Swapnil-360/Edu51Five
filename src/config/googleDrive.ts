@@ -234,7 +234,7 @@ export const getCourseFiles = (courseCode: string, category: string) => {
         // More files available in the drive folder - will be updated when uploaded
       ],
       "slides": [
-        { id: "cse407_slide1", name: "Project Management Slides 1.pdf", url: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/view", embedUrl: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/preview" },
+        { id: "cse407_slide1", name: "Project Management Slides 1.pdf", url: "https://drive.google.com/file/d/1gp3l5KNjzuZS_vC0LUMQ2omWV4Evdbkl/view", embedUrl: "https://drive.google.com/file/d/1gp3l5KNjzuZS_vC0LUMQ2omWV4Evdbkl/preview" },
         { id: "cse407_slide2", name: "Project Management Slides 2.pdf", url: "https://drive.google.com/file/d/1Tif_siXwLyDEmo_jEqUbt5TjQ9bCvywH/view", embedUrl: "https://drive.google.com/file/d/1Tif_siXwLyDEmo_jEqUbt5TjQ9bCvywH/preview" },
         { id: "cse407_slide3", name: "Project Management Slides 3.pdf", url: "https://drive.google.com/file/d/1E_JtTEB5TxBw6CVPlcRDWTUs06tONAlJ/view", embedUrl: "https://drive.google.com/file/d/1E_JtTEB5TxBw6CVPlcRDWTUs06tONAlJ/preview" },
         // More files available in the drive folder - will be updated when uploaded

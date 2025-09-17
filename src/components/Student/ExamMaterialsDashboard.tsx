@@ -84,14 +84,14 @@ export const ExamMaterialsDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        {/* Enhanced Mobile-Responsive Header */}
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">
             📚 Smart Exam Materials
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
             AI-powered material recommendations for your current exam period
           </p>
         </div>
@@ -99,16 +99,16 @@ export const ExamMaterialsDashboard: React.FC = () => {
         {/* Exam Period Banner */}
         <ExamPeriodBanner />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-xl shadow-md border border-blue-100">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpen className="h-5 w-5 text-blue-600" />
+        {/* Enhanced Mobile-Responsive Quick Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
+          <div className="bg-white p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl shadow-md border border-blue-100">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Materials</p>
-                <p className="font-bold text-xl text-gray-900">{filteredMaterials.length}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Total Materials</p>
+                <p className="font-bold text-lg sm:text-xl text-gray-900">{filteredMaterials.length}</p>
               </div>
             </div>
           </div>

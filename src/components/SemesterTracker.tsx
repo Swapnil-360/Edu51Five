@@ -45,25 +45,26 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="min-h-screen semester-gradient p-4">
-      {/* Header */}
+    <div className="min-h-screen semester-gradient p-2 sm:p-4">
+      {/* Enhanced Mobile-Responsive Header */}
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 glass-card rounded-xl hover-lift">
-              <GraduationCap className="h-8 w-8 text-white" />
+        <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 p-2 sm:p-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
+            <div className="p-2 sm:p-3 glass-card rounded-lg sm:rounded-xl hover-lift flex-shrink-0">
+              <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">Semester Tracker</h1>
-              <p className="text-blue-200">BUBT Intake 51 - Section 5</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Semester Tracker</h1>
+              <p className="text-blue-200 text-xs sm:text-sm md:text-base hidden sm:block">BUBT Intake 51 - Section 5</p>
             </div>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="px-4 py-2 glass-card hover:bg-opacity-20 text-white rounded-lg transition-all duration-200 hover-lift"
+              className="px-3 py-2 sm:px-4 sm:py-2 glass-card hover:bg-opacity-20 text-white rounded-lg transition-all duration-200 hover-lift text-sm sm:text-base flex-shrink-0"
             >
-              Back to Dashboard
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="sm:hidden">Back</span>
             </button>
           )}
         </div>

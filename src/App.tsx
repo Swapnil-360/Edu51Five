@@ -113,6 +113,7 @@ function App() {
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [showNoticePanel, setShowNoticePanel] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   
   // File viewer modal states
@@ -202,6 +203,33 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handle click outside to close mobile menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Close mobile menu if clicking outside of it
+      if (showMobileMenu) {
+        const mobileMenuButton = document.querySelector('[title="Menu"]');
+        const mobileMenuDropdown = document.querySelector('.mobile-menu-dropdown');
+        
+        if (mobileMenuButton && mobileMenuDropdown) {
+          if (!mobileMenuButton.contains(target) && !mobileMenuDropdown.contains(target)) {
+            setShowMobileMenu(false);
+          }
+        }
+      }
+    };
+
+    if (showMobileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMobileMenu]);
 
   // Initialize database tables if they don't exist
   const initializeDatabase = async () => {
@@ -535,6 +563,11 @@ For any queries, contact your course instructors or the department.`,
   // Toggle notice panel
   const toggleNoticePanel = () => {
     setShowNoticePanel(!showNoticePanel);
+  };
+
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu);
   };
 
   // Get unread notice count
@@ -1156,33 +1189,33 @@ For any queries, contact your course instructors or the department.`,
   // Main return for all other views
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-      {/* Enhanced Mobile Header with Better Logo Visibility */}
+      {/* Enhanced Mobile-First Responsive Header */}
       <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 z-40">
-        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-          <div className="flex items-center justify-between h-20 sm:h-20 md:h-22 lg:h-24 xl:h-26">
-            <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5">
+        <div className="mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
+          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
+            
+            {/* Left Side - Logo and Brand */}
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0 min-w-0">
               <button
                 onClick={() => goToView('home')}
-                className="flex items-center space-x-3 sm:space-x-3 md:space-x-4 focus:outline-none group"
+                className="flex items-center space-x-2 sm:space-x-3 focus:outline-none group"
                 title="Go to Home"
               >
-                <div className="relative">
-                  <img 
-                    src="/Edu_51_Logo.png" 
-                    alt="Edu51Five Logo" 
-                    className="h-12 w-12 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 xl:h-18 xl:w-18 object-contain no-select rounded-xl shadow-lg bg-white p-2 border-2 border-slate-300" 
-                  />
+                <div className="relative flex-shrink-0">
+                  <div className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 rounded-xl shadow-xl bg-gradient-to-br from-white to-gray-50 p-1 border-2 border-white/30 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
+                    <img 
+                      src="/Edu_51_Logo.png" 
+                      alt="Edu51Five Logo" 
+                      className="h-full w-full object-cover rounded-lg no-select transform transition-transform duration-300 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
                 </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-base md:text-xl lg:text-2xl font-bold no-select text-white">
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold no-select text-white truncate">
                     Edu<span className="text-red-400">51</span>Five
                   </h1>
-                  <p className="text-xs md:text-sm text-gray-300 no-select">Intake 51</p>
-                </div>
-                <div className="sm:hidden">
-                  <h1 className="text-base font-bold no-select text-white">
-                    Edu<span className="text-red-400">51</span>Five
-                  </h1>
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-300 no-select truncate">Intake 51</p>
                 </div>
               </button>
             </div>
@@ -1291,58 +1324,135 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
             
-            <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7">
-              {/* Modern Exam Materials Button */}
-              <button
-                onClick={() => goToView('examMaterials')}
-                className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
-                title="Smart Exam Materials"
-              >
-                <BookOpen className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
-              </button>
-
-              {/* Modern Semester Tracker Button */}
-              <button
-                onClick={() => goToView('semester')}
-                className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
-                title="Semester Tracker"
-              >
-                <Calendar className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
-              </button>
-
-              {/* Professional Notice Bell Icon */}
-              <div className="relative">
+            {/* Right Side - Mobile-First Navigation */}
+            <div className="flex items-center flex-shrink-0">
+              
+              {/* Mobile Menu Button - Shows on mobile/tablet */}
+              <div className="relative md:hidden">
                 <button
-                  onClick={toggleNoticePanel}
-                  className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
-                  title="Notifications"
+                  onClick={toggleMobileMenu}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-lg border border-blue-400/40 group"
+                  title="Menu"
                 >
-                  <Bell className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                   {getUnreadNoticeCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-xl border border-white animate-pulse">
                       {getUnreadNoticeCount()}
                     </span>
                   )}
                 </button>
+
+                {/* Mobile Dropdown Menu - Enhanced Mobile Design */}
+                {showMobileMenu && (
+                  <div className="mobile-menu-dropdown absolute top-full right-0 mt-3 w-72 sm:w-80 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 z-50 animate-in slide-in-from-top-2 duration-300">
+                    <div className="p-4 sm:p-5 space-y-3">
+                      {/* Smart Exam Materials */}
+                      <button
+                        onClick={() => {
+                          goToView('examMaterials');
+                          setShowMobileMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 transition-all duration-300 group border border-orange-500/20 hover:border-orange-400/40"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-white drop-shadow-sm" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <span className="text-white font-semibold text-base block">Smart Exam Materials</span>
+                          <span className="text-gray-300 text-sm">Access study resources</span>
+                        </div>
+                      </button>
+                      
+                      {/* Semester Tracker */}
+                      <button
+                        onClick={() => {
+                          goToView('semester');
+                          setShowMobileMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 transition-all duration-300 group border border-blue-500/20 hover:border-blue-400/40"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-white drop-shadow-sm" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <span className="text-white font-semibold text-base block">Semester Tracker</span>
+                          <span className="text-gray-300 text-sm">Track your progress</span>
+                        </div>
+                      </button>
+                      
+                      {/* Notifications Section - Enhanced as Interactive Button */}
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          setShowNoticePanel(true);
+                        }}
+                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-indigo-500/20 to-blue-500/20 hover:from-indigo-500/30 hover:to-blue-500/30 transition-all duration-300 group border border-indigo-500/20 hover:border-indigo-400/40"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 flex items-center justify-center relative">
+                          <Bell className="h-5 w-5 text-white drop-shadow-sm" />
+                          {getUnreadNoticeCount() > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-lg border border-white animate-pulse">
+                              {getUnreadNoticeCount()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <span className="text-white font-semibold text-base block">Notifications</span>
+                          <span className="text-gray-300 text-sm">
+                            {getUnreadNoticeCount() > 0 ? `${getUnreadNoticeCount()} new notifications` : 'No new notifications'}
+                          </span>
+                        </div>
+                      </button>
+                      
+                      {/* Optional: Separator for clarity */}
+                      <div className="border-t border-gray-700/30 pt-2">
+                        <div className="text-center">
+                          <span className="text-gray-400 text-xs font-medium">💡 Tap any option above to navigate</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {currentView === 'course' && selectedCourse && (
+              {/* Desktop Navigation - Shows on medium screens and up */}
+              <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+                {/* Modern Exam Materials Button */}
                 <button
-                  onClick={handleBackToSection}
-                  className="hidden sm:flex items-center space-x-1 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300 text-sm hover:shadow-xl hover:scale-105 group"
+                  onClick={() => goToView('examMaterials')}
+                  className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm border border-white/20 group"
+                  title="Smart Exam Materials"
                 >
-                  <span className="text-white group-hover:text-blue-100 transition-colors duration-300">← Back to Courses</span>
+                  <BookOpen className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                 </button>
-              )}
-              
-              {currentView === 'section5' && (
+
+                {/* Modern Semester Tracker Button */}
                 <button
-                  onClick={handleBackToHome}
-                  className="hidden sm:flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-800 hover:bg-blue-700 transition-colors text-sm"
+                  onClick={() => goToView('semester')}
+                  className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm border border-white/20 group"
+                  title="Semester Tracker"
                 >
-                  <span>← Back to Home</span>
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                 </button>
-              )}
+
+                {/* Professional Notice Bell Icon */}
+                <div className="relative">
+                  <button
+                    onClick={toggleNoticePanel}
+                    className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-blue-400/40 hover:border-blue-300/60 group"
+                    title="Notifications"
+                  >
+                    <Bell className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                    {getUnreadNoticeCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-xl border border-white animate-pulse">
+                        {getUnreadNoticeCount()}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
 
               {isAdmin && (
                 <button
@@ -1502,72 +1612,72 @@ For any queries, contact your course instructors or the department.`,
         </div>
       )}
 
-      {/* Main Content - Hidden when semester tracker is active */}
+      {/* Main Content - Enhanced Mobile Responsive Design */}
       {currentView !== 'semester' && (
-        <main className="pt-20 sm:pt-20 md:pt-22 lg:pt-24 xl:pt-26 min-h-screen">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
         {/* Home Page */}
         {currentView === 'home' && (
-          <div className="space-y-8 md:space-y-12">
-            {/* Hero Section - Modern Professional Design */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-indigo-100/30 rounded-3xl shadow-2xl border border-white/60 backdrop-blur-sm">
+          <div className="space-y-6 sm:space-y-8 md:space-y-12">
+            {/* Hero Section - Enhanced Mobile Responsive Design */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-indigo-100/30 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/60 backdrop-blur-sm">
               {/* Decorative Background Elements */}
               <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-400/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
+                <div className="absolute top-0 right-0 w-64 sm:w-80 md:w-96 h-64 sm:h-80 md:h-96 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-48 sm:w-64 md:w-80 h-48 sm:h-64 md:h-80 bg-gradient-to-tr from-indigo-400/20 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
               </div>
               
-              <div className="relative z-10 p-8 md:p-12 lg:p-16">
-                <div className="text-center mb-12 md:mb-16">
+              <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
+                <div className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16">
                   {/* Enhanced Logo with Professional Styling */}
-                  <div className="relative mb-8 md:mb-10">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl w-24 h-24 md:w-28 md:h-28 mx-auto"></div>
+                  <div className="relative mb-6 sm:mb-8 md:mb-10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 mx-auto"></div>
                     <img 
                       src="/image.png" 
                       alt="Edu51Five Logo" 
-                      className="relative h-20 w-20 md:h-24 md:w-24 mx-auto object-contain shadow-2xl rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 p-2" 
+                      className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 mx-auto object-contain shadow-2xl rounded-xl sm:rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 p-1.5 sm:p-2" 
                     />
                   </div>
                   
-                  {/* Professional Typography */}
-                  <div className="space-y-4 md:space-y-6 mb-10 md:mb-12">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent no-select leading-tight">
+                  {/* Professional Typography with Mobile Optimization */}
+                  <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-8 sm:mb-10 md:mb-12">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent no-select leading-tight px-2">
                       Welcome to Edu<span className="text-red-500">51</span>Five
                     </h1>
-                    <div className="relative">
-                      <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-700 no-select">
+                    <div className="relative px-2">
+                      <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-700 no-select">
                         BUBT Intake 51 Excellence Platform
                       </h2>
-                      <p className="text-lg md:text-xl text-gray-600 mt-2 font-medium no-select">
+                      <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mt-1 sm:mt-2 font-medium no-select">
                         Department of Computer Science & Engineering
                       </p>
                     </div>
                   </div>
 
-                  {/* Platform Features - Realistic & Compact */}
-                  <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 mb-10">
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 p-2 rounded-xl shadow-lg mb-3">
-                        <span className="text-lg text-white no-select">🎯</span>
+                  {/* Platform Features - Enhanced Mobile Layout */}
+                  <div className="bg-white/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg border border-white/50 mb-8 sm:mb-10">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-lg mb-2 sm:mb-3">
+                        <span className="text-base sm:text-lg text-white no-select">🎯</span>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-800 no-select">Platform Features</h3>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-800 no-select">Platform Features</h3>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                       {[
                         { icon: "📚", text: "Course Materials", desc: "Study resources" },
                         { icon: "📝", text: "Past Questions", desc: "Previous exams" },
                         { icon: "🔔", text: "Smart Notices", desc: "Important updates" },
                         { icon: "📁", text: "Google Drive", desc: "Cloud storage" },
                         { icon: "⏰", text: "Semester Tracker", desc: "Progress timeline" },
-                        { icon: "�", text: "Mobile Ready", desc: "Responsive design" }
+                        { icon: "📱", text: "Mobile Ready", desc: "Responsive design" }
                       ].map((feature, index) => (
-                        <div key={index} className="bg-white/70 backdrop-blur-sm p-3 rounded-lg border border-white/40 hover:bg-white/80 transition-colors duration-200">
+                        <div key={index} className="bg-white/70 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-white/40 hover:bg-white/80 transition-colors duration-200">
                           <div className="text-center">
-                            <span className="text-lg mb-2 block no-select">{feature.icon}</span>
-                            <h4 className="text-sm font-semibold text-gray-800 no-select">{feature.text}</h4>
-                            <p className="text-xs text-gray-600 no-select mt-1">{feature.desc}</p>
+                            <span className="text-sm sm:text-base md:text-lg mb-1 sm:mb-2 block no-select">{feature.icon}</span>
+                            <h4 className="text-xs sm:text-sm font-semibold text-gray-800 no-select leading-tight">{feature.text}</h4>
+                            <p className="text-xs text-gray-600 no-select mt-0.5 sm:mt-1 hidden sm:block">{feature.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -1575,29 +1685,54 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </div>
                 
-                {/* Enhanced Section Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 mb-12 md:mb-16">
-                  {/* Active Section Card */}
+                {/* Enhanced Section Cards with Mobile-First Design */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10 mb-8 sm:mb-10 md:mb-12 lg:mb-16">
+                  {/* Active Section Card - Mobile Optimized */}
                   <div 
-                    className="group relative overflow-hidden bg-gradient-to-br from-white to-blue-50/80 backdrop-blur-md rounded-2xl p-8 md:p-10 shadow-2xl border border-white/60 hover:shadow-3xl cursor-pointer transition-all duration-500 transform hover:-translate-y-3 hover:border-blue-400/60"
+                    className="group relative overflow-hidden bg-gradient-to-br from-white to-blue-50/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl border border-white/60 hover:shadow-3xl cursor-pointer transition-all duration-500 transform hover:-translate-y-2 sm:hover:-translate-y-3 hover:border-blue-400/60"
                     onClick={() => goToView('section5')}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="relative z-10">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-3 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <img 
-                          src="/sec5.png" 
-                          alt="Section 5 CSE" 
-                          className="w-10 h-10 object-contain filter brightness-0 invert"
-                        />
+                      <div className="bg-gradient-to-r from-emerald-500 via-blue-600 to-purple-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center shadow-xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 relative overflow-hidden">
+                        {/* Special Premium Badge Design */}
+                        <div className="relative flex items-center justify-center">
+                          <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-lg"></div>
+                          
+                          {/* Main Crown/Shield Icon */}
+                          <svg className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                            {/* Crown Base */}
+                            <path d="M5 16L3 10L7.5 12L12 8L16.5 12L21 10L19 16H5Z" opacity="0.9"/>
+                            
+                            {/* Crown Jewels */}
+                            <circle cx="7.5" cy="11" r="1" className="text-yellow-300"/>
+                            <circle cx="12" cy="9" r="1.2" className="text-yellow-200"/>
+                            <circle cx="16.5" cy="11" r="1" className="text-yellow-300"/>
+                            
+                            {/* Special "5" in the center */}
+                            <text x="12" y="14" textAnchor="middle" className="text-xs font-bold fill-white">5</text>
+                            
+                            {/* Decorative Stars */}
+                            <path d="M6 6L6.5 7.5L8 8L6.5 8.5L6 10L5.5 8.5L4 8L5.5 7.5Z" opacity="0.7"/>
+                            <path d="M18 6L18.5 7.5L20 8L18.5 8.5L18 10L17.5 8.5L16 8L17.5 7.5Z" opacity="0.7"/>
+                          </svg>
+                          
+                          {/* Animated Glow Effect */}
+                          <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400/40 via-blue-400/40 to-purple-400/40 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></div>
+                          
+                          {/* Special Badge */}
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-bold">★</span>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-blue-700 transition-colors duration-300 no-select">
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 group-hover:text-blue-700 transition-colors duration-300 no-select">
                         Section 5 - CSE
                       </h3>
-                      <p className="text-gray-600 mb-4 text-base md:text-lg leading-relaxed">
+                      <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base md:text-lg leading-relaxed">
                         Computer Science & Engineering Department - Your gateway to academic excellence
                       </p>
-                      <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-3 mb-6 border border-blue-200/50">
+                      <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-2 sm:p-3 mb-4 sm:mb-6 border border-blue-200/50">
                         <p className="text-blue-800 font-semibold text-center">
                           <span className="text-2xl font-bold text-blue-600">{courses.length}</span> Active Courses Available
                         </p>
@@ -1616,7 +1751,7 @@ For any queries, contact your course instructors or the department.`,
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-slate-500/10"></div>
                     <div className="relative z-10">
                       <div className="bg-gradient-to-r from-gray-400 to-slate-500 p-4 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6">
-                        <span className="text-3xl text-white no-select">�</span>
+                        <span className="text-3xl text-white no-select">🔧</span>
                       </div>
                       <h3 className="text-2xl md:text-3xl font-bold text-gray-700 mb-4 no-select">
                         Other Sections
@@ -1704,7 +1839,8 @@ For any queries, contact your course instructors or the department.`,
                               </svg>
                             </a>
                           </p>
-                          <p className="text-slate-400 text-xs">CSE Student</p>
+                          <p className="text-slate-400 text-xs">Intake 51, Sec 5</p>
+                          <p className="text-slate-400 text-xs">Dept. of CSE, BUBT</p>
                         </div>
                       </div>
                     </div>
@@ -2837,58 +2973,116 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* File Viewer Modal */}
+        {/* File Viewer Modal - Enhanced Mobile Responsive Design */}
         {showFileViewer && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 modal-overlay">
-            <div className="bg-white rounded-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col shadow-2xl border border-gray-200 modal-content transition-smooth ui-element">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
-                <div className="flex items-center space-responsive">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <svg className="w-5 h-5 text-blue-600 no-select" viewBox="0 0 24 24" fill="currentColor">
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-2 md:p-4 modal-overlay"
+            onClick={(e) => {
+              // Close modal when clicking outside on mobile
+              if (e.target === e.currentTarget) {
+                closeFileViewer();
+              }
+            }}
+          >
+            <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl w-full h-full sm:max-w-[95vw] md:max-w-7xl sm:max-h-[95vh] md:max-h-[95vh] flex flex-col shadow-2xl border border-gray-200 modal-content transition-smooth ui-element overflow-hidden">
+              {/* Mobile-Optimized Modal Header */}
+              <div className="flex items-center justify-between p-2 sm:p-3 md:p-4 lg:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg sm:rounded-t-xl md:rounded-t-2xl flex-shrink-0">
+                <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
+                  <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 no-select" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="responsive-text-lg font-semibold text-gray-900 truncate max-w-md no-select">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 truncate no-select">
                       {currentFileName}
                     </h3>
-                    <p className="responsive-text-sm text-gray-600 no-select">File Preview</p>
+                    <p className="text-xs sm:text-sm text-gray-600 no-select hidden sm:block">File Preview</p>
                   </div>
                 </div>
-                <div className="flex items-center space-responsive">
+                <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                   <a
                     href={currentFileUrl.replace('/preview', '/view')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 px-3 md:px-4 py-2 responsive-text-sm bg-blue-600 text-white rounded-lg smooth-button transition-smooth shadow-sm ui-element"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg smooth-button transition-smooth shadow-sm ui-element"
+                    title="Open in Google Drive"
                   >
-                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    <span className="no-select">Open in Drive</span>
+                    <span className="no-select hidden sm:inline">Open</span>
+                    <span className="no-select sm:hidden">Drive</span>
                   </a>
                   <button
                     onClick={closeFileViewer}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg smooth-button transition-smooth ui-element"
+                    className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md sm:rounded-lg smooth-button transition-smooth ui-element"
                     title="Close viewer"
                   >
-                    <svg className="w-6 h-6 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
               </div>
               
-              {/* Modal Content */}
-              <div className="flex-1 bg-gray-50 rounded-b-2xl overflow-hidden">
+              {/* Enhanced Mobile-Responsive Modal Content */}
+              <div className="flex-1 bg-gray-50 rounded-b-lg sm:rounded-b-xl md:rounded-b-2xl overflow-hidden relative">
+                {/* Loading overlay for better mobile experience */}
+                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10" id="iframe-loading">
+                  <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                    <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-blue-600 border-t-transparent"></div>
+                    <p className="text-xs sm:text-sm text-gray-600">Loading document...</p>
+                  </div>
+                </div>
+                
+                {/* Mobile-Optimized Iframe */}
                 <iframe
                   src={currentFileUrl}
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 bg-white"
                   title={currentFileName}
                   allow="autoplay"
                   loading="lazy"
+                  onLoad={() => {
+                    const loadingEl = document.getElementById('iframe-loading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                  }}
+                  style={{
+                    minHeight: '300px',
+                    WebkitOverflowScrolling: 'touch',
+                    transform: 'translateZ(0)', // Hardware acceleration for smooth scrolling
+                  }}
                 />
+                
+                {/* Mobile-friendly touch area for closing */}
+                <div 
+                  className="absolute top-0 left-0 w-full h-12 sm:hidden bg-transparent z-20"
+                  onTouchStart={(e) => {
+                    let startY = e.touches[0].clientY;
+                    const handleTouchMove = (e: TouchEvent) => {
+                      const currentY = e.touches[0].clientY;
+                      if (currentY - startY > 50) { // Swipe down to close
+                        closeFileViewer();
+                        document.removeEventListener('touchmove', handleTouchMove);
+                      }
+                    };
+                    document.addEventListener('touchmove', handleTouchMove);
+                    document.addEventListener('touchend', () => {
+                      document.removeEventListener('touchmove', handleTouchMove);
+                    }, { once: true });
+                  }}
+                />
+                
+                {/* Mobile-specific floating close button */}
+                <button
+                  onClick={closeFileViewer}
+                  className="absolute bottom-4 right-4 sm:hidden w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-30 transition-all duration-300 hover:scale-110"
+                  title="Close file preview"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -2910,10 +3104,10 @@ For any queries, contact your course instructors or the department.`,
           <div className="relative h-full">
             <button
               onClick={() => goToView('home')}
-              className="fixed top-4 right-4 z-60 flex items-center justify-center w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+              className="fixed top-2 right-2 sm:top-4 sm:right-4 z-60 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
               title="Close"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
             <ExamMaterialsDashboard />
           </div>
