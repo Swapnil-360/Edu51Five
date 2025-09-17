@@ -227,7 +227,9 @@ export const getCourseFiles = (courseCode: string, category: string) => {
     },
     "CSE-407": {
       "ct-questions": [
-        // Files will be updated later when uploaded to Google Drive
+        { id: "cse407_ct1", name: "CSE-407 CT Question 1.pdf", url: "https://drive.google.com/file/d/1IWKcqUTeOE3t0-eqMApTX10-BpS9Nucm/view", embedUrl: "https://drive.google.com/file/d/1IWKcqUTeOE3t0-eqMApTX10-BpS9Nucm/preview" },
+        { id: "cse407_ct2", name: "CSE-407 CT Question 2.pdf", url: "https://drive.google.com/file/d/1-EfT-cRMsfN3PRQ3YfreBNffPFlLcCkg/view", embedUrl: "https://drive.google.com/file/d/1-EfT-cRMsfN3PRQ3YfreBNffPFlLcCkg/preview" },
+        { id: "cse407_ct3", name: "CSE-407 CT Question 3.pdf", url: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/view", embedUrl: "https://drive.google.com/file/d/bc1q63k6h64n7n56p23cjzu5yl6yfu55yxk6swy66k/preview" },
       ],
       "notes": [
         { id: "cse407_notes1", name: "CSE-407 by Intake-49.pdf", url: "https://drive.google.com/file/d/1kX3PLSVju_sxIOifprP-miybjVkTYE0p/view", embedUrl: "https://drive.google.com/file/d/1kX3PLSVju_sxIOifprP-miybjVkTYE0p/preview" },
