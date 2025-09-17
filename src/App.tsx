@@ -1158,38 +1158,37 @@ For any queries, contact your course instructors or the department.`,
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
       {/* Enhanced Mobile Header with Better Logo Visibility */}
       <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 z-40">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
           <div className="flex items-center justify-between h-20 sm:h-20 md:h-22 lg:h-24 xl:h-26">
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5">
               <button
                 onClick={() => goToView('home')}
-                className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 bg-slate-800/90 hover:bg-slate-700/95 rounded-2xl px-3 py-2.5 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-600/50 hover:border-slate-500/70 group focus:outline-none"
+                className="flex items-center space-x-3 sm:space-x-3 md:space-x-4 focus:outline-none group"
                 title="Go to Home"
               >
                 <div className="relative">
                   <img 
                     src="/Edu_51_Logo.png" 
                     alt="Edu51Five Logo" 
-                    className="h-12 w-12 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 xl:h-18 xl:w-18 object-contain no-select rounded-xl shadow-xl bg-white p-2 transition-all duration-300 group-hover:shadow-2xl group-hover:bg-gray-50 border-2 border-slate-300 group-hover:border-blue-300" 
+                    className="h-12 w-12 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 xl:h-18 xl:w-18 object-contain no-select rounded-xl shadow-lg bg-white p-2 border-2 border-slate-300" 
                   />
-                  <div className="absolute inset-0 rounded-xl ring-1 ring-blue-400/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-base md:text-xl font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
-                    Edu<span className="text-red-400 group-hover:text-red-300">51</span>Five
+                  <h1 className="text-base md:text-xl lg:text-2xl font-bold no-select text-white">
+                    Edu<span className="text-red-400">51</span>Five
                   </h1>
-                  <p className="text-xs text-gray-300 no-select group-hover:text-gray-200 transition-colors duration-300">Intake 51</p>
+                  <p className="text-xs md:text-sm text-gray-300 no-select">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-base font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
-                    Edu<span className="text-red-400 group-hover:text-red-300">51</span>Five
+                  <h1 className="text-base font-bold no-select text-white">
+                    Edu<span className="text-red-400">51</span>Five
                   </h1>
                 </div>
               </button>
             </div>
 
             {/* Real-time Semester Dashboard - Beautiful Display (Non-clickable) */}
-            <div className="hidden lg:flex items-center space-x-4 glass-card px-6 py-3 transition-all duration-300 shadow-lg">
+            <div className="hidden lg:flex items-center space-x-5 xl:space-x-6 glass-card px-6 py-3 transition-all duration-300 shadow-lg">
               {/* Live Clock with Animation */}
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-600 bg-opacity-30 rounded-lg transition-all duration-300">
@@ -1292,35 +1291,35 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
             
-            <div className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 lg:space-x-4 xl:space-x-5">
+            <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7">
               {/* Modern Exam Materials Button */}
               <button
                 onClick={() => goToView('examMaterials')}
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
+                className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Smart Exam Materials"
               >
-                <BookOpen className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                <BookOpen className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
               {/* Modern Semester Tracker Button */}
               <button
                 onClick={() => goToView('semester')}
-                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
+                className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Semester Tracker"
               >
-                <Calendar className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                <Calendar className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
               {/* Professional Notice Bell Icon */}
               <div className="relative">
                 <button
                   onClick={toggleNoticePanel}
-                  className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
+                  className="flex items-center justify-center w-11 h-11 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
                   title="Notifications"
                 >
-                  <Bell className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                  <Bell className="h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                   {getUnreadNoticeCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
                       {getUnreadNoticeCount()}
                     </span>
                   )}
