@@ -1153,21 +1153,21 @@ For any queries, contact your course instructors or the department.`,
   // Main return for all other views
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-      {/* Modern Professional Header with Enhanced Logo Clarity */}
+      {/* Enhanced Mobile Header with Better Logo Visibility */}
       <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 z-40">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
-            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
+          <div className="flex items-center justify-between h-20 sm:h-20 md:h-22 lg:h-24 xl:h-26">
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
               <button
                 onClick={() => setCurrentView('home')}
-                className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 bg-slate-800/90 hover:bg-slate-700/95 rounded-2xl px-3 py-2 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-600/50 hover:border-slate-500/70 group focus:outline-none"
+                className="flex items-center space-x-2 sm:space-x-2 md:space-x-3 bg-slate-800/90 hover:bg-slate-700/95 rounded-2xl px-3 py-2.5 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-slate-600/50 hover:border-slate-500/70 group focus:outline-none"
                 title="Go to Home"
               >
                 <div className="relative">
                   <img 
                     src="/Edu_51_Logo.png" 
                     alt="Edu51Five Logo" 
-                    className="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16 object-contain no-select rounded-xl shadow-xl bg-white p-2 transition-all duration-300 group-hover:shadow-2xl group-hover:bg-gray-50 border-2 border-slate-300 group-hover:border-blue-300" 
+                    className="h-12 w-12 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 xl:h-18 xl:w-18 object-contain no-select rounded-xl shadow-xl bg-white p-2 transition-all duration-300 group-hover:shadow-2xl group-hover:bg-gray-50 border-2 border-slate-300 group-hover:border-blue-300" 
                   />
                   <div className="absolute inset-0 rounded-xl ring-1 ring-blue-400/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -1178,7 +1178,7 @@ For any queries, contact your course instructors or the department.`,
                   <p className="text-xs text-gray-300 no-select group-hover:text-gray-200 transition-colors duration-300">Intake 51</p>
                 </div>
                 <div className="sm:hidden">
-                  <h1 className="text-sm font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
+                  <h1 className="text-base font-bold no-select text-white group-hover:text-blue-100 transition-colors duration-300">
                     Edu<span className="text-red-400 group-hover:text-red-300">51</span>Five
                   </h1>
                 </div>
@@ -1293,29 +1293,29 @@ For any queries, contact your course instructors or the department.`,
               {/* Modern Exam Materials Button */}
               <button
                 onClick={() => goToView('examMaterials')}
-                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-400 hover:via-red-400 hover:to-pink-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Smart Exam Materials"
               >
-                <BookOpen className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                <BookOpen className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
               {/* Modern Semester Tracker Button */}
               <button
                 onClick={() => goToView('semester')}
-                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
+                className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 backdrop-blur-sm border border-white/20 group"
                 title="Semester Tracker"
               >
-                <Calendar className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                <Calendar className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
               </button>
 
               {/* Professional Notice Bell Icon */}
               <div className="relative">
                 <button
                   onClick={toggleNoticePanel}
-                  className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
+                  className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 border border-blue-400/40 hover:border-blue-300/60 group"
                   title="Notifications"
                 >
-                  <Bell className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                  <Bell className="h-5 w-5 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                   {getUnreadNoticeCount() > 0 && (
                     <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
                       {getUnreadNoticeCount()}
@@ -1502,7 +1502,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Hidden when semester tracker is active */}
       {currentView !== 'semester' && (
-        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen">
+        <main className="pt-20 sm:pt-20 md:pt-22 lg:pt-24 xl:pt-26 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Home Page */}
         {currentView === 'home' && (
