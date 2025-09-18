@@ -36,10 +36,9 @@
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   z-index: 9999;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
   /* Prevent body scroll affecting modal position */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
@@ -52,14 +51,11 @@
   contain: layout style paint;
 }
 
-/* Ensure modal content is always properly positioned */
+/* Modal content styling - positioning handled by component inline styles */
 .pdf-modal-content {
-  position: relative;
-  margin: 0 auto;
-  /* Ensure centering works on all mobile browsers */
-  transform: translateZ(0);
+  /* Component handles positioning - no forced positioning here */
+  /* Only add visual styling that doesn't conflict with positioning */
   backface-visibility: hidden;
-  /* Force hardware acceleration for stable positioning */
   will-change: transform;
 }
 
@@ -89,47 +85,22 @@
 /* Mobile-specific adjustments */
 @media (max-width: 768px) {
   .pdf-modal-overlay {
-    padding: 8px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    /* Force center positioning on mobile */
-    display: flex !important;
-    flex-direction: column !important;
-    /* Remove any potential transforms that could affect positioning */
-    transform: none !important;
-    /* Ensure consistent viewport behavior */
+    /* Ensure proper viewport coverage */
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    /* Center content perfectly */
-    align-content: center !important;
-    justify-items: center !important;
-  }
-  
-  .pdf-modal-content {
-    max-width: 90vw !important;
-    max-height: 80vh !important;
-    min-width: 85vw !important;
-    min-height: 70vh !important;
-    /* Ensure modal is centered in viewport */
-    margin: auto !important;
-    /* Remove any positioning that could interfere */
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    /* Force center alignment */
-    align-self: center !important;
-    justify-self: center !important;
+    /* Prevent any scrolling issues */
+    overscroll-behavior: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Fullscreen mode overrides */
-  .pdf-modal-content[style*="width: 100%"] {
-    max-width: 100vw !important;
-    max-height: 100vh !important;
-    min-width: 100vw !important;
-    min-height: 100vh !important;
+  .pdf-modal-content {
+    /* Component handles all positioning and dimensions */
+    /* No mobile-specific positioning overrides needed */
   }
 
   /* Mobile PDF optimizations */
@@ -140,21 +111,23 @@
     max-width: 100% !important;
   }
 
-  /* Ensure full-width iframe on mobile */
+  /* Enhanced mobile iframe handling */
   .pdf-modal-content iframe {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: calc(100% - 80px) !important;
+    /* Let component styles handle dimensions */
+    /* Enhanced touch behavior */
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: manipulation !important;
   }
 
   /* Hide complex controls on mobile */
   .pdf-controls-complex {
-    display: none;
+    display: none !important;
   }
 
   /* Simplified mobile controls */
   .pdf-controls-mobile {
-    display: flex;
+    display: flex !important;
   }
 }
 

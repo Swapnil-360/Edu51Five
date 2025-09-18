@@ -18,25 +18,40 @@ const isMobileDevice = () => {
 const getOptimalDimensions = (isFullscreen: boolean, isMobile: boolean) => {
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
-  
+
   if (isFullscreen) {
     return {
-      width: '100%',
-      height: '100%',
+      width: '100vw',
+      height: '100vh',
       maxWidth: '100vw',
       maxHeight: '100vh',
+      minWidth: '100vw',
+      minHeight: '100vh',
     };
   }
-  
+
   if (isMobile) {
-    // Mobile: Optimize for centered viewport positioning
-    const optimalWidth = Math.min(screenWidth * 0.95, 500);
-    const optimalHeight = Math.min(screenHeight * 0.82, 650); // Slightly reduced for better centering
+    // Mobile: Use safe area and viewport calculations
+    const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0');
+    const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
+    const safeAreaLeft = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)') || '0');
+    const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
+
+    // Account for safe areas and notches
+    const availableWidth = screenWidth - safeAreaLeft - safeAreaRight;
+    const availableHeight = screenHeight - safeAreaTop - safeAreaBottom;
+
+    // Use 92% of available space for better centering
+    const optimalWidth = Math.min(availableWidth * 0.92, availableWidth - 32); // 32px padding
+    const optimalHeight = Math.min(availableHeight * 0.88, availableHeight - 120); // Account for header
+
     return {
       width: `${optimalWidth}px`,
       height: `${optimalHeight}px`,
-      maxWidth: '95vw',
-      maxHeight: '82vh', // Reduced from 85vh for better viewport centering
+      maxWidth: `${availableWidth * 0.95}px`,
+      maxHeight: `${availableHeight * 0.92}px`,
+      minWidth: `${Math.min(320, availableWidth * 0.9)}px`,
+      minHeight: `${Math.min(400, availableHeight * 0.7)}px`,
     };
   } else {
     // Desktop: Optimize for productivity
@@ -47,6 +62,8 @@ const getOptimalDimensions = (isFullscreen: boolean, isMobile: boolean) => {
       height: `${optimalHeight}px`,
       maxWidth: '80vw',
       maxHeight: '90vh',
+      minWidth: '600px',
+      minHeight: '500px',
     };
   }
 };
@@ -57,7 +74,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
   const [error, setError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: '800px', height: '600px', maxWidth: '80vw', maxHeight: '90vh' });
+  const [dimensions, setDimensions] = useState({
+    width: '800px',
+    height: '600px',
+    maxWidth: '80vw',
+    maxHeight: '90vh',
+    minWidth: '600px',
+    minHeight: '500px'
+  });
 
   // Update dimensions on resize or fullscreen change
   useEffect(() => {
@@ -83,22 +107,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
       // Get current scroll position before locking
       const scrollY = window.scrollY;
       const scrollX = window.scrollX;
-      
+
       // Store original styles to restore later
       const originalBodyStyle = {
-        overflow: document.body.style.overflow,
-        position: document.body.style.position,
-        top: document.body.style.top,
-        left: document.body.style.left,
-        right: document.body.style.right,
-        width: document.body.style.width,
-        height: document.body.style.height,
+        overflow: document.body.style.overflow || '',
+        position: document.body.style.position || '',
+        top: document.body.style.top || '',
+        left: document.body.style.left || '',
+        right: document.body.style.right || '',
+        width: document.body.style.width || '',
+        height: document.body.style.height || '',
+        paddingRight: document.body.style.paddingRight || '',
       };
-      
+
       const originalHtmlStyle = {
-        overflow: document.documentElement.style.overflow,
+        overflow: document.documentElement.style.overflow || '',
       };
-      
+
+      // Calculate scrollbar width to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
       // Lock body scroll and ensure modal is positioned relative to viewport
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
@@ -107,36 +135,63 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
       document.body.style.right = '0';
       document.body.style.width = '100vw';
       document.body.style.height = '100vh';
-      
+
+      // Prevent layout shift on mobile by adding padding for scrollbar
+      if (scrollbarWidth > 0 && !isMobile) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+
       // Lock document overflow to prevent any scrolling
       document.documentElement.style.overflow = 'hidden';
-      
-      // Ensure viewport meta tag is properly set for mobile
+
+      // Enhanced viewport meta tag handling for mobile
       let viewportMeta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
-      const originalViewportContent = viewportMeta?.content;
-      if (viewportMeta) {
-        viewportMeta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover';
+      const originalViewportContent = viewportMeta?.content || '';
+      if (viewportMeta && isMobile) {
+        viewportMeta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0';
       }
-      
+
       return () => {
-        // Restore original body styles
-        Object.keys(originalBodyStyle).forEach(key => {
-          document.body.style[key as any] = originalBodyStyle[key as keyof typeof originalBodyStyle] || '';
-        });
-        
-        // Restore original html styles
-        document.documentElement.style.overflow = originalHtmlStyle.overflow || '';
-        
-        // Restore viewport meta tag
-        if (viewportMeta && originalViewportContent) {
-          viewportMeta.content = originalViewportContent;
+        // Restore original body styles with proper cleanup
+        try {
+          Object.keys(originalBodyStyle).forEach(key => {
+            if (originalBodyStyle[key as keyof typeof originalBodyStyle]) {
+              document.body.style[key as any] = originalBodyStyle[key as keyof typeof originalBodyStyle];
+            } else {
+              document.body.style.removeProperty(key);
+            }
+          });
+
+          // Restore original html styles
+          if (originalHtmlStyle.overflow) {
+            document.documentElement.style.overflow = originalHtmlStyle.overflow;
+          } else {
+            document.documentElement.style.removeProperty('overflow');
+          }
+
+          // Restore viewport meta tag
+          if (viewportMeta && originalViewportContent) {
+            viewportMeta.content = originalViewportContent;
+          }
+
+          // Restore scroll position with smooth behavior
+          requestAnimationFrame(() => {
+            window.scrollTo({
+              left: scrollX,
+              top: scrollY,
+              behavior: 'instant'
+            });
+          });
+        } catch (error) {
+          console.warn('Error restoring scroll state:', error);
+          // Fallback restoration
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.documentElement.style.overflow = '';
         }
-        
-        // Restore scroll position
-        window.scrollTo(scrollX, scrollY);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   // Reset viewerKey and loading state on file change
   useEffect(() => {
@@ -154,6 +209,64 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
       }
     }
   }, [fileUrl, isOpen, isMobile]);
+
+  // Enhanced touch gesture handling for mobile
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTracking = false;
+
+    const handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.touches.length === 1) {
+        touchStartY = touchEvent.touches[0].clientY;
+        touchStartX = touchEvent.touches[0].clientX;
+        isTracking = true;
+      }
+    };
+
+    const handleTouchMove = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      if (!isTracking || touchEvent.touches.length !== 1) return;
+
+      const touchCurrentY = touchEvent.touches[0].clientY;
+      const touchCurrentX = touchEvent.touches[0].clientX;
+      const deltaY = touchCurrentY - touchStartY;
+      const deltaX = Math.abs(touchCurrentX - touchStartX);
+
+      // If horizontal movement is greater than vertical, allow default scrolling
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        return;
+      }
+
+      // Prevent pull-to-refresh and overscroll effects
+      if (Math.abs(deltaY) > 10) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isTracking = false;
+    };
+
+    // Add touch event listeners to modal overlay
+    const modalOverlay = document.querySelector('.pdf-modal-overlay');
+    if (modalOverlay) {
+      modalOverlay.addEventListener('touchstart', handleTouchStart, { passive: false });
+      modalOverlay.addEventListener('touchmove', handleTouchMove, { passive: false });
+      modalOverlay.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      if (modalOverlay) {
+        modalOverlay.removeEventListener('touchstart', handleTouchStart);
+        modalOverlay.removeEventListener('touchmove', handleTouchMove);
+        modalOverlay.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [isOpen, isMobile]);
 
   // Cleanup on close
   useEffect(() => {
@@ -175,8 +288,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="pdf-modal-overlay bg-gradient-to-br from-black/95 via-black/90 to-slate-900/95 backdrop-blur-md overflow-hidden"
+    <div
+      className="pdf-modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
@@ -185,51 +298,48 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
         bottom: 0,
         width: '100vw',
         height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: isMobile ? '8px' : '24px',
         zIndex: 9999,
-        // Force hardware acceleration and perfect centering
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        willChange: 'transform',
-        // Ensure consistent viewport behavior across devices
-        contain: 'layout style paint',
-        // Remove any potential scroll effects
+        background: 'rgba(0, 0, 0, 0.95)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        // Prevent scrolling and ensure proper viewport
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'touch',
+        // Hardware acceleration for smooth performance
+        transform: 'translateZ(0)',
+        willChange: 'transform',
+        // Ensure modal stays in viewport
+        contain: 'layout style paint',
       }}
     >
-      <div 
-        className={`pdf-modal-content bg-white shadow-2xl flex flex-col relative transition-all duration-500 ease-out ${
-          isFullscreen 
-            ? 'w-full h-full rounded-none' 
-            : 'rounded-2xl border border-slate-200/20'
-        }`}
+      <div
+        className="pdf-modal-content"
         style={{
-          width: dimensions.width,
-          height: dimensions.height,
-          maxWidth: isFullscreen ? '100vw' : (isMobile ? '95vw' : '80vw'),
-          maxHeight: isFullscreen ? '100vh' : (isMobile ? '82vh' : '90vh'),
-          minHeight: isMobile ? '70vh' : '500px',
-          minWidth: isMobile ? '90vw' : '600px',
-          boxShadow: isFullscreen 
-            ? 'none' 
+          position: 'absolute',
+          top: isFullscreen ? 0 : '50%',
+          left: isFullscreen ? 0 : '50%',
+          transform: isFullscreen ? 'none' : 'translate(-50%, -50%)',
+          // Use calculated dimensions
+          width: isFullscreen ? '100vw' : dimensions.width,
+          height: isFullscreen ? '100vh' : dimensions.height,
+          maxWidth: isFullscreen ? '100vw' : dimensions.maxWidth,
+          maxHeight: isFullscreen ? '100vh' : dimensions.maxHeight,
+          minWidth: isFullscreen ? '100vw' : dimensions.minWidth,
+          minHeight: isFullscreen ? '100vh' : dimensions.minHeight,
+          // Visual styling
+          background: 'white',
+          borderRadius: isFullscreen ? '0px' : '16px',
+          boxShadow: isFullscreen
+            ? 'none'
             : '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          // Ensure perfect centering
-          margin: 'auto',
-          position: 'relative',
-          // Force center alignment in flex container
-          alignSelf: 'center',
-          justifySelf: 'center',
-          // Remove any transforms that could affect positioning
-          transform: 'translateZ(0)',
+          // Layout
+          display: 'flex',
+          flexDirection: 'column',
+          // Hardware acceleration
           backfaceVisibility: 'hidden',
-          // Ensure consistent behavior across browsers
-          contain: 'layout style',
+          willChange: 'transform',
+          // Smooth transitions
+          transition: 'all 0.3s ease-out',
         }}
       >
         {/* Professional Header with Enhanced Design */}
@@ -367,16 +477,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
               sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox allow-presentation"
               onLoad={() => setIsLoading(false)}
               onError={() => setError(true)}
-              style={{ 
+              style={{
                 width: '100%',
                 height: '100%',
                 border: 'none',
                 background: '#ffffff',
                 display: 'block',
                 borderRadius: isFullscreen ? '0px' : '12px',
-                boxShadow: isFullscreen 
-                  ? 'none' 
+                boxShadow: isFullscreen
+                  ? 'none'
                   : 'inset 0 2px 8px 0 rgba(0, 0, 0, 0.08), inset 0 1px 4px 0 rgba(0, 0, 0, 0.05)',
+                // Enhanced touch scrolling for mobile
+                WebkitOverflowScrolling: isMobile ? 'touch' : 'auto',
+                overscrollBehavior: isMobile ? 'contain' : 'auto',
+                // Prevent zoom on double tap
+                touchAction: isMobile ? 'manipulation' : 'auto',
+                // Hardware acceleration for smooth scrolling
+                transform: 'translateZ(0)',
+                willChange: 'transform',
               }}
             />
           </div>
