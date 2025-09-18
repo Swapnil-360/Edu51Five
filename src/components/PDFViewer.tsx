@@ -19,15 +19,92 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose
       setError(false);
       // Reset fullscreen when opening new file
       setIsFullscreen(false);
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-    }
+      
+      // Enhanced mobile viewport and body style management
+      if (typeof window !== 'undefined') {
+        // Add mobile-specific class for CSS-based styling
+        document.body.classList.add('mobile-pdf-viewer-open');
+        
+        // Prevent body scroll and mobile issues
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.height = '100%';
+        document.body.style.width = '100%';
+        document.body.style.touchAction = 'none';
+        
+        // Add mobile viewport meta to prevent zoom issues
+        let viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+      }
 
-    return () => {
-      // Restore body scroll
-      document.body.style.overflow = '';
-    };
+      return () => {
+        // Enhanced cleanup - remove CSS class and reset styles
+        document.body.classList.remove('mobile-pdf-viewer-open');
+        document.body.style.cssText = '';
+        
+        // Reset viewport
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        }
+        
+        // Force a repaint to fix any layout issues
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
+      };
+    }
   }, [isOpen, fileUrl]);
+
+  const handleClose = () => {
+    // Enhanced mobile cleanup with viewport restoration
+    if (typeof window !== 'undefined') {
+      // Reset body styles completely
+      document.body.style.cssText = '';
+      document.body.classList.remove('overflow-hidden', 'mobile-pdf-viewer-open');
+      
+      // Add layout fix class for mobile
+      if (window.innerWidth <= 768) {
+        document.body.classList.add('layout-fix');
+        document.documentElement.classList.add('layout-fix');
+        
+        // Remove after layout stabilizes
+        setTimeout(() => {
+          document.body.classList.remove('layout-fix');
+          document.documentElement.classList.remove('layout-fix');
+        }, 500);
+      }
+      
+      // Force mobile viewport reset
+      const viewportMeta = document.querySelector('meta[name="viewport"]');
+      if (viewportMeta) {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        // Force re-render by temporarily changing viewport
+        setTimeout(() => {
+          viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        }, 100);
+      }
+      
+      // Additional mobile layout fixes
+      document.documentElement.style.cssText = '';
+      
+      // Force layout recalculation on mobile
+      if (window.innerWidth <= 768) {
+        window.scrollTo(0, 0);
+        document.body.offsetHeight; // Force reflow
+        
+        // Force main content reflow
+        const mainContent = document.querySelector('.main-content, main, #root > div');
+        if (mainContent) {
+          mainContent.classList.add('main-content');
+        }
+      }
+    }
+    
+    onClose();
+  };
 
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -44,7 +121,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -108,7 +185,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose
             
             {/* Close Button */}
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               title="Close"
             >
@@ -171,7 +248,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose
 
           {/* Mobile Close Button */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute bottom-4 right-4 sm:hidden w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center z-20 transition-all duration-200"
             title="Close"
           >

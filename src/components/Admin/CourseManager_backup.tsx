@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Plus, FileText, Video, Tag, HelpCircle, Calendar, Download, Eye, Trash2 } from 'lucide-react';
 import { FileUpload } from './FileUpload';
 import { useMaterials } from '../../hooks/useMaterials';
@@ -42,12 +42,12 @@ export function CourseManager({ courseId, courseName, courseCode, onBack }: Cour
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return <Video className="h-4 w-4 sm:h-5 sm:w-5" />;
+      case 'video': return <Video className="h-5 w-5" />;
       case 'pdf': 
-      case 'doc': return <FileText className="h-4 w-4 sm:h-5 sm:w-5" />;
-      case 'suggestion': return <Tag className="h-4 w-4 sm:h-5 sm:w-5" />;
-      case 'past_question': return <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />;
-      default: return <FileText className="h-4 w-4 sm:h-5 sm:w-5" />;
+      case 'doc': return <FileText className="h-5 w-5" />;
+      case 'suggestion': return <Tag className="h-5 w-5" />;
+      case 'past_question': return <HelpCircle className="h-5 w-5" />;
+      default: return <FileText className="h-5 w-5" />;
     }
   };
 
@@ -65,7 +65,6 @@ export function CourseManager({ courseId, courseName, courseCode, onBack }: Cour
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
-        {/* Header */}
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
           <div className="flex items-center space-x-3 sm:space-x-4 order-1">
             <button
@@ -194,7 +193,6 @@ export function CourseManager({ courseId, courseName, courseCode, onBack }: Cour
                         <div>Size: {material.size}</div>
                       )}
                     </div>
-                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-2 sm:space-x-3 justify-end sm:justify-start flex-shrink-0">
@@ -224,14 +222,14 @@ export function CourseManager({ courseId, courseName, courseCode, onBack }: Cour
           </div>
         )}
 
-        {showUpload && (
-          <FileUpload
-            courseId={courseId}
-            courseName={courseName}
-            onFileUploaded={handleFileUploaded}
-            onClose={() => setShowUpload(false)}
-          />
-        )}
+      {showUpload && (
+        <FileUpload
+          courseId={courseId}
+          courseName={courseName}
+          onFileUploaded={handleFileUploaded}
+          onClose={() => setShowUpload(false)}
+        />
+      )}
       </div>
     </div>
   );
