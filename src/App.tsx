@@ -205,7 +205,7 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle click outside to close mobile menu
+  // Handle click outside to close mobile menu and notification panel
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
@@ -221,16 +221,28 @@ function App() {
           }
         }
       }
+
+      // Close notification panel if clicking outside of it
+      if (showNoticePanel) {
+        const notificationButton = document.querySelector('[title="Notifications"]');
+        const notificationPanel = document.querySelector('.notification-panel');
+        
+        if (notificationButton && notificationPanel) {
+          if (!notificationButton.contains(target) && !notificationPanel.contains(target)) {
+            setShowNoticePanel(false);
+          }
+        }
+      }
     };
 
-    if (showMobileMenu) {
+    if (showMobileMenu || showNoticePanel) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showMobileMenu]);
+  }, [showMobileMenu, showNoticePanel]);
 
   // Initialize database tables if they don't exist
   const initializeDatabase = async () => {
@@ -1191,7 +1203,7 @@ For any queries, contact your course instructors or the department.`,
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
       {/* Enhanced Mobile-First Responsive Header */}
-      <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 z-40">
+      <header className="fixed top-0 left-0 right-0 bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 text-white shadow-2xl border-b border-indigo-700/40 z-40">
         <div className="mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
             
@@ -1213,7 +1225,7 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold no-select text-white truncate">
+                  <h1 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold no-select text-white truncate filter drop-shadow-lg antialiased font-sans tracking-wide">
                     Edu<span className="text-red-400">51</span>Five
                   </h1>
                   <p className="text-xs sm:text-xs md:text-sm text-gray-300 no-select truncate">Intake 51</p>
@@ -1471,7 +1483,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Modern Notice Panel with Glassmorphism */}
       {showNoticePanel && (
-        <div className="fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] backdrop-blur-xl bg-white/90 rounded-3xl shadow-2xl border border-white/30 z-50 max-h-80 md:max-h-96 overflow-hidden">
+        <div className="notification-panel fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] backdrop-blur-xl bg-white/90 rounded-3xl shadow-2xl border border-white/30 z-50 max-h-80 md:max-h-96 overflow-hidden">
           {/* Professional Header with Enhanced Gradient */}
           <div className="bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 text-white px-4 md:px-6 py-3 md:py-4 rounded-t-3xl shadow-lg">
             <div className="flex items-center justify-between">
@@ -2202,14 +2214,14 @@ For any queries, contact your course instructors or the department.`,
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
             {/* Modern Header */}
             <div className="bg-white shadow-sm border-b border-gray-200">
-              <div className="max-w-7xl mx-auto px-6 py-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+                <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                  <div className="order-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Admin Dashboard
                     </h1>
-                    <p className="text-gray-600 mt-2">Manage your educational platform with ease</p>
-                    <div className="flex items-center space-x-4 mt-4 text-sm">
+                    <p className="text-gray-600 mt-2 text-sm sm:text-base">Manage your educational platform with ease</p>
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                         <span className="text-gray-700">{courses.length} Courses</span>
@@ -2224,36 +2236,36 @@ For any queries, contact your course instructors or the department.`,
                       </div>
                     </div>
                   </div>
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 order-2">
                     <button
                       onClick={() => setShowCreateCourse(true)}
-                      className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      className="group flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
-                      <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform duration-200" />
-                      <span className="font-medium">Add Course</span>
+                      <Plus className="h-4 sm:h-5 w-4 sm:w-5 group-hover:rotate-90 transition-transform duration-200" />
+                      <span className="font-medium text-sm sm:text-base">Add Course</span>
                     </button>
                     <button
                       onClick={() => setShowUploadFile(true)}
-                      className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      className="group flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
-                      <Upload className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="font-medium">Upload Material</span>
+                      <Upload className="h-4 sm:h-5 w-4 sm:w-5 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium text-sm sm:text-base">Upload Material</span>
                     </button>
                     <button
                       onClick={() => setShowCreateNotice(true)}
-                      className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-700 text-white rounded-xl hover:from-purple-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      className="group flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-700 text-white rounded-xl hover:from-purple-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
-                      <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="font-medium">Create Smart Notice</span>
+                      <Bell className="h-4 sm:h-5 w-4 sm:w-5 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium text-sm sm:text-base">Create Smart Notice</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
               {/* Quick Navigation Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2262,7 +2274,7 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <a 
                     href="#courses-section" 
                     className="group p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
@@ -2271,7 +2283,7 @@ For any queries, contact your course instructors or the department.`,
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200">
                         <span className="text-blue-600 font-semibold">📚</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-blue-700 font-medium">Manage Courses</span>
+                      <span className="text-gray-700 group-hover:text-blue-700 font-medium text-sm sm:text-base">Manage Courses</span>
                     </div>
                   </a>
                   <a 
@@ -2282,7 +2294,7 @@ For any queries, contact your course instructors or the department.`,
                       <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200">
                         <span className="text-emerald-600 font-semibold">🗂️</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-emerald-700 font-medium">Manage Materials</span>
+                      <span className="text-gray-700 group-hover:text-emerald-700 font-medium text-sm sm:text-base">Manage Materials</span>
                     </div>
                   </a>
                   <a 
@@ -2293,51 +2305,51 @@ For any queries, contact your course instructors or the department.`,
                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
                         <span className="text-purple-600 font-semibold">📢</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-purple-700 font-medium">Manage Notices</span>
+                      <span className="text-gray-700 group-hover:text-purple-700 font-medium text-sm sm:text-base">Manage Notices</span>
                     </div>
                   </a>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white shadow-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-100 text-sm font-medium">Total Courses</p>
-                      <p className="text-3xl font-bold mt-1">{courses.length}</p>
+                      <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1">{courses.length}</p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-400 bg-opacity-50 rounded-xl flex items-center justify-center">
-                      <span className="text-2xl">📚</span>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-400 bg-opacity-50 rounded-xl flex items-center justify-center">
+                      <span className="text-xl sm:text-2xl">📚</span>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg">
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-emerald-100 text-sm font-medium">Total Materials</p>
-                      <p className="text-3xl font-bold mt-1">{totalMaterialsCount}</p>
+                      <p className="text-emerald-100 text-xs sm:text-sm font-medium">Total Materials</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1">{totalMaterialsCount}</p>
                     </div>
-                    <div className="w-12 h-12 bg-emerald-400 bg-opacity-50 rounded-xl flex items-center justify-center">
-                      <span className="text-2xl">📁</span>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-400 bg-opacity-50 rounded-xl flex items-center justify-center">
+                      <span className="text-xl sm:text-2xl">📁</span>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg">
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-100 text-sm font-medium">Active Notices</p>
-                      <p className="text-3xl font-bold mt-1">{notices.filter(n => n.is_active).length}</p>
+                      <p className="text-purple-100 text-xs sm:text-sm font-medium">Active Notices</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1">{notices.filter(n => n.is_active).length}</p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-400 bg-opacity-50 rounded-xl flex items-center justify-center">
-                      <Bell className="w-6 h-6 text-purple-100" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-400 bg-opacity-50 rounded-xl flex items-center justify-center">
+                      <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-purple-100" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Courses List - Modern Design */}
-              <div id="courses-section" className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-3xl shadow-xl border border-white/20 backdrop-blur-sm p-6 md:p-8 lg:p-10 responsive-container">
+              <div id="courses-section" className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-3xl shadow-xl border border-white/20 backdrop-blur-sm p-4 sm:p-6 md:p-8 lg:p-10 responsive-container">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-responsive">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 ui-element">

@@ -84,7 +84,7 @@ export const ExamMaterialsDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-3 sm:p-4 md:p-6 overflow-auto">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Mobile-Responsive Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
@@ -94,6 +94,30 @@ export const ExamMaterialsDashboard: React.FC = () => {
           <p className="text-gray-600 text-sm sm:text-base md:text-lg">
             AI-powered material recommendations for your current exam period
           </p>
+        </div>
+
+        {/* Development Notice Banner */}
+        <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white p-4 sm:p-5 md:p-6 rounded-2xl mb-6 sm:mb-8 shadow-lg border border-blue-200/50">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="p-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm">
+              <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                <span className="text-blue-800 text-sm font-bold">⚠️</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg sm:text-xl">🚧 Feature Under Development</h3>
+              <p className="text-blue-100 text-sm sm:text-base">
+                Advanced AI features and enhanced functionality are being added
+              </p>
+            </div>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/20">
+            <p className="text-white/90 text-sm leading-relaxed">
+              <strong>🔮 Coming Soon:</strong> Smart material categorization, personalized study recommendations, 
+              progress tracking, and integrated AI study assistant. The current version provides basic material access 
+              while we enhance the experience with advanced features.
+            </p>
+          </div>
         </div>
 
         {/* Exam Period Banner */}

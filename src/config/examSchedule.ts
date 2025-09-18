@@ -44,10 +44,17 @@ export const getTodaysExam = (currentDate = new Date()) => {
   
   for (const [courseCode, exam] of Object.entries(MID_TERM_SCHEDULE)) {
     if (exam.date === today) {
+      // Check if exam time has passed (exam ends at 11:30 AM)
+      const examEndTime = new Date();
+      examEndTime.setHours(11, 30, 0, 0); // 11:30 AM
+      
+      const isCompleted = currentDate >= examEndTime;
+      
       return {
         courseCode,
         ...exam,
-        isToday: true
+        isToday: true,
+        isCompleted
       };
     }
   }
