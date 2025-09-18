@@ -80,26 +80,60 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
   // Body scroll lock and viewport positioning
   useEffect(() => {
     if (isOpen) {
-      // Lock body scroll and save original styles
-      const originalStyle = window.getComputedStyle(document.body);
-      const originalOverflow = originalStyle.overflow;
-      const originalPosition = originalStyle.position;
+      // Get current scroll position before locking
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
       
+      // Store original styles to restore later
+      const originalBodyStyle = {
+        overflow: document.body.style.overflow,
+        position: document.body.style.position,
+        top: document.body.style.top,
+        left: document.body.style.left,
+        right: document.body.style.right,
+        width: document.body.style.width,
+        height: document.body.style.height,
+      };
+      
+      const originalHtmlStyle = {
+        overflow: document.documentElement.style.overflow,
+      };
+      
+      // Lock body scroll and ensure modal is positioned relative to viewport
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
-      document.body.style.top = '0';
-      document.body.style.left = '0';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
       document.body.style.right = '0';
-      document.body.style.bottom = '0';
+      document.body.style.width = '100vw';
+      document.body.style.height = '100vh';
+      
+      // Lock document overflow to prevent any scrolling
+      document.documentElement.style.overflow = 'hidden';
+      
+      // Ensure viewport meta tag is properly set for mobile
+      let viewportMeta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+      const originalViewportContent = viewportMeta?.content;
+      if (viewportMeta) {
+        viewportMeta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover';
+      }
       
       return () => {
         // Restore original body styles
-        document.body.style.overflow = originalOverflow;
-        document.body.style.position = originalPosition;
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.bottom = '';
+        Object.keys(originalBodyStyle).forEach(key => {
+          document.body.style[key as any] = originalBodyStyle[key as keyof typeof originalBodyStyle] || '';
+        });
+        
+        // Restore original html styles
+        document.documentElement.style.overflow = originalHtmlStyle.overflow || '';
+        
+        // Restore viewport meta tag
+        if (viewportMeta && originalViewportContent) {
+          viewportMeta.content = originalViewportContent;
+        }
+        
+        // Restore scroll position
+        window.scrollTo(scrollX, scrollY);
       };
     }
   }, [isOpen]);
@@ -149,11 +183,22 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
         left: 0,
         right: 0,
         bottom: 0,
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: isMobile ? '8px' : '24px',
         zIndex: 9999,
+        // Force hardware acceleration and perfect centering
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        willChange: 'transform',
+        // Ensure consistent viewport behavior across devices
+        contain: 'layout style paint',
+        // Remove any potential scroll effects
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <div 
@@ -174,6 +219,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpe
             : '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
+          // Ensure perfect centering
+          margin: 'auto',
+          position: 'relative',
+          // Force center alignment in flex container
+          alignSelf: 'center',
+          justifySelf: 'center',
+          // Remove any transforms that could affect positioning
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          // Ensure consistent behavior across browsers
+          contain: 'layout style',
         }}
       >
         {/* Professional Header with Enhanced Design */}

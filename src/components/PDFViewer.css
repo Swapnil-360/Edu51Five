@@ -8,9 +8,25 @@
   }
 }
 
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}
+
 /* Utility classes for PDF viewer */
 .animate-spin-reverse {
   animation: spin-reverse 1s linear infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1.4s ease-in-out infinite both;
 }
 
 /* Mobile-optimized modal positioning */
@@ -27,25 +43,159 @@
   /* Prevent body scroll affecting modal position */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  /* Ensure viewport relative positioning */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Force hardware acceleration for consistent positioning */
+  will-change: transform;
+  /* Ensure modal is always relative to the viewport */
+  contain: layout style paint;
 }
 
-/* Ensure modal content is always centered */
+/* Ensure modal content is always properly positioned */
 .pdf-modal-content {
   position: relative;
-  margin: auto;
+  margin: 0 auto;
   /* Ensure centering works on all mobile browsers */
   transform: translateZ(0);
   backface-visibility: hidden;
+  /* Force hardware acceleration for stable positioning */
+  will-change: transform;
+}
+
+/* PDF Page Styling */
+.pdf-page-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 0 auto;
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  position: relative;
+}
+
+.pdf-page-shadow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+  border-radius: 8px;
 }
 
 /* Mobile-specific adjustments */
 @media (max-width: 768px) {
   .pdf-modal-overlay {
     padding: 8px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    /* Force center positioning on mobile */
+    display: flex !important;
+    flex-direction: column !important;
+    /* Remove any potential transforms that could affect positioning */
+    transform: none !important;
+    /* Ensure consistent viewport behavior */
+    position: fixed !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    /* Center content perfectly */
+    align-content: center !important;
+    justify-items: center !important;
   }
   
   .pdf-modal-content {
-    max-width: 95vw !important;
-    max-height: 82vh !important;
+    max-width: 90vw !important;
+    max-height: 80vh !important;
+    min-width: 85vw !important;
+    min-height: 70vh !important;
+    /* Ensure modal is centered in viewport */
+    margin: auto !important;
+    /* Remove any positioning that could interfere */
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    /* Force center alignment */
+    align-self: center !important;
+    justify-self: center !important;
+  }
+
+  /* Fullscreen mode overrides */
+  .pdf-modal-content[style*="width: 100%"] {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
+  }
+
+  /* Mobile PDF optimizations */
+  .pdf-page-shadow {
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure full-width iframe on mobile */
+  .pdf-modal-content iframe {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100% - 80px) !important;
+  }
+
+  /* Hide complex controls on mobile */
+  .pdf-controls-complex {
+    display: none;
+  }
+
+  /* Simplified mobile controls */
+  .pdf-controls-mobile {
+    display: flex;
+  }
+}
+
+/* Desktop-specific adjustments */
+@media (min-width: 769px) {
+  .pdf-controls-complex {
+    display: flex;
+  }
+
+  .pdf-controls-mobile {
+    display: none;
+  }
+}
+
+/* Custom scrollbar for PDF container */
+.pdf-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+.pdf-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pdf-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pdf-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 3px;
+}
+
+.pdf-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.8);
+}
+
+/* Responsive text for page numbers */
+@media (max-width: 640px) {
+  .page-info {
+    font-size: 0.75rem;
   }
 }
