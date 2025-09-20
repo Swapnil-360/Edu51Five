@@ -43,3 +43,4 @@ It centralizes courses, files, semester tracking, and admin tools in one respons
 ---
 
 ## 🚀 Getting Started
+- **Link**: https://edu51five.vercel.app/
