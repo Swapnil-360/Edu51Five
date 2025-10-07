@@ -1664,94 +1664,113 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* Compact Section Card - Modern Dark Theme */}
-            <div className="max-w-2xl mx-auto">
-              <button
-                onClick={() => goToView('section5')}
-                className="w-full group relative overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl shadow-2xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-slate-700/50"
-              >
-                {/* Animated Shine Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                
-                {/* Subtle Grid Pattern Overlay */}
-                <div className="absolute inset-0 opacity-5">
-                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(99, 102, 241, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                </div>
+            {/* Section 5 Entry Card - 10 Minute School Style */}
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {/* Section 5 Card */}
+                <button
+                  onClick={() => goToView('section5')}
+                  className="w-full group relative overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-gray-100 select-none"
+                >
+                  {/* Compact Banner Image Section */}
+                  <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
+                  {/* Decorative Pattern */}
+                  <div className="absolute inset-0 opacity-20">
+                    <div className="absolute inset-0" style={{ 
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                      backgroundSize: '60px 60px'
+                    }}></div>
+                  </div>
 
-                <div className="relative z-10 p-6 sm:p-8">
-                  <div className="flex items-center gap-4 sm:gap-6">
-                    {/* Modern Gradient Icon */}
-                    <div className="flex-shrink-0">
-                      <div className="relative">
-                        {/* Glow Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 to-purple-500/40 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-                        
-                        {/* Icon Container with Gradient */}
-                        <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-4 shadow-2xl group-hover:scale-110 transition-transform duration-300 border border-white/10">
-                          {/* Modern Shield with "5" */}
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 relative">
-                            <svg className="w-full h-full text-white/20 drop-shadow-2xl" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" opacity="0.3"/>
-                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-                            </svg>
-                            {/* Number 5 - Bold with Strong Shadow */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-3xl sm:text-4xl font-black text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)' }}>5</span>
-                            </div>
-                          </div>
-                          
-                          {/* Premium Badge - Animated */}
-                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                            <span className="text-sm">✦</span>
+                  {/* Central Icon - Smaller */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      {/* Glow */}
+                      <div className="absolute inset-0 bg-white/30 rounded-full blur-2xl animate-pulse"></div>
+                      
+                      {/* Shield Icon */}
+                      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-5 border-2 border-white/30 shadow-xl">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
+                          <svg className="w-full h-full text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-5xl sm:text-6xl font-black text-white" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>5</span>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Content Section */}
-                    <div className="flex-1 text-left">
-                      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                  {/* Shine Effect on Hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                </div>
+
+                {/* Compact Content Section */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
                         Section 5 - CSE
                       </h2>
-                      <p className="text-slate-300 text-sm sm:text-base mb-3">
-                        Materials • Schedule • Notices
+                      <p className="text-gray-600 text-xs sm:text-sm mb-2">
+                        BUBT Intake 51 • Computer Science & Engineering
                       </p>
                       
-                      {/* Course Badge */}
-                      <div className="inline-flex items-center bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm rounded-full px-4 py-1.5 border border-indigo-400/30 shadow-lg">
-                        <span className="text-white font-bold text-sm">
-                          📚 {courses.length} Courses
-                        </span>
+                      {/* Compact Info Tags */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                          {courses.length} Courses
+                        </div>
+                        <div className="inline-flex items-center bg-green-50 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Materials
+                        </div>
+                        <div className="inline-flex items-center bg-purple-50 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Schedule
+                        </div>
                       </div>
                     </div>
 
-                    {/* Arrow with Animation */}
+                    {/* Compact Action Arrow */}
                     <div className="flex-shrink-0">
-                      <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-sm rounded-full p-2 group-hover:bg-indigo-500/30 transition-all border border-indigo-400/20">
-                        <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white group-hover:translate-x-1 transition-transform drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      <div className="bg-indigo-600 text-white rounded-full p-2.5 group-hover:bg-indigo-700 transition-all shadow-md group-hover:shadow-lg">
+                        <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Bottom Accent */}
+                <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
               </button>
 
-              {/* Coming Soon Notice - More Prominent */}
-              <div className="mt-4 relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-amber-400/20 blur-xl animate-pulse"></div>
-                <div className="relative bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-dashed border-amber-400 rounded-lg p-3 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="animate-bounce text-lg">🚧</span>
-                    <p className="text-amber-800 font-semibold text-sm sm:text-base">
-                      Other Sections Coming Soon!
-                    </p>
-                    <span className="animate-bounce text-lg" style={{ animationDelay: '0.2s' }}>🚧</span>
-                  </div>
-                  <p className="text-amber-700 text-xs mt-1">Section 6, 7 & 8 - Under Development</p>
+              {/* Placeholder Cards - Coming Soon */}
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-md border border-gray-300 p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🚧</div>
+                  <p className="text-gray-600 font-semibold text-sm">Section Coming Soon</p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-md border border-gray-300 p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🚧</div>
+                  <p className="text-gray-600 font-semibold text-sm">Section Coming Soon</p>
                 </div>
               </div>
             </div>
+          </div>
 
             {/* Platform Features - Floating Pills Grid */}
             <div className="max-w-4xl mx-auto px-4">
