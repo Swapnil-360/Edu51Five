@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp, Timer } from 'lucide-react';
 import { getCurrentSemesterStatus } from '../config/semester';
 import { MID_TERM_SCHEDULE, getTodaysExam, getUpcomingExam, getNextExamCountdown } from '../config/examSchedule';
+import { 
+  getCurrentSchedule, 
+  getRoutineTitle, 
+  getRoutineDescription, 
+  getTodaysSchedule, 
+  getNextClass, 
+  getWeeklyClassSummary,
+  getCurrentClassStatus,
+  formatTimeRemaining,
+  areTodaysClassesFinished,
+  getNextDaySchedule
+} from '../config/classRoutine';
 
 interface SemesterTrackerProps {
   onClose?: () => void;
@@ -11,6 +23,9 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
   const [nextExam, setNextExam] = useState(getNextExamCountdown());
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set([
+    ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]
+  ]));
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,6 +40,26 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
 
   const todaysExam = getTodaysExam(currentTime);
   const upcomingExam = getUpcomingExam(currentTime);
+  
+  // Helper functions for collapsible schedule
+  const toggleDay = (day: string) => {
+    const newExpanded = new Set(expandedDays);
+    if (newExpanded.has(day)) {
+      newExpanded.delete(day);
+    } else {
+      newExpanded.add(day);
+    }
+    setExpandedDays(newExpanded);
+  };
+
+  const expandAllDays = () => {
+    setExpandedDays(new Set(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']));
+  };
+
+  const collapseAllDays = () => {
+    const today = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()];
+    setExpandedDays(new Set([today]));
+  };
   
   const formatTime = (date: Date) => {
     return date.toLocaleString('en-BD', {
@@ -380,6 +415,308 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* SMART CLASS ROUTINE SECTION - Now using config */}
+        <div className="bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 rounded-2xl p-6 mb-8 hover-lift shadow-lg border border-indigo-300">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-3 bg-indigo-600 rounded-xl shadow-lg">
+              <BookOpen className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">{getRoutineTitle()}</h2>
+              <p className="text-indigo-700 text-sm">{getRoutineDescription()}</p>
+            </div>
+            <div className="ml-auto">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                📚 LIVE
+              </span>
+            </div>
+          </div>
+
+          {/* Weekly Stats from config */}
+          <div className="mb-6 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-indigo-200">
+            <h3 className="font-bold text-indigo-800 mb-3">📊 Weekly Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(() => {
+                const summary = getWeeklyClassSummary();
+                return (
+                  <>
+                    <div className="text-center p-2 bg-blue-50 rounded-lg">
+                      <div className="text-lg font-bold text-blue-700">{summary.totalClasses}</div>
+                      <div className="text-xs text-blue-600">Total Classes</div>
+                    </div>
+                    <div className="text-center p-2 bg-green-50 rounded-lg">
+                      <div className="text-lg font-bold text-green-700">{summary.theoryClasses}</div>
+                      <div className="text-xs text-green-600">Theory</div>
+                    </div>
+                    <div className="text-center p-2 bg-purple-50 rounded-lg">
+                      <div className="text-lg font-bold text-purple-700">{summary.labClasses}</div>
+                      <div className="text-xs text-purple-600">Lab</div>
+                    </div>
+                    <div className="text-center p-2 bg-orange-50 rounded-lg">
+                      <div className="text-lg font-bold text-orange-700">{summary.activeDays}</div>
+                      <div className="text-xs text-orange-600">Active Days</div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Today's Schedule from config */}
+          <div className="mb-6 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-indigo-200 text-center">
+            {(() => {
+              const todaysClasses = getTodaysSchedule();
+              const nextClass = getNextClass();
+              const classStatus = getCurrentClassStatus();
+              const classesFinished = areTodaysClassesFinished();
+              const nextDaySchedule = getNextDaySchedule();
+              
+              if (classStatus.status === 'ongoing') {
+                return (
+                  <div>
+                    <div className="text-4xl mb-2">⏰</div>
+                    <h3 className="font-bold text-green-800 mb-2">Class Ongoing!</h3>
+                    <p className="text-sm text-green-600">
+                      {classStatus.currentClass?.courseCode} - {classStatus.currentClass?.courseName}
+                    </p>
+                    <p className="text-xs text-green-500 mt-1">
+                      Room {classStatus.currentClass?.room} • {formatTimeRemaining(classStatus.minutesRemaining || 0)} left
+                    </p>
+                  </div>
+                );
+              } else if (nextClass && nextClass.isToday) {
+                return (
+                  <div>
+                    <div className="text-4xl mb-2">⏳</div>
+                    <h3 className="font-bold text-blue-800 mb-2">Next Class Today</h3>
+                    <p className="text-sm text-blue-600">
+                      {nextClass.courseCode} - {nextClass.courseName}
+                    </p>
+                    <p className="text-xs text-blue-500 mt-1">
+                      Room {nextClass.room} • Starts in {formatTimeRemaining(nextClass.minutesToStart)}
+                    </p>
+                  </div>
+                );
+              } else if (classesFinished && nextClass && !nextClass.isToday) {
+                // Show next day's first class when today's classes are done
+                return (
+                  <div>
+                    <div className="text-4xl mb-2">✅</div>
+                    <h3 className="font-bold text-green-800 mb-2">Today's Classes Complete!</h3>
+                    <p className="text-sm text-green-600">All {todaysClasses.length} classes finished</p>
+                    <div className="mt-3 pt-3 border-t border-indigo-200">
+                      <p className="text-xs text-indigo-600 font-semibold mb-1">Next Class: {nextClass.dayName}</p>
+                      <p className="text-sm text-indigo-700">{nextClass.courseCode} - {nextClass.courseName}</p>
+                      <p className="text-xs text-indigo-500 mt-1">
+                        Room {nextClass.room} • {nextClass.time}
+                      </p>
+                      <p className="text-xs text-indigo-400 mt-1">
+                        {'daysUntil' in nextClass && nextClass.daysUntil === 1 ? 'Tomorrow' : 'daysUntil' in nextClass ? `In ${nextClass.daysUntil} days` : 'Soon'} • {'hoursUntil' in nextClass ? `${nextClass.hoursUntil}h away` : 'Soon'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              } else if (todaysClasses.length === 0 && nextDaySchedule) {
+                // No classes today, show next day's schedule
+                return (
+                  <div>
+                    <div className="text-4xl mb-2">🎉</div>
+                    <h3 className="font-bold text-indigo-800 mb-2">No Classes Today!</h3>
+                    <p className="text-sm text-indigo-600">Enjoy your free day!</p>
+                    <div className="mt-3 pt-3 border-t border-indigo-200">
+                      <p className="text-xs text-blue-600 font-semibold mb-1">
+                        Next Classes: {nextDaySchedule.dayName} ({nextDaySchedule.date})
+                      </p>
+                      <p className="text-xs text-blue-500">
+                        {nextDaySchedule.totalClasses} {nextDaySchedule.totalClasses === 1 ? 'class' : 'classes'} scheduled
+                      </p>
+                    </div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div>
+                    <div className="text-4xl mb-2">🎉</div>
+                    <h3 className="font-bold text-indigo-800 mb-2">No Classes Today!</h3>
+                    <p className="text-sm text-indigo-600">Enjoy your free day! Perfect for self-study.</p>
+                  </div>
+                );
+              }
+            })()}
+          </div>
+
+          {/* Weekly Schedule from config - Collapsible */}
+          <div>
+            {/* Control Buttons */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">📅 Weekly Schedule</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={expandAllDays}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-medium"
+                >
+                  Expand All
+                </button>
+                <button
+                  onClick={collapseAllDays}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors font-medium"
+                >
+                  Today Only
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Days */}
+            <div className="space-y-2">
+              {getCurrentSchedule().map((daySchedule) => {
+                const today = new Date();
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const isToday = daySchedule.day === dayNames[today.getDay()];
+                const isExpanded = expandedDays.has(daySchedule.day);
+                const hasClasses = daySchedule.slots.length > 0;
+
+                return (
+                  <div
+                    key={daySchedule.day}
+                    className={`rounded-xl border-2 overflow-hidden transition-all ${
+                      isToday
+                        ? 'border-blue-400 bg-blue-50/50 shadow-md'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    {/* Day Header - Clickable */}
+                    <button
+                      onClick={() => toggleDay(daySchedule.day)}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`text-lg font-bold ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                          {daySchedule.day}
+                        </span>
+                        {isToday && (
+                          <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">
+                            TODAY
+                          </span>
+                        )}
+                        {!hasClasses && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            FREE DAY
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500 font-medium">
+                          {hasClasses ? `${daySchedule.slots.length} class${daySchedule.slots.length > 1 ? 'es' : ''}` : 'No classes'}
+                        </span>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {/* Day Content - Collapsible */}
+                    {isExpanded && hasClasses && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {daySchedule.slots.map((slot, slotIndex) => {
+                          const classStatus = getCurrentClassStatus();
+                          const isCurrentClass = classStatus.status === 'ongoing' && 
+                                                  classStatus.currentClass?.courseCode === slot.courseCode && 
+                                                  classStatus.currentClass?.time === slot.time && 
+                                                  isToday;
+                          
+                          return (
+                            <div
+                              key={slotIndex}
+                              className={`p-3 rounded-lg border transition-all ${
+                                isCurrentClass
+                                  ? 'border-green-400 bg-green-50 shadow-sm'
+                                  : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                {/* Left: Course Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className={`font-bold text-sm ${isCurrentClass ? 'text-green-700' : 'text-gray-900'}`}>
+                                      {slot.courseCode}
+                                    </span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                      slot.type === 'lab'
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                      {slot.type === 'lab' ? '🧪 Lab' : '📖 Theory'}
+                                    </span>
+                                    {isCurrentClass && (
+                                      <span className="text-xs px-2 py-0.5 bg-green-500 text-white rounded-full font-semibold animate-pulse">
+                                        LIVE
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 line-clamp-1">
+                                    {slot.courseName}
+                                  </p>
+                                </div>
+
+                                {/* Right: Time & Room */}
+                                <div className="text-right flex-shrink-0">
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    {slot.time.split(' - ')[0]}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    🏢 {slot.room}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Progress bar for current class */}
+                              {isCurrentClass && classStatus.minutesRemaining && (
+                                <div className="mt-2 pt-2 border-t border-green-200">
+                                  <div className="flex justify-between text-xs text-green-700 mb-1">
+                                    <span>In Progress</span>
+                                    <span className="font-semibold">{classStatus.minutesRemaining} min left</span>
+                                  </div>
+                                  <div className="w-full bg-green-200 rounded-full h-1.5">
+                                    <div
+                                      className="bg-green-500 h-1.5 rounded-full transition-all"
+                                      style={{ width: `${Math.max(0, Math.min(100, ((75 - classStatus.minutesRemaining) / 75) * 100))}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Smart Schedule Info */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl border border-blue-200">
+            <div className="flex items-center space-x-3 mb-2">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">📚</span>
+              </div>
+              <span className="font-semibold text-blue-800">{getRoutineTitle()}</span>
+            </div>
+            <p className="text-sm text-blue-700">
+              • Live schedule updates with real-time class status<br/>
+              • 🟣 Purple = Lab Classes | 🔵 Blue = Theory Classes<br/>
+              • Room numbers and timings from official routine<br/>
+              • Friday & Saturday are free days for self-study
+            </p>
           </div>
         </div>
         </div>
