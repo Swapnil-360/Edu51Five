@@ -343,11 +343,12 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
           </div>
         )}
 
-        {/* Mid-term Schedule */}
+        {/* Mid-term Schedule - Only show during final exam period */}
+        {semesterStatus.isFinalPeriod && (
         <div className="bg-gradient-to-br from-emerald-100 via-teal-50 to-teal-100 rounded-2xl p-6 hover-lift shadow-lg border border-emerald-300">
           <div className="flex items-center space-x-3 mb-6">
             <Users className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-xl font-bold text-slate-800">Mid-term Examination Schedule</h2>
+            <h2 className="text-xl font-bold text-slate-800">Final Examination Schedule</h2>
           </div>
 
           <div className="overflow-x-auto">
@@ -417,6 +418,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
             </table>
           </div>
         </div>
+        )}
 
         {/* SMART CLASS ROUTINE SECTION - Now using config */}
         <div className="bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 rounded-2xl p-6 mb-8 hover-lift shadow-lg border border-indigo-300">
@@ -550,6 +552,29 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose }) => {
 
           {/* Weekly Schedule from config - Collapsible */}
           <div>
+            {/* Section 5 Notice Banner */}
+            <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-xl border-2 border-indigo-200 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shadow-md">
+                    <span className="text-white font-bold text-lg">5</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                    <span>📚 Section 5 Class Routine</span>
+                    <span className="px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full">LIVE</span>
+                  </h4>
+                  <p className="text-sm text-indigo-700 leading-relaxed">
+                    <strong>B.Sc. Engg. in CSE | Intake: 51-5 | Semester: Fall 2025</strong>
+                  </p>
+                  <p className="text-xs text-indigo-600 mt-1">
+                    📌 Currently showing schedule for <strong>Section 5 only</strong>. More sections coming soon!
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Control Buttons */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">📅 Weekly Schedule</h3>

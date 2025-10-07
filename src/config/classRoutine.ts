@@ -264,11 +264,11 @@ export const getRoutineTitle = (): string => {
   
   switch (routineType) {
     case 'final_exam':
-      return '🎯 Final Examination Schedule';
+      return '🎯 Final Examination Schedule - Section 5';
     case 'midterm_exam':
-      return '📝 Mid-term Examination Schedule';
+      return '📝 Mid-term Examination Schedule - Section 5';
     default:
-      return '📚 Regular Class Schedule - Fall 2025';
+      return '📚 Section 5 Class Schedule - Fall 2025';
   }
 };
 
@@ -281,7 +281,7 @@ export const getRoutineDescription = (): string => {
     case 'midterm_exam':
       return 'Mid-term examinations are currently ongoing. Stay focused!';
     default:
-      return 'B.Sc. Engg. in CSE | Intake: 51-5 | Semester: Fall, 2025 | Mid-terms completed - Regular classes resumed';
+      return 'Section 51-5 | Mid-terms completed - Regular classes resumed | More sections coming soon';
   }
 };
 
