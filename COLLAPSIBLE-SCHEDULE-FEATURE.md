@@ -1,8 +1,16 @@
 # Collapsible Schedule Feature - Space-Saving Design
 ## Date: October 7, 2025
 
+⚠️ **SECTION 5 ONLY** - Currently showing routine for **Section 5** students only.  
+The collapsible design is ready for other sections to be added later.
+
+---
+
 ### 🎯 Problem Solved
 The weekly class schedule was taking up too much vertical space, making it difficult to scroll and view all content. This became a bigger concern knowing that more sections will be added in the future.
+
+**Current Status:** Routine available for **Section 5 only**.  
+**Future Plan:** Easy to add Section 6, 7, 8, etc. using the same collapsible pattern.
 
 ---
 

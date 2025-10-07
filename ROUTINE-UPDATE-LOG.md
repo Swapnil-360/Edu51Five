@@ -1,13 +1,20 @@
 # Class Routine Update Log
 ## Date: October 6, 2025
 
+⚠️ **SECTION 5 ONLY** - This routine is currently for **Section 5 (Intake 51-5)** students only.  
+Other sections will be added in future updates.
+
+---
+
 ### Updates Made:
 
 #### 1. **Class Routine Configuration** (`src/config/classRoutine.ts`)
 Updated the regular class schedule to match the official Fall 2025 routine for:
 - **Program**: B.Sc. Engg. in CSE
-- **Intake**: 51-5 (Section 5-5)
+- **Intake**: 51-5 (**Section 5 ONLY**)
 - **Semester**: Fall 2025
+
+⚠️ **Note:** If you are from Section 6, 7, 8 or other sections, your routine has not been added yet.
 
 #### 2. **Room Number Corrections**:
 - **Sunday**:
