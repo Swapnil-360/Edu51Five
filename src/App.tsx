@@ -1631,200 +1631,219 @@ For any queries, contact your course instructors or the department.`,
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
         {/* Home Page */}
         {currentView === 'home' && (
-          <div className="space-y-6 sm:space-y-8 md:space-y-12">
-            {/* Hero Section - Enhanced Mobile Responsive Design */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/50 to-indigo-100/30 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/60 backdrop-blur-sm">
-              {/* Decorative Background Elements */}
-              <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 sm:w-80 md:w-96 h-64 sm:h-80 md:h-96 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-48 sm:w-64 md:w-80 h-48 sm:h-64 md:h-80 bg-gradient-to-tr from-indigo-400/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-2xl"></div>
-              </div>
-              
-              <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
-                <div className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16">
-                  {/* Enhanced Logo with Professional Styling */}
-                  <div className="relative mb-6 sm:mb-8 md:mb-10">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 mx-auto"></div>
-                    <img 
-                      src="/image.png" 
-                      alt="Edu51Five Logo" 
-                      className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 mx-auto object-contain shadow-2xl rounded-xl sm:rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 p-1.5 sm:p-2" 
-                    />
-                  </div>
-                  
-                  {/* Professional Typography with Mobile Optimization */}
-                  <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-8 sm:mb-10 md:mb-12">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent no-select leading-tight px-2">
-                      Welcome to Edu<span className="text-red-500">51</span>Five
-                    </h1>
-                    <div className="relative px-2">
-                      <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-700 no-select">
-                        BUBT Intake 51 Excellence Platform
-                      </h2>
-                      <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mt-1 sm:mt-2 font-medium no-select">
-                        Department of Computer Science & Engineering
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Platform Features - Enhanced Mobile Layout */}
-                  <div className="bg-white/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg border border-white/50 mb-8 sm:mb-10">
-                    <div className="text-center mb-4 sm:mb-6">
-                      <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-lg mb-2 sm:mb-3">
-                        <span className="text-base sm:text-lg text-white no-select">🎯</span>
-                      </div>
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-800 no-select">Platform Features</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-                      {[
-                        { icon: "📚", text: "Course Materials", desc: "Study resources" },
-                        { icon: "📝", text: "Past Questions", desc: "Previous exams" },
-                        { icon: "🔔", text: "Smart Notices", desc: "Important updates" },
-                        { icon: "📁", text: "Google Drive", desc: "Cloud storage" },
-                        { icon: "⏰", text: "Semester Tracker", desc: "Progress timeline" },
-                        { icon: "📱", text: "Mobile Ready", desc: "Responsive design" }
-                      ].map((feature, index) => (
-                        <div key={index} className="bg-white/70 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-white/40 hover:bg-white/80 transition-colors duration-200">
-                          <div className="text-center">
-                            <span className="text-sm sm:text-base md:text-lg mb-1 sm:mb-2 block no-select">{feature.icon}</span>
-                            <h4 className="text-xs sm:text-sm font-semibold text-gray-800 no-select leading-tight">{feature.text}</h4>
-                            <p className="text-xs text-gray-600 no-select mt-0.5 sm:mt-1 hidden sm:block">{feature.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+          <div className="space-y-6 sm:space-y-8">
+            {/* Welcome Hero Section */}
+            <div className="text-center py-8 sm:py-10">
+              {/* Logo */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-5">
+                  <img 
+                    src="/image.png" 
+                    alt="BUBT Logo" 
+                    className="h-16 w-16 sm:h-20 sm:w-20 object-contain" 
+                  />
                 </div>
+              </div>
+
+              {/* Welcome Title */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                <span className="text-slate-800">Welcome to </span>
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Edu<span className="text-red-500">51</span>Five
+                </span>
+              </h1>
+
+              {/* Subtitle and Description */}
+              <div className="max-w-2xl mx-auto space-y-2">
+                <p className="text-xl sm:text-2xl font-semibold text-slate-700">
+                  BUBT Intake 51 Excellence Platform
+                </p>
+                <p className="text-sm sm:text-base text-slate-600">
+                  Department of Computer Science & Engineering
+                </p>
+              </div>
+            </div>
+
+            {/* Compact Section Card - Modern Dark Theme */}
+            <div className="max-w-2xl mx-auto">
+              <button
+                onClick={() => goToView('section5')}
+                className="w-full group relative overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl shadow-2xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-slate-700/50"
+              >
+                {/* Animated Shine Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                 
-                {/* Enhanced Section Cards with Mobile-First Design */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-10 mb-8 sm:mb-10 md:mb-12 lg:mb-16">
-                  {/* Active Section Card - Mobile Optimized */}
-                  <div 
-                    className="group relative overflow-hidden bg-gradient-to-br from-white to-blue-50/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl border border-white/60 hover:shadow-3xl cursor-pointer transition-all duration-500 transform hover:-translate-y-2 sm:hover:-translate-y-3 hover:border-blue-400/60"
-                    onClick={() => goToView('section5')}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative z-10">
-                      <div className="bg-gradient-to-r from-emerald-500 via-blue-600 to-purple-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center shadow-xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 relative overflow-hidden">
-                        {/* Special Premium Badge Design */}
-                        <div className="relative flex items-center justify-center">
-                          <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-lg"></div>
+                {/* Subtle Grid Pattern Overlay */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(99, 102, 241, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                </div>
+
+                <div className="relative z-10 p-6 sm:p-8">
+                  <div className="flex items-center gap-4 sm:gap-6">
+                    {/* Modern Gradient Icon */}
+                    <div className="flex-shrink-0">
+                      <div className="relative">
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 to-purple-500/40 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+                        
+                        {/* Icon Container with Gradient */}
+                        <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-4 shadow-2xl group-hover:scale-110 transition-transform duration-300 border border-white/10">
+                          {/* Modern Shield with "5" */}
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 relative">
+                            <svg className="w-full h-full text-white/20 drop-shadow-2xl" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" opacity="0.3"/>
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                            </svg>
+                            {/* Number 5 - Bold with Strong Shadow */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-3xl sm:text-4xl font-black text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)' }}>5</span>
+                            </div>
+                          </div>
                           
-                          {/* Main Crown/Shield Icon */}
-                          <svg className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
-                            {/* Crown Base */}
-                            <path d="M5 16L3 10L7.5 12L12 8L16.5 12L21 10L19 16H5Z" opacity="0.9"/>
-                            
-                            {/* Crown Jewels */}
-                            <circle cx="7.5" cy="11" r="1" className="text-yellow-300"/>
-                            <circle cx="12" cy="9" r="1.2" className="text-yellow-200"/>
-                            <circle cx="16.5" cy="11" r="1" className="text-yellow-300"/>
-                            
-                            {/* Special "5" in the center */}
-                            <text x="12" y="14" textAnchor="middle" className="text-xs font-bold fill-white">5</text>
-                            
-                            {/* Decorative Stars */}
-                            <path d="M6 6L6.5 7.5L8 8L6.5 8.5L6 10L5.5 8.5L4 8L5.5 7.5Z" opacity="0.7"/>
-                            <path d="M18 6L18.5 7.5L20 8L18.5 8.5L18 10L17.5 8.5L16 8L17.5 7.5Z" opacity="0.7"/>
-                          </svg>
-                          
-                          {/* Animated Glow Effect */}
-                          <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400/40 via-blue-400/40 to-purple-400/40 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></div>
-                          
-                          {/* Special Badge */}
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-bold">★</span>
+                          {/* Premium Badge - Animated */}
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                            <span className="text-sm">✦</span>
                           </div>
                         </div>
                       </div>
-                      <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 group-hover:text-blue-700 transition-colors duration-300 no-select">
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="flex-1 text-left">
+                      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow-lg">
                         Section 5 - CSE
-                      </h3>
-                      <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base md:text-lg leading-relaxed">
-                        Computer Science & Engineering Department - Your gateway to academic excellence
+                      </h2>
+                      <p className="text-slate-300 text-sm sm:text-base mb-3">
+                        Materials • Schedule • Notices
                       </p>
-                      <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-2 sm:p-3 mb-4 sm:mb-6 border border-blue-200/50">
-                        <p className="text-blue-800 font-semibold text-center">
-                          <span className="text-2xl font-bold text-blue-600">{courses.length}</span> Active Courses Available
-                        </p>
+                      
+                      {/* Course Badge */}
+                      <div className="inline-flex items-center bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm rounded-full px-4 py-1.5 border border-indigo-400/30 shadow-lg">
+                        <span className="text-white font-bold text-sm">
+                          📚 {courses.length} Courses
+                        </span>
                       </div>
-                      <div className="flex items-center text-blue-600 font-bold text-lg group-hover:text-blue-700 transition-colors duration-300">
-                        <span className="no-select">Enter Learning Portal</span>
-                        <svg className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </div>
+
+                    {/* Arrow with Animation */}
+                    <div className="flex-shrink-0">
+                      <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-sm rounded-full p-2 group-hover:bg-indigo-500/30 transition-all border border-indigo-400/20">
+                        <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white group-hover:translate-x-1 transition-transform drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Coming Soon Card */}
-                  <div className="relative overflow-hidden bg-gradient-to-br from-white to-gray-50/80 backdrop-blur-md rounded-2xl p-8 md:p-10 shadow-2xl border border-white/60 opacity-75">
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-slate-500/10"></div>
-                    <div className="relative z-10">
-                      <div className="bg-gradient-to-r from-gray-400 to-slate-500 p-4 rounded-2xl w-16 h-16 flex items-center justify-center shadow-xl mb-6">
-                        <span className="text-3xl text-white no-select">🔧</span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-700 mb-4 no-select">
-                        Other Sections
-                      </h3>
-                      <p className="text-gray-500 mb-4 text-base md:text-lg leading-relaxed">
-                        Additional departments and sections - Expanding the educational ecosystem
-                      </p>
-                      <div className="bg-gradient-to-r from-gray-100 to-slate-100 rounded-lg p-3 mb-6 border border-gray-200/50">
-                        <p className="text-gray-600 font-semibold text-center">
-                          More Sections Coming Soon...
-                        </p>
-                      </div>
-                      <p className="text-gray-400 font-medium text-base">
-                        🔔 Stay tuned for updates
-                      </p>
-                    </div>
+                </div>
+              </button>
+
+              {/* Coming Soon Notice - More Prominent */}
+              <div className="mt-4 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-amber-400/20 blur-xl animate-pulse"></div>
+                <div className="relative bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-dashed border-amber-400 rounded-lg p-3 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-bounce text-lg">🚧</span>
+                    <p className="text-amber-800 font-semibold text-sm sm:text-base">
+                      Other Sections Coming Soon!
+                    </p>
+                    <span className="animate-bounce text-lg" style={{ animationDelay: '0.2s' }}>🚧</span>
                   </div>
+                  <p className="text-amber-700 text-xs mt-1">Section 6, 7 & 8 - Under Development</p>
                 </div>
               </div>
             </div>
 
-            {/* Professional Footer Section */}
-            <div className="bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 rounded-2xl shadow-lg border border-slate-700/50 overflow-hidden">
-              <div className="relative z-10 p-6 md:p-8">
-                {/* Contact & Connect Section */}
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-white mb-3">
-                    Connect & Support
-                  </h3>
-                  <p className="text-slate-300 text-sm mb-6 max-w-xl mx-auto">
-                    Found a bug? Have suggestions? Let's connect and improve together.
-                  </p>
-                  
-                  {/* Professional Contact Buttons */}
-                  <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mb-6">
-                    <a
-                      href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
-                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-medium rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md"
-                      target="_blank" rel="noopener noreferrer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                      </svg>
-                      Email
-                    </a>
-                    <a
-                      href="https://wa.me/8801318090383?text=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
-                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-medium rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md"
-                      target="_blank" rel="noopener noreferrer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                      </svg>
-                      WhatsApp
-                    </a>
+            {/* Platform Features - Floating Pills Grid */}
+            <div className="max-w-4xl mx-auto px-4">
+              <div className="text-center mb-4">
+                <p className="text-gray-600 text-sm font-medium">Available Features</p>
+              </div>
+              
+              {/* Static Grid - All Visible */}
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-3">
+                {[
+                  { icon: "📚", text: "Course Materials", delay: "0s" },
+                  { icon: "📝", text: "Past Questions", delay: "0.3s" },
+                  { icon: "🔔", text: "Smart Notices", delay: "0.6s" },
+                  { icon: "📁", text: "Google Drive", delay: "0.9s" },
+                  { icon: "⏰", text: "Class Schedule", delay: "1.2s" },
+                  { icon: "📊", text: "Semester Tracker", delay: "1.5s" }
+                ].map((feature, index) => (
+                  <div 
+                    key={index} 
+                    className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-sm cursor-default select-none transition-all hover:scale-105 hover:shadow-md"
+                    style={{
+                      animation: 'pulse-soft 4s ease-in-out infinite',
+                      animationDelay: feature.delay
+                    }}
+                  >
+                    <span className="text-lg">{feature.icon}</span>
+                    <span className="text-gray-700 text-sm font-medium whitespace-nowrap">{feature.text}</span>
                   </div>
-                </div>
+                ))}
+              </div>
+              
+              <p className="text-center text-gray-400 text-xs">
+                ✨ Available in Section 5
+              </p>
+            </div>
 
-                {/* Developer & Copyright Section */}
+            {/* Compact Connect & Support Section */}
+            <div className="relative bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/50 rounded-xl shadow-md border border-slate-200 overflow-hidden">
+              {/* Subtle Decorative Background */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400 to-pink-500 rounded-full blur-2xl"></div>
+              </div>
+
+              <div className="relative z-10 p-4 md:p-5">
+                {/* Compact Header */}
+                <div className="text-center mb-3">
+                  <div className="inline-flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800">
+                      Connect & Support
+                    </h3>
+                  </div>
+                  <p className="text-slate-600 text-xs max-w-md mx-auto">
+                    Found a bug? Have suggestions? Let's improve together.
+                  </p>
+                </div>
+                
+                {/* Compact Contact Buttons */}
+                <div className="flex justify-center items-center gap-2">
+                  <a
+                    href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
+                    className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-semibold rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+                    target="_blank" rel="noopener noreferrer"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1.5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                    </svg>
+                    Email
+                  </a>
+                  <a
+                    href="https://wa.me/8801318090383?text=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
+                    className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+                    target="_blank" rel="noopener noreferrer"
+                  >
+                    <svg className="w-3.5 h-3.5 mr-1.5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                    </svg>
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Developer & Copyright Footer */}
+            <div className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl shadow-lg border border-slate-700/50 overflow-hidden mt-4">
+              <div className="relative z-10 p-6">
                 <div className="border-t border-slate-700/50 pt-6">
                   <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     {/* Developer Info */}
