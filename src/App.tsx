@@ -143,6 +143,9 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   
+  // Exam period selection state
+  const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>('midterm');
+  
   // File viewer modal states
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
@@ -160,7 +163,8 @@ function App() {
     type: 'pdf' as Material['type'],
     file: null as File | null,
     video_url: '',
-    description: ''
+    description: '',
+    exam_period: 'midterm' as 'midterm' | 'final' // Default to midterm
   });
   const [newNotice, setNewNotice] = useState({
     title: '',
@@ -751,6 +755,7 @@ For any queries, contact your course instructors or the department.`,
         video_url: newMaterial.video_url,
         type: newMaterial.type,
         course_code: newMaterial.course_id, // Using course_id from form as course_code for DB
+        exam_period: newMaterial.exam_period,
         size: newMaterial.file ? `${(newMaterial.file.size / 1024 / 1024).toFixed(2)} MB` : undefined
       });
 
@@ -763,6 +768,7 @@ For any queries, contact your course instructors or the department.`,
           video_url: newMaterial.video_url,
           type: newMaterial.type,
           course_code: newMaterial.course_id, // Using course_id from form as course_code for DB
+          exam_period: newMaterial.exam_period,
           size: newMaterial.file ? `${(newMaterial.file.size / 1024 / 1024).toFixed(2)} MB` : undefined
         }]);
 
@@ -780,7 +786,8 @@ For any queries, contact your course instructors or the department.`,
         type: 'pdf' as Material['type'],
         file: null,
         video_url: '',
-        description: ''
+        description: '',
+        exam_period: 'midterm'
       });
       setShowUploadFile(false);
       if (selectedCourse) {
@@ -2104,12 +2111,54 @@ For any queries, contact your course instructors or the department.`,
                   }`}>Access organized study materials by category</p>
                 </div>
               </div>
+
+              {/* Exam Period Tabs */}
+              <div className="flex space-x-2 mb-6">
+                <button
+                  onClick={() => setSelectedExamPeriod('midterm')}
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                    selectedExamPeriod === 'midterm'
+                      ? isDarkMode
+                        ? 'bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : isDarkMode
+                        ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Midterm Materials</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setSelectedExamPeriod('final')}
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                    selectedExamPeriod === 'final'
+                      ? isDarkMode
+                        ? 'bg-gradient-to-r from-purple-900 to-pink-900 text-white shadow-lg'
+                        : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                      : isDarkMode
+                        ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Final Materials</span>
+                  </div>
+                </button>
+              </div>
               
               <div className="grid-responsive">
                 {getCourseCategories(selectedCourse.code).map((category) => {
                   const categoryInfo = getCategoryInfo(category);
-                  const driveLink = getGoogleDriveLink(selectedCourse.code, category);
-                  const files = getCourseFiles(selectedCourse.code, category);
+                  const driveLink = getGoogleDriveLink(selectedCourse.code, category, selectedExamPeriod);
+                  const files = getCourseFiles(selectedCourse.code, category, selectedExamPeriod);
                   
                   // Dark mode color mapping
                   const getDarkBg = (cat: string) => {
@@ -2316,17 +2365,17 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}>Loading materials...</p>
               </div>
-            ) : materials.length === 0 ? (
+            ) : materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).length === 0 ? (
               <div className="text-center py-12">
                 <FileText className={`h-12 w-12 mx-auto mb-4 transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-600' : 'text-gray-400'
                 }`} />
                 <h3 className={`text-lg font-medium mb-2 transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                }`}>No materials found</h3>
+                }`}>No {selectedExamPeriod} materials found</h3>
                 <p className={`transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>No materials have been uploaded for this course yet.</p>
+                }`}>No materials have been uploaded for {selectedExamPeriod} exam yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -2341,14 +2390,14 @@ For any queries, contact your course instructors or the department.`,
                   <div>
                     <h3 className={`text-lg font-semibold transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                    }`}>📁 Uploaded Materials</h3>
+                    }`}>📁 Uploaded {selectedExamPeriod.charAt(0).toUpperCase() + selectedExamPeriod.slice(1)} Materials</h3>
                     <p className={`text-sm transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>Materials uploaded through the admin panel</p>
+                    }`}>Materials uploaded for {selectedExamPeriod} exam preparation</p>
                   </div>
                 </div>
                 
-                {materials.map((material, index) => {
+                {materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).map((material, index) => {
                   const materialScheme = getMaterialColorScheme(material.id, index);
                   return (
                     <div key={material.id} className={`rounded-2xl shadow-xl border backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
@@ -2850,6 +2899,15 @@ For any queries, contact your course instructors or the department.`,
                   <option value="video">Video</option>
                   <option value="suggestion">Suggestion</option>
                   <option value="past_question">Past Question</option>
+                </select>
+                <select
+                  value={newMaterial.exam_period}
+                  onChange={(e) => setNewMaterial({ ...newMaterial, exam_period: e.target.value as 'midterm' | 'final' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="midterm">Midterm Exam</option>
+                  <option value="final">Final Exam</option>
                 </select>
                 <input
                   type="file"

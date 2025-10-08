@@ -32,6 +32,7 @@ export interface Material {
   file_url: string | null;
   video_url?: string;
   description?: string;
+  exam_period?: 'midterm' | 'final'; // Added for exam period separation
   created_at: string;
   size?: string;
 }
