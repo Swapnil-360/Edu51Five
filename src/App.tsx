@@ -23,7 +23,9 @@ import {
   Calendar,
   ExternalLink,
   ImageIcon,
-  Clock
+  Clock,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface Course {
@@ -47,6 +49,30 @@ interface Material {
 }
 
 function App() {
+  // Dark mode state with localStorage persistence
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('darkMode', JSON.stringify(newValue));
+      return newValue;
+    });
+  };
+
+  // Apply dark mode to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
   const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester' | 'examMaterials'>(() => {
@@ -1201,9 +1227,17 @@ For any queries, contact your course instructors or the department.`,
 
   // Main return for all other views
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800' 
+        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100'
+    }`}>
       {/* Enhanced Mobile-First Responsive Header */}
-      <header className="fixed top-0 left-0 right-0 bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 text-white shadow-2xl border-b border-indigo-700/40 z-40">
+      <header className={`fixed top-0 left-0 right-0 shadow-2xl border-b z-40 transition-colors duration-300 ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 border-gray-700/40'
+          : 'bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 border-indigo-700/40'
+      } text-white`}>
         <div className="mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
             
@@ -1361,6 +1395,28 @@ For any queries, contact your course instructors or the department.`,
                 {showMobileMenu && (
                   <div className="mobile-menu-dropdown absolute top-full right-0 mt-3 w-72 sm:w-80 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 z-50 animate-in slide-in-from-top-2 duration-300">
                     <div className="p-4 sm:p-5 space-y-3">
+                      {/* Dark Mode Toggle for Mobile */}
+                      <button
+                        onClick={() => {
+                          toggleDarkMode();
+                        }}
+                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-gray-600/20 to-gray-700/20 hover:from-gray-600/30 hover:to-gray-700/30 transition-all duration-300 group border border-gray-600/20 hover:border-gray-500/40"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-gray-600 to-gray-700 flex items-center justify-center">
+                          {isDarkMode ? (
+                            <Sun className="h-5 w-5 text-yellow-300 drop-shadow-sm" />
+                          ) : (
+                            <Moon className="h-5 w-5 text-white drop-shadow-sm" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <span className="text-white font-semibold text-base block">
+                            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                          </span>
+                          <span className="text-gray-300 text-sm">Toggle theme</span>
+                        </div>
+                      </button>
+
                       {/* Smart Exam Materials */}
                       <button
                         onClick={() => {
@@ -1432,6 +1488,19 @@ For any queries, contact your course instructors or the department.`,
 
               {/* Desktop Navigation - Shows on medium screens and up */}
               <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+                {/* Dark Mode Toggle */}
+                <button
+                  onClick={toggleDarkMode}
+                  className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 hover:from-gray-600 hover:via-gray-500 hover:to-gray-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm border border-white/20 group"
+                  title={isDarkMode ? "Light Mode" : "Dark Mode"}
+                >
+                  {isDarkMode ? (
+                    <Sun className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-yellow-300 group-hover:scale-110 transition-transform drop-shadow-lg" />
+                  ) : (
+                    <Moon className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
+                  )}
+                </button>
+
                 {/* Modern Exam Materials Button */}
                 <button
                   onClick={() => goToView('examMaterials')}
@@ -1636,7 +1705,9 @@ For any queries, contact your course instructors or the department.`,
             <div className="text-center py-8 sm:py-10">
               {/* Logo */}
               <div className="flex justify-center mb-6">
-                <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-5">
+                <div className={`rounded-3xl shadow-xl p-4 sm:p-5 transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
                   <img 
                     src="/image.png" 
                     alt="BUBT Logo" 
@@ -1647,7 +1718,7 @@ For any queries, contact your course instructors or the department.`,
 
               {/* Welcome Title */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-                <span className="text-slate-800">Welcome to </span>
+                <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-slate-800'}`}>Welcome to </span>
                 <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Edu<span className="text-red-500">51</span>Five
                 </span>
@@ -1655,10 +1726,14 @@ For any queries, contact your course instructors or the department.`,
 
               {/* Subtitle and Description */}
               <div className="max-w-2xl mx-auto space-y-2">
-                <p className="text-xl sm:text-2xl font-semibold text-slate-700">
+                <p className={`text-xl sm:text-2xl font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                }`}>
                   BUBT Intake 51 Excellence Platform
                 </p>
-                <p className="text-sm sm:text-base text-slate-600">
+                <p className={`text-sm sm:text-base transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                }`}>
                   Department of Computer Science & Engineering
                 </p>
               </div>
@@ -1670,7 +1745,9 @@ For any queries, contact your course instructors or the department.`,
                 {/* Section 5 Card */}
                 <button
                   onClick={() => goToView('section5')}
-                  className="w-full group relative overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-gray-100 select-none"
+                  className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
+                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+                  }`}
                 >
                   {/* Compact Banner Image Section */}
                   <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
@@ -1710,10 +1787,14 @@ For any queries, contact your course instructors or the department.`,
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                      <h2 className={`text-lg sm:text-xl font-bold mb-1 group-hover:text-indigo-600 transition-colors ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                      }`}>
                         Section 5 - CSE
                       </h2>
-                      <p className="text-gray-600 text-xs sm:text-sm mb-2">
+                      <p className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                         BUBT Intake 51 • Computer Science & Engineering
                       </p>
                       
@@ -1756,17 +1837,25 @@ For any queries, contact your course instructors or the department.`,
               </button>
 
               {/* Placeholder Cards - Coming Soon */}
-              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-md border border-gray-300 p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none">
+              <div className={`rounded-xl shadow-md border p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none transition-colors duration-300 ${
+                isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300'
+              }`}>
                 <div className="text-center">
                   <div className="text-4xl mb-2">🚧</div>
-                  <p className="text-gray-600 font-semibold text-sm">Section Coming Soon</p>
+                  <p className={`font-semibold text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Section Coming Soon</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-md border border-gray-300 p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none">
+              <div className={`rounded-xl shadow-md border p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none transition-colors duration-300 ${
+                isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300'
+              }`}>
                 <div className="text-center">
                   <div className="text-4xl mb-2">🚧</div>
-                  <p className="text-gray-600 font-semibold text-sm">Section Coming Soon</p>
+                  <p className={`font-semibold text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Section Coming Soon</p>
                 </div>
               </div>
             </div>
@@ -1775,7 +1864,9 @@ For any queries, contact your course instructors or the department.`,
             {/* Platform Features - Floating Pills Grid */}
             <div className="max-w-4xl mx-auto px-4">
               <div className="text-center mb-4">
-                <p className="text-gray-600 text-sm font-medium">Available Features</p>
+                <p className={`text-sm font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Available Features</p>
               </div>
               
               {/* Static Grid - All Visible */}
@@ -1790,25 +1881,35 @@ For any queries, contact your course instructors or the department.`,
                 ].map((feature, index) => (
                   <div 
                     key={index} 
-                    className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-sm cursor-default select-none transition-all hover:scale-105 hover:shadow-md"
+                    className={`inline-flex items-center gap-2 backdrop-blur-sm border rounded-full px-4 py-2 shadow-sm cursor-default select-none transition-all hover:scale-105 hover:shadow-md ${
+                      isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/80 border-gray-200'
+                    }`}
                     style={{
                       animation: 'pulse-soft 4s ease-in-out infinite',
                       animationDelay: feature.delay
                     }}
                   >
                     <span className="text-lg">{feature.icon}</span>
-                    <span className="text-gray-700 text-sm font-medium whitespace-nowrap">{feature.text}</span>
+                    <span className={`text-sm font-medium whitespace-nowrap transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>{feature.text}</span>
                   </div>
                 ))}
               </div>
               
-              <p className="text-center text-gray-400 text-xs">
+              <p className={`text-center text-xs transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+              }`}>
                 ✨ Available in Section 5
               </p>
             </div>
 
             {/* Compact Connect & Support Section */}
-            <div className="relative bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/50 rounded-xl shadow-md border border-slate-200 overflow-hidden">
+            <div className={`relative rounded-xl shadow-md border overflow-hidden transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-br from-gray-800 via-gray-900/50 to-slate-900/50 border-gray-700' 
+                : 'bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/50 border-slate-200'
+            }`}>
               {/* Subtle Decorative Background */}
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full blur-2xl"></div>
@@ -1824,11 +1925,15 @@ For any queries, contact your course instructors or the department.`,
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800">
+                    <h3 className={`text-lg font-bold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-slate-800'
+                    }`}>
                       Connect & Support
                     </h3>
                   </div>
-                  <p className="text-slate-600 text-xs max-w-md mx-auto">
+                  <p className={`text-xs max-w-md mx-auto transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                  }`}>
                     Found a bug? Have suggestions? Let's improve together.
                   </p>
                 </div>
@@ -1963,24 +2068,40 @@ For any queries, contact your course instructors or the department.`,
         {currentView === 'course' && selectedCourse && (
           <div className="space-y-6 md:space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">{selectedCourse.name}</h2>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium w-fit">
+              <h2 className={`text-xl md:text-2xl font-bold transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+              }`}>{selectedCourse.name}</h2>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit transition-colors duration-300 ${
+                isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
+              }`}>
                 {selectedCourse.code}
               </span>
             </div>
-            <p className="text-gray-600 text-sm md:text-base select-text">{selectedCourse.description}</p>
+            <p className={`text-sm md:text-base select-text transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>{selectedCourse.description}</p>
 
             {/* Google Drive Resources */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className={`rounded-xl p-6 shadow-sm border transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
               <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                  isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'
+                }`}>
+                  <svg className={`w-6 h-6 transition-colors duration-300 ${
+                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                  }`} viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">Course Materials</h3>
-                  <p className="text-sm text-gray-600">Access organized study materials by category</p>
+                  <h3 className={`text-xl font-semibold transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>Course Materials</h3>
+                  <p className={`text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Access organized study materials by category</p>
                 </div>
               </div>
               
@@ -1990,10 +2111,41 @@ For any queries, contact your course instructors or the department.`,
                   const driveLink = getGoogleDriveLink(selectedCourse.code, category);
                   const files = getCourseFiles(selectedCourse.code, category);
                   
+                  // Dark mode color mapping
+                  const getDarkBg = (cat: string) => {
+                    switch(cat) {
+                      case 'ct-questions': return 'from-red-950/30 via-pink-950/20 to-red-900/30';
+                      case 'notes': return 'from-blue-950/30 via-indigo-950/20 to-blue-900/30';
+                      case 'slides': return 'from-green-950/30 via-emerald-950/20 to-green-900/30';
+                      case 'suggestions': return 'from-yellow-950/30 via-amber-950/20 to-yellow-900/30';
+                      case 'super-tips': return 'from-purple-950/30 via-violet-950/20 to-purple-900/30';
+                      case 'videos': return 'from-pink-950/30 via-rose-950/20 to-pink-900/30';
+                      default: return 'from-gray-950/30 via-slate-950/20 to-gray-900/30';
+                    }
+                  };
+                  
+                  const getDarkBorder = (cat: string) => {
+                    switch(cat) {
+                      case 'ct-questions': return 'border-red-800/30';
+                      case 'notes': return 'border-blue-800/30';
+                      case 'slides': return 'border-green-800/30';
+                      case 'suggestions': return 'border-yellow-800/30';
+                      case 'super-tips': return 'border-purple-800/30';
+                      case 'videos': return 'border-pink-800/30';
+                      default: return 'border-gray-800/30';
+                    }
+                  };
+                  
                   return (
-                    <div key={category} className={`bg-gradient-to-br ${categoryInfo.bgGradient} rounded-xl ${categoryInfo.borderColor} border overflow-hidden smooth-card transition-all duration-300 ui-element hover:shadow-lg transform hover:-translate-y-1 group`}>
+                    <div key={category} className={`bg-gradient-to-br ${
+                      isDarkMode ? getDarkBg(category) : categoryInfo.bgGradient
+                    } rounded-xl ${
+                      isDarkMode ? getDarkBorder(category) : categoryInfo.borderColor
+                    } border overflow-hidden smooth-card transition-all duration-300 ui-element hover:shadow-lg transform hover:-translate-y-1 group`}>
                       {/* Professional Category Header */}
-                      <div className={`flex items-center justify-between p-4 bg-white/40 backdrop-blur-sm border-b ${categoryInfo.borderColor}`}>
+                      <div className={`flex items-center justify-between p-4 backdrop-blur-sm border-b ${
+                        isDarkMode ? getDarkBorder(category) : categoryInfo.borderColor
+                      } ${isDarkMode ? 'bg-gray-900/40' : 'bg-white/40'}`}>
                         <div className="flex items-center space-x-3">
                           <div className={`w-10 h-10 ${categoryInfo.iconBg} rounded-lg flex items-center justify-center text-lg no-select shadow-sm`}>
                             {categoryInfo.icon}
@@ -2026,7 +2178,11 @@ For any queries, contact your course instructors or the department.`,
                         {files.length > 0 ? (
                           <div className="space-y-2">
                             {files.slice(0, 3).map((file) => (
-                              <div key={file.id} className={`flex items-center justify-between p-3 bg-white/50 backdrop-blur-sm rounded-lg hover:bg-white/70 transition-all duration-200 group border ${categoryInfo.borderColor} border-opacity-30`}>
+                              <div key={file.id} className={`flex items-center justify-between p-3 backdrop-blur-sm rounded-lg transition-all duration-200 group border border-opacity-30 ${
+                                isDarkMode 
+                                  ? `bg-gray-900/50 hover:bg-gray-800/70 ${getDarkBorder(category)}`
+                                  : `bg-white/50 hover:bg-white/70 ${categoryInfo.borderColor}`
+                              }`}>
                                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                                   {/* Professional File Type Icons */}
                                   <div className="flex-shrink-0">
@@ -2059,7 +2215,11 @@ For any queries, contact your course instructors or the department.`,
                                   
                                   {/* Professional File Name */}
                                   <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium ${categoryInfo.textColor} truncate group-hover:text-gray-900 transition-colors`}>
+                                    <p className={`text-sm font-medium truncate transition-colors ${
+                                      isDarkMode 
+                                        ? 'text-gray-300 group-hover:text-gray-100'
+                                        : `${categoryInfo.textColor} group-hover:text-gray-900`
+                                    }`}>
                                       {file.name}
                                     </p>
                                   </div>
@@ -2093,22 +2253,30 @@ For any queries, contact your course instructors or the department.`,
                               </div>
                             ))}
                             {files.length > 3 && (
-                              <div className="text-xs text-gray-500 text-center py-1">
+                              <div className={`text-xs text-center py-1 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                              }`}>
                                 +{files.length - 3} more files
                               </div>
                             )}
                           </div>
                         ) : (
                           <div className="text-center py-4">
-                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`w-8 h-8 mx-auto mb-2 transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-600' : 'text-gray-300'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                             </svg>
-                            <p className="text-xs text-gray-500 mb-2">No files</p>
+                            <p className={`text-xs mb-2 transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                            }`}>No files</p>
                             <a
                               href={driveLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
+                              className={`inline-flex items-center px-2 py-1 rounded text-xs transition-colors duration-300 ${
+                                isDarkMode ? 'bg-blue-900/50 text-blue-300 hover:bg-blue-800/70' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              }`}
                             >
                               Browse
                             </a>
@@ -2120,46 +2288,74 @@ For any queries, contact your course instructors or the department.`,
                 })}
               </div>
               
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between responsive-text-sm text-gray-600">
+              <div className={`mt-6 pt-4 border-t transition-colors duration-300 ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}>
+                <div className={`flex items-center justify-between responsive-text-sm transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   <div className="flex items-center space-x-2">
                     <svg className="w-4 h-4 text-green-500 no-select" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <span className="no-select">👁️ Preview files • 📁 Browse complete folders • Real file counts</span>
                   </div>
-                  <span className="text-gray-400 no-select">Google Drive Integration</span>
+                  <span className={`no-select transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                  }`}>Google Drive Integration</span>
                 </div>
               </div>
             </div>
 
             {loading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-600 mt-2">Loading materials...</p>
+                <div className={`animate-spin rounded-full h-8 w-8 border-b-2 mx-auto ${
+                  isDarkMode ? 'border-blue-400' : 'border-blue-600'
+                }`}></div>
+                <p className={`mt-2 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Loading materials...</p>
               </div>
             ) : materials.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No materials found</h3>
-                <p className="text-gray-600">No materials have been uploaded for this course yet.</p>
+                <FileText className={`h-12 w-12 mx-auto mb-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-600' : 'text-gray-400'
+                }`} />
+                <h3 className={`text-lg font-medium mb-2 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                }`}>No materials found</h3>
+                <p className={`transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>No materials have been uploaded for this course yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Upload className="w-5 h-5 text-green-600" />
+                  <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-green-900/50' : 'bg-green-100'
+                  }`}>
+                    <Upload className={`w-5 h-5 transition-colors duration-300 ${
+                      isDarkMode ? 'text-green-400' : 'text-green-600'
+                    }`} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">📁 Uploaded Materials</h3>
-                    <p className="text-sm text-gray-600">Materials uploaded through the admin panel</p>
+                    <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                    }`}>📁 Uploaded Materials</h3>
+                    <p className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Materials uploaded through the admin panel</p>
                   </div>
                 </div>
                 
                 {materials.map((material, index) => {
                   const materialScheme = getMaterialColorScheme(material.id, index);
                   return (
-                    <div key={material.id} className={`bg-gradient-to-br ${materialScheme.bg} rounded-2xl shadow-xl border border-white/20 backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2`}>
+                    <div key={material.id} className={`rounded-2xl shadow-xl border backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
+                      isDarkMode 
+                        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 border-gray-700/50'
+                        : `bg-gradient-to-br ${materialScheme.bg} border-white/20`
+                    }`}>
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-6 flex-1">
                           <div className={`p-4 rounded-2xl shadow-lg transform rotate-3 bg-gradient-to-r ${materialScheme.accent} text-white`}>
@@ -2167,19 +2363,35 @@ For any queries, contact your course instructors or the department.`,
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-xl font-bold text-gray-900 mb-2 hover:text-transparent hover:bg-gradient-to-r hover:${materialScheme.accent} hover:bg-clip-text transition-all cursor-pointer`}>
+                            <h3 className={`text-xl font-bold mb-2 hover:text-transparent hover:bg-gradient-to-r hover:${materialScheme.accent} hover:bg-clip-text transition-all cursor-pointer ${
+                              isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                            }`}>
                               {material.title}
                             </h3>
-                            <p className="text-gray-700 text-base mb-4 leading-relaxed">{material.description}</p>
+                            <p className={`text-base mb-4 leading-relaxed transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>{material.description}</p>
                             
                             <div className="flex items-center space-x-4 text-sm">
-                              <div className={`bg-gradient-to-r ${materialScheme.accent} bg-opacity-20 px-4 py-2 rounded-xl font-semibold text-gray-800`}>
+                              <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                                isDarkMode 
+                                  ? 'bg-blue-900/40 text-blue-300'
+                                  : `bg-gradient-to-r ${materialScheme.accent} bg-opacity-20 text-gray-800`
+                              }`}>
                                 Type: {material.type}
                               </div>
                               {material.size && (
-                                <div className="bg-gradient-to-r from-gray-100 to-slate-200 px-4 py-2 rounded-xl font-semibold text-gray-800">Size: {material.size}</div>
+                                <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                                  isDarkMode
+                                    ? 'bg-gray-700/50 text-gray-300'
+                                    : 'bg-gradient-to-r from-gray-100 to-slate-200 text-gray-800'
+                                }`}>Size: {material.size}</div>
                               )}
-                              <div className="bg-gradient-to-r from-emerald-100 to-teal-100 px-4 py-2 rounded-xl font-semibold text-emerald-800">
+                              <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                                isDarkMode
+                                  ? 'bg-emerald-900/40 text-emerald-300'
+                                  : 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800'
+                              }`}>
                                 {new Date(material.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -2193,7 +2405,11 @@ For any queries, contact your course instructors or the department.`,
                             href={material.video_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode
+                                ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/30'
+                                : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                            }`}
                             title="Watch Video"
                           >
                             <Eye className="h-5 w-5" />
@@ -2203,14 +2419,20 @@ For any queries, contact your course instructors or the department.`,
                             href={material.file_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode
+                                ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-900/30'
+                                : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                            }`}
                             title="Preview File"
                           >
                             <Eye className="h-5 w-5" />
                           </a>
                         ) : (
                           <button
-                            className="p-2 text-gray-300 cursor-not-allowed rounded-lg"
+                            className={`p-2 cursor-not-allowed rounded-lg ${
+                              isDarkMode ? 'text-gray-600' : 'text-gray-300'
+                            }`}
                             title="No preview available"
                             disabled
                           >
@@ -2223,14 +2445,20 @@ For any queries, contact your course instructors or the department.`,
                           <a
                             href={material.file_url}
                             download
-                            className="p-2 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode
+                                ? 'text-gray-400 hover:text-teal-400 hover:bg-teal-900/30'
+                                : 'text-gray-500 hover:text-teal-600 hover:bg-teal-50'
+                            }`}
                             title="Download File"
                           >
                             <Download className="h-5 w-5" />
                           </a>
                         ) : (
                           <button
-                            className="p-2 text-gray-300 cursor-not-allowed rounded-lg"
+                            className={`p-2 cursor-not-allowed rounded-lg ${
+                              isDarkMode ? 'text-gray-600' : 'text-gray-300'
+                            }`}
                             title="No file to download"
                             disabled
                           >
@@ -3031,9 +3259,9 @@ For any queries, contact your course instructors or the department.`,
           isOpen={showFileViewer}
           onClose={closeFileViewer}
         />
-        </div>
+      </div>
       </main>
-      )}
+        )}
 
       {/* Semester Tracker Page */}
       {currentView === 'semester' && (
