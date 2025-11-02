@@ -43,6 +43,13 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
    * Initialize Google API
    */
   useEffect(() => {
+    // Check if API key is configured
+    if (!API_KEY) {
+      console.warn('VITE_GOOGLE_API_KEY not configured in environment');
+      setError('Google Drive API key not configured. Please set VITE_GOOGLE_API_KEY in environment variables.');
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'https://apis.google.com/js/api.js';
     script.onload = () => {
@@ -57,11 +64,15 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
           findCourseFolder();
         } catch (error) {
           console.error('GAPI init error:', error);
-          setError('Failed to initialize Google Drive');
+          setError('Failed to initialize Google Drive API. Check your API key configuration.');
         }
       });
     };
     
+    script.onerror = () => {
+      setError('Failed to load Google API. Check your internet connection.');
+    };
+
     if (!document.querySelector('script[src="https://apis.google.com/js/api.js"]')) {
       document.body.appendChild(script);
     } else {
