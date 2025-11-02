@@ -7,6 +7,10 @@ import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
 import PDFViewer from './components/PDFViewer';
+import { DirectDriveUpload } from './components/Admin/DirectDriveUpload';
+import { DriveManager } from './components/Admin/DriveManager';
+import { StudentDriveView } from './components/Student/StudentDriveView';
+import { CourseDriveView } from './components/Student/CourseDriveView';
 import { 
   FileText, 
   Play, 
@@ -45,6 +49,9 @@ interface Material {
   type: string;
   course_code: string;
   size: string | null;
+  exam_period?: 'midterm' | 'final'; // NEW: For filtering by exam period
+  uploaded_by?: string; // NEW: Admin email who uploaded
+  download_url?: string; // NEW: Separate download link
   created_at: string;
 }
 
@@ -1328,7 +1335,7 @@ For any queries, contact your course instructors or the department.`,
                       style={{ width: `${semesterStatus.progressPercentage}%` }}
                     ></div>
                   </div>
-                  <span className="responsive-text-xs text-blue-200 mt-1.5 no-select font-bold transition-colors duration-300">
+                    <span className="responsive-text-xs text-white no-select font-medium">
                     {semesterStatus.progressPercentage}%
                   </span>
                 </div>
@@ -2187,273 +2194,55 @@ For any queries, contact your course instructors or the department.`,
               isDarkMode ? 'text-gray-400' : 'text-gray-600'
             }`}>{selectedCourse.description}</p>
 
-            {/* Google Drive Resources */}
-            <div className={`rounded-xl p-6 shadow-sm border transition-colors duration-300 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <div className="flex items-center space-x-3 mb-6">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${
-                  isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'
-                }`}>
-                  <svg className={`w-6 h-6 transition-colors duration-300 ${
-                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                  }`} viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+            {/* Exam Period Tabs */}
+            <div className="flex space-x-2 mb-6">
+              <button
+                onClick={() => setSelectedExamPeriod('midterm')}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                  selectedExamPeriod === 'midterm'
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : isDarkMode
+                      ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
+                  <span>Midterm Materials</span>
                 </div>
-                <div>
-                  <h3 className={`text-xl font-semibold transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Course Materials</h3>
-                  <p className={`text-sm transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>Access organized study materials by category</p>
+              </button>
+              <button
+                onClick={() => setSelectedExamPeriod('final')}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                  selectedExamPeriod === 'final'
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-purple-900 to-pink-900 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                    : isDarkMode
+                      ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Final Materials</span>
                 </div>
-              </div>
-
-              {/* Exam Period Tabs */}
-              <div className="flex space-x-2 mb-6">
-                <button
-                  onClick={() => setSelectedExamPeriod('midterm')}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                    selectedExamPeriod === 'midterm'
-                      ? isDarkMode
-                        ? 'bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                      : isDarkMode
-                        ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Midterm Materials</span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setSelectedExamPeriod('final')}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                    selectedExamPeriod === 'final'
-                      ? isDarkMode
-                        ? 'bg-gradient-to-r from-purple-900 to-pink-900 text-white shadow-lg'
-                        : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                      : isDarkMode
-                        ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Final Materials</span>
-                  </div>
-                </button>
-              </div>
-              
-              <div className="grid-responsive">
-                {getCourseCategories(selectedCourse.code).map((category) => {
-                  const categoryInfo = getCategoryInfo(category);
-                  const driveLink = getGoogleDriveLink(selectedCourse.code, category, selectedExamPeriod);
-                  const files = getCourseFiles(selectedCourse.code, category, selectedExamPeriod);
-                  
-                  // Dark mode color mapping
-                  const getDarkBg = (cat: string) => {
-                    switch(cat) {
-                      case 'ct-questions': return 'from-red-950/30 via-pink-950/20 to-red-900/30';
-                      case 'notes': return 'from-blue-950/30 via-indigo-950/20 to-blue-900/30';
-                      case 'slides': return 'from-green-950/30 via-emerald-950/20 to-green-900/30';
-                      case 'suggestions': return 'from-yellow-950/30 via-amber-950/20 to-yellow-900/30';
-                      case 'super-tips': return 'from-purple-950/30 via-violet-950/20 to-purple-900/30';
-                      case 'videos': return 'from-pink-950/30 via-rose-950/20 to-pink-900/30';
-                      default: return 'from-gray-950/30 via-slate-950/20 to-gray-900/30';
-                    }
-                  };
-                  
-                  const getDarkBorder = (cat: string) => {
-                    switch(cat) {
-                      case 'ct-questions': return 'border-red-800/30';
-                      case 'notes': return 'border-blue-800/30';
-                      case 'slides': return 'border-green-800/30';
-                      case 'suggestions': return 'border-yellow-800/30';
-                      case 'super-tips': return 'border-purple-800/30';
-                      case 'videos': return 'border-pink-800/30';
-                      default: return 'border-gray-800/30';
-                    }
-                  };
-                  
-                  return (
-                    <div key={category} className={`bg-gradient-to-br ${
-                      isDarkMode ? getDarkBg(category) : categoryInfo.bgGradient
-                    } rounded-xl ${
-                      isDarkMode ? getDarkBorder(category) : categoryInfo.borderColor
-                    } border overflow-hidden smooth-card transition-all duration-300 ui-element hover:shadow-lg transform hover:-translate-y-1 group`}>
-                      {/* Professional Category Header */}
-                      <div className={`flex items-center justify-between p-4 backdrop-blur-sm border-b ${
-                        isDarkMode ? getDarkBorder(category) : categoryInfo.borderColor
-                      } ${isDarkMode ? 'bg-gray-900/40' : 'bg-white/40'}`}>
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-10 h-10 ${categoryInfo.iconBg} rounded-lg flex items-center justify-center text-lg no-select shadow-sm`}>
-                            {categoryInfo.icon}
-                          </div>
-                          <div>
-                            <h4 className={`font-semibold ${categoryInfo.textColor} responsive-text-base no-select`}>
-                              {categoryInfo.label}
-                            </h4>
-                            <p className={`responsive-text-sm ${categoryInfo.textColor} opacity-70 no-select font-medium`}>
-                              {files.length} files
-                            </p>
-                          </div>
-                        </div>
-                        {/* Elegant Folder Icon */}
-                        <a
-                          href={driveLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`p-2 ${categoryInfo.textColor} opacity-70 hover:opacity-100 hover:bg-white/30 rounded-lg smooth-button transition-all duration-300 ui-element group-hover:scale-105 transform`}
-                          title="Open folder in Google Drive"
-                        >
-                          <svg className="w-5 h-5 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                          </svg>
-                        </a>
-                      </div>
-                      
-                      {/* Professional Files List */}
-                      <div className="p-4">
-                        {files.length > 0 ? (
-                          <div className="space-y-2">
-                            {files.slice(0, 3).map((file) => (
-                              <div key={file.id} className={`flex items-center justify-between p-3 backdrop-blur-sm rounded-lg transition-all duration-200 group border border-opacity-30 ${
-                                isDarkMode 
-                                  ? `bg-gray-900/50 hover:bg-gray-800/70 ${getDarkBorder(category)}`
-                                  : `bg-white/50 hover:bg-white/70 ${categoryInfo.borderColor}`
-                              }`}>
-                                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                  {/* Professional File Type Icons */}
-                                  <div className="flex-shrink-0">
-                                    {file.name.toLowerCase().includes('.pdf') ? (
-                                      <div className="w-7 h-7 bg-red-50 rounded-md flex items-center justify-center border border-red-100">
-                                        <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.5,8.5H10.5A2,2 0 0,1 12.5,10.5V11.5A2,2 0 0,1 10.5,13.5H8.5V16.5H7.5V8.5M8.5,9.5V12.5H10.5A1,1 0 0,0 11.5,11.5V10.5A1,1 0 0,0 10.5,9.5H8.5M13.5,8.5H15.43C16.47,8.5 17,9 17,10V11.2C17,12.2 16.47,12.7 15.43,12.7H14.5V16.5H13.5V8.5M14.5,9.5V11.7H15.43C15.73,11.7 16,11.47 16,11.2V10C16,9.73 15.73,9.5 15.43,9.5H14.5Z"/>
-                                        </svg>
-                                      </div>
-                                    ) : file.name.toLowerCase().includes('.ppt') ? (
-                                      <div className="w-7 h-7 bg-orange-50 rounded-md flex items-center justify-center border border-orange-100">
-                                        <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M8,8H10.5A2.5,2.5 0 0,1 13,10.5A2.5,2.5 0 0,1 10.5,13H9V16H8V8M9,9V12H10.5A1.5,1.5 0 0,0 12,10.5A1.5,1.5 0 0,0 10.5,9H9Z"/>
-                                        </svg>
-                                      </div>
-                                    ) : file.name.toLowerCase().includes('.mp4') ? (
-                                      <div className="w-7 h-7 bg-purple-50 rounded-md flex items-center justify-center border border-purple-100">
-                                        <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/>
-                                        </svg>
-                                      </div>
-                                    ) : (
-                                      <div className="w-7 h-7 bg-blue-50 rounded-md flex items-center justify-center border border-blue-100">
-                                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M6 2C4.89 2 4 2.9 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2H6Z"/>
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </div>
-                                  
-                                  {/* Professional File Name */}
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium truncate transition-colors ${
-                                      isDarkMode 
-                                        ? 'text-gray-300 group-hover:text-gray-100'
-                                        : `${categoryInfo.textColor} group-hover:text-gray-900`
-                                    }`}>
-                                      {file.name}
-                                    </p>
-                                  </div>
-                                </div>
-                                
-                                {/* Professional Action Buttons */}
-                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                  <button
-                                    onClick={() => openFileViewer(file.embedUrl || file.url, file.name)}
-                                    className={`p-1.5 ${categoryInfo.textColor} opacity-70 hover:opacity-100 hover:bg-white/50 rounded-md smooth-button transition-all duration-200 ui-element`}
-                                    title="Preview"
-                                  >
-                                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                  </button>
-                                  
-                                  <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1 text-gray-400 hover:text-green-600 rounded smooth-button transition-smooth ui-element"
-                                    title="Open in Drive"
-                                  >
-                                    <svg className="w-4 h-4 no-select" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                  </a>
-                                </div>
-                              </div>
-                            ))}
-                            {files.length > 3 && (
-                              <div className={`text-xs text-center py-1 transition-colors duration-300 ${
-                                isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                              }`}>
-                                +{files.length - 3} more files
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-center py-4">
-                            <svg className={`w-8 h-8 mx-auto mb-2 transition-colors duration-300 ${
-                              isDarkMode ? 'text-gray-600' : 'text-gray-300'
-                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                            <p className={`text-xs mb-2 transition-colors duration-300 ${
-                              isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                            }`}>No files</p>
-                            <a
-                              href={driveLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs transition-colors duration-300 ${
-                                isDarkMode ? 'bg-blue-900/50 text-blue-300 hover:bg-blue-800/70' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                              }`}
-                            >
-                              Browse
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className={`mt-6 pt-4 border-t transition-colors duration-300 ${
-                isDarkMode ? 'border-gray-700' : 'border-gray-200'
-              }`}>
-                <div className={`flex items-center justify-between responsive-text-sm transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4 text-green-500 no-select" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="no-select">👁️ Preview files • 📁 Browse complete folders • Real file counts</span>
-                  </div>
-                  <span className={`no-select transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                  }`}>Google Drive Integration</span>
-                </div>
-              </div>
+              </button>
             </div>
+
+            {/* NEW: Direct Google Drive View */}
+            <CourseDriveView
+              courseCode={selectedCourse.code}
+              courseName={selectedCourse.name}
+              examPeriod={selectedExamPeriod}
+              isDarkMode={isDarkMode}
+            />
 
             {loading ? (
               <div className="text-center py-8">
@@ -2625,28 +2414,28 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Admin Dashboard */}
         {isAdmin && currentView === 'admin' && (
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+            <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
             {/* Modern Header */}
-            <div className="bg-white shadow-sm border-b border-gray-200">
+              <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
                 <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
                   <div className="order-1">
                     <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Admin Dashboard
                     </h1>
-                    <p className="text-gray-600 mt-2 text-sm sm:text-base">Manage your educational platform with ease</p>
+                      <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 text-sm sm:text-base`}>Manage your educational platform with ease</p>
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                        <span className="text-gray-700">{courses.length} Courses</span>
+                          <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{courses.length} Courses</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                        <span className="text-gray-700">{materials.length} Materials</span>
+                          <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{materials.length} Materials</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                        <span className="text-gray-700">{notices.filter(n => n.is_active).length} Active Notices</span>
+                          <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{notices.filter(n => n.is_active).length} Active Notices</span>
                       </div>
                     </div>
                   </div>
@@ -2679,47 +2468,83 @@ For any queries, contact your course instructors or the department.`,
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
               {/* Quick Navigation Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-4 sm:p-6`}>
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={`w-10 h-10 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'} rounded-xl flex items-center justify-center`}>
+                      <svg className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Quick Actions</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <a 
                     href="#courses-section" 
-                    className="group p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                      className={`group p-4 border rounded-xl transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'border-gray-700 hover:border-blue-500 hover:bg-blue-900/30' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200">
-                        <span className="text-blue-600 font-semibold">📚</span>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isDarkMode 
+                            ? 'bg-blue-900/50 group-hover:bg-blue-900' 
+                            : 'bg-blue-100 group-hover:bg-blue-200'
+                        }`}>
+                            <span className={`font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>📚</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-blue-700 font-medium text-sm sm:text-base">Manage Courses</span>
+                        <span className={`font-medium text-sm sm:text-base ${
+                          isDarkMode 
+                            ? 'text-gray-300 group-hover:text-blue-400' 
+                            : 'text-gray-700 group-hover:text-blue-700'
+                        }`}>Manage Courses</span>
                     </div>
                   </a>
                   <a 
                     href="#materials-section" 
-                    className="group p-4 border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200"
+                      className={`group p-4 border rounded-xl transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'border-gray-700 hover:border-emerald-500 hover:bg-emerald-900/30' 
+                          : 'border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200">
-                        <span className="text-emerald-600 font-semibold">🗂️</span>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isDarkMode 
+                            ? 'bg-emerald-900/50 group-hover:bg-emerald-900' 
+                            : 'bg-emerald-100 group-hover:bg-emerald-200'
+                        }`}>
+                            <span className={`font-semibold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>🗂️</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-emerald-700 font-medium text-sm sm:text-base">Manage Materials</span>
+                        <span className={`font-medium text-sm sm:text-base ${
+                          isDarkMode 
+                            ? 'text-gray-300 group-hover:text-emerald-400' 
+                            : 'text-gray-700 group-hover:text-emerald-700'
+                        }`}>Manage Materials</span>
                     </div>
                   </a>
                   <a 
                     href="#notices-section" 
-                    className="group p-4 border border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all duration-200"
+                      className={`group p-4 border rounded-xl transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'border-gray-700 hover:border-purple-500 hover:bg-purple-900/30' 
+                          : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
-                        <span className="text-purple-600 font-semibold">📢</span>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isDarkMode 
+                            ? 'bg-purple-900/50 group-hover:bg-purple-900' 
+                            : 'bg-purple-100 group-hover:bg-purple-200'
+                        }`}>
+                            <span className={`font-semibold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>📢</span>
                       </div>
-                      <span className="text-gray-700 group-hover:text-purple-700 font-medium text-sm sm:text-base">Manage Notices</span>
+                        <span className={`font-medium text-sm sm:text-base ${
+                          isDarkMode 
+                            ? 'text-gray-300 group-hover:text-purple-400' 
+                            : 'text-gray-700 group-hover:text-purple-700'
+                        }`}>Manage Notices</span>
                     </div>
                   </a>
                 </div>
@@ -2762,26 +2587,43 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
 
+              {/* Google Drive Manager - New centralized approach */}
+              <div className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
+                  : 'bg-gradient-to-br from-orange-50 via-white to-pink-50 border-orange-200'
+              }`}>
+                <DriveManager isDarkMode={isDarkMode} />
+              </div>
+
               {/* Courses List - Modern Design */}
-              <div id="courses-section" className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-3xl shadow-xl border border-white/20 backdrop-blur-sm p-4 sm:p-6 md:p-8 lg:p-10 responsive-container">
+                <div id="courses-section" className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 lg:p-10 responsive-container ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
+                    : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border-white/20'
+                }`}>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-responsive">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 ui-element">
                       <span className="text-white font-bold no-select text-lg">📚</span>
                     </div>
-                    <h3 className="responsive-text-xl font-bold text-gray-800 no-select ml-4">Course Management</h3>
+                      <h3 className={`responsive-text-xl font-bold no-select ml-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Course Management</h3>
                   </div>
                 </div>
                 <div className="space-y-6">
                   {courses.map((course, index) => {
                     const colorScheme = getCourseColorScheme(course.code, index);
                     return (
-                      <div key={course.id} className={`group bg-gradient-to-r ${colorScheme.bgGradient} p-6 md:p-8 border-l-4 border-${colorScheme.accent} rounded-2xl shadow-lg hover:shadow-2xl smooth-card ui-element hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1`}>
+                      <div key={course.id} className={`group p-6 md:p-8 border-l-4 rounded-2xl shadow-lg hover:shadow-2xl smooth-card ui-element transition-all duration-300 transform hover:-translate-y-1 ${
+                        isDarkMode
+                          ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600 hover:border-blue-500'
+                          : `bg-gradient-to-r ${colorScheme.bgGradient} border-${colorScheme.accent} hover:border-purple-500`
+                      }`}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h4 className={`font-bold text-gray-900 responsive-text-xl group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300 no-select`}>{course.name}</h4>
+                              <h4 className={`font-bold responsive-text-xl group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300 no-select ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{course.name}</h4>
                             <p className={`font-semibold mt-2 no-select ${colorScheme.badge} px-3 py-1 rounded-full inline-block text-sm`}>{course.code}</p>
-                            <p className="text-gray-700 responsive-text-base mt-3 select-text leading-relaxed">{course.description}</p>
+                              <p className={`responsive-text-base mt-3 select-text leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{course.description}</p>
                           </div>
                           <div className="text-right ml-8">
                             <div className="flex items-center space-x-3 mb-4">
@@ -2790,7 +2632,7 @@ For any queries, contact your course instructors or the department.`,
                                   {materials.filter(m => m.course_code === course.code).length}
                                 </span>
                               </div>
-                              <span className="text-gray-700 font-semibold">materials</span>
+                                <span className={`font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>materials</span>
                             </div>
                             <button
                               onClick={() => handleCourseClick(course)}
@@ -2807,40 +2649,50 @@ For any queries, contact your course instructors or the department.`,
                     );
                   })}
                   {courses.length === 0 && (
-                    <div className="text-center py-12">
-                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className={`text-center py-12 rounded-xl ${isDarkMode ? 'bg-gray-800' : ''}`}>
+                      <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <span className="text-3xl">📚</span>
                       </div>
-                      <p className="text-gray-500 text-lg font-medium">No courses yet</p>
-                      <p className="text-gray-400 text-sm mt-1">Create your first course to get started</p>
+                      <p className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>No courses yet</p>
+                      <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>Create your first course to get started</p>
                     </div>
                   )}
                 </div>
               </div>
 
             {/* Materials Management Section */}
-            <div id="materials-section" className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-xl border border-gray-100">
+              <div id="materials-section" className={`rounded-2xl p-8 shadow-xl border ${
+                isDarkMode 
+                  ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700' 
+                  : 'bg-gradient-to-br from-white to-gray-50 border-gray-100'
+              }`}>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-3">
                   <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
                     <FolderOpen className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">Materials Library</h3>
-                    <p className="text-gray-600">Manage all uploaded materials ({materials.length} items)</p>
+                      <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Materials Library</h3>
+                      <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Manage all uploaded materials ({materials.length} items)</p>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+                  <div className={`text-sm px-4 py-2 rounded-full ${
+                    isDarkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-500 bg-gray-100'
+                  }`}>
                   {materials.length > 0 ? 'Click delete to remove materials' : 'No materials uploaded yet'}
                 </div>
               </div>
 
               <div className="grid gap-6">
                 {materials.map((material) => (
-                  <div key={material.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 hover:border-blue-200">
+                    <div key={material.id} className={`rounded-xl border p-6 hover:shadow-lg transition-all duration-200 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 border-gray-700 hover:border-blue-500' 
+                        : 'bg-white border-gray-200 hover:border-blue-200'
+                    }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1 flex items-start space-x-4">
-                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                           {(() => {
                             if (material.type.includes('pdf')) return <FileText className="h-5 w-5 text-red-500" />;
                             if (material.type.includes('image')) return <ImageIcon className="h-5 w-5 text-green-500" />;
@@ -2850,8 +2702,8 @@ For any queries, contact your course instructors or the department.`,
                           })()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 text-lg mb-1 truncate">{material.title}</h4>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                            <h4 className={`font-semibold text-lg mb-1 truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{material.title}</h4>
+                            <div className={`flex items-center space-x-4 text-sm mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             <span className="flex items-center">
                               <BookOpen className="h-4 w-4 mr-1" />
                               {material.course_code || 'Unknown Course'}
@@ -2862,11 +2714,11 @@ For any queries, contact your course instructors or the department.`,
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`}>
                               {material.type}
                             </span>
                             {material.size && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
                                 {material.size}
                               </span>
                             )}
@@ -2898,13 +2750,19 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 ))}
                 {materials.length === 0 && (
-                  <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                    <div className="bg-gradient-to-r from-gray-300 to-gray-400 p-4 rounded-2xl w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                  <div className={`text-center py-16 rounded-xl ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-br from-gray-800 to-gray-700' 
+                      : 'bg-gradient-to-br from-gray-50 to-gray-100'
+                  }`}>
+                    <div className={`p-4 rounded-2xl w-20 h-20 mx-auto mb-6 flex items-center justify-center ${
+                      isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600' : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                    }`}>
                       <FolderOpen className="h-10 w-10 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No Materials Found</h3>
-                    <p className="text-gray-600 text-lg mb-4">Upload some materials to see them here</p>
-                    <div className="text-sm text-gray-500">Materials will appear as beautiful cards with file type indicators</div>
+                    <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>No Materials Found</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-lg mb-4`}>Upload some materials to see them here</p>
+                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Materials will appear as beautiful cards with file type indicators</div>
                   </div>
                 )}
               </div>
@@ -2916,8 +2774,8 @@ For any queries, contact your course instructors or the department.`,
         {/* Create Course Modal */}
         {showCreateCourse && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New Course</h2>
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
+              <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Add New Course</h2>
               <form onSubmit={handleCreateCourse} className="space-y-4">
                 <input
                   type="text"
@@ -2966,8 +2824,8 @@ For any queries, contact your course instructors or the department.`,
         {/* Upload File Modal */}
         {showUploadFile && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Material</h2>
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
+              <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Upload Material</h2>
               <form onSubmit={handleFileUpload} className="space-y-4">
                 <select
                   value={newMaterial.course_id}
@@ -3057,11 +2915,11 @@ For any queries, contact your course instructors or the department.`,
         {/* Enhanced Categorized Notice Creation Modal */}
         {showCreateNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">📢 Create Smart Notice</h2>
-                  <p className="text-sm text-gray-600">Choose a category and let the system help you create targeted notices</p>
+                  <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📢 Create Smart Notice</h2>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Choose a category and let the system help you create targeted notices</p>
                 </div>
                 <button
                   onClick={() => {
@@ -3077,7 +2935,7 @@ For any queries, contact your course instructors or the department.`,
                       is_active: true 
                     });
                   }}
-                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
                 >
                   <X className="h-6 w-6" />
                 </button>

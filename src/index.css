@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide scrollbar for mobile breadcrumb navigation */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :root {
   /* Category color variables for Google Classroom style */
   --color-blue-100: #dbeafe;
@@ -572,7 +583,8 @@
     transform: translateZ(0) !important;
     backface-visibility: hidden !important;
   }
-} 
+}
+ 
  
 /* Animated gradient for logo text */
 @keyframes gradient {
