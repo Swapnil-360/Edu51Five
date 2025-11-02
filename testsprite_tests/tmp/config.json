@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "executionArgs": {
+    "projectName": "Edu51Five",
+    "projectPath": "D:\\Edu51Five",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-Gfrb4-6ErK-2zvhtR9MBCbyNSWFSocSY9D4lxSLxfYEhiKOw5WnsD6pmsSVDIqBOLQ4aTkUO-yN6sNZdBHadsFuc5PwWIRV7TyewcvasTRnV7MYVcSwUEUOMkZAXvLl63KA"
+    }
+  },
+  "proxy": "http://0874cecc-ce6c-4348-9e1f-fda946b05e85:EBn8aB3Emoh3QEo5u4l9zbH3XyYMxOl6@tun.testsprite.com:8080"
+}

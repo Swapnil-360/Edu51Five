@@ -1,0 +1,120 @@
+{
+  "meta": {
+    "project": "Edu51Five",
+    "date": "2025-10-29",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Edu51Five is a modern academic portal designed for BUBT Intake-51 Section-5 students that centralizes course information, study materials, semester progress tracking, and administrative management in a responsive, user-friendly web application.",
+  "core_goals": [
+    "Provide students with a centralized dashboard to access courses, sections, and study materials.",
+    "Enable administrators to efficiently manage courses, upload materials, and post notices.",
+    "Deliver real-time semester progress tracking including phases and upcoming milestones.",
+    "Offer a seamless and responsive user interface adaptable to desktop, tablet, and mobile devices.",
+    "Support integration with external storage such as Google Drive for smart file delivery and previewing.",
+    "Ensure data persistence and management via Supabase backend with secure and robust CRUD operations."
+  ],
+  "key_features": [
+    "Student Dashboard displaying courses, intakes, and section details.",
+    "Admin Dashboard with modal workflows for adding and managing courses, materials, and notices.",
+    "Semester Tracker showing live progress bar, timeline, countdowns, and phase information with a dedicated full-screen view.",
+    "Exam Materials Dashboard providing a smart and centralized resource hub.",
+    "Reusable PDF Viewer modal supporting fullscreen and mobile preview for PDFs and Google Drive files.",
+    "Global two-notice system supporting welcome messages and exam routine images with localStorage fallback and Supabase persistence.",
+    "Comprehensive course and file search and filter capabilities.",
+    "Responsive UI built with Tailwind CSS featuring animated progress bars and milestone indicators."
+  ],
+  "user_flow_summary": [
+    "Students log in and access the Student Dashboard to browse courses and materials.",
+    "Users view semester progress and next milestones via the Semester Tracker section.",
+    "Admins access the Admin Dashboard via authentication to manage courses and upload materials through modal forms.",
+    "Users interact with notices displayed globally, with persistence across sessions.",
+    "Exam materials can be previewed in the PDF Viewer modal or accessed via embedded Google Drive links.",
+    "Users search and filter courses and files to quickly locate resources.",
+    "The application maintains state routing between views (home, section, course, semester, admin, exam materials) in a single-page app experience."
+  ],
+  "validation_criteria": [
+    "Successful CRUD operations with Supabase for courses, materials, and notices.",
+    "Responsive UI rendering correctly across desktop, tablet, and mobile devices.",
+    "Correct display and live updating of semester progress and milestone countdowns.",
+    "PDF Viewer modal correctly previews files from local storage and Google Drive with full functionality.",
+    "Admin workflows for adding courses and uploading materials trigger appropriate database updates and UI refreshes.",
+    "Global notices are displayed and persist reliably using Supabase and localStorage fallback.",
+    "Search and filter functionalities accurately return relevant courses and materials.",
+    "Navigation within the single-page app is smooth, with the correct view state updates and data loading."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "React",
+      "Vite",
+      "Supabase",
+      "Tailwind CSS",
+      "Lucide React"
+    ],
+    "features": [
+      {
+        "name": "Application shell and view state routing",
+        "description": "Single-page app with manual view state navigation (home, section, course, semester, admin, exam materials) managed in App component.",
+        "files": [
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Supabase integration",
+        "description": "CRUD for courses, materials, and notices using Supabase tables and storage.",
+        "files": [
+          "src/lib/supabase.ts",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Notices system (Welcome + Exam Routine)",
+        "description": "Global two-notice system with localStorage fallback and Supabase persistence, including image embedding for exam routine.",
+        "files": [
+          "src/types.ts",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Semester tracker",
+        "description": "Live semester progress, phases, and next milestone display; dedicated full-screen view.",
+        "files": [
+          "src/components/SemesterTracker.tsx",
+          "src/config/semester.ts",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Exam materials dashboard",
+        "description": "Full-screen smart materials dashboard for study resources.",
+        "files": [
+          "src/components/Student/ExamMaterialsDashboard.tsx",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "PDF viewer modal",
+        "description": "Reusable modal to preview PDFs and Google Drive files via embeddable links.",
+        "files": [
+          "src/components/PDFViewer.tsx",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Google Drive configuration",
+        "description": "Category metadata, folder links, and file listing per course category.",
+        "files": [
+          "src/config/googleDrive.ts",
+          "src/App.tsx"
+        ]
+      },
+      {
+        "name": "Course and materials management (Admin)",
+        "description": "Admin modal workflows for adding courses, uploading materials, and managing notices.",
+        "files": [
+          "src/App.tsx"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,469 @@
+[
+  {
+    "id": "TC001",
+    "title": "Student login and access Student Dashboard",
+    "description": "Verify that a student can log in successfully and access the Student Dashboard showing courses, intakes, and section details.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid student credentials"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is successful and Student Dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify courses, intakes, and section details are correctly listed"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Student login failure with invalid credentials",
+    "description": "Check that login fails with incorrect username or password and appropriate error message is shown.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid username and/or password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that login fails and an error message is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Admin login and access Admin Dashboard",
+    "description": "Verify that an administrator can log in and access the Admin Dashboard with modals for managing courses, materials, and notices.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid administrator credentials"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is successful and Admin Dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify modals for adding and managing courses, materials, and notices are accessible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Admin adds a new course successfully",
+    "description": "Verify admin can add a new course using modal workflow and the course is persisted and reflected in the Student Dashboard.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as admin and open Admin Dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the add course modal"
+      },
+      {
+        "type": "action",
+        "description": "Fill in course details correctly"
+      },
+      {
+        "type": "action",
+        "description": "Submit the add course form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify course is added in Supabase database"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify course appears in the Student Dashboard course list"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Admin uploads study material successfully",
+    "description": "Verify admin can upload study materials for courses via modal form and files are stored and accessible to students.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log in as admin and open Admin Dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open upload materials modal"
+      },
+      {
+        "type": "action",
+        "description": "Select course and upload valid material files"
+      },
+      {
+        "type": "action",
+        "description": "Submit the upload form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify files are uploaded to Supabase storage and associated with correct course"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify uploaded materials are visible and accessible in Student Dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Global notices display and persistence",
+    "description": "Verify welcome messages and exam routine images appear globally, persist across user sessions using Supabase and fallback to localStorage.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Post a new notice (welcome message or exam routine) via Admin Dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notice appears on all users’ views globally"
+      },
+      {
+        "type": "action",
+        "description": "Refresh or reopen the application"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notices persist and reload correctly from Supabase or fallback to localStorage"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify embedded exam routine images display properly"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Semester Tracker live progress and milestones update",
+    "description": "Verify the semester tracker shows accurate real-time progress bar, phase timeline, countdowns, and milestone information with correct updates.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the Semester Tracker section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live progress bar updates correctly according to semester dates"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify timeline phases and milestone countdowns display accurate data"
+      },
+      {
+        "type": "action",
+        "description": "Open full-screen Semester Tracker view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify full-screen view displays all semester phases and milestone details"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Exam Materials Dashboard functionality",
+    "description": "Verify exam materials are displayed in a centralized dashboard and accessible properly from student view.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the Exam Materials Dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all relevant study materials are listed accurately"
+      },
+      {
+        "type": "action",
+        "description": "Open an exam material document"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the file opens in PDF viewer modal or Google Drive preview"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Reusable PDF Viewer modal on different devices",
+    "description": "Verify that the PDF Viewer modal correctly previews PDFs and Google Drive files with fullscreen and mobile responsive previews.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a PDF file from local storage"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify PDF renders correctly in modal"
+      },
+      {
+        "type": "action",
+        "description": "Open a Google Drive file link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Google Drive file preview loads correctly in the modal"
+      },
+      {
+        "type": "action",
+        "description": "Switch viewport to mobile device dimensions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify PDF Viewer modal adapts its layout responsively and supports fullscreen preview"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Course and material search and filter accuracy",
+    "description": "Verify that course and file search and filtering functionality returns relevant and accurate results.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enter keywords in the course search field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only relevant courses matching the keyword are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters (such as intake, section, or file type) on courses/materials"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered list matches the selection criteria exactly"
+      },
+      {
+        "type": "action",
+        "description": "Clear search and filters"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify full list of courses and materials is restored"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Navigation and view state routing in SPA",
+    "description": "Verify smooth navigation among views (home, section, course, semester, admin, exam materials) and correct data loading for each.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Click navigation links to switch between views"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL and application state update accordingly without full page reload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify data for the selected view loads correctly and is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Refresh page on different views"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify application routes correctly and loads expected data"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Data persistence and CRUD operations with Supabase",
+    "description": "Verify all Create, Read, Update, and Delete operations for courses, materials, and notices correctly persist data to Supabase and data integrity is maintained.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a new course entry via Admin Dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new course is created in Supabase and visible in front-end"
+      },
+      {
+        "type": "action",
+        "description": "Update course details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updates are persisted and shown correctly"
+      },
+      {
+        "type": "action",
+        "description": "Delete a course"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify course is removed from Supabase and UI"
+      },
+      {
+        "type": "action",
+        "description": "Perform similar CRUD operations for study materials and notices"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all corresponding operations are persisted and reflected with no data loss"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Responsive UI rendering on desktop, tablet, and mobile",
+    "description": "Verify that the UI adapts smoothly and renders correctly across desktop, tablet, and mobile devices with consistent layout and functionality.",
+    "category": "ui",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the application in desktop viewport size"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify layout, menus, and controls are displayed correctly and usable"
+      },
+      {
+        "type": "action",
+        "description": "Resize viewport to tablet dimensions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify responsive adjustments for layout and controls appear as expected"
+      },
+      {
+        "type": "action",
+        "description": "Resize viewport to mobile phone dimensions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify mobile optimized UI including menus and modals displays properly without clipping or overlap"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Error handling on Supabase CRUD failures",
+    "description": "Verify the application handles errors gracefully when Supabase CRUD operations fail (e.g. network issues, permission denied).",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate a Supabase failure during course creation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user receives a clear error message"
+      },
+      {
+        "type": "action",
+        "description": "Simulate failure during file upload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify upload failure is gracefully handled with retry option or error notification"
+      },
+      {
+        "type": "action",
+        "description": "Simulate error while loading notices"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fallback to localStorage works and user is informed if offline"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Google Drive files loading and preview validation",
+    "description": "Verify that Google Drive configuration metadata and folder links load correctly and files are listed and previewed without errors.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load course category with Google Drive folder link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify files from Google Drive folder list display correctly"
+      },
+      {
+        "type": "action",
+        "description": "Open a Google Drive file in PDF Viewer modal"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Google Drive embedded preview works correctly"
+      },
+      {
+        "type": "action",
+        "description": "Simulate Google Drive file loading failure"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is notified properly and degraded UI behavior handled"
+      }
+    ]
+  }
+]

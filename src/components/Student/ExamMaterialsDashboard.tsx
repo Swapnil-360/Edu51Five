@@ -11,7 +11,11 @@ import {
 } from '../../config/examMaterials';
 import { getCurrentSemesterStatus } from '../../config/semester';
 
-export const ExamMaterialsDashboard: React.FC = () => {
+interface ExamMaterialsDashboardProps {
+  isDarkMode?: boolean;
+}
+
+export const ExamMaterialsDashboard: React.FC<ExamMaterialsDashboardProps> = ({ isDarkMode = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<MaterialType | 'all'>('all');
@@ -84,35 +88,55 @@ export const ExamMaterialsDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-3 sm:p-4 md:p-6 overflow-auto">
+    <div className={`min-h-screen p-3 sm:p-4 md:p-6 overflow-auto transition-colors duration-300 ${
+      isDarkMode
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900'
+        : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'
+    }`}>
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Mobile-Responsive Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8 px-2">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">
+          <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+          }`}>
             📚 Smart Exam Materials
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+          <p className={`text-sm sm:text-base md:text-lg transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             AI-powered material recommendations for your current exam period
           </p>
         </div>
 
         {/* Development Notice Banner */}
-        <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white p-4 sm:p-5 md:p-6 rounded-2xl mb-6 sm:mb-8 shadow-lg border border-blue-200/50">
+        <div className={`p-4 sm:p-5 md:p-6 rounded-2xl mb-6 sm:mb-8 shadow-lg transition-colors duration-300 ${
+          isDarkMode
+            ? 'bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 border border-blue-700/50 text-white'
+            : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white border border-blue-200/50'
+        }`}>
           <div className="flex items-center space-x-3 mb-3">
-            <div className="p-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm">
+            <div className={`p-2 rounded-lg backdrop-blur-sm ${
+              isDarkMode ? 'bg-white bg-opacity-10' : 'bg-white bg-opacity-20'
+            }`}>
               <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
                 <span className="text-blue-800 text-sm font-bold">⚠️</span>
               </div>
             </div>
             <div>
               <h3 className="font-bold text-lg sm:text-xl">🚧 Feature Under Development</h3>
-              <p className="text-blue-100 text-sm sm:text-base">
+              <p className={`text-sm sm:text-base transition-colors duration-300 ${
+                isDarkMode ? 'text-blue-200' : 'text-blue-100'
+              }`}>
                 Advanced AI features and enhanced functionality are being added
               </p>
             </div>
           </div>
-          <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/20">
-            <p className="text-white/90 text-sm leading-relaxed">
+          <div className={`rounded-xl p-3 backdrop-blur-sm border transition-colors duration-300 ${
+            isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white/10 border-white/20'
+          }`}>
+            <p className={`text-sm leading-relaxed transition-colors duration-300 ${
+              isDarkMode ? 'text-white/80' : 'text-white/90'
+            }`}>
               <strong>🔮 Coming Soon:</strong> Smart material categorization, personalized study recommendations, 
               progress tracking, and integrated AI study assistant. The current version provides basic material access 
               while we enhance the experience with advanced features.
@@ -125,59 +149,111 @@ export const ExamMaterialsDashboard: React.FC = () => {
 
         {/* Enhanced Mobile-Responsive Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
-          <div className="bg-white p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl shadow-md border border-blue-100">
+          <div className={`p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl shadow-md border ${
+            isDarkMode
+              ? 'bg-gray-800 border-blue-800'
+              : 'bg-white border-blue-100'
+          }`}>
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
+                isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'
+              }`}>
+                <BookOpen className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`} />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600">Total Materials</p>
-                <p className="font-bold text-lg sm:text-xl text-gray-900">{filteredMaterials.length}</p>
+                <p className={`text-xs sm:text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Total Materials</p>
+                <p className={`font-bold text-lg sm:text-xl ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                }`}>{filteredMaterials.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow-md border border-orange-100">
+          <div className={`p-4 rounded-xl shadow-md border ${
+            isDarkMode
+              ? 'bg-gray-800 border-orange-800'
+              : 'bg-white border-orange-100'
+          }`}>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Target className="h-5 w-5 text-orange-600" />
+              <div className={`p-2 rounded-lg ${
+                isDarkMode ? 'bg-orange-900/40' : 'bg-orange-100'
+              }`}>
+                <Target className={`h-5 w-5 ${
+                  isDarkMode ? 'text-orange-400' : 'text-orange-600'
+                }`} />
               </div>
               <div>
-                <p className="text-sm text-gray-600">High Priority</p>
-                <p className="font-bold text-xl text-gray-900">
+                <p className={`text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>High Priority</p>
+                <p className={`font-bold text-xl ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                }`}>
                   {filteredMaterials.filter((m: ExamMaterial) => m.isHighPriority).length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow-md border border-green-100">
+          <div className={`p-4 rounded-xl shadow-md border ${
+            isDarkMode
+              ? 'bg-gray-800 border-green-800'
+              : 'bg-white border-green-100'
+          }`}>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="h-5 w-5 text-green-600" />
+              <div className={`p-2 rounded-lg ${
+                isDarkMode ? 'bg-green-900/40' : 'bg-green-100'
+              }`}>
+                <Clock className={`h-5 w-5 ${
+                  isDarkMode ? 'text-green-400' : 'text-green-600'
+                }`} />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Current Phase</p>
-                <p className="font-bold text-sm text-gray-900">{semesterStatus.currentPhase}</p>
+                <p className={`text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Current Phase</p>
+                <p className={`font-bold text-sm ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                }`}>{semesterStatus.currentPhase}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow-md border border-purple-100">
+          <div className={`p-4 rounded-xl shadow-md border ${
+            isDarkMode
+              ? 'bg-gray-800 border-purple-800'
+              : 'bg-white border-purple-100'
+          }`}>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-purple-600" />
+              <div className={`p-2 rounded-lg ${
+                isDarkMode ? 'bg-purple-900/40' : 'bg-purple-100'
+              }`}>
+                <Calendar className={`h-5 w-5 ${
+                  isDarkMode ? 'text-purple-400' : 'text-purple-600'
+                }`} />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Days to Next</p>
-                <p className="font-bold text-xl text-gray-900">{semesterStatus.daysToMilestone}</p>
+                <p className={`text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Days to Next</p>
+                <p className={`font-bold text-xl ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                }`}>{semesterStatus.daysToMilestone}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div className={`rounded-xl shadow-lg p-6 mb-8 border ${
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
+            : 'bg-white border-gray-100'
+        }`}>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
             {/* Search */}
             <div className="relative">
@@ -234,7 +310,9 @@ export const ExamMaterialsDashboard: React.FC = () => {
                 onChange={(e) => setShowRelevantOnly(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Current exam only</span>
+              <span className={`text-sm ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Current exam only</span>
             </label>
           </div>
         </div>
@@ -243,21 +321,35 @@ export const ExamMaterialsDashboard: React.FC = () => {
         {Object.keys(materialsByCourse).length === 0 ? (
           <div className="text-center py-12">
             <div className="mb-4">
-              <Filter className="h-12 w-12 text-gray-400 mx-auto" />
+              <Filter className={`h-12 w-12 mx-auto ${
+                isDarkMode ? 'text-gray-600' : 'text-gray-400'
+              }`} />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No materials found</h3>
-            <p className="text-gray-500">Try adjusting your search criteria</p>
+            <h3 className={`text-lg font-medium mb-2 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+            }`}>No materials found</h3>
+            <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>Try adjusting your search criteria</p>
           </div>
         ) : (
           <div className="space-y-8">
             {Object.entries(materialsByCourse).map(([courseCode, materials]) => (
               <div key={courseCode} className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <h2 className="text-2xl font-bold text-gray-900">{courseCode}</h2>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  <h2 className={`text-2xl font-bold ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>{courseCode}</h2>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    isDarkMode
+                      ? 'bg-blue-900/40 text-blue-300'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
                     {materials.length} materials
                   </span>
-                  <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    isDarkMode
+                      ? 'bg-orange-900/40 text-orange-300'
+                      : 'bg-orange-100 text-orange-800'
+                  }`}>
                     {materials.filter(m => isMaterialRelevantNow(m)).length} relevant now
                   </span>
                 </div>

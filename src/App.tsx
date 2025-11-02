@@ -402,11 +402,11 @@ FOR ALL USING (true) WITH CHECK (true);
       let routineNotice = null;
 
       if (data) {
-        welcomeNotice = data.find(n => n.id === 'welcome-notice');
-        routineNotice = data.find(n => n.id === 'exam-routine-notice');
+        welcomeNotice = (data as Notice[]).find((n: Notice) => n.id === 'welcome-notice');
+        routineNotice = (data as Notice[]).find((n: Notice) => n.id === 'exam-routine-notice');
       }
 
-      const defaultNotices = [];
+      const defaultNotices: Notice[] = [];
 
       // Create default welcome notice if it doesn't exist
       if (!welcomeNotice) {
@@ -425,9 +425,13 @@ This platform is your centralized hub for all Section 5 (Computer Science & Engi
 Best of luck with your studies!
 - Edu51Five Team`,
           type: 'info',
+          category: 'announcement',
+          priority: 'normal',
+          exam_type: null,
+          event_date: '',
           is_active: true,
           created_at: new Date().toISOString()
-        };
+        } as Notice;
 
         // Try to save to database
         try {
@@ -455,9 +459,13 @@ Best of luck with your studies!
 
 For any queries, contact your course instructors or the department.`,
           type: 'warning',
+          category: 'exam',
+          priority: 'high',
+          exam_type: 'midterm',
+          event_date: '',
           is_active: true,
           created_at: new Date().toISOString()
-        };
+        } as Notice;
 
         // Try to save to database
         try {
@@ -504,8 +512,8 @@ For any queries, contact your course instructors or the department.`,
 
       // If database query successful, extract the notices
       if (!error && dbNotices) {
-        welcomeNotice = dbNotices.find(n => n.id === 'welcome-notice');
-        routineNotice = dbNotices.find(n => n.id === 'exam-routine-notice');
+        welcomeNotice = (dbNotices as Notice[]).find((n: Notice) => n.id === 'welcome-notice');
+        routineNotice = (dbNotices as Notice[]).find((n: Notice) => n.id === 'exam-routine-notice');
         console.log('Database notices found:', { welcome: !!welcomeNotice, routine: !!routineNotice });
       }
 
@@ -885,7 +893,7 @@ For any queries, contact your course instructors or the department.`,
   };
 
   // Material color schemes for diversity
-  const getMaterialColorScheme = (materialId: string, index: number) => {
+  const getMaterialColorScheme = (index: number) => {
     const materialSchemes = [
       { bg: 'from-white via-blue-50 to-indigo-100', accent: 'from-blue-500 to-indigo-600' },
       { bg: 'from-white via-green-50 to-emerald-100', accent: 'from-green-500 to-emerald-600' },
@@ -1400,16 +1408,28 @@ For any queries, contact your course instructors or the department.`,
 
                 {/* Mobile Dropdown Menu - Enhanced Mobile Design */}
                 {showMobileMenu && (
-                  <div className="mobile-menu-dropdown absolute top-full right-0 mt-3 w-72 sm:w-80 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 z-50 animate-in slide-in-from-top-2 duration-300">
+                  <div className={`mobile-menu-dropdown absolute top-full right-0 mt-3 w-72 sm:w-80 backdrop-blur-xl rounded-2xl shadow-2xl border z-50 animate-in slide-in-from-top-2 duration-300 ${
+                    isDarkMode
+                      ? 'bg-gray-900/95 border-gray-700/50'
+                      : 'bg-white/95 border-gray-200/50'
+                  }`}>
                     <div className="p-4 sm:p-5 space-y-3">
                       {/* Dark Mode Toggle for Mobile */}
                       <button
                         onClick={() => {
                           toggleDarkMode();
                         }}
-                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-gray-600/20 to-gray-700/20 hover:from-gray-600/30 hover:to-gray-700/30 transition-all duration-300 group border border-gray-600/20 hover:border-gray-500/40"
+                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border ${
+                          isDarkMode
+                            ? 'bg-gradient-to-r from-gray-600/20 to-gray-700/20 hover:from-gray-600/30 hover:to-gray-700/30 border-gray-600/20 hover:border-gray-500/40'
+                            : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 hover:border-gray-400'
+                        }`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-gray-600 to-gray-700 flex items-center justify-center">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isDarkMode
+                            ? 'bg-gradient-to-r from-gray-600 to-gray-700'
+                            : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                        }`}>
                           {isDarkMode ? (
                             <Sun className="h-5 w-5 text-yellow-300 drop-shadow-sm" />
                           ) : (
@@ -1417,10 +1437,14 @@ For any queries, contact your course instructors or the department.`,
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <span className="text-white font-semibold text-base block">
+                          <span className={`font-semibold text-base block ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>
                             {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                           </span>
-                          <span className="text-gray-300 text-sm">Toggle theme</span>
+                          <span className={`text-sm ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>Toggle theme</span>
                         </div>
                       </button>
 
@@ -1436,8 +1460,12 @@ For any queries, contact your course instructors or the department.`,
                           <BookOpen className="h-5 w-5 text-white drop-shadow-sm" />
                         </div>
                         <div className="flex-1 text-left">
-                          <span className="text-white font-semibold text-base block">Smart Exam Materials</span>
-                          <span className="text-gray-300 text-sm">Access study resources</span>
+                          <span className={`font-semibold text-base block ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>Smart Exam Materials</span>
+                          <span className={`text-sm ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>Access study resources</span>
                         </div>
                       </button>
                       
@@ -1453,8 +1481,12 @@ For any queries, contact your course instructors or the department.`,
                           <Calendar className="h-5 w-5 text-white drop-shadow-sm" />
                         </div>
                         <div className="flex-1 text-left">
-                          <span className="text-white font-semibold text-base block">Semester Tracker</span>
-                          <span className="text-gray-300 text-sm">Track your progress</span>
+                          <span className={`font-semibold text-base block ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>Semester Tracker</span>
+                          <span className={`text-sm ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>Track your progress</span>
                         </div>
                       </button>
                       
@@ -1475,17 +1507,25 @@ For any queries, contact your course instructors or the department.`,
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <span className="text-white font-semibold text-base block">Notifications</span>
-                          <span className="text-gray-300 text-sm">
+                          <span className={`font-semibold text-base block ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>Notifications</span>
+                          <span className={`text-sm ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
                             {getUnreadNoticeCount() > 0 ? `${getUnreadNoticeCount()} new notifications` : 'No new notifications'}
                           </span>
                         </div>
                       </button>
                       
                       {/* Optional: Separator for clarity */}
-                      <div className="border-t border-gray-700/30 pt-2">
+                      <div className={`border-t pt-2 ${
+                        isDarkMode ? 'border-gray-700/30' : 'border-gray-300/30'
+                      }`}>
                         <div className="text-center">
-                          <span className="text-gray-400 text-xs font-medium">💡 Tap any option above to navigate</span>
+                          <span className={`text-xs font-medium ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}>💡 Tap any option above to navigate</span>
                         </div>
                       </div>
                     </div>
@@ -1559,19 +1599,35 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Modern Notice Panel with Glassmorphism */}
       {showNoticePanel && (
-        <div className="notification-panel fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] backdrop-blur-xl bg-white/90 rounded-3xl shadow-2xl border border-white/30 z-50 max-h-80 md:max-h-96 overflow-hidden">
+        <div className={`notification-panel fixed top-16 md:top-20 right-2 md:right-4 w-80 sm:w-96 max-w-[calc(100vw-1rem)] backdrop-blur-xl rounded-3xl shadow-2xl border z-50 max-h-80 md:max-h-96 overflow-hidden transition-colors duration-300 ${
+          isDarkMode
+            ? 'bg-gray-800/95 border-gray-700/50'
+            : 'bg-white/90 border-white/30'
+        }`}>
           {/* Professional Header with Enhanced Gradient */}
-          <div className="bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 text-white px-4 md:px-6 py-3 md:py-4 rounded-t-3xl shadow-lg">
+          <div className={`px-4 md:px-6 py-3 md:py-4 rounded-t-3xl shadow-lg transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white'
+              : 'bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 text-white'
+          }`}>
             <div className="flex items-center justify-between">
               <h3 className="font-bold flex items-center text-sm md:text-base">
-                <div className="p-2 bg-white/20 rounded-xl mr-3 shadow-lg border border-white/30">
+                <div className={`p-2 rounded-xl mr-3 shadow-lg border transition-colors duration-300 ${
+                  isDarkMode
+                    ? 'bg-white/10 border-white/20'
+                    : 'bg-white/20 border-white/30'
+                }`}>
                   <Bell className="h-4 w-4 text-white drop-shadow-lg" />
                 </div>
                 <span className="text-white drop-shadow-sm">Notifications</span>
               </h3>
               <button
                 onClick={() => setShowNoticePanel(false)}
-                className="text-white/80 hover:text-white hover:bg-white/20 transition-all duration-300 p-2 rounded-2xl shadow-md border border-white/20 hover:border-white/30"
+                className={`p-2 rounded-2xl shadow-md border transition-all duration-300 ${
+                  isDarkMode
+                    ? 'text-white/80 hover:text-white hover:bg-white/10 border-white/10 hover:border-white/20'
+                    : 'text-white/80 hover:text-white hover:bg-white/20 border-white/20 hover:border-white/30'
+                }`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1582,17 +1638,31 @@ For any queries, contact your course instructors or the department.`,
           <div className="max-h-56 md:max-h-64 overflow-y-auto scrollbar-modern">
             {notices.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl mb-4">
-                  <Bell className="h-8 w-8 text-blue-500" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 transition-colors duration-300 ${
+                  isDarkMode
+                    ? 'bg-gradient-to-r from-blue-900/50 to-indigo-900/50'
+                    : 'bg-gradient-to-r from-blue-100 to-indigo-100'
+                }`}>
+                  <Bell className={`h-8 w-8 transition-colors duration-300 ${
+                    isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                  }`} />
                 </div>
-                <p className="text-gray-500 text-sm font-medium">No notifications yet</p>
-                <p className="text-gray-400 text-xs mt-1">Stay tuned for updates!</p>
+                <p className={`text-sm font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>No notifications yet</p>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                }`}>Stay tuned for updates!</p>
               </div>
             ) : (
               notices.filter(notice => notice.is_active).map((notice, index) => (
                 <div
                   key={notice.id}
-                  className="p-4 md:p-5 border-b border-gray-100/50 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm"
+                  className={`p-4 md:p-5 border-b cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm ${
+                    isDarkMode
+                      ? 'border-gray-700/50 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-indigo-900/20'
+                      : 'border-gray-100/50 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50'
+                  }`}
                   onClick={() => {
                     handleNoticeClick(notice);
                     markNoticeAsRead(notice.id);
@@ -1602,10 +1672,13 @@ For any queries, contact your course instructors or the department.`,
                   <div className="flex items-start space-x-3 md:space-x-4">
                     {/* Modern Category & Priority Icon */}
                     <div className={`p-2 md:p-3 rounded-2xl flex-shrink-0 relative shadow-lg transition-all duration-300 ${
-                      notice.type === 'info' ? 'bg-gradient-to-r from-blue-100 to-blue-200' :
-                      notice.type === 'warning' ? 'bg-gradient-to-r from-yellow-100 to-orange-200' :
-                      notice.type === 'success' ? 'bg-gradient-to-r from-green-100 to-emerald-200' :
-                      'bg-gradient-to-r from-red-100 to-pink-200'
+                      notice.type === 'info' 
+                        ? isDarkMode ? 'bg-gradient-to-r from-blue-900/50 to-blue-800/50' : 'bg-gradient-to-r from-blue-100 to-blue-200'
+                        : notice.type === 'warning' 
+                        ? isDarkMode ? 'bg-gradient-to-r from-yellow-900/50 to-orange-900/50' : 'bg-gradient-to-r from-yellow-100 to-orange-200'
+                        : notice.type === 'success' 
+                        ? isDarkMode ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50' : 'bg-gradient-to-r from-green-100 to-emerald-200'
+                        : isDarkMode ? 'bg-gradient-to-r from-red-900/50 to-pink-900/50' : 'bg-gradient-to-r from-red-100 to-pink-200'
                     }`}>
                       {/* Category-based icons with modern styling */}
                       {notice.category === 'exam' ? (
@@ -1639,11 +1712,17 @@ For any queries, contact your course instructors or the department.`,
                     <div className="flex-1 min-w-0">
                       {/* Modern Title with category badge */}
                       <div className="flex items-center space-x-2 mb-2">
-                        <p className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 flex-1 leading-relaxed">
+                        <p className={`text-sm md:text-base font-semibold line-clamp-2 flex-1 leading-relaxed transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                        }`}>
                           {notice.title}
                         </p>
                         {notice.category === 'exam' && notice.exam_type && (
-                          <span className="text-xs bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 px-2 py-1 rounded-full whitespace-nowrap font-medium shadow-sm">
+                          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap font-medium shadow-sm transition-colors duration-300 ${
+                            isDarkMode
+                              ? 'bg-gradient-to-r from-orange-900/50 to-red-900/50 text-orange-300'
+                              : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-800'
+                          }`}>
                             {notice.exam_type === 'midterm' ? '📝 Mid' : '🎯 Final'}
                           </span>
                         )}
@@ -1652,25 +1731,39 @@ For any queries, contact your course instructors or the department.`,
                       {/* Modern Date and badges */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <p className="text-xs text-gray-500 font-medium">
+                          <p className={`text-xs font-medium transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                          }`}>
                             {new Date(notice.created_at).toLocaleDateString()}
                           </p>
                         
                         {/* Modern Priority badges */}
                         {notice.priority === 'urgent' && (
-                          <span className="text-xs bg-gradient-to-r from-red-100 to-pink-100 text-red-800 px-2 py-1 rounded-full font-bold animate-pulse shadow-sm">
+                          <span className={`text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm transition-colors duration-300 ${
+                            isDarkMode
+                              ? 'bg-gradient-to-r from-red-900/50 to-pink-900/50 text-red-300'
+                              : 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800'
+                          }`}>
                             🔴 URGENT
                           </span>
                         )}
                         {notice.priority === 'high' && (
-                          <span className="text-xs bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 px-2 py-1 rounded-full font-semibold shadow-sm">
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold shadow-sm transition-colors duration-300 ${
+                            isDarkMode
+                              ? 'bg-gradient-to-r from-yellow-900/50 to-orange-900/50 text-yellow-300'
+                              : 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800'
+                          }`}>
                             🟡 HIGH
                           </span>
                         )}
                         
                         {/* Modern Event date */}
                         {notice.category === 'event' && notice.event_date && (
-                          <span className="text-xs bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800 px-2 py-1 rounded-full font-medium shadow-sm">
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium shadow-sm transition-colors duration-300 ${
+                            isDarkMode
+                              ? 'bg-gradient-to-r from-purple-900/50 to-indigo-900/50 text-purple-300'
+                              : 'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800'
+                          }`}>
                             📅 {new Date(notice.event_date).toLocaleDateString('en-BD', { month: 'short', day: 'numeric' })}
                           </span>
                         )}
@@ -1692,8 +1785,14 @@ For any queries, contact your course instructors or the department.`,
           
           {/* Professional Footer */}
           {notices.length > 0 && (
-            <div className="bg-gradient-to-r from-gray-100/90 to-slate-100/90 px-4 py-3 rounded-b-3xl border-t border-gray-200/60 shadow-inner">
-              <p className="text-xs text-center text-gray-700 font-medium">
+            <div className={`px-4 py-3 rounded-b-3xl border-t shadow-inner ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-gray-800/90 to-gray-900/90 border-gray-700/60'
+                : 'bg-gradient-to-r from-gray-100/90 to-slate-100/90 border-gray-200/60'
+            }`}>
+              <p className={`text-xs text-center font-medium ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 💡 Click any notification to view details
               </p>
             </div>
@@ -2398,7 +2497,7 @@ For any queries, contact your course instructors or the department.`,
                 </div>
                 
                 {materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).map((material, index) => {
-                  const materialScheme = getMaterialColorScheme(material.id, index);
+                  const materialScheme = getMaterialColorScheme(index);
                   return (
                     <div key={material.id} className={`rounded-2xl shadow-xl border backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
                       isDarkMode 
@@ -3203,20 +3302,28 @@ For any queries, contact your course instructors or the department.`,
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-              <div className={`p-6 border-l-4 ${
-                selectedNotice.type === 'info' ? 'border-blue-400 bg-blue-50' :
-                selectedNotice.type === 'warning' ? 'border-yellow-400 bg-yellow-50' :
-                selectedNotice.type === 'success' ? 'border-green-400 bg-green-50' :
-                'border-red-400 bg-red-50'
+            <div className={`rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className={`p-6 border-l-4 transition-colors duration-300 ${
+                selectedNotice.type === 'info' 
+                  ? isDarkMode ? 'border-blue-400 bg-blue-900/30' : 'border-blue-400 bg-blue-50'
+                  : selectedNotice.type === 'warning' 
+                  ? isDarkMode ? 'border-yellow-400 bg-yellow-900/30' : 'border-yellow-400 bg-yellow-50'
+                  : selectedNotice.type === 'success' 
+                  ? isDarkMode ? 'border-green-400 bg-green-900/30' : 'border-green-400 bg-green-50'
+                  : isDarkMode ? 'border-red-400 bg-red-900/30' : 'border-red-400 bg-red-50'
               }`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${
-                      selectedNotice.type === 'info' ? 'bg-blue-100' :
-                      selectedNotice.type === 'warning' ? 'bg-yellow-100' :
-                      selectedNotice.type === 'success' ? 'bg-green-100' :
-                      'bg-red-100'
+                    <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                      selectedNotice.type === 'info' 
+                        ? isDarkMode ? 'bg-blue-700/50' : 'bg-blue-100'
+                        : selectedNotice.type === 'warning' 
+                        ? isDarkMode ? 'bg-yellow-700/50' : 'bg-yellow-100'
+                        : selectedNotice.type === 'success' 
+                        ? isDarkMode ? 'bg-green-700/50' : 'bg-green-100'
+                        : isDarkMode ? 'bg-red-700/50' : 'bg-red-100'
                     }`}>
                       <Bell className={`h-6 w-6 ${
                         selectedNotice.type === 'info' ? 'text-blue-600' :
@@ -3226,17 +3333,24 @@ For any queries, contact your course instructors or the department.`,
                       }`} />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedNotice.title}</h2>
+                      <h2 className={`text-2xl font-bold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                      }`}>{selectedNotice.title}</h2>
                       <div className="flex items-center space-x-2 mt-1">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          selectedNotice.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                          selectedNotice.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                          selectedNotice.type === 'success' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
+                          selectedNotice.type === 'info' 
+                            ? isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
+                            : selectedNotice.type === 'warning' 
+                            ? isDarkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+                            : selectedNotice.type === 'success' 
+                            ? isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-800'
+                            : isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-800'
                         }`}>
                           {selectedNotice.type.toUpperCase()}
                         </span>
-                        <span className="text-sm text-gray-600">
+                        <span className={`text-sm transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
                           Posted on {new Date(selectedNotice.created_at).toLocaleDateString()}
                         </span>
                       </div>
@@ -3244,9 +3358,11 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                   <button
                     onClick={closeNoticeModal}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className={`p-2 rounded-lg transition-all duration-300 ${
+                      isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                    }`}
                   >
-                    <X className="h-6 w-6 text-gray-500" />
+                    <X className="h-6 w-6" />
                   </button>
                 </div>
               </div>
@@ -3268,18 +3384,28 @@ For any queries, contact your course instructors or the department.`,
                       
                       return (
                         <div>
-                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-6 select-text">
+                          <p className={`leading-relaxed whitespace-pre-wrap mb-6 select-text transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
                             {textContent}
                           </p>
-                          <div className="bg-gray-50 rounded-xl p-4 text-center">
-                            <h4 className="font-semibold text-gray-900 mb-3"><span className="no-select">📋</span> Exam Routine</h4>
+                          <div className={`rounded-xl p-4 text-center transition-colors duration-300 ${
+                            isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
+                          }`}>
+                            <h4 className={`font-semibold mb-3 transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                            }`}><span className="no-select">📋</span> Exam Routine</h4>
                             <img 
                               src={imageData} 
                               alt="Midterm Exam Routine - Section 5" 
-                              className="max-w-full h-auto rounded-lg shadow-lg mx-auto border border-gray-200"
+                              className={`max-w-full h-auto rounded-lg shadow-lg mx-auto border transition-colors duration-300 ${
+                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
+                              }`}
                               style={{maxHeight: '600px'}}
                             />
-                            <p className="text-sm text-gray-600 mt-2">
+                            <p className={`text-sm mt-2 transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
                               Click on the image to view in full size
                             </p>
                           </div>
@@ -3287,7 +3413,9 @@ For any queries, contact your course instructors or the department.`,
                       );
                     } else {
                       return (
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap select-text">
+                        <p className={`leading-relaxed whitespace-pre-wrap select-text transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
                           {content}
                         </p>
                       );
@@ -3296,11 +3424,17 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
               
-              <div className="p-6 bg-gray-50 border-t">
+              <div className={`p-6 border-t transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'
+              }`}>
                 <div className="flex justify-end">
                   <button
                     onClick={closeNoticeModal}
-                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    className={`px-6 py-2 rounded-lg transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-600 text-white hover:bg-gray-500'
+                        : 'bg-gray-600 text-white hover:bg-gray-700'
+                    }`}
                   >
                     Close
                   </button>
@@ -3324,7 +3458,7 @@ For any queries, contact your course instructors or the department.`,
       {/* Semester Tracker Page */}
       {currentView === 'semester' && (
         <div className="fixed inset-0 z-50 overflow-hidden">
-          <SemesterTracker onClose={() => goToView('home')} />
+          <SemesterTracker onClose={() => goToView('home')} isDarkMode={isDarkMode} />
         </div>
       )}
 
@@ -3339,7 +3473,7 @@ For any queries, contact your course instructors or the department.`,
             >
               <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <ExamMaterialsDashboard />
+            <ExamMaterialsDashboard isDarkMode={isDarkMode} />
           </div>
         </div>
       )}

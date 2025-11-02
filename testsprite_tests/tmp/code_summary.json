@@ -1,0 +1,75 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "Supabase",
+    "Tailwind CSS",
+    "Lucide React"
+  ],
+  "features": [
+    {
+      "name": "Application shell and view state routing",
+      "description": "Single-page app with manual view state navigation (home, section, course, semester, admin, exam materials) managed in App component.",
+      "files": [
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Supabase integration",
+      "description": "CRUD for courses, materials, and notices using Supabase tables and storage.",
+      "files": [
+        "src/lib/supabase.ts",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Notices system (Welcome + Exam Routine)",
+      "description": "Global two-notice system with localStorage fallback and Supabase persistence, including image embedding for exam routine.",
+      "files": [
+        "src/types.ts",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Semester tracker",
+      "description": "Live semester progress, phases, and next milestone display; dedicated full-screen view.",
+      "files": [
+        "src/components/SemesterTracker.tsx",
+        "src/config/semester.ts",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Exam materials dashboard",
+      "description": "Full-screen smart materials dashboard for study resources.",
+      "files": [
+        "src/components/Student/ExamMaterialsDashboard.tsx",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "PDF viewer modal",
+      "description": "Reusable modal to preview PDFs and Google Drive files via embeddable links.",
+      "files": [
+        "src/components/PDFViewer.tsx",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Google Drive configuration",
+      "description": "Category metadata, folder links, and file listing per course category.",
+      "files": [
+        "src/config/googleDrive.ts",
+        "src/App.tsx"
+      ]
+    },
+    {
+      "name": "Course and materials management (Admin)",
+      "description": "Admin modal workflows for adding courses, uploading materials, and managing notices.",
+      "files": [
+        "src/App.tsx"
+      ]
+    }
+  ]
+}
