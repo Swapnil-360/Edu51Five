@@ -178,114 +178,98 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
       {/* Header Section */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 text-sm sm:text-base`}>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 text-xs sm:text-sm md:text-base`}>
             Manage notices, emergencies, and view platform statistics
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8">
         {/* SECTION 1: Quick Stats Dashboard */}
         <div>
-          <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          <h2 className={`text-base sm:text-lg font-semibold mb-3 sm:mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             📊 Platform Statistics
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
             {/* Courses Card */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
-                  <p className="text-2xl sm:text-3xl font-bold mt-2">{coursesCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-400 bg-opacity-50 rounded-xl flex items-center justify-center text-xl">
-                  📚
-                </div>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-2">
+                <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{coursesCount}</p>
+                <div className="text-xl sm:text-2xl opacity-50">📚</div>
               </div>
             </div>
 
             {/* Files Card */}
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-xs sm:text-sm font-medium">Total Files</p>
-                  <p className="text-2xl sm:text-3xl font-bold mt-2">{materialsCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-emerald-400 bg-opacity-50 rounded-xl flex items-center justify-center text-xl">
-                  📁
-                </div>
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-2">
+                <p className="text-emerald-100 text-xs sm:text-sm font-medium">Total Files</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{materialsCount}</p>
+                <div className="text-xl sm:text-2xl opacity-50">📁</div>
               </div>
             </div>
 
             {/* Online Users Card */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
-                  <p className="text-2xl sm:text-3xl font-bold mt-2">{onlineUsers}</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-400 bg-opacity-50 rounded-xl flex items-center justify-center text-xl">
-                  👥
-                </div>
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-2">
+                <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{onlineUsers}</p>
+                <div className="text-xl sm:text-2xl opacity-50">👥</div>
               </div>
             </div>
 
             {/* Semester Progress Card */}
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-xs sm:text-sm font-medium">Semester Progress</p>
-                  <p className="text-2xl sm:text-3xl font-bold mt-2">Week {currentWeek}</p>
-                  <p className="text-orange-100 text-xs mt-1">{semesterProgress}% complete</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-400 bg-opacity-50 rounded-xl flex items-center justify-center text-xl">
-                  📅
-                </div>
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-2">
+                <p className="text-orange-100 text-xs sm:text-sm font-medium">Semester Progress</p>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold">Week {currentWeek}</p>
+                <p className="text-orange-100 text-xs">{semesterProgress}%</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* SECTION 2: Notice Management (PRIMARY) */}
-        <div className={`rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-6`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <Bell className="w-5 h-5 mr-2 text-blue-500" />
-              📌 Notice Management
+        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <Bell className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-500" />
+              <span className="hidden xs:inline">📌 Notice Management</span>
+              <span className="xs:hidden">Notices</span>
             </h2>
             <button
               onClick={onCreateNotice}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Notice</span>
             </button>
           </div>
 
           {/* Existing Notices from Database */}
           {notices.length > 0 ? (
-            <div className={`space-y-3 max-h-64 overflow-y-auto ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`space-y-2 sm:space-y-3 max-h-80 overflow-y-auto ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               {notices.map((notice) => (
                 <div
                   key={notice.id}
-                  className={`p-4 rounded-lg border transition-all ${
+                  className={`p-3 sm:p-4 rounded-lg border transition-all ${
                     isDarkMode
                       ? `border-gray-600 ${notice.is_active ? 'bg-gray-700/50' : 'bg-gray-800/30'}`
                       : `border-gray-200 ${notice.is_active ? 'bg-blue-50' : 'bg-gray-50'}`
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <p className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-2 mb-1">
+                        <p className={`font-semibold text-xs sm:text-sm break-words ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                           {notice.title || notice.id}
                         </p>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
+                          className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
                             notice.is_active
                               ? isDarkMode
                                 ? 'bg-green-900/50 text-green-300'
@@ -298,28 +282,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {notice.is_active ? '🟢 Active' : '⚫ Inactive'}
                         </span>
                       </div>
-                      <p className={`text-sm mt-2 line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-xs sm:text-sm mt-1 sm:mt-2 line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {notice.content}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2 ml-3">
+                    <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-3 flex-shrink-0">
                       <button
                         onClick={onEditNotice}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                           isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
                         }`}
                         title="Edit this notice"
                       >
-                        <Edit2 className="w-4 h-4 text-blue-500" />
+                        <Edit2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-blue-500 flex-shrink-0" />
                       </button>
                       <button
                         onClick={() => onDeleteNotice && onDeleteNotice(notice.id)}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                           isDarkMode ? 'hover:bg-red-900/50' : 'hover:bg-red-50'
                         }`}
                         title="Delete this notice"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-red-500 flex-shrink-0" />
                       </button>
                     </div>
                   </div>
@@ -327,8 +311,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ))}
             </div>
           ) : (
-            <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} pt-4`}>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center py-4`}>
+            <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} pt-3 sm:pt-4`}>
+              <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center py-3 sm:py-4`}>
                 No notices yet. Click "Add Notice" to create one.
               </p>
             </div>
@@ -336,17 +320,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 3: Emergency Alerts */}
-        <div className={`rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-6`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
-              🚨 Emergency Alerts
+        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-red-500" />
+              <span className="hidden xs:inline">🚨 Emergency Alerts</span>
+              <span className="xs:hidden">Alerts</span>
             </h2>
             <button
               onClick={() => setShowAddAlert(!showAddAlert)}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Alert</span>
             </button>
           </div>
@@ -431,17 +416,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 4: Emergency Links */}
-        <div className={`rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-6`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <LinkIcon className="w-5 h-5 mr-2 text-blue-500" />
-              🔗 Emergency Links
+        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <LinkIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-500" />
+              <span className="hidden xs:inline">🔗 Emergency Links</span>
+              <span className="xs:hidden">Links</span>
             </h2>
             <button
               onClick={() => setShowAddLink(!showAddLink)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Link</span>
             </button>
           </div>
