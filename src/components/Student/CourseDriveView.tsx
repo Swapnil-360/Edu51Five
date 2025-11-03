@@ -265,8 +265,12 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
 
       {/* Error - Mobile Friendly */}
       {error && (
-        <div className="p-3 sm:p-4 mb-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm sm:text-base text-red-800">{error}</p>
+        <div className={`p-3 sm:p-4 mb-4 rounded-lg border transition-colors ${
+          isDarkMode
+            ? 'bg-red-900/30 border-red-700/50 text-red-300'
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <p className="text-sm sm:text-base">{error}</p>
         </div>
       )}
 

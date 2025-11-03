@@ -2266,8 +2266,12 @@ For any queries, contact your course instructors or the department.`,
                 <img src="/image.png" alt="Edu51Five Logo" className="h-20 w-20 mx-auto object-contain" />
                 <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
               </div>
-              <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text mb-4">Section 5 - Department of CSE</h2>
-              <p className="text-gray-700 text-lg">Choose your course to access materials</p>
+              <h2 className={`text-3xl font-bold bg-clip-text transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'text-transparent bg-gradient-to-r from-gray-100 via-blue-300 to-purple-300 bg-clip-text' 
+                  : 'text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text'
+              } mb-4`}>Section 5 - Department of CSE</h2>
+              <p className={`text-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Choose your course to access materials</p>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -2277,12 +2281,28 @@ For any queries, contact your course instructors or the department.`,
                   <div
                     key={course.id}
                     onClick={() => handleCourseClick(course)}
-                    className={`bg-gradient-to-br ${colorScheme.bgGradient} p-6 md:p-8 rounded-2xl shadow-xl border border-white/30 backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:${colorScheme.border} group`}
+                    className={`p-6 md:p-8 rounded-2xl shadow-xl border backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 group ${
+                      isDarkMode
+                        ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50'
+                        : `bg-gradient-to-br ${colorScheme.bgGradient} border-white/30 hover:${colorScheme.border}`
+                    }`}
                   >
-                    <h3 className={`text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:bg-gradient-to-r group-hover:${colorScheme.textGradient} group-hover:bg-clip-text transition-all duration-300`}>{course.name}</h3>
-                    <p className={`font-semibold mb-3 text-sm md:text-base ${colorScheme.badge} px-3 py-1 rounded-full inline-block`}>{course.code}</p>
-                    <p className="text-gray-700 text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed">{course.description}</p>
-                    <p className={`text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300`}>
+                    <h3 className={`text-xl md:text-2xl font-bold mb-3 transition-all duration-300 ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                    }`}>{course.name}</h3>
+                    <p className={`font-semibold mb-3 text-sm md:text-base px-3 py-1 rounded-full inline-block transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-blue-900/50 text-blue-300' 
+                        : colorScheme.badge
+                    }`}>{course.code}</p>
+                    <p className={`text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>{course.description}</p>
+                    <p className={`text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300 ${
+                      isDarkMode 
+                        ? 'text-blue-400' 
+                        : `text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text`
+                    }`}>
                       Access Materials 
                       <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
