@@ -9,6 +9,7 @@ import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashbo
 import PDFViewer from './components/PDFViewer';
 import { DirectDriveUpload } from './components/Admin/DirectDriveUpload';
 import { DriveManager } from './components/Admin/DriveManager';
+import AdminDashboard from './components/Admin/AdminDashboard';
 import { StudentDriveView } from './components/Student/StudentDriveView';
 import { CourseDriveView } from './components/Student/CourseDriveView';
 import { 
@@ -137,6 +138,8 @@ function App() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(0);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [emergencyAlerts, setEmergencyAlerts] = useState<Array<{id: string; message: string; status: string; created_at: string}>>([]);
+  const [emergencyLinks, setEmergencyLinks] = useState<Array<{id: string; title: string; url: string; status: string; created_at: string}>>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
@@ -191,6 +194,7 @@ function App() {
     initializeDatabase();
     loadCourses();
     loadNotices();
+    loadEmergencyData();
     if (selectedCourse) {
       loadMaterials(selectedCourse.code);
     }
@@ -222,14 +226,42 @@ function App() {
   // No longer auto-create welcome notice - Admin must manually create notices
   // useEffect removed to prevent automatic welcome notice spam
 
-  // Auto-refresh notices every 30 seconds for real-time updates
+  // Auto-refresh notices and emergency data every 30 seconds for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('Auto-refreshing notices...');
+      console.log('Auto-refreshing notices and emergency data...');
       loadNotices();
+      loadEmergencyData();
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Listen for storage changes to instantly update notices when admin adds/edits them
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'edu51five_notices' || e.key === 'emergency_alerts' || e.key === 'emergency_links') {
+        console.log('Storage changed, reloading data:', e.key);
+        loadNotices();
+        loadEmergencyData();
+      }
+    };
+
+    // Listen for custom event (same-window updates)
+    const handleCustomEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      console.log('Custom event received, reloading data:', customEvent.detail.type);
+      loadNotices();
+      loadEmergencyData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('edu51five-data-updated', handleCustomEvent);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('edu51five-data-updated', handleCustomEvent);
+    };
   }, []);
 
   // Real-time semester tracking - update every second
@@ -486,8 +518,8 @@ For any queries, contact your course instructors or the department.`,
       // Always show these 2 notices (welcome + routine)
       defaultNotices.push(welcomeNotice, routineNotice);
       
-      // Filter only active notices and limit to 2
-      const activeNotices = defaultNotices.filter(n => n && n.is_active).slice(0, 2);
+      // Filter only active notices and allow up to 5
+      const activeNotices = defaultNotices.filter(n => n && n.is_active).slice(0, 5);
       
       setNotices(activeNotices);
       localStorage.setItem('edu51five_notices', JSON.stringify(activeNotices));
@@ -501,63 +533,57 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
-  // Load notices - Global 2-notice system (Welcome + Exam Routine)
+  // Load notices - Load all active notices (up to 5) including newly added ones
   const loadNotices = async () => {
     try {
-      console.log('Loading global notices (Welcome + Exam Routine)...');
+      console.log('Loading all active notices (up to 5)...');
       
-      // Try to load the 2 specific notices from database
+      // Try to load ALL notices from database
       const { data: dbNotices, error } = await supabase
         .from('notices')
         .select('*')
-        .in('id', ['welcome-notice', 'exam-routine-notice'])
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      let welcomeNotice = null;
-      let routineNotice = null;
+      let allNotices: Notice[] = [];
 
-      // If database query successful, extract the notices
-      if (!error && dbNotices) {
-        welcomeNotice = (dbNotices as Notice[]).find((n: Notice) => n.id === 'welcome-notice');
-        routineNotice = (dbNotices as Notice[]).find((n: Notice) => n.id === 'exam-routine-notice');
-        console.log('Database notices found:', { welcome: !!welcomeNotice, routine: !!routineNotice });
-      }
-
-      // Fallback to localStorage if notices not found in database
-      const localNoticesStr = localStorage.getItem('edu51five_notices');
-      if (localNoticesStr && (!welcomeNotice || !routineNotice)) {
-        try {
-          const localNotices = JSON.parse(localNoticesStr);
-          if (!welcomeNotice) {
-            welcomeNotice = localNotices.find((n: Notice) => n.id === 'welcome-notice');
+      // If database query successful, use those notices
+      if (!error && dbNotices && dbNotices.length > 0) {
+        allNotices = dbNotices as Notice[];
+        console.log('Database notices loaded:', allNotices.length);
+      } else {
+        // Fallback to localStorage for all notices
+        const localNoticesStr = localStorage.getItem('edu51five_notices');
+        if (localNoticesStr) {
+          try {
+            const localNotices = JSON.parse(localNoticesStr);
+            allNotices = Array.isArray(localNotices) 
+              ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
+              : [];
+            console.log('Local notices loaded:', allNotices.length);
+          } catch (e) {
+            console.error('Error parsing local notices:', e);
+            allNotices = [];
           }
-          if (!routineNotice) {
-            routineNotice = localNotices.find((n: Notice) => n.id === 'exam-routine-notice');
-          }
-          console.log('Local fallback used for missing notices');
-        } catch (e) {
-          console.error('Error parsing local notices:', e);
         }
       }
 
-      // If notices still don't exist, initialize defaults
-      if (!welcomeNotice || !routineNotice) {
-        console.log('Initializing missing default notices...');
+      // If no notices exist, initialize defaults
+      if (allNotices.length === 0) {
+        console.log('No notices found, initializing defaults...');
         await initializeDefaultNotices();
-        return; // initializeDefaultNotices will handle setting the notices
+        return;
       }
 
-      // Always show exactly 2 notices: Welcome + Routine
-      const globalNotices = [welcomeNotice, routineNotice].filter(n => n);
+      // Set all active notices (up to 5)
+      setNotices(allNotices);
+      localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
       
-      setNotices(globalNotices);
-      localStorage.setItem('edu51five_notices', JSON.stringify(globalNotices));
-      
-      console.log('Global notices loaded:', globalNotices.length, 'notices');
+      console.log('All notices loaded:', allNotices.length, 'notices');
       
     } catch (err) {
-      console.error('Error loading global notices:', err);
+      console.error('Error loading notices:', err);
       
       // Final fallback - try to initialize defaults
       try {
@@ -566,6 +592,26 @@ For any queries, contact your course instructors or the department.`,
         console.error('Failed to initialize default notices:', initError);
         setNotices([]);
       }
+    }
+  };
+
+  // Load emergency alerts and links from localStorage
+  const loadEmergencyData = () => {
+    try {
+      const savedAlerts = localStorage.getItem('emergency_alerts');
+      const savedLinks = localStorage.getItem('emergency_links');
+      
+      if (savedAlerts) {
+        const alerts = JSON.parse(savedAlerts);
+        setEmergencyAlerts(alerts.filter((a: any) => a.status === 'ACTIVE'));
+      }
+      
+      if (savedLinks) {
+        const links = JSON.parse(savedLinks);
+        setEmergencyLinks(links.filter((l: any) => l.status === 'ACTIVE'));
+      }
+    } catch (err) {
+      console.error('Error loading emergency data:', err);
     }
   };
 
@@ -1614,26 +1660,14 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
 
-              {isAdmin ? (
+              {/* Admin Button - Only visible when admin is logged in */}
+              {isAdmin && (
                 <button
                   onClick={handleAdminLogout}
                   className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-colors text-xs md:text-sm"
                 >
                   <span className="hidden sm:inline">Admin Logout</span>
                   <span className="sm:hidden">Logout</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log('Admin button clicked');
-                    setShowAdminLogin(true);
-                    window.scrollTo(0, 0);
-                  }}
-                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors text-xs md:text-sm no-select"
-                >
-                  <span className="hidden sm:inline">Admin</span>
-                  <span className="sm:hidden">Admin</span>
                 </button>
               )}
             </div>
@@ -1680,7 +1714,7 @@ For any queries, contact your course instructors or the department.`,
           
           {/* Content Area with Modern Scrollbar */}
           <div className="max-h-56 md:max-h-64 overflow-y-auto scrollbar-modern">
-            {notices.length === 0 ? (
+            {notices.length === 0 && emergencyAlerts.length === 0 && emergencyLinks.length === 0 ? (
               <div className="p-8 text-center">
                 <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 transition-colors duration-300 ${
                   isDarkMode
@@ -1699,7 +1733,71 @@ For any queries, contact your course instructors or the department.`,
                 }`}>Stay tuned for updates!</p>
               </div>
             ) : (
-              notices.filter(notice => notice.is_active).map((notice, index) => (
+              <>
+                {/* Emergency Alerts Section */}
+                {emergencyAlerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-4 md:p-5 border-b cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm ${
+                      isDarkMode
+                        ? 'border-red-700/50 hover:bg-gradient-to-r hover:from-red-900/30 hover:to-pink-900/30'
+                        : 'border-red-200/50 hover:bg-gradient-to-r hover:from-red-50/50 hover:to-pink-50/50'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3 md:space-x-4">
+                      <div className={`p-2 md:p-3 rounded-2xl flex-shrink-0 relative shadow-lg ${
+                        isDarkMode ? 'bg-gradient-to-r from-red-900/50 to-pink-900/50' : 'bg-gradient-to-r from-red-100 to-pink-200'
+                      }`}>
+                        <span className="text-lg drop-shadow-sm">🚨</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs md:text-sm font-semibold transition-colors duration-300 ${
+                          isDarkMode ? 'text-red-400' : 'text-red-700'
+                        }`}>EMERGENCY ALERT</p>
+                        <p className={`text-sm md:text-base font-medium mt-1 break-words transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                        }`}>{alert.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Emergency Links Section */}
+                {emergencyLinks.map((link) => (
+                  <div
+                    key={link.id}
+                    className={`p-4 md:p-5 border-b cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm ${
+                      isDarkMode
+                        ? 'border-purple-700/50 hover:bg-gradient-to-r hover:from-purple-900/30 hover:to-blue-900/30'
+                        : 'border-purple-200/50 hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-blue-50/50'
+                    }`}
+                    onClick={() => {
+                      if (link.url) window.open(link.url, '_blank');
+                    }}
+                  >
+                    <div className="flex items-start space-x-3 md:space-x-4">
+                      <div className={`p-2 md:p-3 rounded-2xl flex-shrink-0 relative shadow-lg ${
+                        isDarkMode ? 'bg-gradient-to-r from-purple-900/50 to-blue-900/50' : 'bg-gradient-to-r from-purple-100 to-blue-200'
+                      }`}>
+                        <span className="text-lg drop-shadow-sm">🔗</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs md:text-sm font-semibold transition-colors duration-300 ${
+                          isDarkMode ? 'text-purple-400' : 'text-purple-700'
+                        }`}>IMPORTANT LINK</p>
+                        <p className={`text-sm md:text-base font-medium mt-1 break-words transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                        }`}>{link.title}</p>
+                        <p className={`text-xs mt-1 break-all ${
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        }`}>{link.url}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Regular Notices Section */}
+                {notices.filter(notice => notice.is_active).map((notice, index) => (
                 <div
                   key={notice.id}
                   className={`p-4 md:p-5 border-b cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm ${
@@ -1820,14 +1918,13 @@ For any queries, contact your course instructors or the department.`,
                           </span>
                         )}
                       </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </>
             )}
-          </div>
-          
-          {/* Professional Footer */}
+          </div>          {/* Professional Footer */}
           {notices.length > 0 && (
             <div className={`px-4 py-3 rounded-b-3xl border-t shadow-inner ${
               isDarkMode
@@ -2449,8 +2546,23 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* Admin Dashboard */}
+        {/* Admin Dashboard - New Redesigned */}
         {isAdmin && currentView === 'admin' && (
+          <AdminDashboard
+            isDarkMode={isDarkMode}
+            coursesCount={courses.length}
+            materialsCount={totalMaterialsCount}
+            onlineUsers={0}
+            currentWeek={semesterStatus.semesterWeek}
+            totalWeeks={20}
+            notices={notices}
+            onEditNotice={() => setShowCreateNotice(true)}
+            onCreateNotice={() => setShowCreateNotice(true)}
+          />
+        )}
+
+        {/* OLD ADMIN DASHBOARD CODE - HIDDEN FOR FUTURE USE */}
+        {false && isAdmin && currentView === 'admin' && (
             <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
             {/* Modern Header */}
               <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`}>
@@ -2515,7 +2627,8 @@ For any queries, contact your course instructors or the department.`,
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Quick Actions</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <a 
+                  {/* Manage Courses - HIDDEN */}
+                  {false && <a 
                     href="#courses-section" 
                       className={`group p-4 border rounded-xl transition-all duration-200 ${
                         isDarkMode 
@@ -2537,8 +2650,9 @@ For any queries, contact your course instructors or the department.`,
                             : 'text-gray-700 group-hover:text-blue-700'
                         }`}>Manage Courses</span>
                     </div>
-                  </a>
-                  <a 
+                  </a>}
+                  {/* Manage Materials - HIDDEN */}
+                  {false && <a 
                     href="#materials-section" 
                       className={`group p-4 border rounded-xl transition-all duration-200 ${
                         isDarkMode 
@@ -2560,7 +2674,7 @@ For any queries, contact your course instructors or the department.`,
                             : 'text-gray-700 group-hover:text-emerald-700'
                         }`}>Manage Materials</span>
                     </div>
-                  </a>
+                  </a>}
                   <a 
                     href="#notices-section" 
                       className={`group p-4 border rounded-xl transition-all duration-200 ${
@@ -2633,8 +2747,8 @@ For any queries, contact your course instructors or the department.`,
                 <DriveManager isDarkMode={isDarkMode} />
               </div>
 
-              {/* Courses List - Modern Design */}
-                <div id="courses-section" className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 lg:p-10 responsive-container ${
+              {/* Courses List - Modern Design - HIDDEN FOR NOW */}
+                {false && <div id="courses-section" className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 lg:p-10 responsive-container ${
                   isDarkMode 
                     ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
                     : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border-white/20'
@@ -2695,10 +2809,10 @@ For any queries, contact your course instructors or the department.`,
                     </div>
                   )}
                 </div>
-              </div>
+              </div>}
 
-            {/* Materials Management Section */}
-              <div id="materials-section" className={`rounded-2xl p-8 shadow-xl border ${
+            {/* Materials Management Section - HIDDEN FOR NOW */}
+              {false && <div id="materials-section" className={`rounded-2xl p-8 shadow-xl border ${
                 isDarkMode 
                   ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700' 
                   : 'bg-gradient-to-br from-white to-gray-50 border-gray-100'
@@ -2803,7 +2917,7 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 )}
               </div>
-            </div>
+            </div>}
             </div>
           </div>
         )}
