@@ -132,7 +132,10 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
       loadFolder(periodFolder.id);
     } catch (error: any) {
       console.error('Error finding course folder:', error);
-      setError('Failed to find course materials');
+      console.log('Course Code:', courseCode);
+      console.log('Exam Period:', examPeriod);
+      console.log('Error details:', error.result?.error);
+      setError(`Failed to find ${examPeriod} materials for ${courseCode}. Please try refreshing or contact admin.`);
       setLoading(false);
     }
   };
@@ -270,22 +273,45 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
             ? 'bg-red-900/30 border-red-700/50 text-red-300'
             : 'bg-red-50 border-red-200 text-red-800'
         }`}>
-          <p className="text-sm sm:text-base">{error}</p>
+          <p className="text-sm sm:text-base font-medium mb-2">⚠️ Error Loading Materials</p>
+          <p className="text-xs sm:text-sm">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              if (isLoaded) findCourseFolder();
+            }}
+            className={`mt-2 px-3 py-1 text-xs rounded transition-colors ${
+              isDarkMode
+                ? 'bg-red-800 hover:bg-red-700 text-white'
+                : 'bg-red-100 hover:bg-red-200 text-red-800'
+            }`}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Initializing API Loading State */}
+      {!isLoaded && !error && (
+        <div className="text-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Initializing Google Drive...</p>
         </div>
       )}
 
       {/* Files/Folders Grid - Mobile Responsive */}
-      {loading ? (
+      {isLoaded && loading ? (
         <div className="text-center py-8 sm:py-12">
           <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading...</p>
+          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading materials...</p>
         </div>
-      ) : items.length === 0 ? (
+      ) : isLoaded && items.length === 0 && !error ? (
         <div className="text-center py-8 sm:py-12">
           <Folder className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-          <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No materials found</p>
+          <p className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No {examPeriod} materials found</p>
+          <p className={`text-xs sm:text-sm mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Materials for this period haven't been uploaded yet</p>
         </div>
-      ) : (
+      ) : isLoaded && items.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {items.map((item) => (
             <div
@@ -353,6 +379,11 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
               )}
             </div>
           ))}
+        </div>
+      ) : isLoaded ? null : (
+        <div className="text-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading...</p>
         </div>
       )}
     </div>
