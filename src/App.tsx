@@ -689,29 +689,9 @@ For any queries, contact your course instructors or the department.`,
   const handleFacebookClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
+    // Open Facebook profile directly in new tab (no delays, no app protocol attempts)
     const facebookUrl = "https://www.facebook.com/mr.swapnil360";
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // Try to open in Facebook app first, fallback to browser
-      const fbAppUrl = "fb://profile/mr.swapnil360";
-      
-      // Create a temporary iframe to try opening the app
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = fbAppUrl;
-      document.body.appendChild(iframe);
-      
-      // If app doesn't open within 2 seconds, open in browser
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        window.open(facebookUrl, '_blank', 'noopener,noreferrer');
-      }, 2000);
-      
-    } else {
-      // Desktop - open in new tab
-      window.open(facebookUrl, '_blank', 'noopener,noreferrer');
-    }
+    window.open(facebookUrl, '_blank', 'noopener,noreferrer');
   };
 
   // Handle email contact - Open Gmail compose directly
