@@ -1531,11 +1531,14 @@ For any queries, contact your course instructors or the department.`,
                       }`}>
                         {!isAdmin && (
                           <button
+                            type="button"
                             onClick={() => {
+                              console.log('Admin button clicked from mobile menu');
                               setShowAdminLogin(true);
                               setShowMobileMenu(false);
+                              window.scrollTo(0, 0);
                             }}
-                            className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 transition-all duration-300 group border border-purple-500/20 hover:border-purple-400/40"
+                            className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 transition-all duration-300 group border border-purple-500/20 hover:border-purple-400/40 no-select"
                           >
                             <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
                               <span className="h-5 w-5 text-white drop-shadow-sm font-bold">⚙️</span>
@@ -1621,8 +1624,13 @@ For any queries, contact your course instructors or the department.`,
                 </button>
               ) : (
                 <button
-                  onClick={() => setShowAdminLogin(true)}
-                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors text-xs md:text-sm"
+                  type="button"
+                  onClick={() => {
+                    console.log('Admin button clicked');
+                    setShowAdminLogin(true);
+                    window.scrollTo(0, 0);
+                  }}
+                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors text-xs md:text-sm no-select"
                 >
                   <span className="hidden sm:inline">Admin</span>
                   <span className="sm:hidden">Admin</span>
