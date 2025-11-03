@@ -2527,6 +2527,7 @@ For any queries, contact your course instructors or the department.`,
             notices={notices}
             onEditNotice={() => setShowCreateNotice(true)}
             onCreateNotice={() => setShowCreateNotice(true)}
+            onDeleteNotice={handleDeleteNotice}
           />
         )}
 

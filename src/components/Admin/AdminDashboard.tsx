@@ -37,6 +37,7 @@ interface AdminDashboardProps {
   notices?: Notice[];
   onEditNotice: () => void;
   onCreateNotice: () => void;
+  onDeleteNotice?: (noticeId: string) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -49,6 +50,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   notices = [],
   onEditNotice,
   onCreateNotice,
+  onDeleteNotice,
 }) => {
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     courseManagement: false,
@@ -300,15 +302,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {notice.content}
                       </p>
                     </div>
-                    <button
-                      onClick={onEditNotice}
-                      className={`ml-3 p-2 rounded-lg transition-colors ${
-                        isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
-                      }`}
-                      title="Edit this notice"
-                    >
-                      <Edit2 className="w-4 h-4 text-blue-500" />
-                    </button>
+                    <div className="flex items-center space-x-2 ml-3">
+                      <button
+                        onClick={onEditNotice}
+                        className={`p-2 rounded-lg transition-colors ${
+                          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                        }`}
+                        title="Edit this notice"
+                      >
+                        <Edit2 className="w-4 h-4 text-blue-500" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteNotice && onDeleteNotice(notice.id)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          isDarkMode ? 'hover:bg-red-900/50' : 'hover:bg-red-50'
+                        }`}
+                        title="Delete this notice"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
