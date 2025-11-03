@@ -1529,7 +1529,28 @@ For any queries, contact your course instructors or the department.`,
                       <div className={`border-t pt-2 ${
                         isDarkMode ? 'border-gray-700/30' : 'border-gray-300/30'
                       }`}>
-                        <div className="text-center">
+                        {!isAdmin && (
+                          <button
+                            onClick={() => {
+                              setShowAdminLogin(true);
+                              setShowMobileMenu(false);
+                            }}
+                            className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 transition-all duration-300 group border border-purple-500/20 hover:border-purple-400/40"
+                          >
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                              <span className="h-5 w-5 text-white drop-shadow-sm font-bold">⚙️</span>
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className={`font-semibold text-base block ${
+                                isDarkMode ? 'text-white' : 'text-gray-900'
+                              }`}>Admin Access</span>
+                              <span className={`text-sm ${
+                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                              }`}>Manage materials & notices</span>
+                            </div>
+                          </button>
+                        )}
+                        <div className="text-center mt-4">
                           <span className={`text-xs font-medium ${
                             isDarkMode ? 'text-gray-400' : 'text-gray-600'
                           }`}>💡 Tap any option above to navigate</span>
@@ -1590,13 +1611,21 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
 
-              {isAdmin && (
+              {isAdmin ? (
                 <button
                   onClick={handleAdminLogout}
                   className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-colors text-xs md:text-sm"
                 >
                   <span className="hidden sm:inline">Admin Logout</span>
                   <span className="sm:hidden">Logout</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowAdminLogin(true)}
+                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors text-xs md:text-sm"
+                >
+                  <span className="hidden sm:inline">Admin</span>
+                  <span className="sm:hidden">Admin</span>
                 </button>
               )}
             </div>
