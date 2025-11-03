@@ -1082,13 +1082,8 @@ For any queries, contact your course instructors or the department.`,
 
   // Admin: Delete notice
   const handleDeleteNotice = async (noticeId: string) => {
-    // Prevent deletion of global system notices
-    if (noticeId === 'welcome-notice' || noticeId === 'exam-routine-notice') {
-      alert('❌ Cannot delete global system notices!\n\nUse "Update Notice" to modify the Welcome or Exam Routine content instead.');
-      return;
-    }
-    
-    if (!confirm('Are you sure you want to delete this notice?')) {
+    // Confirm deletion of any notice
+    if (!confirm('Are you sure you want to delete this notice? This action cannot be undone.')) {
       return;
     }
     
