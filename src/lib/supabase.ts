@@ -54,9 +54,45 @@ function createSupabaseMock() {
   } as any;
 }
 
+// Suppress verbose console logs
+if (typeof window !== 'undefined') {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  
+  // Suppress Supabase connection warnings
+  console.error = function(...args: any[]) {
+    if (args[0]?.toString?.().includes('Could not establish connection') || 
+        args[0]?.toString?.().includes('Receiving end does not exist')) {
+      return; // Suppress noisy Supabase errors
+    }
+    originalError.apply(console, args);
+  };
+  
+  console.warn = function(...args: any[]) {
+    if (args[0]?.toString?.().includes('Supabase not configured')) {
+      return; // Suppress Supabase not configured warning
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
+      global: {
+        fetch: (...args: any[]) => {
+          return fetch(...args).catch((error) => {
+            // Suppress connection errors silently
+            if (error?.message?.includes('Could not establish connection')) {
+              return new Response(JSON.stringify({ error: 'offline' }), { status: 0 });
+            }
+            throw error;
+          });
+        },
+      },
+    })
   : (() => {
-      console.warn('⚠️ Supabase not configured. Using no-op mock. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable real backend.');
+      if (isSupabaseConfigured === false) {
+        console.info('ℹ️ Supabase not fully configured. Using offline mode.');
+      }
       return createSupabaseMock();
     })();
