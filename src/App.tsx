@@ -533,49 +533,53 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
-  // Load notices - Load all active notices (up to 5) including newly added ones
+  // Load notices - Load all active notices (up to 5) from DATABASE first, then localStorage
   const loadNotices = async () => {
     try {
-      console.log('Loading all active notices (up to 5)...');
+      console.log('Loading all active notices (up to 5) from database...');
       
-      // Try to load ALL notices from localStorage first (primary source)
-      const localNoticesStr = localStorage.getItem('edu51five_notices');
       let allNotices: Notice[] = [];
       
+      // PRIMARY SOURCE: Try to load ALL notices from database
+      try {
+        const { data: dbNotices, error } = await supabase
+          .from('notices')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (!error && dbNotices && dbNotices.length > 0) {
+          allNotices = dbNotices as Notice[];
+          console.log('✅ Database notices loaded:', allNotices.length);
+          // Save to localStorage for offline access
+          localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
+          setNotices(allNotices);
+          return; // Success! Exit early with database data
+        } else if (error) {
+          console.warn('Database error:', error.message);
+        } else {
+          console.log('No notices in database');
+        }
+      } catch (dbErr) {
+        console.error('Database connection error:', dbErr);
+      }
+
+      // FALLBACK: If database is empty or unavailable, try localStorage
+      const localNoticesStr = localStorage.getItem('edu51five_notices');
       if (localNoticesStr) {
         try {
           const localNotices = JSON.parse(localNoticesStr);
           allNotices = Array.isArray(localNotices) 
             ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
             : [];
-          console.log('Local notices loaded:', allNotices.length);
+          console.log('⚠️ Using local storage fallback:', allNotices.length, 'notices');
         } catch (e) {
           console.error('Error parsing local notices:', e);
         }
       }
 
-      // If no local notices, try database
-      if (allNotices.length === 0) {
-        try {
-          const { data: dbNotices, error } = await supabase
-            .from('notices')
-            .select('*')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(5);
-
-          if (!error && dbNotices && dbNotices.length > 0) {
-            allNotices = dbNotices as Notice[];
-            console.log('Database notices loaded:', allNotices.length);
-            // Save to localStorage for offline access
-            localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
-          }
-        } catch (err) {
-          console.error('Database error:', err);
-        }
-      }
-
-      // Set the notices (don't force defaults, let admin create them)
+      // Set the notices (empty or from fallback)
       setNotices(allNotices);
       
       console.log('All notices loaded:', allNotices.length, 'notices');
@@ -1099,15 +1103,31 @@ For any queries, contact your course instructors or the department.`,
       localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
       console.log('Notice deleted from localStorage');
       
-      // Try to delete from database
+      // Delete from database (primary operation)
+      let deletedFromDB = false;
       try {
-        await supabase.from('notices').delete().eq('id', noticeId);
-        console.log('Notice deleted from database');
+        const { error } = await supabase.from('notices').delete().eq('id', noticeId);
+        if (error) {
+          console.error('Database delete error:', error);
+          alert('⚠️ Notice deleted locally, but database update may have failed. Refresh page to verify.');
+        } else {
+          deletedFromDB = true;
+          console.log('✅ Notice deleted from database successfully');
+        }
       } catch (error) {
         console.warn('Notice deleted locally, database cleanup may be needed:', error);
+        alert('⚠️ Notice deleted locally, but database update may have failed. Refresh page to verify.');
+      }
+      
+      // Dispatch event for instant UI update across tabs
+      window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
+      
+      if (deletedFromDB) {
+        alert('✅ Notice deleted successfully!');
       }
     } catch (error) {
       console.error('Error deleting notice:', error);
+      alert('❌ Error deleting notice. Please try again.');
     } finally {
       setLoading(false);
     }
