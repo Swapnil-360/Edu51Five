@@ -714,6 +714,30 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
+  // Handle email contact
+  const handleEmailClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const email = 'miftahurr503@gmail.com';
+    const subject = encodeURIComponent('Edu51Five Platform Contact');
+    const body = encodeURIComponent("Hi Swapnil,\n\nI found your Edu51Five platform and want to connect!\n\nBest regards");
+    
+    // Try to open with mailto protocol
+    const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+    
+    // Create a temporary link element and click it
+    const link = document.createElement('a');
+    link.href = mailtoLink;
+    link.click();
+    
+    // Also try opening Gmail web if mailto doesn't work
+    setTimeout(() => {
+      const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${email}&subject=${subject}&body=${body}`;
+      // Check if mailto worked (it's hard to detect, so we just show a fallback message)
+      console.log('Email client opened. If it didn\'t work, try: https://mail.google.com');
+    }, 500);
+  };
+
   // Navigation functions
   const handleBackToHome = () => {
     setSelectedCourse(null);
@@ -2171,16 +2195,17 @@ For any queries, contact your course instructors or the department.`,
                 
                 {/* Compact Contact Buttons */}
                 <div className="flex justify-center items-center gap-2">
-                  <a
-                    href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
-                    className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-semibold rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+                  <button
+                    onClick={handleEmailClick}
+                    className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-semibold rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                    title="Click to open email"
                   >
                     <svg className="w-3.5 h-3.5 mr-1.5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
                     </svg>
                     Email
-                  </a>
+                  </button>
                   <a
                     href="https://wa.me/8801318090383?text=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
                     className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
