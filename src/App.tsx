@@ -1281,7 +1281,7 @@ For any queries, contact your course instructors or the department.`,
           ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 border-gray-700/40'
           : 'bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 border-indigo-700/40'
       } text-white`}>
-        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24 gap-2 sm:gap-3 md:gap-4">
             
             {/* Left Side - Logo and Brand */}
@@ -1436,7 +1436,7 @@ For any queries, contact your course instructors or the department.`,
 
                 {/* Mobile Dropdown Menu - Enhanced Mobile Design */}
                 {showMobileMenu && (
-                  <div className={`mobile-menu-dropdown absolute top-full right-0 mt-3 w-72 sm:w-80 backdrop-blur-xl rounded-2xl shadow-2xl border z-50 animate-in slide-in-from-top-2 duration-300 ${
+                  <div className={`mobile-menu-dropdown fixed top-20 right-3 sm:right-4 md:right-6 w-72 sm:w-80 backdrop-blur-xl rounded-2xl shadow-2xl border z-50 animate-in slide-in-from-top-2 duration-300 ${
                     isDarkMode
                       ? 'bg-gray-900/95 border-gray-700/50'
                       : 'bg-white/95 border-gray-200/50'
