@@ -1281,8 +1281,8 @@ For any queries, contact your course instructors or the department.`,
           ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 border-gray-700/40'
           : 'bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-900 border-indigo-700/40'
       } text-white`}>
-        <div className="mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
-          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24">
+        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24 gap-2 sm:gap-3 md:gap-4">
             
             {/* Left Side - Logo and Brand */}
             <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0 min-w-0">
@@ -1547,38 +1547,10 @@ For any queries, contact your course instructors or the department.`,
                       </button>
                       
                       {/* Optional: Separator for clarity */}
-                      <div className={`border-t pt-2 ${
-                        isDarkMode ? 'border-gray-700/30' : 'border-gray-300/30'
-                      }`}>
-                        {!isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              console.log('Admin button clicked from mobile menu');
-                              setShowAdminLogin(true);
-                              setShowMobileMenu(false);
-                              window.scrollTo(0, 0);
-                            }}
-                            className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 transition-all duration-300 group border border-purple-500/20 hover:border-purple-400/40 no-select"
-                          >
-                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
-                              <span className="h-5 w-5 text-white drop-shadow-sm font-bold">⚙️</span>
-                            </div>
-                            <div className="flex-1 text-left">
-                              <span className={`font-semibold text-base block ${
-                                isDarkMode ? 'text-white' : 'text-gray-900'
-                              }`}>Admin Access</span>
-                              <span className={`text-sm ${
-                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                              }`}>Manage materials & notices</span>
-                            </div>
-                          </button>
-                        )}
-                        <div className="text-center mt-4">
+                      <div className="text-center mt-4">
                           <span className={`text-xs font-medium ${
                             isDarkMode ? 'text-gray-400' : 'text-gray-600'
                           }`}>💡 Tap any option above to navigate</span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1918,11 +1890,11 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
       {currentView !== 'semester' && (
-        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
+        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen overflow-x-hidden">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
         {/* Home Page */}
         {currentView === 'home' && (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8 w-full">
             {/* Welcome Hero Section */}
             <div className="text-center py-8 sm:py-10">
               {/* Logo */}
@@ -1962,8 +1934,8 @@ For any queries, contact your course instructors or the department.`,
             </div>
 
             {/* Section 5 Entry Card - 10 Minute School Style */}
-            <div className="max-w-6xl mx-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
                 {/* Section 5 Card */}
                 <button
                   onClick={() => goToView('section5')}
@@ -2309,26 +2281,26 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Course Materials View */}
         {currentView === 'course' && selectedCourse && (
-          <div className="space-y-6 md:space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <h2 className={`text-xl md:text-2xl font-bold transition-colors duration-300 ${
+          <div className="space-y-4 sm:space-y-6 md:space-y-8 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-2 sm:px-0">
+              <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-100' : 'text-gray-900'
               }`}>{selectedCourse.name}</h2>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit transition-colors duration-300 ${
+              <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit transition-colors duration-300 ${
                 isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
               }`}>
                 {selectedCourse.code}
               </span>
             </div>
-            <p className={`text-sm md:text-base select-text transition-colors duration-300 ${
+            <p className={`text-sm sm:text-base md:text-lg select-text transition-colors duration-300 px-2 sm:px-0 ${
               isDarkMode ? 'text-gray-400' : 'text-gray-600'
             }`}>{selectedCourse.description}</p>
 
             {/* Exam Period Tabs */}
-            <div className="flex space-x-2 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0 w-full">
               <button
                 onClick={() => setSelectedExamPeriod('midterm')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                className={`flex-1 py-3 sm:py-4 px-3 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition-all duration-300 ${
                   selectedExamPeriod === 'midterm'
                     ? isDarkMode
                       ? 'bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg'
@@ -2396,20 +2368,20 @@ For any queries, contact your course instructors or the department.`,
                 }`}>No materials have been uploaded for {selectedExamPeriod} exam yet.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className={`p-2 rounded-lg transition-colors duration-300 ${
+              <div className="space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-7 px-2 sm:px-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
+                  <div className={`flex-shrink-0 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-colors duration-300 ${
                     isDarkMode ? 'bg-green-900/50' : 'bg-green-100'
                   }`}>
-                    <Upload className={`w-5 h-5 transition-colors duration-300 ${
+                    <Upload className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-300 ${
                       isDarkMode ? 'text-green-400' : 'text-green-600'
                     }`} />
                   </div>
-                  <div>
-                    <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                  <div className="flex-1">
+                    <h3 className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-100' : 'text-gray-900'
                     }`}>📁 Uploaded {selectedExamPeriod.charAt(0).toUpperCase() + selectedExamPeriod.slice(1)} Materials</h3>
-                    <p className={`text-sm transition-colors duration-300 ${
+                    <p className={`text-xs sm:text-sm md:text-base transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-400' : 'text-gray-600'
                     }`}>Materials uploaded for {selectedExamPeriod} exam preparation</p>
                   </div>
@@ -2418,29 +2390,31 @@ For any queries, contact your course instructors or the department.`,
                 {materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).map((material, index) => {
                   const materialScheme = getMaterialColorScheme(index);
                   return (
-                    <div key={material.id} className={`rounded-2xl shadow-xl border backdrop-blur-sm p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
+                    <div key={material.id} className={`rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 hover:shadow-lg sm:hover:shadow-2xl transition-all duration-300 transform hover:sm:-translate-y-1 md:hover:-translate-y-2 ${
                       isDarkMode 
                         ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 border-gray-700/50'
                         : `bg-gradient-to-br ${materialScheme.bg} border-white/20`
                     }`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-6 flex-1">
-                          <div className={`p-4 rounded-2xl shadow-lg transform rotate-3 bg-gradient-to-r ${materialScheme.accent} text-white`}>
-                            {getTypeIcon(material.type)}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-5 md:gap-6">
+                        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg transform rotate-0 sm:rotate-1 md:rotate-3 bg-gradient-to-r ${materialScheme.accent} text-white`}>
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8">
+                              {getTypeIcon(material.type)}
+                            </div>
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-xl font-bold mb-2 hover:text-transparent hover:bg-gradient-to-r hover:${materialScheme.accent} hover:bg-clip-text transition-all cursor-pointer ${
-                              isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                            <h3 className={`text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-1 sm:mb-2 md:mb-3 break-words transition-all cursor-pointer ${
+                              isDarkMode ? 'text-gray-100 hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'
                             }`}>
                               {material.title}
                             </h3>
-                            <p className={`text-base mb-4 leading-relaxed transition-colors duration-300 ${
+                            <p className={`text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 md:mb-5 leading-relaxed line-clamp-2 transition-colors duration-300 ${
                               isDarkMode ? 'text-gray-300' : 'text-gray-700'
                             }`}>{material.description}</p>
                             
-                            <div className="flex items-center space-x-4 text-sm">
-                              <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                            <div className="flex flex-wrap gap-2 sm:gap-2.5 md:gap-3 text-xs sm:text-xs md:text-sm">
+                              <div className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg sm:rounded-lg md:rounded-xl font-semibold transition-colors duration-300 whitespace-nowrap ${
                                 isDarkMode 
                                   ? 'bg-blue-900/40 text-blue-300'
                                   : `bg-gradient-to-r ${materialScheme.accent} bg-opacity-20 text-gray-800`
@@ -2448,13 +2422,13 @@ For any queries, contact your course instructors or the department.`,
                                 Type: {material.type}
                               </div>
                               {material.size && (
-                                <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                                <div className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg sm:rounded-lg md:rounded-xl font-semibold transition-colors duration-300 whitespace-nowrap ${
                                   isDarkMode
                                     ? 'bg-gray-700/50 text-gray-300'
                                     : 'bg-gradient-to-r from-gray-100 to-slate-200 text-gray-800'
                                 }`}>Size: {material.size}</div>
                               )}
-                              <div className={`px-4 py-2 rounded-xl font-semibold transition-colors duration-300 ${
+                              <div className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg sm:rounded-lg md:rounded-xl font-semibold transition-colors duration-300 whitespace-nowrap ${
                                 isDarkMode
                                   ? 'bg-emerald-900/40 text-emerald-300'
                                   : 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800'
@@ -2465,45 +2439,45 @@ For any queries, contact your course instructors or the department.`,
                           </div>
                         </div>
                       
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
                         {/* Preview Button */}
                         {material.type === 'video' && material.video_url ? (
                           <a
                             href={material.video_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
                               isDarkMode
                                 ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/30'
                                 : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
                             }`}
                             title="Watch Video"
                           >
-                            <Eye className="h-5 w-5" />
+                            <Eye className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
                           </a>
                         ) : material.file_url ? (
                           <a
                             href={material.file_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
                               isDarkMode
                                 ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-900/30'
                                 : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
                             }`}
                             title="Preview File"
                           >
-                            <Eye className="h-5 w-5" />
+                            <Eye className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
                           </a>
                         ) : (
                           <button
-                            className={`p-2 cursor-not-allowed rounded-lg ${
+                            className={`p-2 sm:p-2.5 cursor-not-allowed rounded-lg sm:rounded-xl ${
                               isDarkMode ? 'text-gray-600' : 'text-gray-300'
                             }`}
                             title="No preview available"
                             disabled
                           >
-                            <Eye className="h-5 w-5" />
+                            <Eye className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
                           </button>
                         )}
 
@@ -2512,24 +2486,24 @@ For any queries, contact your course instructors or the department.`,
                           <a
                             href={material.file_url}
                             download
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
                               isDarkMode
                                 ? 'text-gray-400 hover:text-teal-400 hover:bg-teal-900/30'
                                 : 'text-gray-500 hover:text-teal-600 hover:bg-teal-50'
                             }`}
                             title="Download File"
                           >
-                            <Download className="h-5 w-5" />
+                            <Download className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
                           </a>
                         ) : (
                           <button
-                            className={`p-2 cursor-not-allowed rounded-lg ${
+                            className={`p-2 sm:p-2.5 cursor-not-allowed rounded-lg sm:rounded-xl ${
                               isDarkMode ? 'text-gray-600' : 'text-gray-300'
                             }`}
                             title="No file to download"
                             disabled
                           >
-                            <Download className="h-5 w-5" />
+                            <Download className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
                           </button>
                         )}
                       </div>
