@@ -2174,7 +2174,6 @@ For any queries, contact your course instructors or the department.`,
                   <a
                     href="mailto:miftahurr503@gmail.com?subject=Edu51Five%20Platform%20Contact&body=Hi%20Swapnil%2C%20I%20found%20your%20Edu51Five%20platform%20and%20want%20to%20connect!"
                     className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-semibold rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-                    target="_blank" rel="noopener noreferrer"
                   >
                     <svg className="w-3.5 h-3.5 mr-1.5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
