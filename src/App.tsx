@@ -538,60 +538,51 @@ For any queries, contact your course instructors or the department.`,
     try {
       console.log('Loading all active notices (up to 5)...');
       
-      // Try to load ALL notices from database
-      const { data: dbNotices, error } = await supabase
-        .from('notices')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
+      // Try to load ALL notices from localStorage first (primary source)
+      const localNoticesStr = localStorage.getItem('edu51five_notices');
       let allNotices: Notice[] = [];
-
-      // If database query successful, use those notices
-      if (!error && dbNotices && dbNotices.length > 0) {
-        allNotices = dbNotices as Notice[];
-        console.log('Database notices loaded:', allNotices.length);
-      } else {
-        // Fallback to localStorage for all notices
-        const localNoticesStr = localStorage.getItem('edu51five_notices');
-        if (localNoticesStr) {
-          try {
-            const localNotices = JSON.parse(localNoticesStr);
-            allNotices = Array.isArray(localNotices) 
-              ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
-              : [];
-            console.log('Local notices loaded:', allNotices.length);
-          } catch (e) {
-            console.error('Error parsing local notices:', e);
-            allNotices = [];
-          }
+      
+      if (localNoticesStr) {
+        try {
+          const localNotices = JSON.parse(localNoticesStr);
+          allNotices = Array.isArray(localNotices) 
+            ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
+            : [];
+          console.log('Local notices loaded:', allNotices.length);
+        } catch (e) {
+          console.error('Error parsing local notices:', e);
         }
       }
 
-      // If no notices exist, initialize defaults
+      // If no local notices, try database
       if (allNotices.length === 0) {
-        console.log('No notices found, initializing defaults...');
-        await initializeDefaultNotices();
-        return;
+        try {
+          const { data: dbNotices, error } = await supabase
+            .from('notices')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          if (!error && dbNotices && dbNotices.length > 0) {
+            allNotices = dbNotices as Notice[];
+            console.log('Database notices loaded:', allNotices.length);
+            // Save to localStorage for offline access
+            localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
+          }
+        } catch (err) {
+          console.error('Database error:', err);
+        }
       }
 
-      // Set all active notices (up to 5)
+      // Set the notices (don't force defaults, let admin create them)
       setNotices(allNotices);
-      localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
       
       console.log('All notices loaded:', allNotices.length, 'notices');
       
     } catch (err) {
       console.error('Error loading notices:', err);
-      
-      // Final fallback - try to initialize defaults
-      try {
-        await initializeDefaultNotices();
-      } catch (initError) {
-        console.error('Failed to initialize default notices:', initError);
-        setNotices([]);
-      }
+      setNotices([]);
     }
   };
 
@@ -1018,28 +1009,12 @@ For any queries, contact your course instructors or the department.`,
     try {
       setLoading(true);
       
-      // Determine which global notice slot this should update
-      let noticeId: string;
-      let noticeTitle: string;
-      
-      if (newNotice.title.toLowerCase().includes('welcome') || 
-          newNotice.title.toLowerCase().includes('intro')) {
-        noticeId = 'welcome-notice';
-        noticeTitle = '🎉 Welcome to Edu51Five - BUBT Intake 51 Section 5';
-      } else if (newNotice.title.toLowerCase().includes('exam') || 
-                 newNotice.title.toLowerCase().includes('routine') ||
-                 newNotice.title.toLowerCase().includes('midterm')) {
-        noticeId = 'exam-routine-notice';
-        noticeTitle = '📅 Midterm Exam Routine - Section 5';
-      } else {
-        // Default to exam routine slot for other admin notices
-        noticeId = 'exam-routine-notice';
-        noticeTitle = newNotice.title;
-      }
+      // Create new notice with unique ID (allow multiple notices, not just 2 slots)
+      const noticeId = `notice-${Date.now()}`;
       
       const notice: Notice = {
         id: noticeId,
-        title: noticeTitle,
+        title: newNotice.title,
         content: newNotice.content,
         type: newNotice.type,
         category: newNotice.category,
@@ -1050,39 +1025,33 @@ For any queries, contact your course instructors or the department.`,
         is_active: newNotice.is_active
       };
 
-      console.log('Updating global notice slot:', noticeId);
+      console.log('Creating new notice:', noticeId);
 
-      // Update the specific notice in the global system
-      const updatedNotices = [...notices];
-      const existingIndex = updatedNotices.findIndex(n => n.id === noticeId);
-      
-      if (existingIndex >= 0) {
-        updatedNotices[existingIndex] = notice;
-      } else {
-        // If we somehow don't have this notice, add it
-        updatedNotices.push(notice);
-      }
+      // Add new notice to the list (keep existing ones, add new one at the beginning)
+      const updatedNotices = [notice, ...notices.filter(n => n.id !== noticeId)].slice(0, 5);
 
       setNotices(updatedNotices);
       localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
-      console.log('Global notice updated in localStorage');
+      console.log('New notice added to localStorage');
 
       // Try to save to database
       try {
-        // Use upsert to update or insert
         const { error } = await supabase
           .from('notices')
-          .upsert([notice], { onConflict: 'id' });
+          .insert([notice]);
         
         if (error) {
           console.error('Database save failed:', error);
           console.log('Notice saved locally only.');
         } else {
-          console.log('Global notice saved to database successfully');
+          console.log('Notice saved to database successfully');
         }
       } catch (dbError) {
         console.warn('Database not available, using local storage:', dbError);
       }
+      
+      // Dispatch event for instant UI update
+      window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
       
       // Reset form
       setNewNotice({ 
