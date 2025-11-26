@@ -2062,7 +2062,7 @@ For any queries, contact your course instructors or the department.`,
           </div>
 
             {/* Platform Features - Floating Pills Grid */}
-            <div className="max-w-4xl mx-auto px-4">
+            <div className="max-w-6xl mx-auto px-4">
               <div className="text-center mb-4">
                 <p className={`text-sm font-medium transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
