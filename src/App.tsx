@@ -314,6 +314,26 @@ function App() {
     };
   }, [showMobileMenu, showNoticePanel]);
 
+  // Lock background scrolling when any overlay/modal/panel is open
+  useEffect(() => {
+    const overlaysOpen = showNoticePanel || showNoticeModal || showCreateNotice || showUploadFile || showCreateCourse || showFileViewer || showMobileMenu;
+    if (overlaysOpen) {
+      const previousOverflow = document.body.style.overflow;
+      const previousPaddingRight = document.body.style.paddingRight || '';
+      // Compensate for scrollbar disappearance to avoid layout shift
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = previousOverflow;
+        document.body.style.paddingRight = previousPaddingRight;
+      };
+    }
+    return;
+  }, [showNoticePanel, showNoticeModal, showCreateNotice, showUploadFile, showCreateCourse, showFileViewer, showMobileMenu]);
+
   // Initialize database tables if they don't exist
   const initializeDatabase = async () => {
     try {
@@ -428,7 +448,7 @@ FOR ALL USING (true) WITH CHECK (true);
 
   // Create welcome notice if it doesn't exist
   // Initialize default notices (Welcome + Exam Routine slots)
-  const initializeDefaultNotices = async () => {
+  const initializeDefaultNotices = async (): Promise<Notice[]> => {
     try {
       console.log('Checking for default notices...');
       
@@ -526,16 +546,19 @@ For queries, contact course instructors or the department.
       
       // Filter only active notices and allow up to 5
       const activeNotices = defaultNotices.filter(n => n && n.is_active).slice(0, 5);
-      
+
       setNotices(activeNotices);
       localStorage.setItem('edu51five_notices', JSON.stringify(activeNotices));
-      
+
       console.log('Initialized with default notices:', activeNotices.length);
+
+      return activeNotices;
 
     } catch (error) {
       console.error('Error initializing default notices:', error);
       // Fallback to empty notices
       setNotices([]);
+      return [];
     }
   };
 
@@ -545,6 +568,16 @@ For queries, contact course instructors or the department.
       console.log('Loading all active notices (up to 5) from database...');
       
       let allNotices: Notice[] = [];
+      // Restore persisted read-notice ids (we store reads in 'edu51five_read_notices')
+      try {
+        const readStr = localStorage.getItem('edu51five_read_notices');
+        if (readStr) {
+          const readArr = JSON.parse(readStr);
+          if (Array.isArray(readArr)) setUnreadNotices(readArr);
+        }
+      } catch (e) {
+        console.warn('Could not restore read notices from localStorage', e);
+      }
       
       // PRIMARY SOURCE: Try to load ALL notices from database
       try {
@@ -585,9 +618,26 @@ For queries, contact course instructors or the department.
         }
       }
 
-      // Set the notices (empty or from fallback)
+      // If there are no notices from DB/localStorage, initialize defaults (welcome + routine)
+      if (!allNotices || allNotices.length === 0) {
+        try {
+          const defaults = await initializeDefaultNotices();
+          if (defaults && defaults.length > 0) {
+            allNotices = defaults;
+          } else {
+            // as a last resort try to read what was written
+            const stored = localStorage.getItem('edu51five_notices');
+            if (stored) {
+              allNotices = JSON.parse(stored) as Notice[];
+            }
+          }
+        } catch (e) {
+          console.error('Error creating default notices:', e);
+        }
+      }
+
       setNotices(allNotices);
-      
+
       console.log('All notices loaded:', allNotices.length, 'notices');
       
     } catch (err) {
@@ -684,9 +734,16 @@ For queries, contact course instructors or the department.
 
   // Mark notice as read
   const markNoticeAsRead = (noticeId: string) => {
-    if (!unreadNotices.includes(noticeId)) {
-      setUnreadNotices([...unreadNotices, noticeId]);
-    }
+    setUnreadNotices(prev => {
+      if (prev.includes(noticeId)) return prev;
+      const next = [...prev, noticeId];
+      try {
+        localStorage.setItem('edu51five_read_notices', JSON.stringify(next));
+      } catch (e) {
+        console.warn('Failed to persist read notices', e);
+      }
+      return next;
+    });
   };
 
 
@@ -1088,6 +1145,70 @@ For queries, contact course instructors or the department.
     }
   };
 
+  // Admin: Insert Final Exam Routine notice (prebuilt)
+  const handleInsertFinalExamNotice = async () => {
+    if (!confirm('Insert the Final Exam Routine notice for Dec 04–14, 2025?')) return;
+    try {
+      setLoading(true);
+
+      const notice: Notice = {
+        id: 'exam-routine-final-2025',
+        title: '📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)',
+        content: `Final examination schedule for Section 5 (Computer Science & Engineering).
+
+📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
+• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
+• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
+• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
+• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
+• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
+
+• Arrive 15 minutes early for each exam
+• Carry your student ID and necessary materials
+
+⚠️ **Admin Notice:** Use the admin panel to upload the official routine image if available. This notice can be updated from Admin → Notices.
+
+For queries, contact course instructors or the department.
+`,
+        type: 'warning',
+        category: 'exam',
+        priority: 'high',
+        exam_type: 'final',
+        event_date: '',
+        created_at: new Date().toISOString(),
+        is_active: true
+      } as Notice;
+
+      // Add to local state (prepend), keep up to 5
+      const updatedNotices = [notice, ...notices.filter(n => n.id !== notice.id)].slice(0, 5);
+      setNotices(updatedNotices);
+      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+
+      // Try to upsert into database
+      try {
+        const { error } = await supabase.from('notices').upsert([notice], { onConflict: 'id' });
+        if (error) {
+          console.warn('Supabase upsert error:', error);
+          alert('Notice added locally but database update may have failed.');
+        } else {
+          console.log('Final exam notice upserted to database');
+          alert('✅ Final exam notice added successfully.');
+        }
+      } catch (dbErr) {
+        console.warn('Database call failed, notice saved locally:', dbErr);
+        alert('Notice added locally; database unavailable.');
+      }
+
+      // Notify other windows/tabs
+      window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
+    } catch (err) {
+      console.error('Error inserting final exam notice:', err);
+      alert('Error adding final exam notice. See console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Admin: Delete notice
   const handleDeleteNotice = async (noticeId: string) => {
     // Confirm deletion of any notice
@@ -1236,7 +1357,7 @@ For any queries, contact your course instructors or the department.`,
   if (showAdminLogin && !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <div className="admin-auth bg-white p-8 rounded-lg shadow-md w-full max-w-md">
           <div className="text-center mb-6">
             <img src="/image.png" alt="Edu51Five Logo" className="h-16 w-16 mx-auto mb-4 object-contain" />
             <h1 className="text-2xl font-bold text-gray-900">Edu51Five</h1>
@@ -1588,6 +1709,8 @@ For any queries, contact your course instructors or the department.`,
                     <Moon className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white group-hover:scale-110 transition-transform drop-shadow-lg" />
                   )}
                 </button>
+
+                {/* Theme selector removed (was causing issues) */}
 
                 {/* Modern Exam Materials Button */}
                 <button
@@ -2868,7 +2991,7 @@ For any queries, contact your course instructors or the department.`,
         {/* Create Course Modal */}
         {showCreateCourse && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
+            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
               <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Add New Course</h2>
               <form onSubmit={handleCreateCourse} className="space-y-4">
                 <input
@@ -2918,7 +3041,7 @@ For any queries, contact your course instructors or the department.`,
         {/* Upload File Modal */}
         {showUploadFile && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
+            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
               <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Upload Material</h2>
               <form onSubmit={handleFileUpload} className="space-y-4">
                 <select
@@ -3009,7 +3132,7 @@ For any queries, contact your course instructors or the department.`,
         {/* Enhanced Categorized Notice Creation Modal */}
         {showCreateNotice && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
+            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📢 Create Smart Notice</h2>
@@ -3237,6 +3360,13 @@ For any queries, contact your course instructors or the department.`,
                 >
                   Cancel
                 </button>
+                  <button
+                    onClick={handleInsertFinalExamNotice}
+                    disabled={loading}
+                    className="px-4 py-2 border border-orange-400 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+                  >
+                    ➕ Insert Final Exam Routine
+                  </button>
                 <button
                   onClick={handleCreateNotice}
                   disabled={!newNotice.title || !newNotice.content}
@@ -3322,56 +3452,242 @@ For any queries, contact your course instructors or the department.`,
               <div className="p-6 overflow-y-auto max-h-96">
                 <div className="prose prose-gray max-w-none">
                   {(() => {
-                    const content = selectedNotice.content;
-                    
-                    // Check for both URL and base64 image formats
+                    const content = selectedNotice.content || '';
+
+                    // detect embedded image or URL markers
                     const urlMatch = content.match(/\[EXAM_ROUTINE_URL\](.*?)\[\/EXAM_ROUTINE_URL\]/);
                     const imageMatch = content.match(/\[EXAM_ROUTINE_IMAGE\](.*?)\[\/EXAM_ROUTINE_IMAGE\]/);
-                    
+
+                    // parse simple structured routine lines into entries
+                    const parseRoutineEntries = (text) => {
+                      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                      const entries = [];
+                      for (const line of lines) {
+                        if (/Room\s*\d+/i.test(line) && /\d{2}\/\d{2}\/\d{4}/.test(line)) {
+                          const parts = line.split('•').map(p => p.trim()).filter(Boolean);
+                          const dateTime = parts[0] || '';
+                          const course = parts[1] || '';
+                          const hall = parts[2] || '';
+                          const roomText = parts.slice().reverse().find(p => /Room\s*\d+/i.test(p)) || '';
+                          const roomMatch = roomText.match(/Room\s*(\d+)/i);
+                          const roomNum = roomMatch ? roomMatch[1] : '';
+                          let building = '';
+                          let roomNo = roomNum;
+                          if (roomNum && roomNum.length >= 2) {
+                            building = roomNum.charAt(0);
+                            roomNo = roomNum.slice(1);
+                          }
+                          entries.push({ dateTime, course, hall, roomFull: roomNum, building, roomNo, raw: line });
+                        }
+                      }
+                      return entries;
+                    };
+
+                    const routineEntries = parseRoutineEntries(content);
+
+                    const generatePrintableHTML = (title: string, entries: any[]) => {
+                      const styles = `body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#0f172a}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}th{background:#f3f4f6}`;
+                      const rows = entries.map(e => `<tr><td>${e.dateTime}</td><td>${e.course}</td><td>${e.hall}</td><td>Building ${e.building || '-'} / Room ${e.roomNo || e.roomFull || '-'}</td></tr>`).join('');
+                      return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body><h1>${title}</h1><table><thead><tr><th>Date & Time</th><th>Course</th><th>Hall</th><th>Building / Room</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+                    };
+
+                    const openPrintableWindow = (html: string) => {
+                      const w = window.open('', '_blank', 'noopener,noreferrer');
+                      if (!w) return alert('Unable to open print window. Please allow popups.');
+                      w.document.open();
+                      w.document.write(html);
+                      w.document.close();
+                      setTimeout(() => { w.focus(); w.print(); }, 300);
+                    };
+
+                    const generateAndDownloadPDF = async (title: string, entries: any[]) => {
+                      setLoading(true);
+                      const html = generatePrintableHTML(title, entries);
+
+                      // 1) Try printing via a hidden iframe (no popups, should be allowed on user gesture)
+                      try {
+                        const iframe = document.createElement('iframe');
+                        iframe.style.position = 'fixed';
+                        iframe.style.left = '-10000px';
+                        iframe.style.top = '0';
+                        iframe.style.width = '800px';
+                        iframe.style.height = '600px';
+                        iframe.style.border = '0';
+                        document.body.appendChild(iframe);
+
+                        // Write content and call print when ready
+                        const doc = iframe.contentWindow?.document;
+                        if (doc) {
+                          doc.open();
+                          doc.write(html);
+                          doc.close();
+
+                          // Some browsers require onload; use a small timeout to ensure rendering
+                          setTimeout(() => {
+                            try {
+                              iframe.contentWindow?.focus();
+                              // Trigger print for iframe content
+                              iframe.contentWindow?.print();
+                            } catch (e) {
+                              console.warn('Iframe print failed, will fallback', e);
+                            } finally {
+                              try { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch (e) {}
+                              setLoading(false);
+                            }
+                          }, 300);
+
+                          return;
+                        } else {
+                          // If we couldn't access iframe document, remove it and continue to fallbacks
+                          try { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch (e) {}
+                        }
+                      } catch (err) {
+                        console.warn('Hidden iframe approach failed, trying other fallbacks', err);
+                      }
+
+                      // 2) Try opening a new window (user gesture) and call print there
+                      try {
+                        const w = window.open('', '_blank', 'noopener,noreferrer');
+                        if (w) {
+                          w.document.open();
+                          w.document.write(html + `
+                            <script>
+                              window.onload = function(){
+                                try{ window.focus(); window.print(); } catch(e){}
+                                setTimeout(()=>{ try{ window.close(); } catch(e){} }, 500);
+                              };
+                            <\/script>
+                          `);
+                          w.document.close();
+                          setLoading(false);
+                          return;
+                        }
+                      } catch (err) {
+                        console.warn('Opening print window failed, will try html2pdf fallback', err);
+                      }
+
+                      // 3) Final fallback: html2pdf library to generate and download PDF
+                      let container: HTMLDivElement | null = null;
+                      try {
+                        container = document.createElement('div');
+                        container.style.position = 'fixed';
+                        container.style.left = '-10000px';
+                        container.style.top = '0';
+                        container.style.width = '800px';
+                        container.innerHTML = html;
+                        document.body.appendChild(container);
+
+                        const lib = await import('html2pdf.js');
+                        const html2pdfFunc = (lib && (lib as any).default) ? (lib as any).default : (lib as any);
+
+                        const filename = `${(title || 'exam_routine').replace(/[^a-z0-9\\-_\\.]/gi, '_')}.pdf`;
+                        const options = {
+                          margin: [12, 12, 12, 12],
+                          filename,
+                          image: { type: 'jpeg', quality: 0.98 },
+                          html2canvas: { scale: 2, useCORS: true },
+                          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+                        };
+
+                        await (html2pdfFunc() as any).from(container).set(options).save();
+                      } catch (err) {
+                        console.error('PDF generation failed:', err);
+                        // Last resort: open printable window (may be blocked)
+                        try { openPrintableWindow(html); } catch (e) { console.warn('Fallback printable window failed', e); }
+                      } finally {
+                        try { if (container && container.parentNode) container.parentNode.removeChild(container); } catch (e) { /* ignore */ }
+                        setLoading(false);
+                      }
+                    };
+
                     if (urlMatch || imageMatch) {
                       const imageData = urlMatch ? urlMatch[1] : (imageMatch ? imageMatch[1] : '');
-                      const textContent = content
-                        .replace(/\[EXAM_ROUTINE_URL\].*?\[\/EXAM_ROUTINE_URL\]/g, '')
-                        .replace(/\[EXAM_ROUTINE_IMAGE\].*?\[\/EXAM_ROUTINE_IMAGE\]/g, '');
-                      
+                      const textContent = content.replace(/\[EXAM_ROUTINE_URL\].*?\[\/EXAM_ROUTINE_URL\]/g, '').replace(/\[EXAM_ROUTINE_IMAGE\].*?\[\/EXAM_ROUTINE_IMAGE\]/g, '');
                       return (
                         <div>
-                          <p className={`leading-relaxed whitespace-pre-wrap mb-6 select-text transition-colors duration-300 ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                          }`}>
+                          <p className={`leading-relaxed whitespace-pre-wrap mb-6 select-text transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             {textContent}
                           </p>
-                          <div className={`rounded-xl p-4 text-center transition-colors duration-300 ${
-                            isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-                          }`}>
-                            <h4 className={`font-semibold mb-3 transition-colors duration-300 ${
-                              isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                            }`}><span className="no-select">📋</span> Exam Routine</h4>
-                            <img 
-                              src={imageData} 
-                              alt="Midterm Exam Routine - Section 5" 
-                              className={`max-w-full h-auto rounded-lg shadow-lg mx-auto border transition-colors duration-300 ${
-                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                              }`}
-                              style={{maxHeight: '600px'}}
-                            />
-                            <p className={`text-sm mt-2 transition-colors duration-300 ${
-                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              Click on the image to view in full size
-                            </p>
+                          <div className={`rounded-xl p-4 text-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                            <h4 className={`font-semibold mb-3 transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}><span className="no-select">📋</span> Exam Routine</h4>
+                            <img src={imageData} alt="Exam Routine" className={`max-w-full h-auto rounded-lg shadow-lg mx-auto border transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`} style={{maxHeight: '600px'}} />
+                            <p className={`text-sm mt-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Click on the image to view in full size</p>
+                          </div>
+                          <div className={`mt-4 rounded-lg p-4 ${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white border border-gray-100'} text-sm`}>
+                            <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Exam Guidelines</h4>
+                            <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                              <li>Arrive at least 15 minutes before the exam start time.</li>
+                              <li>Bring your student ID and necessary stationery.</li>
+                              <li>Mobile phones must be switched off and kept away during exams.</li>
+                              <li>Read instructions carefully before starting the paper.</li>
+                            </ul>
+                            <p className={`mt-3 font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Best of luck to all students — Edu51Five Team 🎓</p>
                           </div>
                         </div>
                       );
-                    } else {
+                    }
+
+                    if (routineEntries && routineEntries.length > 0) {
                       return (
-                        <p className={`leading-relaxed whitespace-pre-wrap select-text transition-colors duration-300 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          {content}
-                        </p>
+                        <div>
+                          <div className={`bg-white rounded-lg p-4 shadow-sm border ${isDarkMode ? 'bg-gray-800/60' : 'bg-white'}`}>
+                            <h3 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Digital Final Exam Routine</h3>
+                            <div className="overflow-x-auto">
+                              <table className={`w-full text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                <thead>
+                                  <tr className="text-left text-xs text-gray-500">
+                                    <th className="pb-2">Date & Time</th>
+                                    <th className="pb-2">Course</th>
+                                    <th className="pb-2">Hall</th>
+                                    <th className="pb-2">Building / Room</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {routineEntries.map((e, idx) => (
+                                    <tr key={idx} className="border-t">
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.dateTime}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.course}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.hall}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Building {e.building || '-'} / Room {e.roomNo || e.roomFull || '-'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            <div className="mt-4 flex space-x-2">
+                              <button
+                                onClick={() => generateAndDownloadPDF(selectedNotice.title || 'Exam Routine', routineEntries)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:brightness-95 transition"
+                              >
+                                📄 Download / Print Routine
+                              </button>
+                              <button
+                                onClick={() => {
+                                  alert('Routine copied to clipboard. You can paste it into a document to save as PDF.');
+                                  navigator.clipboard && navigator.clipboard.writeText(content);
+                                }}
+                                className={`px-4 py-2 border rounded-lg transition ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                                📋 Copy Raw Text
+                              </button>
+                            </div>
+                            <div className={`mt-4 rounded-lg p-4 ${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white border border-gray-100'} text-sm`}>
+                              <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Exam Guidelines</h4>
+                              <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                <li>Arrive at least 15 minutes before the exam start time.</li>
+                                <li>Bring your student ID and necessary stationery.</li>
+                                <li>Mobile phones must be switched off and kept away during exams.</li>
+                                <li>Read instructions carefully before starting the paper.</li>
+                              </ul>
+                              <p className={`mt-3 font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Best of luck to all students — Edu51Five Team 🎓</p>
+                            </div>
+                          </div>
+                        </div>
                       );
                     }
+
+                    return (
+                      <p className={`leading-relaxed whitespace-pre-wrap select-text transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
+                    );
                   })()}
                 </div>
               </div>

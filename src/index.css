@@ -400,6 +400,50 @@
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
   }
 
+  /* Dark modal input adjustments: keep inputs light and readable */
+  .dark-modal input,
+  .dark-modal select,
+  .dark-modal textarea {
+    background-color: #f8fafc; /* light - gray-50 */
+    color: #0f172a; /* slate-900 */
+    border-color: #e5e7eb; /* gray-200 */
+  }
+
+  .dark-modal input::placeholder,
+  .dark-modal textarea::placeholder {
+    color: #6b7280; /* gray-500 */
+  }
+
+  .dark-modal input:focus,
+  .dark-modal select:focus,
+  .dark-modal textarea:focus {
+    outline: 2px solid rgba(59,130,246,0.35);
+    outline-offset: 2px;
+  }
+
+  /* Admin auth panel: ensure inputs look normal in both themes */
+  .admin-auth input,
+  .admin-auth select,
+  .admin-auth textarea {
+    background-color: #ffffff !important;
+    color: #111827 !important; /* gray-900 */
+    border-color: #d1d5db !important; /* gray-300 */
+  }
+
+  .admin-auth input::placeholder,
+  .admin-auth textarea::placeholder {
+    color: #6b7280 !important; /* gray-500 */
+  }
+
+  /* Generic modal content fallbacks to avoid pure-black inputs */
+  .modal-content input,
+  .modal-content select,
+  .modal-content textarea {
+    background-color: #f8fafc; /* gray-50 */
+    color: #0f172a; /* slate-900 */
+    border-color: #e5e7eb; /* gray-200 */
+  }
+
   /* Perfect mobile scaling for text */
   .responsive-text-xs {
     font-size: 0.75rem;
@@ -645,9 +689,7 @@
     transform: translateZ(0) !important;
     backface-visibility: hidden !important;
   }
-}
-
-   
+  }
 
 /* Animated gradient for logo text */
 @keyframes gradient {
