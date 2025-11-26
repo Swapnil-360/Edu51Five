@@ -6,6 +6,7 @@ import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFile
 import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
+import MarqueeTicker from './components/MarqueeTicker';
 import PDFViewer from './components/PDFViewer';
 import { DirectDriveUpload } from './components/Admin/DirectDriveUpload';
 import { DriveManager } from './components/Admin/DriveManager';
@@ -2068,33 +2069,8 @@ For any queries, contact your course instructors or the department.`,
                 }`}>Available Features</p>
               </div>
               
-              {/* Static Grid - All Visible */}
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-3">
-                {[
-                  { icon: "📚", text: "Course Materials", delay: "0s" },
-                  { icon: "📝", text: "Past Questions", delay: "0.3s" },
-                  { icon: "🔔", text: "Smart Notices", delay: "0.6s" },
-                  { icon: "📁", text: "Google Drive", delay: "0.9s" },
-                  { icon: "⏰", text: "Class Schedule", delay: "1.2s" },
-                  { icon: "📊", text: "Semester Tracker", delay: "1.5s" }
-                ].map((feature, index) => (
-                  <div 
-                    key={index} 
-                    className={`inline-flex items-center gap-2 backdrop-blur-sm border rounded-full px-4 py-2 shadow-sm cursor-default select-none transition-all hover:scale-105 hover:shadow-md ${
-                      isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/80 border-gray-200'
-                    }`}
-                    style={{
-                      animation: 'pulse-soft 4s ease-in-out infinite',
-                      animationDelay: feature.delay
-                    }}
-                  >
-                    <span className="text-lg">{feature.icon}</span>
-                    <span className={`text-sm font-medium whitespace-nowrap transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>{feature.text}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Marquee-style Available Features ticker */}
+              <MarqueeTicker isDarkMode={isDarkMode} />
               
               <p className={`text-center text-xs transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-500' : 'text-gray-400'

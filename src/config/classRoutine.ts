@@ -22,7 +22,7 @@ export const REGULAR_CLASS_SCHEDULE: DaySchedule[] = [
     day: 'Sunday',
     slots: [
       {
-        time: '01:30 PM - 02:45 PM',
+        time: '01:30 PM - 04:00 PM',
         courseCode: 'CSE 320',
         courseName: 'Computer Networks Lab',
         teacher: 'Lab Instructor',
@@ -30,7 +30,7 @@ export const REGULAR_CLASS_SCHEDULE: DaySchedule[] = [
         type: 'lab'
       },
       {
-        time: '02:45 PM - 04:00 PM',
+        time: '04:00 PM - 05:15 PM',
         courseCode: 'CSE 327',
         courseName: 'Software Engineering',
         teacher: 'Course Teacher',
