@@ -60,9 +60,10 @@ export const SEMESTER_CONFIG: SemesterConfig = {
     },
     
     finalExams: {
-      name: "Final Examinations", 
-      startDate: "2025-12-01",   // Early December (estimated)
-      endDate: "2025-12-15",     // CONFIRMED end date
+      name: "Final Examinations",
+      // Updated to match the official final exam routine for Section 5
+      startDate: "2025-12-04",   // First final exam: 04/12/2025
+      endDate: "2025-12-14",     // Last final exam: 14/12/2025
       type: 'final'
     }
   },
@@ -211,7 +212,7 @@ export const getSemesterTimeline = () => {
       },
       {
         name: "Finals",
-        date: "Dec 1-15", 
+        date: "Dec 4-14",
         status: progress.isFinalPeriod ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
         icon: "🎯"
       },

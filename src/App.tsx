@@ -485,22 +485,27 @@ Best of luck with your studies!
       if (!routineNotice) {
         routineNotice = {
           id: 'exam-routine-notice',
-          title: '📅 Midterm Exam Routine - Section 5',
-          content: `Midterm examination schedule for Section 5 (Computer Science & Engineering).
+          title: '📅 Final Exam Routine - Section 5',
+          content: `Final examination schedule for Section 5 (Computer Science & Engineering).
 
-📋 **Exam Information:**
-• Start Date: Sunday, September 14, 2025
-• All students must check the detailed routine below
+📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
+• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
+• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
+• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
+• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
+• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
+
 • Arrive 15 minutes early for each exam
-• Bring student ID and necessary materials
+• Carry your student ID and necessary materials
 
-⚠️ **Admin Notice:** Use the admin panel to upload the detailed exam routine image. This notice will be automatically updated when the routine is uploaded.
+⚠️ **Admin Notice:** Use the admin panel to upload the official routine image if available. This notice can be updated from Admin → Notices.
 
-For any queries, contact your course instructors or the department.`,
+For queries, contact course instructors or the department.
+`,
           type: 'warning',
           category: 'exam',
           priority: 'high',
-          exam_type: 'midterm',
+          exam_type: 'final',
           event_date: '',
           is_active: true,
           created_at: new Date().toISOString()
