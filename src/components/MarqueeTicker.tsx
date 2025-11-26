@@ -5,48 +5,41 @@ interface MarqueeTickerProps {
 
 export default function MarqueeTicker({ isDarkMode }: MarqueeTickerProps) {
     const features = [
-        "📚 Course Materials",
-        "📝 Past Questions",
-        "🔔 Smart Notices",
-        "📁 Google Drive",
-        "⏰ Class Schedule",
-        "📊 Semester Tracker"
+        { icon: '📚', label: 'Course Materials' },
+        { icon: '📝', label: 'Past Questions' },
+        { icon: '🔔', label: 'Smart Notices' },
+        { icon: '📁', label: 'Google Drive' },
+        { icon: '⏰', label: 'Class Schedule' },
+        { icon: '📊', label: 'Semester Tracker' }
     ];
 
     return (
-        <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 mb-6">
-            <div className={`relative overflow-hidden rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/90 border-gray-200'
-                }`}>
-                <div className="flex items-center py-3">
-                    {/* Label */}
-                    <div className="flex-shrink-0 px-4 border-r border-gray-200 dark:border-gray-700 z-10 bg-inherit">
-                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                            Updates
-                        </span>
-                    </div>
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mb-6">
+            <div className={`relative overflow-hidden rounded-2xl border shadow-md ${isDarkMode ? 'bg-gradient-to-r from-gray-900/70 via-indigo-900/50 to-gray-800/60 border-gray-700/50' : 'bg-white/95 border-gray-200'} `}>
+                <div className="flex items-center py-3 px-3 sm:px-4">
+                    {/* Label removed - header already displays the title above */}
 
                     {/* Scrolling Marquee */}
-                    <div className="marquee-container flex-1 overflow-hidden whitespace-nowrap relative">
-                        <div className="animate-marquee inline-block">
+                    <div className="marquee-container flex-1 overflow-hidden whitespace-nowrap relative" aria-hidden="false" role="region" aria-label="Available features ticker">
+                        <div className="animate-marquee inline-block" style={{ willChange: 'transform' }}>
                             {/* First set of features */}
                             {features.map((feature, index) => (
-                                <span key={`first-${index}`}>
-                                    <span className={`mx-4 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                                        }`}>{feature}</span>
+                                <span key={`first-${index}`} className="inline-flex items-center mr-6">
+                                    <span className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{feature.icon}&nbsp;</span>
+                                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{feature.label}</span>
                                     {index < features.length - 1 && (
-                                        <span className="mx-2 text-gray-400">•</span>
+                                        <span className="mx-3 text-gray-400">•</span>
                                     )}
                                 </span>
                             ))}
-                            <span className="mx-2 text-gray-400">•</span>
 
                             {/* Duplicate set for seamless loop */}
                             {features.map((feature, index) => (
-                                <span key={`second-${index}`}>
-                                    <span className={`mx-4 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                                        }`}>{feature}</span>
+                                <span key={`second-${index}`} className="inline-flex items-center mr-6">
+                                    <span className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{feature.icon}&nbsp;</span>
+                                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{feature.label}</span>
                                     {index < features.length - 1 && (
-                                        <span className="mx-2 text-gray-400">•</span>
+                                        <span className="mx-3 text-gray-400">•</span>
                                     )}
                                 </span>
                             ))}

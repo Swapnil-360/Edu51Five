@@ -728,7 +728,14 @@
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 30s linear infinite;
+  /* Slightly faster, smooth linear loop */
+  animation: marquee 28s linear infinite;
+}
+
+/* Pause animation when user hovers for accessibility */
+.marquee-container:hover .animate-marquee,
+.marquee-container:focus-within .animate-marquee {
+  animation-play-state: paused;
 }
 
 .marquee-container {
