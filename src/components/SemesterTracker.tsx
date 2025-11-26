@@ -170,7 +170,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 <span className={`transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-slate-600'
                 }`}>Overall Progress</span>
-                <span className="text-slate-800 font-bold">{semesterStatus.progressPercentage}%</span>
+                <span className={`${isDarkMode ? 'text-gray-100' : 'text-slate-800'} font-bold`}>{semesterStatus.progressPercentage}%</span>
               </div>
               <div className="w-full bg-blue-100 rounded-full h-4 overflow-hidden progress-glow">
                 <div 
@@ -230,7 +230,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               ? 'bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-purple-800/40 border border-indigo-700/50'
               : 'bg-gradient-to-br from-indigo-100 via-purple-50 to-purple-100 border border-indigo-300'
           }`}>
-            <div className="flex items-center space-x-3 mb-6">
+              <div className="flex items-center space-x-3 mb-6">
               <Calendar className="h-6 w-6 text-indigo-600" />
               <h2 className={`text-xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-100' : 'text-slate-800'
@@ -278,10 +278,14 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 }`}></div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors duration-300 ${
+                isDarkMode
+                  ? 'bg-purple-900/30 border-purple-700/50'
+                  : 'bg-purple-50 border-purple-200'
+              }`}>
                 <div>
-                  <div className="font-semibold text-purple-700">Final Exams</div>
-                  <div className="text-sm text-purple-600">Dec 1-15, 2025</div>
+                  <div className={`font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Final Exams</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Dec 4-14, 2025</div>
                 </div>
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               </div>
