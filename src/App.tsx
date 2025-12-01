@@ -5,6 +5,15 @@ import { Notice } from './types';
 import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFiles } from './config/googleDrive';
 import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
+import { 
+  registerServiceWorker, 
+  requestNotificationPermission, 
+  subscribeToPushNotifications,
+  savePushSubscription,
+  isPushNotificationSupported,
+  getNotificationPermission,
+  isPushSubscribed
+} from './lib/pushNotifications';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
 import MarqueeTicker from './components/MarqueeTicker';
 import PDFViewer from './components/PDFViewer';
@@ -160,6 +169,11 @@ function App() {
   const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
   const sessionIdRef = useRef<string>('');
   
+  // Push notification states
+  const [isPushEnabled, setIsPushEnabled] = useState<boolean>(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
+  const hasInitializedPush = useRef(false);
+  
   // Exam period selection state
   const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>('midterm');
   
@@ -249,6 +263,96 @@ function App() {
       }
     } catch (err) {
       // Silently fail if function doesn't exist
+    }
+  };
+
+  // Initialize push notifications
+  const initializePushNotifications = async () => {
+    if (!isPushNotificationSupported() || hasInitializedPush.current) {
+      return;
+    }
+
+    hasInitializedPush.current = true;
+
+    try {
+      // Register service worker
+      await registerServiceWorker();
+
+      // Check current permission
+      const currentPermission = getNotificationPermission();
+      setPushPermission(currentPermission);
+
+      // Check if already subscribed
+      const isSubscribed = await isPushSubscribed();
+      setIsPushEnabled(isSubscribed);
+
+      console.log('Push notifications initialized:', { permission: currentPermission, subscribed: isSubscribed });
+    } catch (error) {
+      console.error('Failed to initialize push notifications:', error);
+    }
+  };
+
+  // Enable push notifications
+  const enablePushNotifications = async () => {
+    try {
+      // Request permission
+      const permission = await requestNotificationPermission();
+      setPushPermission(permission);
+
+      if (permission !== 'granted') {
+        alert('Notification permission denied. Please enable notifications in your browser settings.');
+        return false;
+      }
+
+      // Subscribe to push notifications
+      const subscription = await subscribeToPushNotifications();
+      
+      if (!subscription) {
+        alert('Failed to subscribe to push notifications');
+        return false;
+      }
+
+      // Save subscription to database
+      const sessionId = getSessionId();
+      const saved = await savePushSubscription(subscription, sessionId);
+
+      if (saved) {
+        setIsPushEnabled(true);
+        console.log('Push notifications enabled successfully');
+        return true;
+      } else {
+        alert('Failed to save notification subscription');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      alert('Failed to enable push notifications: ' + String(error));
+      return false;
+    }
+  };
+
+  // Send push notification when notice is created (admin only)
+  const sendNoticeNotification = async (notice: Notice) => {
+    try {
+      // Call Supabase Edge Function to send push notifications
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          noticeId: notice.id,
+          noticeType: notice.id, // 'welcome-notice' or 'exam-routine-notice'
+          title: notice.title,
+          body: notice.content.substring(0, 100), // Truncate to 100 chars
+          url: '/'
+        }
+      });
+
+      if (error) {
+        console.error('Failed to send push notification:', error);
+        return;
+      }
+
+      console.log('Push notification sent:', data);
+    } catch (error) {
+      console.error('Error sending push notification:', error);
     }
   };
 
@@ -423,6 +527,13 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Initialize push notifications on mount (student pages only)
+  useEffect(() => {
+    if (currentView !== 'admin' && !isAdmin) {
+      initializePushNotifications();
+    }
+  }, [currentView, isAdmin]);
 
   // Handle click outside to close mobile menu and notification panel
   useEffect(() => {
@@ -1278,6 +1389,9 @@ Best of luck with your studies!
       // Dispatch event for instant UI update
       window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
       
+      // Send push notification to all subscribers
+      await sendNoticeNotification(notice);
+      
       // Reset form
       setNewNotice({ 
         title: '', 
@@ -1291,7 +1405,7 @@ Best of luck with your studies!
       });
       setShowCreateNotice(false);
       
-      alert(`Global ${noticeId === 'welcome-notice' ? 'Welcome' : 'Exam Routine'} notice updated successfully!`);
+      alert(`Global ${noticeId === 'welcome-notice' ? 'Welcome' : 'Exam Routine'} notice updated successfully! Push notifications sent.`);
       
     } catch (error) {
       console.error('Error creating notice:', error);
@@ -1739,6 +1853,62 @@ For any queries, contact your course instructors or the department.`,
                       : 'bg-white/95 border-gray-200/50'
                   }`}>
                     <div className="p-4 sm:p-5 space-y-3">
+                      {/* Push Notifications Toggle for Mobile */}
+                      {isPushNotificationSupported() && (
+                        <button
+                          onClick={async () => {
+                            if (isPushEnabled) {
+                              if (confirm('Disable push notifications?')) {
+                                // Note: Full unsubscribe implementation would be needed here
+                                setIsPushEnabled(false);
+                                alert('Push notifications disabled. You can re-enable them anytime.');
+                              }
+                            } else {
+                              const enabled = await enablePushNotifications();
+                              if (enabled) {
+                                alert('Push notifications enabled! You will now receive updates when new notices are posted.');
+                              }
+                            }
+                          }}
+                          className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
+                            isPushEnabled
+                              ? isDarkMode
+                                ? 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 hover:from-green-900/50 hover:to-emerald-900/50 border-green-500/30 hover:border-green-400/50'
+                                : 'bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-300/40 hover:border-green-400/60'
+                              : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-700/40 to-gray-800/40 hover:from-gray-700/50 hover:to-gray-800/50 border-gray-600/30 hover:border-gray-500/50'
+                              : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center shadow-md ${
+                            isPushEnabled
+                              ? 'bg-gradient-to-r from-green-600 to-emerald-600'
+                              : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-600 to-gray-700'
+                              : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                          }`}>
+                            <Bell className={`h-5 w-5 drop-shadow-lg ${
+                              isPushEnabled ? 'text-white' : isDarkMode ? 'text-gray-300' : 'text-white'
+                            }`} />
+                            {isPushEnabled && (
+                              <div className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <span className={`font-bold text-base block ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              {isPushEnabled ? 'Notifications On' : 'Enable Notifications'}
+                            </span>
+                            <span className={`text-sm mt-0.5 block ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`}>
+                              {isPushEnabled ? 'Get alerts on new updates' : 'Stay updated with notices'}
+                            </span>
+                          </div>
+                        </button>
+                      )}
+
                       {/* Dark Mode Toggle for Mobile */}
                       <button
                         onClick={() => {
