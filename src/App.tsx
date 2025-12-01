@@ -4106,7 +4106,7 @@ For any queries, contact your course instructors or the department.`,
                           <div className={`rounded-xl p-4 text-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                             <h4 className={`font-semibold mb-3 transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}><span className="no-select">📄</span> Final Exam Routine (PDF)</h4>
                             <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>A PDF version of the routine is available. Download it below.</p>
-                            <div className="flex items-center justify-center gap-3">
+                            <div className="flex items-center justify-center">
                               <button
                                 onClick={() => downloadFile(pdfUrl, filename)}
                                 disabled={loading}
@@ -4114,13 +4114,8 @@ For any queries, contact your course instructors or the department.`,
                                   loading ? 'opacity-60 cursor-wait' : 'hover:bg-blue-700'
                                 }`}
                               >
-                                {loading ? '⏳ Downloading...' : '⬇️ Download Routine (PDF)'}
+                                {loading ? '⏳ Downloading...' : '⬇️ Download (PDF)'}
                               </button>
-                              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={`px-3 py-2 border rounded-lg text-sm transition-all ${
-                                isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                              }`}>
-                                👁️ Open
-                              </a>
                             </div>
                           </div>
                           <div className={`mt-4 rounded-lg p-4 ${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white border border-gray-100'} text-sm`}>
