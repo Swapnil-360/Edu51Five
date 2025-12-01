@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Notice } from './types';
@@ -3488,7 +3488,7 @@ For any queries, contact your course instructors or the department.`,
                     const generatePrintableHTML = (title: string, entries: any[]) => {
                       const styles = `body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#0f172a}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}th{background:#f3f4f6}`;
                       const rows = entries.map(e => `<tr><td>${e.dateTime}</td><td>${e.course}</td><td>${e.hall}</td><td>Building ${e.building || '-'} / Room ${e.roomNo || e.roomFull || '-'}</td></tr>`).join('');
-                      return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body><h1>${title}</h1><table><thead><tr><th>Date & Time</th><th>Course</th><th>Hall</th><th>Building / Room</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+                      return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body><h1>${title}</h1><table><thead><tr><th>Date & Time</th><th>Course</th><th>Course Teacher</th><th>Building / Room</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
                     };
 
                     const openPrintableWindow = (html: string) => {
@@ -3630,25 +3630,25 @@ For any queries, contact your course instructors or the department.`,
                     if (routineEntries && routineEntries.length > 0) {
                       return (
                         <div>
-                          <div className={`bg-white rounded-lg p-4 shadow-sm border ${isDarkMode ? 'bg-gray-800/60' : 'bg-white'}`}>
+                          <div className={`rounded-lg p-4 shadow-sm border ${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white border-gray-100'}`}>
                             <h3 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Digital Final Exam Routine</h3>
                             <div className="overflow-x-auto">
-                              <table className={`w-full text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                              <table className={`w-full text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
                                 <thead>
-                                  <tr className="text-left text-xs text-gray-500">
+                                  <tr className={`text-left text-xs ${isDarkMode ? 'text-gray-100' : 'text-gray-500'}`}>
                                     <th className="pb-2">Date & Time</th>
                                     <th className="pb-2">Course</th>
-                                    <th className="pb-2">Hall</th>
+                                    <th className="pb-2">Course Teacher</th>
                                     <th className="pb-2">Building / Room</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {routineEntries.map((e, idx) => (
-                                    <tr key={idx} className="border-t">
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.dateTime}</td>
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.course}</td>
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{e.hall}</td>
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Building {e.building || '-'} / Room {e.roomNo || e.roomFull || '-'}</td>
+                                    <tr key={idx} className={`${isDarkMode ? 'border-t border-gray-700' : 'border-t'}`}>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.dateTime}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.course}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.hall}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Building {e.building || '-'} / Room {e.roomNo || e.roomFull || '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
