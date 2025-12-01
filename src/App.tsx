@@ -3383,11 +3383,11 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className={`rounded-2xl shadow-2xl w-[min(92vw,720px)] sm:w-full sm:max-w-2xl max-w-[980px] mx-2 max-h-[90vh] overflow-hidden transition-colors duration-300 ${
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 p-4">
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl w-[min(92vw,720px)] sm:w-full sm:max-w-2xl max-w-[980px] max-h-[90vh] overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800' : 'bg-white'
               }`}>
-              <div className={`p-4 sm:p-6 border-l-4 transition-colors duration-300 ${
+              <div className={`p-3 sm:p-5 border-l-4 transition-colors duration-300 ${
                 selectedNotice.type === 'info' 
                   ? isDarkMode ? 'border-blue-400 bg-blue-900/30' : 'border-blue-400 bg-blue-50'
                   : selectedNotice.type === 'warning' 
@@ -3396,7 +3396,7 @@ For any queries, contact your course instructors or the department.`,
                   ? isDarkMode ? 'border-green-400 bg-green-900/30' : 'border-green-400 bg-green-50'
                   : isDarkMode ? 'border-red-400 bg-red-900/30' : 'border-red-400 bg-red-50'
               }`}>
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-lg transition-colors duration-300 ${
                       selectedNotice.type === 'info' 
@@ -3415,10 +3415,10 @@ For any queries, contact your course instructors or the department.`,
                       }`} />
                     </div>
                     <div>
-                      <h2 className={`text-2xl font-bold transition-colors duration-300 ${
+                      <h2 className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
                         isDarkMode ? 'text-gray-100' : 'text-gray-900'
                       }`}>{selectedNotice.title}</h2>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-2 mt-1 text-xs sm:text-sm">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
                           selectedNotice.type === 'info' 
                             ? isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
@@ -3449,7 +3449,7 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
               
-              <div className="p-3 sm:p-4 overflow-y-auto max-h-[72vh] sm:max-h-[80vh]">
+              <div className="p-2 sm:p-4 overflow-y-auto max-h-[78vh] sm:max-h-[80vh]">
                 <div className="prose prose-gray max-w-none">
                   {(() => {
                     const content = selectedNotice.content || '';
@@ -3457,6 +3457,7 @@ For any queries, contact your course instructors or the department.`,
                     // detect embedded image or URL markers
                     const urlMatch = content.match(/\[EXAM_ROUTINE_URL\](.*?)\[\/EXAM_ROUTINE_URL\]/);
                     const imageMatch = content.match(/\[EXAM_ROUTINE_IMAGE\](.*?)\[\/EXAM_ROUTINE_IMAGE\]/);
+                    const pdfMatch = content.match(/\[EXAM_ROUTINE_PDF\](.*?)\[\/EXAM_ROUTINE_PDF\]/);
 
                     // parse simple structured routine lines into entries
                     const parseRoutineEntries = (text) => {
@@ -3485,10 +3486,30 @@ For any queries, contact your course instructors or the department.`,
 
                     const routineEntries = parseRoutineEntries(content);
 
+                    // Build date/time parts for each entry and detect a common exam time
+                    const timeRegex = /(\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:to|–|-|—)\s*\d{1,2}:\d{2}\s*(?:AM|PM))/i;
+                    const entriesWithParts = routineEntries.map((e) => {
+                      const m = e.dateTime.match(timeRegex);
+                      const timeOnly = m ? m[0].replace(/–/g, 'to').replace(/—/g, 'to') : '';
+                      const dateOnly = m ? e.dateTime.replace(m[0], '').trim() : e.dateTime;
+                      return { ...e, dateOnly, timeOnly };
+                    });
+
+                    const commonTime = entriesWithParts.length > 0 && entriesWithParts.every(en => en.timeOnly && en.timeOnly === entriesWithParts[0].timeOnly)
+                      ? entriesWithParts[0].timeOnly
+                      : '';
+
                     const generatePrintableHTML = (title: string, entries: any[]) => {
                       const styles = `body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#0f172a}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}th{background:#f3f4f6}`;
-                      const rows = entries.map(e => `<tr><td>${e.dateTime}</td><td>${e.course}</td><td>${e.hall}</td><td>Building ${e.building || '-'} / Room ${e.roomNo || e.roomFull || '-'}</td></tr>`).join('');
-                      return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body><h1>${title}</h1><table><thead><tr><th>Date & Time</th><th>Course</th><th>Course Teacher</th><th>Building / Room</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+                      const rows = entries.map(e => {
+                        const dateCell = e.dateOnly || e.dateTime || '';
+                        const buildingRoom = `B${e.building || '-'}\/${e.roomNo || e.roomFull || '-'}`;
+                        return `<tr><td>${dateCell}</td><td>${e.course}</td><td>${e.hall}</td><td>${buildingRoom}</td></tr>`;
+                      }).join('');
+
+                      const timeBlock = commonTime ? `<p style="text-align:center;margin:8px 0;font-weight:600;">Exam Time: ${commonTime}</p>` : '';
+
+                      return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body><h1>${title}</h1>${timeBlock}<table><thead><tr><th>Date</th><th>Course</th><th>Course Teacher</th><th>Bld/Room</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
                     };
 
                     const openPrintableWindow = (html: string) => {
@@ -3500,7 +3521,38 @@ For any queries, contact your course instructors or the department.`,
                       setTimeout(() => { w.focus(); w.print(); }, 300);
                     };
 
+                    // Robust downloader for remote PDF files (handles CORS/blobs)
+                    const downloadFile = async (url: string, filename?: string) => {
+                      try {
+                        setLoading(true);
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error('Network response was not ok');
+                        const blob = await res.blob();
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = filename || url.split('/').pop() || 'routine.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                      } catch (err) {
+                        console.warn('Direct download failed, opening in new tab', err);
+                        window.open(url, '_blank');
+                      } finally {
+                        setLoading(false);
+                      }
+                    };
+
                     const generateAndDownloadPDF = async (title: string, entries: any[]) => {
+                      // If notice embeds a ready-made PDF, download it directly
+                      if (pdfMatch && pdfMatch[1]) {
+                        const pdfUrl = pdfMatch[1];
+                        const filename = `${(title || 'exam_routine').replace(/[^a-z0-9\-_\.]/gi, '_')}.pdf`;
+                        await downloadFile(pdfUrl, filename);
+                        return;
+                      }
+
                       setLoading(true);
                       const html = generatePrintableHTML(title, entries);
 
@@ -3600,6 +3652,46 @@ For any queries, contact your course instructors or the department.`,
                       }
                     };
 
+                    if (pdfMatch && pdfMatch[1]) {
+                      const pdfUrl = pdfMatch[1];
+                      const textContent = content.replace(/\[EXAM_ROUTINE_PDF\].*?\[\/EXAM_ROUTINE_PDF\]/g, '').trim();
+                      const filename = `${(selectedNotice.title || 'exam_routine').replace(/[^a-z0-9\-_\.]/gi, '_')}.pdf`;
+                      return (
+                        <div>
+                          {textContent ? (
+                            <p className={`leading-relaxed whitespace-pre-wrap mb-4 select-text transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {textContent}
+                            </p>
+                          ) : null}
+                          <div className={`rounded-xl p-4 text-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                            <h4 className={`font-semibold mb-3 transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}><span className="no-select">📄</span> Final Exam Routine (PDF)</h4>
+                            <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>A PDF version of the routine is available. Download it below.</p>
+                            <div className="flex items-center justify-center gap-3">
+                              <button
+                                onClick={() => downloadFile(pdfUrl, filename)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:brightness-95 transition"
+                              >
+                                ⬇️ Download Routine (PDF)
+                              </button>
+                              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-white border rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                                👁️ Open
+                              </a>
+                            </div>
+                          </div>
+                          <div className={`mt-4 rounded-lg p-4 ${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white border border-gray-100'} text-sm`}>
+                            <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Exam Guidelines</h4>
+                            <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                              <li>Arrive at least 15 minutes before the exam start time.</li>
+                              <li>Bring your student ID and necessary stationery.</li>
+                              <li>Mobile phones must be switched off and kept away during exams.</li>
+                              <li>Read instructions carefully before starting the paper.</li>
+                            </ul>
+                            <p className={`mt-3 font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Best of luck to all students — Edu51Five Team 🎓</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     if (urlMatch || imageMatch) {
                       const imageData = urlMatch ? urlMatch[1] : (imageMatch ? imageMatch[1] : '');
                       const textContent = content.replace(/\[EXAM_ROUTINE_URL\].*?\[\/EXAM_ROUTINE_URL\]/g, '').replace(/\[EXAM_ROUTINE_IMAGE\].*?\[\/EXAM_ROUTINE_IMAGE\]/g, '');
@@ -3633,41 +3725,44 @@ For any queries, contact your course instructors or the department.`,
                           <div className={`rounded-lg p-4 shadow-sm border ${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white border-gray-100'}`}>
                             <h3 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Digital Final Exam Routine</h3>
                             <div className="overflow-x-auto">
+                              {commonTime ? (
+                                <p className={`text-sm mb-2 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Exam Time: {commonTime}</p>
+                              ) : null}
                               <table className={`w-full text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
                                 <thead>
                                   <tr className={`text-left text-xs ${isDarkMode ? 'text-gray-100' : 'text-gray-500'}`}>
-                                    <th className="pb-2">Date & Time</th>
+                                    <th className="pb-2">Date</th>
                                     <th className="pb-2">Course</th>
                                     <th className="pb-2">Course Teacher</th>
-                                    <th className="pb-2">Building / Room</th>
+                                    <th className="pb-2">Bld/Room</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {routineEntries.map((e, idx) => (
+                                  {entriesWithParts.map((e, idx) => (
                                     <tr key={idx} className={`${isDarkMode ? 'border-t border-gray-700' : 'border-t'}`}>
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.dateTime}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{commonTime ? e.dateOnly : e.dateTime}</td>
                                       <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.course}</td>
                                       <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{e.hall}</td>
-                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Building {e.building || '-'} / Room {e.roomNo || e.roomFull || '-'}</td>
+                                      <td className={`py-2 align-top ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>{`B${e.building || '-'}\/${e.roomNo || e.roomFull || '-'}`}</td>
                                     </tr>
                                   ))}
                                 </tbody>
                               </table>
                             </div>
-                            <div className="mt-4 flex space-x-2">
+                            <div className="mt-3 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                               <button
                                 onClick={() => generateAndDownloadPDF(selectedNotice.title || 'Exam Routine', routineEntries)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:brightness-95 transition"
+                                className="w-full sm:w-auto px-3 py-2 sm:px-4 bg-blue-600 text-white rounded-lg hover:brightness-95 transition text-sm"
                               >
-                                📄 Download / Print Routine
+                                📄 Download / Print
                               </button>
                               <button
                                 onClick={() => {
                                   alert('Routine copied to clipboard. You can paste it into a document to save as PDF.');
                                   navigator.clipboard && navigator.clipboard.writeText(content);
                                 }}
-                                className={`px-4 py-2 border rounded-lg transition ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
-                                📋 Copy Raw Text
+                                className={`w-full sm:w-auto px-3 py-2 sm:px-4 border rounded-lg transition text-sm ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                                📋 Copy
                               </button>
                             </div>
                             <div className={`mt-4 rounded-lg p-4 ${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white border border-gray-100'} text-sm`}>
