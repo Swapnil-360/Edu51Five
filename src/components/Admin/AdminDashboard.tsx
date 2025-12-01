@@ -213,13 +213,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
-            {/* Online Users Card */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
-                <p className="text-2xl sm:text-3xl font-bold">{onlineUsers}</p>
-                <div className="text-xl sm:text-2xl opacity-50">👥</div>
+            {/* Online Users Card - Real-time */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden">
+              {/* Live indicator animation */}
+              <div className="absolute top-3 right-3">
+                <div className="relative">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <div className="absolute inset-0 w-2 h-2 bg-green-400 rounded-full animate-ping opacity-75"></div>
+                </div>
               </div>
+              
+              <div className="flex flex-col space-y-1.5 sm:space-y-2">
+                <div className="flex items-center space-x-2">
+                  <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
+                  <span className="text-[10px] bg-green-400 text-green-900 px-1.5 py-0.5 rounded-full font-semibold">LIVE</span>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold">{onlineUsers}</p>
+                <div className="flex items-center space-x-1.5 text-purple-100 text-xs">
+                  <span className="opacity-75">Active now</span>
+                  <span className="opacity-50">•</span>
+                  <span className="opacity-75">Updates every 10s</span>
+                </div>
+              </div>
+              
+              {/* Decorative pulse effect */}
+              <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
 
             {/* Semester Progress Card */}

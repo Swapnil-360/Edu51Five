@@ -156,6 +156,10 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   
+  // Real-time active users tracking
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
+  const sessionIdRef = useRef<string>('');
+  
   // Exam period selection state
   const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>('midterm');
   
@@ -191,6 +195,62 @@ function App() {
   });
 
   const ADMIN_PASSWORD = 'edu51five2025';
+
+  // Generate or get session ID
+  const getSessionId = () => {
+    if (!sessionIdRef.current) {
+      sessionIdRef.current = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    }
+    return sessionIdRef.current;
+  };
+
+  // Track user presence on student page
+  const trackUserPresence = async (page: string) => {
+    try {
+      const sessionId = getSessionId();
+      const { error } = await supabase
+        .from('active_users')
+        .upsert({
+          session_id: sessionId,
+          page: page,
+          last_active: new Date().toISOString(),
+          user_agent: navigator.userAgent
+        }, { onConflict: 'session_id' });
+      
+      if (error && error.code !== 'PGRST116') { // Ignore table not exists error
+        console.warn('User tracking error:', error.message);
+      }
+    } catch (err) {
+      // Silently fail if table doesn't exist yet
+    }
+  };
+
+  // Remove user session on unmount
+  const removeUserSession = async () => {
+    try {
+      const sessionId = getSessionId();
+      await supabase
+        .from('active_users')
+        .delete()
+        .eq('session_id', sessionId);
+    } catch (err) {
+      // Silently fail
+    }
+  };
+
+  // Get active users count
+  const fetchActiveUsersCount = async () => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_active_user_count', { page_name: 'student' });
+      
+      if (!error && typeof data === 'number') {
+        setActiveUsersCount(data);
+      }
+    } catch (err) {
+      // Silently fail if function doesn't exist
+    }
+  };
 
   // Suppress Google API console errors (they're logged but won't clutter console)
   useEffect(() => {
@@ -264,6 +324,59 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Track user presence and setup realtime subscription for active users
+  useEffect(() => {
+    // Track presence on student page
+    if (currentView === 'section5' || currentView === 'course' || currentView === 'home') {
+      trackUserPresence('student');
+      
+      // Update presence every 30 seconds
+      const presenceInterval = setInterval(() => {
+        trackUserPresence('student');
+      }, 30000);
+
+      // Cleanup on unmount or view change
+      return () => {
+        clearInterval(presenceInterval);
+        removeUserSession();
+      };
+    }
+  }, [currentView]);
+
+  // Subscribe to active users changes (for admin panel)
+  useEffect(() => {
+    if (isAdmin && currentView === 'admin') {
+      // Initial fetch
+      fetchActiveUsersCount();
+
+      // Setup realtime subscription
+      const channel = supabase
+        .channel('active_users_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'active_users'
+          },
+          () => {
+            fetchActiveUsersCount();
+          }
+        )
+        .subscribe();
+
+      // Refresh count every 10 seconds
+      const countInterval = setInterval(() => {
+        fetchActiveUsersCount();
+      }, 10000);
+
+      return () => {
+        clearInterval(countInterval);
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isAdmin, currentView]);
 
   // Listen for storage changes to instantly update notices when admin adds/edits them
   useEffect(() => {
@@ -2689,7 +2802,7 @@ For any queries, contact your course instructors or the department.`,
             isDarkMode={isDarkMode}
             coursesCount={courses.length}
             materialsCount={totalMaterialsCount}
-            onlineUsers={0}
+            onlineUsers={activeUsersCount}
             currentWeek={semesterStatus.semesterWeek}
             totalWeeks={20}
             notices={notices}
