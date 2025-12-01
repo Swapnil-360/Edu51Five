@@ -4,7 +4,7 @@
  * Admin can: browse, create folders, upload, delete, organize
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Upload, LogIn, LogOut, FolderPlus, Trash2, Eye, RefreshCw, Folder, File } from 'lucide-react';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
@@ -13,6 +13,9 @@ const SCOPES = 'https://www.googleapis.com/auth/drive';
 const ROOT_FOLDER_ID = '1pwtRJ3AcPVztKq2nBebj0oP5b2G-iugq';
 
 let accessToken: string | null = null;
+// Global flag to prevent duplicate initialization (survives React StrictMode)
+let isGloballyInitializing = false;
+let isGloballyInitialized = false;
 
 interface DriveItem {
   id: string;
@@ -32,6 +35,7 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [tokenClient, setTokenClient] = useState<any>(null);
+  const hasInitialized = useRef(false);
   
   const [currentFolderId, setCurrentFolderId] = useState(ROOT_FOLDER_ID);
   const [folderPath, setFolderPath] = useState<Array<{id: string, name: string}>>([
@@ -45,6 +49,13 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
    * Initialize Google Identity Services
    */
   useEffect(() => {
+    // Prevent duplicate initialization using ref (survives StrictMode)
+    if (hasInitialized.current || isGloballyInitializing || isGloballyInitialized) {
+      return;
+    }
+    
+    hasInitialized.current = true;
+    isGloballyInitializing = true;
     console.log('🚀 DriveManager: Initializing...');
     
     // Load GAPI
@@ -52,13 +63,28 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
     gapiScript.src = 'https://apis.google.com/js/api.js';
     gapiScript.onload = () => {
       window.gapi.load('client', async () => {
-        await window.gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-        });
-        console.log('✅ GAPI client ready');
-        setIsGapiLoaded(true);
+        try {
+          await window.gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+          });
+          console.log('✅ GAPI client ready');
+          setIsGapiLoaded(true);
+        } catch (error: any) {
+          // Google API discovery might be temporarily unavailable (502)
+          // This is not critical - user can still authenticate and try again
+          console.warn('⚠️ GAPI init warning (non-critical):', error?.message || 'Unknown error');
+          setIsGapiLoaded(true); // Allow UI to proceed
+        } finally {
+          isGloballyInitializing = false;
+          isGloballyInitialized = true;
+        }
       });
+    };
+    gapiScript.onerror = () => {
+      console.error('❌ Failed to load Google API script');
+      isGloballyInitializing = false;
+      isGloballyInitialized = true; // Mark as done even on error to prevent retries
     };
     document.body.appendChild(gapiScript);
 

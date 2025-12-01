@@ -178,72 +178,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
       {/* Header Section */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 md:py-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 text-xs sm:text-sm md:text-base`}>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1.5 sm:mt-2 text-sm sm:text-base`}>
             Manage notices, emergencies, and view platform statistics
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
         {/* SECTION 1: Quick Stats Dashboard */}
         <div>
           <h2 className={`text-base sm:text-lg font-semibold mb-3 sm:mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             📊 Platform Statistics
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {/* Courses Card */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-2">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-1.5 sm:space-y-2">
                 <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{coursesCount}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{coursesCount}</p>
                 <div className="text-xl sm:text-2xl opacity-50">📚</div>
               </div>
             </div>
 
             {/* Files Card */}
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-2">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-1.5 sm:space-y-2">
                 <p className="text-emerald-100 text-xs sm:text-sm font-medium">Total Files</p>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{materialsCount}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{materialsCount}</p>
                 <div className="text-xl sm:text-2xl opacity-50">📁</div>
               </div>
             </div>
 
             {/* Online Users Card */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-2">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-1.5 sm:space-y-2">
                 <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold">{onlineUsers}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{onlineUsers}</p>
                 <div className="text-xl sm:text-2xl opacity-50">👥</div>
               </div>
             </div>
 
             {/* Semester Progress Card */}
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-2">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex flex-col space-y-1.5 sm:space-y-2">
                 <p className="text-orange-100 text-xs sm:text-sm font-medium">Semester Progress</p>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold">Week {currentWeek}</p>
-                <p className="text-orange-100 text-xs">{semesterProgress}%</p>
+                <p className="text-2xl sm:text-3xl font-bold">Week {currentWeek}</p>
+                <p className="text-orange-100 text-xs sm:text-sm">{semesterProgress}%</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* SECTION 2: Notice Management (PRIMARY) */}
-        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <Bell className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-500" />
-              <span className="hidden xs:inline">📌 Notice Management</span>
-              <span className="xs:hidden">Notices</span>
+              <Bell className="w-5 h-5 mr-2 text-blue-500" />
+              <span>Notices</span>
             </h2>
             <button
               onClick={onCreateNotice}
-              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Notice</span>
@@ -256,16 +255,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {notices.map((notice) => (
                 <div
                   key={notice.id}
-                  className={`p-3 sm:p-4 rounded-lg border transition-all ${
+                  className={`p-4 rounded-lg border transition-all ${
                     isDarkMode
                       ? `border-gray-600 ${notice.is_active ? 'bg-gray-700/50' : 'bg-gray-800/30'}`
                       : `border-gray-200 ${notice.is_active ? 'bg-blue-50' : 'bg-gray-50'}`
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center flex-wrap gap-2 mb-1">
-                        <p className={`font-semibold text-xs sm:text-sm break-words ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      <div className="flex items-center flex-wrap gap-2 mb-2">
+                        <p className={`font-semibold text-sm break-words ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                           {notice.title || notice.id}
                         </p>
                         <span
@@ -282,28 +281,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {notice.is_active ? '🟢 Active' : '⚫ Inactive'}
                         </span>
                       </div>
-                      <p className={`text-xs sm:text-sm mt-1 sm:mt-2 line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-sm mt-1 line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {notice.content}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={onEditNotice}
-                        className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                        className={`p-2 rounded-lg transition-colors ${
                           isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
                         }`}
                         title="Edit this notice"
                       >
-                        <Edit2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-blue-500 flex-shrink-0" />
+                        <Edit2 className="w-4 h-4 text-blue-500" />
                       </button>
                       <button
                         onClick={() => onDeleteNotice && onDeleteNotice(notice.id)}
-                        className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                        className={`p-2 rounded-lg transition-colors ${
                           isDarkMode ? 'hover:bg-red-900/50' : 'hover:bg-red-50'
                         }`}
                         title="Delete this notice"
                       >
-                        <Trash2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-red-500 flex-shrink-0" />
+                        <Trash2 className="w-4 h-4 text-red-500" />
                       </button>
                     </div>
                   </div>
@@ -320,16 +319,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 3: Emergency Alerts */}
-        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-red-500" />
-              <span className="hidden xs:inline">🚨 Emergency Alerts</span>
-              <span className="xs:hidden">Alerts</span>
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <span>Emergency Alerts</span>
             </h2>
             <button
               onClick={() => setShowAddAlert(!showAddAlert)}
-              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Alert</span>
@@ -342,14 +340,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 value={newAlertMessage}
                 onChange={(e) => setNewAlertMessage(e.target.value)}
                 placeholder="Emergency alert message..."
-                className={`w-full px-3 py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'}`}
-                rows={2}
+                className={`w-full px-3 py-2 rounded-lg text-sm ${isDarkMode ? 'bg-gray-600 text-white placeholder-gray-400' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-red-500`}
+                rows={3}
               />
-              <div className="flex space-x-2 mt-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-3">
                 <button
                   onClick={saveAlert}
                   disabled={!newAlertMessage.trim()}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Save Alert
                 </button>
@@ -358,7 +356,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setShowAddAlert(false);
                     setNewAlertMessage('');
                   }}
-                  className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'}`}
+                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}
                 >
                   Cancel
                 </button>
@@ -367,7 +365,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
 
           {emergencyAlerts.length === 0 ? (
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center py-4`}>
               No active emergency alerts
             </p>
           ) : (
@@ -375,7 +373,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {emergencyAlerts.map(alert => (
                 <div
                   key={alert.id}
-                  className={`p-4 rounded-lg flex justify-between items-center transition-all ${
+                  className={`p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-all ${
                     alert.status === 'ACTIVE'
                       ? isDarkMode
                         ? 'bg-red-900/30 border border-red-500/50'
@@ -385,13 +383,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       : 'bg-gray-100'
                   }`}
                 >
-                  <div className="flex-1">
-                    <p className={isDarkMode ? 'text-gray-200' : 'text-gray-800'}>{alert.message}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} break-words`}>{alert.message}</p>
                     <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Status: <span className={alert.status === 'ACTIVE' ? 'text-green-500' : 'text-gray-500'}>{alert.status}</span>
+                      Status: <span className={alert.status === 'ACTIVE' ? 'text-green-500 font-medium' : 'text-gray-500'}>{alert.status}</span>
                     </p>
                   </div>
-                  <div className="flex space-x-2 ml-4">
+                  <div className="flex space-x-2 flex-shrink-0">
                     <button
                       onClick={() => toggleAlertStatus(alert.id)}
                       className={`p-2 rounded-lg transition-colors ${
@@ -399,7 +397,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }`}
                       title={alert.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     >
-                      {alert.status === 'ACTIVE' ? '✓' : '○'}
+                      <span className="text-base">{alert.status === 'ACTIVE' ? '✓' : '○'}</span>
                     </button>
                     <button
                       onClick={() => deleteAlert(alert.id)}
@@ -416,16 +414,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 4: Emergency Links */}
-        <div className={`rounded-xl sm:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-3 sm:p-4 md:p-6`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <LinkIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-500" />
-              <span className="hidden xs:inline">🔗 Emergency Links</span>
-              <span className="xs:hidden">Links</span>
+              <LinkIcon className="w-5 h-5 mr-2 text-blue-500" />
+              <span>Emergency Links</span>
             </h2>
             <button
               onClick={() => setShowAddLink(!showAddLink)}
-              className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Link</span>
@@ -439,20 +436,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 value={newLinkTitle}
                 onChange={(e) => setNewLinkTitle(e.target.value)}
                 placeholder="Link title..."
-                className={`w-full px-3 py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'}`}
+                className={`w-full px-3 py-2 rounded-lg text-sm ${isDarkMode ? 'bg-gray-600 text-white placeholder-gray-400' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               <input
                 type="url"
                 value={newLinkUrl}
                 onChange={(e) => setNewLinkUrl(e.target.value)}
-                placeholder="URL..."
-                className={`w-full px-3 py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'}`}
+                placeholder="https://example.com"
+                className={`w-full px-3 py-2 rounded-lg text-sm ${isDarkMode ? 'bg-gray-600 text-white placeholder-gray-400' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={saveLink}
                   disabled={!newLinkTitle.trim() || !newLinkUrl.trim()}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Save Link
                 </button>
@@ -462,7 +459,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setNewLinkTitle('');
                     setNewLinkUrl('');
                   }}
-                  className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'}`}
+                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}
                 >
                   Cancel
                 </button>
@@ -471,7 +468,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
 
           {emergencyLinks.length === 0 ? (
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center py-4`}>
               No emergency links
             </p>
           ) : (
@@ -479,7 +476,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {emergencyLinks.map(link => (
                 <div
                   key={link.id}
-                  className={`p-4 rounded-lg flex justify-between items-start transition-all ${
+                  className={`p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-start gap-3 transition-all ${
                     isDarkMode
                       ? link.status === 'ACTIVE'
                         ? 'bg-gray-700 border border-blue-500/30'
@@ -489,21 +486,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       : 'bg-gray-100 opacity-60'
                   }`}
                 >
-                  <div className="flex-1">
-                    <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{link.title}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} break-words`}>{link.title}</p>
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 text-sm hover:underline break-all"
+                      className="text-blue-500 text-xs sm:text-sm hover:underline break-all block mt-1"
                     >
                       {link.url}
                     </a>
                     <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Status: <span className={link.status === 'ACTIVE' ? 'text-green-500' : 'text-gray-500'}>{link.status}</span>
+                      Status: <span className={link.status === 'ACTIVE' ? 'text-green-500 font-medium' : 'text-gray-500'}>{link.status}</span>
                     </p>
                   </div>
-                  <div className="flex space-x-2 ml-4 flex-shrink-0">
+                  <div className="flex space-x-2 flex-shrink-0">
                     <button
                       onClick={() => toggleLinkStatus(link.id)}
                       className={`p-2 rounded-lg transition-colors ${
@@ -511,7 +508,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }`}
                       title={link.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     >
-                      {link.status === 'ACTIVE' ? '✓' : '○'}
+                      <span className="text-base">{link.status === 'ACTIVE' ? '✓' : '○'}</span>
                     </button>
                     <button
                       onClick={() => deleteLink(link.id)}
@@ -528,7 +525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 5: Google Drive Manager */}
-        <div className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 transition-colors duration-300 ${
+        <div className={`rounded-xl lg:rounded-2xl shadow-xl border backdrop-blur-sm p-4 sm:p-5 lg:p-6 transition-colors duration-300 ${
           isDarkMode 
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
             : 'bg-gradient-to-br from-orange-50 via-white to-pink-50 border-orange-200'

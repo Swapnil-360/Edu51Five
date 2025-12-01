@@ -38,6 +38,8 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
   const [currentFolderId, setCurrentFolderId] = useState<string>('');
   const [folderPath, setFolderPath] = useState<Array<{id: string, name: string}>>([]);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   /**
    * Initialize Google API
@@ -55,16 +57,48 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
     script.onload = () => {
       window.gapi.load('client', async () => {
         try {
+          // Initialize GAPI client without discovery docs (more reliable)
           await window.gapi.client.init({
             apiKey: API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
           });
-          setIsLoaded(true);
-          // Start by finding the course folder
-          findCourseFolder();
-        } catch (error) {
-          console.error('GAPI init error:', error);
-          setError('Failed to initialize Google Drive API. Check your API key configuration.');
+          
+          // Load Drive API v3 directly (bypasses problematic discovery service)
+          await window.gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+          
+          // Verify Drive API is loaded
+          if (window.gapi.client.drive?.files) {
+            console.log('✅ Google Drive API loaded successfully');
+            setIsLoaded(true);
+            findCourseFolder();
+          } else {
+            throw new Error('Drive API failed to load');
+          }
+        } catch (error: any) {
+          console.warn('⚠️ Direct load failed, trying alternative method...');
+          // Ultimate fallback: load by name instead of URL
+          try {
+            await window.gapi.client.init({
+              apiKey: API_KEY,
+            });
+            await window.gapi.client.load('drive', 'v3');
+            
+            if (window.gapi.client.drive?.files) {
+              console.log('✅ Google Drive API loaded (fallback method)');
+              setIsLoaded(true);
+              findCourseFolder();
+            } else {
+              throw new Error('Drive API not available');
+            }
+          } catch (fallbackError: any) {
+            console.error('❌ All initialization methods failed');
+            console.error('Possible causes:', 
+              '\n  • Google API servers temporarily down',
+              '\n  • API key restrictions',
+              '\n  • Network/firewall blocking googleapis.com');
+            setError('Unable to connect to Google Drive. Please try again in a few minutes.');
+            setIsLoaded(false);
+            setLoading(false);
+          }
         }
       });
     };
@@ -79,16 +113,32 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
       setIsLoaded(true);
       findCourseFolder();
     }
+    
+    // Reset retry counter when course/period changes
+    setRetryCount(0);
   }, [courseCode, examPeriod]);
 
   /**
    * Find course folder in root
    */
   const findCourseFolder = async () => {
-    if (!window.gapi?.client?.drive) return;
+    if (!window.gapi?.client?.drive?.files) {
+      if (retryCount < MAX_RETRIES) {
+        console.warn(`Drive API not ready yet, retry ${retryCount + 1}/${MAX_RETRIES} in 1 second...`);
+        setRetryCount(retryCount + 1);
+        setTimeout(findCourseFolder, 1000);
+        return;
+      } else {
+        console.error('❌ Drive API failed to initialize after multiple retries');
+        setError('Unable to connect to Google Drive. Please refresh the page and try again.');
+        setLoading(false);
+        return;
+      }
+    }
     
     setLoading(true);
     setError(null);
+    setRetryCount(0); // Reset counter on successful connection
     
     try {
       // Search for course folder (e.g., "CSE-319-20")

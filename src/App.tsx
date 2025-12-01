@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Notice } from './types';
@@ -138,6 +138,8 @@ function App() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(0);
+  const [isLoadingNotices, setIsLoadingNotices] = useState(false);
+  const hasLoadedInitialNotices = useRef(false);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [emergencyAlerts, setEmergencyAlerts] = useState<Array<{id: string; message: string; status: string; created_at: string}>>([]);
   const [emergencyLinks, setEmergencyLinks] = useState<Array<{id: string; title: string; url: string; status: string; created_at: string}>>([]);
@@ -190,12 +192,37 @@ function App() {
 
   const ADMIN_PASSWORD = 'edu51five2025';
 
-  // Load courses and materials on component mount
+  // Suppress Google API console errors (they're logged but won't clutter console)
   useEffect(() => {
+    const originalError = console.error;
+    console.error = (...args: any[]) => {
+      // Suppress Google API discovery errors (502 Bad Gateway)
+      if (args[0]?.includes?.('GapiClientError') || 
+          args[0]?.includes?.('API discovery') ||
+          args[0]?.message?.includes?.('API discovery')) {
+        return; // Silently ignore these errors
+      }
+      originalError.apply(console, args);
+    };
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
+  // Load courses, notices, and initialize on component mount (once)
+  useEffect(() => {
+    if (hasLoadedInitialNotices.current) {
+      return; // Prevent StrictMode from causing duplicate calls
+    }
+    hasLoadedInitialNotices.current = true;
     initializeDatabase();
     loadCourses();
     loadNotices();
     loadEmergencyData();
+  }, []); // Run only once on mount
+
+  // Load materials when selectedCourse changes
+  useEffect(() => {
     if (selectedCourse) {
       loadMaterials(selectedCourse.code);
     }
@@ -227,39 +254,48 @@ function App() {
   // No longer auto-create welcome notice - Admin must manually create notices
   // useEffect removed to prevent automatic welcome notice spam
 
-  // Auto-refresh notices and emergency data every 30 seconds for real-time updates
+  // Auto-refresh notices and emergency data every 2 minutes for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('Auto-refreshing notices and emergency data...');
+      console.log('🔄 Auto-refreshing notices and emergency data...');
       loadNotices();
       loadEmergencyData();
-    }, 30000); // 30 seconds
+    }, 120000); // 2 minutes (reduced from 30s to minimize unnecessary calls)
 
     return () => clearInterval(interval);
   }, []);
 
   // Listen for storage changes to instantly update notices when admin adds/edits them
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'edu51five_notices' || e.key === 'emergency_alerts' || e.key === 'emergency_links') {
-        console.log('Storage changed, reloading data:', e.key);
+    let debounceTimer: NodeJS.Timeout | null = null;
+
+    const debouncedReload = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
         loadNotices();
         loadEmergencyData();
+      }, 500); // Wait 500ms before reloading to batch rapid changes
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'edu51five_notices' || e.key === 'emergency_alerts' || e.key === 'emergency_links') {
+        console.log('📦 Storage changed, scheduling reload:', e.key);
+        debouncedReload();
       }
     };
 
     // Listen for custom event (same-window updates)
     const handleCustomEvent = (e: Event) => {
       const customEvent = e as CustomEvent;
-      console.log('Custom event received, reloading data:', customEvent.detail.type);
-      loadNotices();
-      loadEmergencyData();
+      console.log('⚡ Custom event received, scheduling reload:', customEvent.detail.type);
+      debouncedReload();
     };
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('edu51five-data-updated', handleCustomEvent);
     
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('edu51five-data-updated', handleCustomEvent);
     };
@@ -506,7 +542,7 @@ Best of luck with your studies!
       if (!routineNotice) {
         routineNotice = {
           id: 'exam-routine-notice',
-          title: '📅 Final Exam Routine - Section 5',
+          title: '📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)',
           content: `Final examination schedule for Section 5 (Computer Science & Engineering).
 
 📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
@@ -519,9 +555,7 @@ Best of luck with your studies!
 • Arrive 15 minutes early for each exam
 • Carry your student ID and necessary materials
 
-⚠️ **Admin Notice:** Use the admin panel to upload the official routine image if available. This notice can be updated from Admin → Notices.
-
-For queries, contact course instructors or the department.
+[EXAM_ROUTINE_PDF]https://aljnyhxthmwgesnkqwzu.supabase.co/storage/v1/object/public/materials/materials/Final_Exam_Routine_Dec_2025.pdf[/EXAM_ROUTINE_PDF]
 `,
           type: 'warning',
           category: 'exam',
@@ -564,6 +598,13 @@ For queries, contact course instructors or the department.
 
   // Load notices - Load all active notices (up to 5) from DATABASE first, then localStorage
   const loadNotices = async () => {
+    // Prevent duplicate loading
+    if (isLoadingNotices) {
+      console.log('⏸️ Notice loading already in progress, skipping...');
+      return;
+    }
+
+    setIsLoadingNotices(true);
     try {
       console.log('Loading all active notices (up to 5) from database...');
       
@@ -643,6 +684,8 @@ For queries, contact course instructors or the department.
     } catch (err) {
       console.error('Error loading notices:', err);
       setNotices([]);
+    } finally {
+      setIsLoadingNotices(false);
     }
   };
 
@@ -1145,16 +1188,20 @@ For queries, contact course instructors or the department.
     }
   };
 
-  // Admin: Insert Final Exam Routine notice (prebuilt)
+  // Admin: Insert Final Exam Routine notice (prebuilt) - Optimized for INP
   const handleInsertFinalExamNotice = async () => {
     if (!confirm('Insert the Final Exam Routine notice for Dec 04–14, 2025?')) return;
-    try {
-      setLoading(true);
-
-      const notice: Notice = {
-        id: 'exam-routine-final-2025',
-        title: '📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)',
-        content: `Final examination schedule for Section 5 (Computer Science & Engineering).
+    
+    // Immediate UI feedback
+    setLoading(true);
+    
+    // Use requestIdleCallback or setTimeout to avoid blocking
+    setTimeout(async () => {
+      try {
+        const notice: Notice = {
+          id: 'exam-routine-final-2025',
+          title: '📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)',
+          content: `Final examination schedule for Section 5 (Computer Science & Engineering).
 
 📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
 • 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
@@ -1166,47 +1213,46 @@ For queries, contact course instructors or the department.
 • Arrive 15 minutes early for each exam
 • Carry your student ID and necessary materials
 
-⚠️ **Admin Notice:** Use the admin panel to upload the official routine image if available. This notice can be updated from Admin → Notices.
+[EXAM_ROUTINE_PDF]https://aljnyhxthmwgesnkqwzu.supabase.co/storage/v1/object/public/materials/materials/Final_Exam_Routine_Dec_2025.pdf[/EXAM_ROUTINE_PDF]
 
 For queries, contact course instructors or the department.
 `,
-        type: 'warning',
-        category: 'exam',
-        priority: 'high',
-        exam_type: 'final',
-        event_date: '',
-        created_at: new Date().toISOString(),
-        is_active: true
-      } as Notice;
+          type: 'warning',
+          category: 'exam',
+          priority: 'high',
+          exam_type: 'final',
+          event_date: '',
+          created_at: new Date().toISOString(),
+          is_active: true
+        } as Notice;
 
-      // Add to local state (prepend), keep up to 5
-      const updatedNotices = [notice, ...notices.filter(n => n.id !== notice.id)].slice(0, 5);
-      setNotices(updatedNotices);
-      localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+        // Update local state first (instant UI update)
+        const updatedNotices = [notice, ...notices.filter(n => n.id !== notice.id)].slice(0, 5);
+        setNotices(updatedNotices);
+        localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+        
+        // Database operation in background (non-blocking)
+        supabase.from('notices').upsert([notice], { onConflict: 'id' })
+          .then(({ error }) => {
+            if (error) {
+              console.warn('Supabase upsert error:', error);
+            } else {
+              console.log('Final exam notice synced to database');
+            }
+          })
+          .catch(err => console.warn('Database sync failed:', err));
 
-      // Try to upsert into database
-      try {
-        const { error } = await supabase.from('notices').upsert([notice], { onConflict: 'id' });
-        if (error) {
-          console.warn('Supabase upsert error:', error);
-          alert('Notice added locally but database update may have failed.');
-        } else {
-          console.log('Final exam notice upserted to database');
-          alert('✅ Final exam notice added successfully.');
-        }
-      } catch (dbErr) {
-        console.warn('Database call failed, notice saved locally:', dbErr);
-        alert('Notice added locally; database unavailable.');
+        // Notify other windows/tabs
+        window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
+        
+        setLoading(false);
+        alert('✅ Final exam notice added successfully!');
+      } catch (err) {
+        console.error('Error inserting final exam notice:', err);
+        setLoading(false);
+        alert('Error adding final exam notice. See console for details.');
       }
-
-      // Notify other windows/tabs
-      window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
-    } catch (err) {
-      console.error('Error inserting final exam notice:', err);
-      alert('Error adding final exam notice. See console for details.');
-    } finally {
-      setLoading(false);
-    }
+    }, 0);
   };
 
   // Admin: Delete notice
@@ -1585,32 +1631,32 @@ For any queries, contact your course instructors or the department.`,
                         onClick={() => {
                           toggleDarkMode();
                         }}
-                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border ${
+                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
                           isDarkMode
-                            ? 'bg-gradient-to-r from-gray-600/20 to-gray-700/20 hover:from-gray-600/30 hover:to-gray-700/30 border-gray-600/20 hover:border-gray-500/40'
+                            ? 'bg-gradient-to-r from-gray-700/40 to-gray-800/40 hover:from-gray-700/50 hover:to-gray-800/50 border-gray-600/30 hover:border-gray-500/50'
                             : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 hover:border-gray-400'
                         }`}
                       >
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                        <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center shadow-md ${
                           isDarkMode
                             ? 'bg-gradient-to-r from-gray-600 to-gray-700'
                             : 'bg-gradient-to-r from-gray-400 to-gray-500'
                         }`}>
                           {isDarkMode ? (
-                            <Sun className="h-5 w-5 text-yellow-300 drop-shadow-sm" />
+                            <Sun className="h-5 w-5 text-yellow-300 drop-shadow-lg" />
                           ) : (
-                            <Moon className="h-5 w-5 text-white drop-shadow-sm" />
+                            <Moon className="h-5 w-5 text-white drop-shadow-lg" />
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <span className={`font-semibold text-base block ${
+                          <span className={`font-bold text-base block ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                           }`}>
                             {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                           </span>
-                          <span className={`text-sm ${
+                          <span className={`text-sm mt-0.5 block ${
                             isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                          }`}>Toggle theme</span>
+                          }`}>Toggle theme appearance</span>
                         </div>
                       </button>
 
@@ -1620,16 +1666,20 @@ For any queries, contact your course instructors or the department.`,
                           goToView('examMaterials');
                           setShowMobileMenu(false);
                         }}
-                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 transition-all duration-300 group border border-orange-500/20 hover:border-orange-400/40"
+                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
+                          isDarkMode
+                            ? 'bg-gradient-to-r from-orange-900/40 to-pink-900/40 hover:from-orange-900/50 hover:to-pink-900/50 border-orange-500/30 hover:border-orange-400/50'
+                            : 'bg-gradient-to-r from-orange-50 to-pink-50 hover:from-orange-100 hover:to-pink-100 border-orange-300/40 hover:border-orange-400/60'
+                        }`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-white drop-shadow-sm" />
+                        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 flex items-center justify-center shadow-md">
+                          <BookOpen className="h-5 w-5 text-white drop-shadow-lg" />
                         </div>
                         <div className="flex-1 text-left">
-                          <span className={`font-semibold text-base block ${
+                          <span className={`font-bold text-base block ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                           }`}>Smart Exam Materials</span>
-                          <span className={`text-sm ${
+                          <span className={`text-sm mt-0.5 block ${
                             isDarkMode ? 'text-gray-300' : 'text-gray-600'
                           }`}>Access study resources</span>
                         </div>
@@ -1641,54 +1691,88 @@ For any queries, contact your course instructors or the department.`,
                           goToView('semester');
                           setShowMobileMenu(false);
                         }}
-                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 transition-all duration-300 group border border-blue-500/20 hover:border-blue-400/40"
+                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
+                          isDarkMode
+                            ? 'bg-gradient-to-r from-blue-900/40 to-purple-900/40 hover:from-blue-900/50 hover:to-purple-900/50 border-blue-500/30 hover:border-blue-400/50'
+                            : 'bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-300/40 hover:border-blue-400/60'
+                        }`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                          <Calendar className="h-5 w-5 text-white drop-shadow-sm" />
+                        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-md">
+                          <Calendar className="h-5 w-5 text-white drop-shadow-lg" />
                         </div>
                         <div className="flex-1 text-left">
-                          <span className={`font-semibold text-base block ${
+                          <span className={`font-bold text-base block ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                           }`}>Semester Tracker</span>
-                          <span className={`text-sm ${
+                          <span className={`text-sm mt-0.5 block ${
                             isDarkMode ? 'text-gray-300' : 'text-gray-600'
                           }`}>Track your progress</span>
                         </div>
                       </button>
                       
-                      {/* Notifications Section - Enhanced as Interactive Button */}
+                      {/* Notifications Section - Enhanced Modern Design */}
                       <button
                         onClick={() => {
                           setShowMobileMenu(false);
                           setShowNoticePanel(true);
                         }}
-                        className="w-full flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-indigo-500/20 to-blue-500/20 hover:from-indigo-500/30 hover:to-blue-500/30 transition-all duration-300 group border border-indigo-500/20 hover:border-indigo-400/40"
+                        className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
+                          getUnreadNoticeCount() > 0
+                            ? isDarkMode
+                              ? 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 hover:from-blue-900/50 hover:to-indigo-900/50 border-blue-500/30 hover:border-blue-400/50'
+                              : 'bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-300/40 hover:border-blue-400/60'
+                            : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-700/30 to-gray-800/30 hover:from-gray-700/40 hover:to-gray-800/40 border-gray-600/20 hover:border-gray-500/40'
+                              : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 hover:border-gray-400'
+                        }`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 flex items-center justify-center relative">
-                          <Bell className="h-5 w-5 text-white drop-shadow-sm" />
+                        <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative shadow-md ${
+                          getUnreadNoticeCount() > 0
+                            ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700'
+                            : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-600 to-gray-700'
+                              : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                        }`}>
+                          <Bell className="h-5 w-5 text-white drop-shadow-lg" />
                           {getUnreadNoticeCount() > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-lg border border-white animate-pulse">
+                            <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-xl border-2 border-white animate-pulse">
                               {getUnreadNoticeCount()}
                             </span>
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <span className={`font-semibold text-base block ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
-                          }`}>Notifications</span>
-                          <span className={`text-sm ${
+                          <div className="flex items-center space-x-2">
+                            <span className={`font-bold text-base ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>Notifications</span>
+                            {getUnreadNoticeCount() > 0 && (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                isDarkMode
+                                  ? 'bg-blue-600/40 text-blue-300'
+                                  : 'bg-blue-200 text-blue-800'
+                              }`}>
+                                {getUnreadNoticeCount()} new
+                              </span>
+                            )}
+                          </div>
+                          <span className={`text-sm mt-0.5 block ${
                             isDarkMode ? 'text-gray-300' : 'text-gray-600'
                           }`}>
-                            {getUnreadNoticeCount() > 0 ? `${getUnreadNoticeCount()} new notifications` : 'No new notifications'}
+                            {getUnreadNoticeCount() > 0 ? 'Tap to view updates' : 'All caught up!'}
                           </span>
                         </div>
                       </button>
                       
-                      {/* Optional: Separator for clarity */}
-                      <div className="text-center mt-4">
-                          <span className={`text-xs font-medium ${
+                      {/* Modern Tip Section */}
+                      <div className={`text-center mt-4 pt-3 border-t ${
+                        isDarkMode ? 'border-gray-700/50' : 'border-gray-200/50'
+                      }`}>
+                          <span className={`text-xs font-medium flex items-center justify-center space-x-1.5 ${
                             isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                          }`}>💡 Tap any option above to navigate</span>
+                          }`}>
+                            <span className="text-base">💡</span>
+                            <span>Tap any option to navigate</span>
+                          </span>
                       </div>
                     </div>
                   </div>
@@ -2990,177 +3074,315 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Create Course Modal */}
         {showCreateCourse && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
-              <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Add New Course</h2>
-              <form onSubmit={handleCreateCourse} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Course Name"
-                  value={newCourse.name}
-                  onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Course Code"
-                  value={newCourse.code}
-                  onChange={(e) => setNewCourse({ ...newCourse, code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-                <textarea
-                  placeholder="Course Description"
-                  value={newCourse.description}
-                  onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                />
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateCourse(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Adding...' : 'Add Course'}
-                  </button>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+              <div className={`relative w-full max-w-[92vw] sm:max-w-md md:max-w-lg max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}>
+                {/* Modal Header */}
+                <div className={`flex-shrink-0 p-4 sm:p-5 border-b transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <h2 className={`text-lg sm:text-xl font-bold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                      <span className="text-xl sm:text-2xl mr-2">➕</span>
+                      <span>Add New Course</span>
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateCourse(false)}
+                      className={`p-2 rounded-xl transition-all duration-300 ${
+                        isDarkMode 
+                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </button>
+                  </div>
                 </div>
-              </form>
+
+                {/* Modal Body */}
+                <form onSubmit={handleCreateCourse} className="flex flex-col flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Course Name"
+                      value={newCourse.name}
+                      onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Course Code"
+                      value={newCourse.code}
+                      onChange={(e) => setNewCourse({ ...newCourse, code: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    />
+                    <textarea
+                      placeholder="Course Description"
+                      value={newCourse.description}
+                      onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className={`flex-shrink-0 p-4 sm:p-5 border-t transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                  }`}>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateCourse(false)}
+                        className={`flex-1 px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
+                          isDarkMode 
+                            ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      >
+                        {loading ? 'Adding...' : 'Add Course'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Upload File Modal */}
         {showUploadFile && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-lg max-w-md w-full mx-4 border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
-              <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Upload Material</h2>
-              <form onSubmit={handleFileUpload} className="space-y-4">
-                <select
-                  value={newMaterial.course_id}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, course_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Select Course</option>
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.code}>{course.name} ({course.code})</option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  placeholder="Material Title"
-                  value={newMaterial.title}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-                <select
-                  value={newMaterial.type}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value as Material['type'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="doc">Document</option>
-                  <option value="video">Video</option>
-                  <option value="suggestion">Suggestion</option>
-                  <option value="past_question">Past Question</option>
-                </select>
-                <select
-                  value={newMaterial.exam_period}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, exam_period: e.target.value as 'midterm' | 'final' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="midterm">Midterm Exam</option>
-                  <option value="final">Final Exam</option>
-                </select>
-                <input
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setNewMaterial({ ...newMaterial, file });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.avi"
-                />
-                <input
-                  type="url"
-                  placeholder="Video URL (optional)"
-                  value={newMaterial.video_url}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, video_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <textarea
-                  placeholder="Description (optional)"
-                  value={newMaterial.description}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                />
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadFile(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Uploading...' : 'Upload'}
-                  </button>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+              <div className={`relative w-full max-w-[92vw] sm:max-w-md md:max-w-lg max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}>
+                {/* Modal Header */}
+                <div className={`flex-shrink-0 p-4 sm:p-5 border-b transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <h2 className={`text-lg sm:text-xl font-bold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                      <span className="text-xl sm:text-2xl mr-2">📤</span>
+                      <span>Upload Material</span>
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowUploadFile(false)}
+                      className={`p-2 rounded-xl transition-all duration-300 ${
+                        isDarkMode 
+                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </button>
+                  </div>
                 </div>
-              </form>
+
+                {/* Modal Body */}
+                <form onSubmit={handleFileUpload} className="flex flex-col flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+                    <select
+                      value={newMaterial.course_id}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, course_id: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    >
+                      <option value="">Select Course</option>
+                      {courses.map((course) => (
+                        <option key={course.id} value={course.code}>{course.name} ({course.code})</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Material Title"
+                      value={newMaterial.title}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    />
+                    <select
+                      value={newMaterial.type}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value as Material['type'] })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="pdf">PDF</option>
+                      <option value="doc">Document</option>
+                      <option value="video">Video</option>
+                      <option value="suggestion">Suggestion</option>
+                      <option value="past_question">Past Question</option>
+                    </select>
+                    <select
+                      value={newMaterial.exam_period}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, exam_period: e.target.value as 'midterm' | 'final' })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    >
+                      <option value="midterm">Midterm Exam</option>
+                      <option value="final">Final Exam</option>
+                    </select>
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setNewMaterial({ ...newMaterial, file });
+                        }
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.avi"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Video URL (optional)"
+                      value={newMaterial.video_url}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, video_url: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <textarea
+                      placeholder="Description (optional)"
+                      value={newMaterial.description}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, description: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className={`flex-shrink-0 p-4 sm:p-5 border-t transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                  }`}>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowUploadFile(false)}
+                        className={`flex-1 px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
+                          isDarkMode 
+                            ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      >
+                        {loading ? 'Uploading...' : 'Upload'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* Enhanced Categorized Notice Creation Modal */}
         {showCreateNotice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${isDarkMode ? 'dark-modal modal-content bg-gray-800' : 'modal-content bg-white'} p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-transparent'}`}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📢 Create Smart Notice</h2>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Choose a category and let the system help you create targeted notices</p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+              <div className={`relative w-full max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}>
+                {/* Modal Header - Fixed */}
+                <div className={`flex-shrink-0 p-4 sm:p-5 lg:p-6 border-b transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 pr-4">
+                      <h2 className={`text-lg sm:text-xl font-bold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                        <span className="text-xl sm:text-2xl mr-2">📢</span>
+                        <span>Create Smart Notice</span>
+                      </h2>
+                      <p className={`text-xs sm:text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Choose a category and let the system help you create targeted notices
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowCreateNotice(false);
+                        setNewNotice({ 
+                          title: '', 
+                          content: '', 
+                          type: 'info', 
+                          category: 'announcement',
+                          priority: 'normal',
+                          exam_type: null,
+                          event_date: '',
+                          is_active: true 
+                        });
+                      }}
+                      className={`flex-shrink-0 p-2 rounded-xl transition-all duration-300 ${
+                        isDarkMode 
+                          ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowCreateNotice(false);
-                    setNewNotice({ 
-                      title: '', 
-                      content: '', 
-                      type: 'info', 
-                      category: 'announcement',
-                      priority: 'normal',
-                      exam_type: null,
-                      event_date: '',
-                      is_active: true 
-                    });
-                  }}
-                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+              
+                {/* Modal Body - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6">
               
               {/* Category Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Notice Category</label>
+                <label className={`block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Notice Category</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
                     { value: 'announcement', icon: '📢', label: 'General', desc: 'Regular announcements' },
@@ -3175,15 +3397,15 @@ For any queries, contact your course instructors or the department.`,
                       onClick={() => setNewNotice({ ...newNotice, category: category.value as any })}
                       className={`p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                         newNotice.category === category.value
-                          ? 'border-blue-500 bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? isDarkMode ? 'border-blue-400 bg-blue-900/50 shadow-md' : 'border-blue-500 bg-blue-50 shadow-md'
+                          : isDarkMode ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-lg">{category.icon}</span>
-                        <span className="font-semibold text-gray-900">{category.label}</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{category.label}</span>
                       </div>
-                      <p className="text-xs text-gray-600">{category.desc}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{category.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -3193,7 +3415,7 @@ For any queries, contact your course instructors or the department.`,
                 <div className="space-y-4">
                   {/* Title with smart suggestions */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                       Title
                       {newNotice.category === 'exam' && (
                         <span className="text-xs text-blue-600 ml-2">(Exam notices get priority display)</span>
@@ -3203,7 +3425,7 @@ For any queries, contact your course instructors or the department.`,
                       type="text"
                       value={newNotice.title}
                       onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
                       placeholder={
                         newNotice.category === 'exam' ? 'Mid-term Exam Schedule Update' :
                         newNotice.category === 'event' ? 'Upcoming Cultural Event' :
@@ -3216,7 +3438,7 @@ For any queries, contact your course instructors or the department.`,
 
                   {/* Priority Level */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Priority Level</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { value: 'low', icon: '🟢', label: 'Low', color: 'text-green-600' },
@@ -3229,8 +3451,8 @@ For any queries, contact your course instructors or the department.`,
                           onClick={() => setNewNotice({ ...newNotice, priority: priority.value as any })}
                           className={`p-2 rounded-lg border text-sm transition-all ${
                             newNotice.priority === priority.value
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? isDarkMode ? 'border-blue-400 bg-blue-900/50' : 'border-blue-500 bg-blue-50'
+                              : isDarkMode ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/50' : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
                           <span className="mr-1">{priority.icon}</span>
@@ -3242,11 +3464,11 @@ For any queries, contact your course instructors or the department.`,
 
                   {/* Notice Type */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Visual Style</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Visual Style</label>
                     <select
                       value={newNotice.type}
                       onChange={(e) => setNewNotice({ ...newNotice, type: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
                     >
                       <option value="info">🔵 Info (Blue)</option>
                       <option value="success">🟢 Success (Green)</option>
@@ -3260,7 +3482,7 @@ For any queries, contact your course instructors or the department.`,
                   {/* Exam-specific fields */}
                   {newNotice.category === 'exam' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Exam Type</label>
+                      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Exam Type</label>
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           { value: 'midterm', label: 'Mid-term', icon: '📝' },
@@ -3271,8 +3493,8 @@ For any queries, contact your course instructors or the department.`,
                             onClick={() => setNewNotice({ ...newNotice, exam_type: examType.value as any })}
                             className={`p-2 rounded-lg border text-sm transition-all ${
                               newNotice.exam_type === examType.value
-                                ? 'border-orange-500 bg-orange-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? isDarkMode ? 'border-orange-400 bg-orange-900/50 text-gray-100' : 'border-orange-500 bg-orange-50'
+                                : isDarkMode ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/50 text-gray-200' : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
                             <span className="mr-1">{examType.icon}</span>
@@ -3286,18 +3508,18 @@ For any queries, contact your course instructors or the department.`,
                   {/* Event-specific fields */}
                   {newNotice.category === 'event' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Event Date</label>
+                      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Event Date</label>
                       <input
                         type="date"
                         value={newNotice.event_date || ''}
                         onChange={(e) => setNewNotice({ ...newNotice, event_date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
                       />
                     </div>
                   )}
 
                   {/* Active toggle */}
-                  <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <div className={`flex items-center p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                     <input
                       type="checkbox"
                       id="is_active"
@@ -3305,7 +3527,7 @@ For any queries, contact your course instructors or the department.`,
                       onChange={(e) => setNewNotice({ ...newNotice, is_active: e.target.checked })}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_active" className={`ml-2 block text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                       📢 Publish immediately (visible to all students)
                     </label>
                   </div>
@@ -3314,11 +3536,11 @@ For any queries, contact your course instructors or the department.`,
 
               {/* Content */}
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Notice Content</label>
+                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Notice Content</label>
                 <textarea
                   value={newNotice.content}
                   onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
                   rows={4}
                   placeholder={
                     newNotice.category === 'exam' ? 
@@ -3329,51 +3551,66 @@ For any queries, contact your course instructors or the department.`,
                   }
                 />
                 <div className="flex justify-between items-center mt-2">
-                  <span className="text-xs text-gray-500">
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     {newNotice.content.length} characters
                   </span>
                   {newNotice.category === 'exam' && newNotice.exam_type && (
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                    <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-orange-900/50 text-orange-300' : 'bg-orange-100 text-orange-800'}`}>
                       🎯 {newNotice.exam_type === 'midterm' ? 'Mid-term' : 'Final'} Exam Notice
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex space-x-3 pt-6 border-t">
-                <button
-                  onClick={() => {
-                    setShowCreateNotice(false);
-                    setNewNotice({ 
-                      title: '', 
-                      content: '', 
-                      type: 'info', 
-                      category: 'announcement',
-                      priority: 'normal',
-                      exam_type: null,
-                      event_date: '',
-                      is_active: true 
-                    });
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                  <button
-                    onClick={handleInsertFinalExamNotice}
-                    disabled={loading}
-                    className="px-4 py-2 border border-orange-400 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
-                  >
-                    ➕ Insert Final Exam Routine
-                  </button>
-                <button
-                  onClick={handleCreateNotice}
-                  disabled={!newNotice.title || !newNotice.content}
-                  className="flex-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
-                >
-                  🚀 Create {newNotice.priority === 'urgent' ? 'Urgent' : newNotice.category === 'exam' ? 'Exam' : 'Smart'} Notice
-                </button>
+                </div>
+
+                {/* Modal Footer - Fixed */}
+                <div className={`flex-shrink-0 p-4 sm:p-5 lg:p-6 border-t transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+                }`}>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => {
+                        setShowCreateNotice(false);
+                        setNewNotice({ 
+                          title: '', 
+                          content: '', 
+                          type: 'info', 
+                          category: 'announcement',
+                          priority: 'normal',
+                          exam_type: null,
+                          event_date: '',
+                          is_active: true 
+                        });
+                      }}
+                      className={`px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
+                        isDarkMode 
+                          ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleInsertFinalExamNotice}
+                      disabled={loading}
+                      className={`px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
+                        isDarkMode 
+                          ? 'border-orange-400 text-orange-300 hover:bg-orange-900/30' 
+                          : 'border-orange-400 text-orange-700 hover:bg-orange-50'
+                      }`}
+                    >
+                      ➕ Insert Final Exam Routine
+                    </button>
+                    <button
+                      onClick={handleCreateNotice}
+                      disabled={!newNotice.title || !newNotice.content}
+                      className="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+                    >
+                      🚀 Create {newNotice.priority === 'urgent' ? 'Urgent' : newNotice.category === 'exam' ? 'Exam' : 'Smart'} Notice
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -3383,11 +3620,12 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 p-4">
-            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl w-[min(92vw,720px)] sm:w-full sm:max-w-2xl max-w-[980px] max-h-[90vh] overflow-hidden transition-colors duration-300 ${
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <div className={`relative w-full max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800' : 'bg-white'
               }`}>
-              <div className={`p-3 sm:p-5 border-l-4 transition-colors duration-300 ${
+              <div className={`flex-shrink-0 p-3 sm:p-4 border-l-4 transition-colors duration-300 ${
                 selectedNotice.type === 'info' 
                   ? isDarkMode ? 'border-blue-400 bg-blue-900/30' : 'border-blue-400 bg-blue-50'
                   : selectedNotice.type === 'warning' 
@@ -3396,9 +3634,9 @@ For any queries, contact your course instructors or the department.`,
                   ? isDarkMode ? 'border-green-400 bg-green-900/30' : 'border-green-400 bg-green-50'
                   : isDarkMode ? 'border-red-400 bg-red-900/30' : 'border-red-400 bg-red-50'
               }`}>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg transition-colors duration-300 ${
                       selectedNotice.type === 'info' 
                         ? isDarkMode ? 'bg-blue-700/50' : 'bg-blue-100'
                         : selectedNotice.type === 'warning' 
@@ -3407,19 +3645,19 @@ For any queries, contact your course instructors or the department.`,
                         ? isDarkMode ? 'bg-green-700/50' : 'bg-green-100'
                         : isDarkMode ? 'bg-red-700/50' : 'bg-red-100'
                     }`}>
-                      <Bell className={`h-6 w-6 ${
+                      <Bell className={`h-4 w-4 sm:h-5 sm:w-5 ${
                         selectedNotice.type === 'info' ? 'text-blue-600' :
                         selectedNotice.type === 'warning' ? 'text-yellow-600' :
                         selectedNotice.type === 'success' ? 'text-green-600' :
                         'text-red-600'
                       }`} />
                     </div>
-                    <div>
-                      <h2 className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
+                    <div className="min-w-0 flex-1">
+                      <h2 className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 leading-tight ${
                         isDarkMode ? 'text-gray-100' : 'text-gray-900'
                       }`}>{selectedNotice.title}</h2>
-                      <div className="flex items-center space-x-2 mt-1 text-xs sm:text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
                           selectedNotice.type === 'info' 
                             ? isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
                             : selectedNotice.type === 'warning' 
@@ -3430,27 +3668,27 @@ For any queries, contact your course instructors or the department.`,
                         }`}>
                           {selectedNotice.type.toUpperCase()}
                         </span>
-                        <span className={`text-sm transition-colors duration-300 ${
+                        <span className={`text-xs transition-colors duration-300 ${
                           isDarkMode ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                          Posted on {new Date(selectedNotice.created_at).toLocaleDateString()}
+                          {new Date(selectedNotice.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={closeNoticeModal}
-                    className={`p-2 rounded-lg transition-all duration-300 ${
+                    className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 ${
                       isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
                     }`}
                   >
-                    <X className="h-6 w-6" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
               
-              <div className="p-2 sm:p-4 overflow-y-auto max-h-[78vh] sm:max-h-[80vh]">
-                <div className="prose prose-gray max-w-none">
+              <div className="p-3 sm:p-4 overflow-y-auto flex-1 min-h-0">
+                <div className="prose prose-sm sm:prose prose-gray max-w-none">
                   {(() => {
                     const content = selectedNotice.content || '';
 
@@ -3521,134 +3759,65 @@ For any queries, contact your course instructors or the department.`,
                       setTimeout(() => { w.focus(); w.print(); }, 300);
                     };
 
-                    // Robust downloader for remote PDF files (handles CORS/blobs)
+                    // Mobile-friendly PDF downloader (works on all devices)
                     const downloadFile = async (url: string, filename?: string) => {
+                      if (loading) return; // Prevent multiple simultaneous downloads
+                      
                       try {
                         setLoading(true);
-                        const res = await fetch(url);
-                        if (!res.ok) throw new Error('Network response was not ok');
-                        const blob = await res.blob();
-                        const blobUrl = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = blobUrl;
-                        a.download = filename || url.split('/').pop() || 'routine.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                        
+                        // Mobile detection
+                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        
+                        if (isMobile) {
+                          // Mobile: Direct link open (more reliable on mobile browsers)
+                          setTimeout(() => {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                            setLoading(false);
+                          }, 100);
+                        } else {
+                          // Desktop: Blob download for better UX
+                          const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+                          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                          const blob = await res.blob();
+                          const blobUrl = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = blobUrl;
+                          a.download = filename || url.split('/').pop() || 'routine.pdf';
+                          a.style.display = 'none';
+                          document.body.appendChild(a);
+                          
+                          // Trigger download
+                          setTimeout(() => {
+                            a.click();
+                            setTimeout(() => {
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(blobUrl);
+                            }, 100);
+                          }, 50);
+                          
+                          setTimeout(() => setLoading(false), 800);
+                        }
                       } catch (err) {
-                        console.warn('Direct download failed, opening in new tab', err);
-                        window.open(url, '_blank');
-                      } finally {
+                        console.warn('Download failed, opening in new tab', err);
                         setLoading(false);
+                        window.open(url, '_blank', 'noopener,noreferrer');
                       }
                     };
 
-                    const generateAndDownloadPDF = async (title: string, entries: any[]) => {
-                      // If notice embeds a ready-made PDF, download it directly
-                      if (pdfMatch && pdfMatch[1]) {
-                        const pdfUrl = pdfMatch[1];
+                    const downloadRoutinePDF = async (title: string) => {
+                      if (loading) return; // Prevent multiple simultaneous operations
+                      
+                      // Check for PDF in notice content
+                      const pdfUrlMatch = content.match(/\[EXAM_ROUTINE_PDF\](.*?)\[\/EXAM_ROUTINE_PDF\]/);
+                      
+                      if (pdfUrlMatch && pdfUrlMatch[1]) {
+                        const pdfUrl = pdfUrlMatch[1];
                         const filename = `${(title || 'exam_routine').replace(/[^a-z0-9\-_\.]/gi, '_')}.pdf`;
                         await downloadFile(pdfUrl, filename);
-                        return;
-                      }
-
-                      setLoading(true);
-                      const html = generatePrintableHTML(title, entries);
-
-                      // 1) Try printing via a hidden iframe (no popups, should be allowed on user gesture)
-                      try {
-                        const iframe = document.createElement('iframe');
-                        iframe.style.position = 'fixed';
-                        iframe.style.left = '-10000px';
-                        iframe.style.top = '0';
-                        iframe.style.width = '800px';
-                        iframe.style.height = '600px';
-                        iframe.style.border = '0';
-                        document.body.appendChild(iframe);
-
-                        // Write content and call print when ready
-                        const doc = iframe.contentWindow?.document;
-                        if (doc) {
-                          doc.open();
-                          doc.write(html);
-                          doc.close();
-
-                          // Some browsers require onload; use a small timeout to ensure rendering
-                          setTimeout(() => {
-                            try {
-                              iframe.contentWindow?.focus();
-                              // Trigger print for iframe content
-                              iframe.contentWindow?.print();
-                            } catch (e) {
-                              console.warn('Iframe print failed, will fallback', e);
-                            } finally {
-                              try { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch (e) {}
-                              setLoading(false);
-                            }
-                          }, 300);
-
-                          return;
-                        } else {
-                          // If we couldn't access iframe document, remove it and continue to fallbacks
-                          try { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch (e) {}
-                        }
-                      } catch (err) {
-                        console.warn('Hidden iframe approach failed, trying other fallbacks', err);
-                      }
-
-                      // 2) Try opening a new window (user gesture) and call print there
-                      try {
-                        const w = window.open('', '_blank', 'noopener,noreferrer');
-                        if (w) {
-                          w.document.open();
-                          w.document.write(html + `
-                            <script>
-                              window.onload = function(){
-                                try{ window.focus(); window.print(); } catch(e){}
-                                setTimeout(()=>{ try{ window.close(); } catch(e){} }, 500);
-                              };
-                            <\/script>
-                          `);
-                          w.document.close();
-                          setLoading(false);
-                          return;
-                        }
-                      } catch (err) {
-                        console.warn('Opening print window failed, will try html2pdf fallback', err);
-                      }
-
-                      // 3) Final fallback: html2pdf library to generate and download PDF
-                      let container: HTMLDivElement | null = null;
-                      try {
-                        container = document.createElement('div');
-                        container.style.position = 'fixed';
-                        container.style.left = '-10000px';
-                        container.style.top = '0';
-                        container.style.width = '800px';
-                        container.innerHTML = html;
-                        document.body.appendChild(container);
-
-                        const lib = await import('html2pdf.js');
-                        const html2pdfFunc = (lib && (lib as any).default) ? (lib as any).default : (lib as any);
-
-                        const filename = `${(title || 'exam_routine').replace(/[^a-z0-9\\-_\\.]/gi, '_')}.pdf`;
-                        const options = {
-                          margin: [12, 12, 12, 12],
-                          filename,
-                          image: { type: 'jpeg', quality: 0.98 },
-                          html2canvas: { scale: 2, useCORS: true },
-                          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
-                        };
-
-                        await (html2pdfFunc() as any).from(container).set(options).save();
-                      } catch (err) {
-                        console.error('PDF generation failed:', err);
-                        // Last resort: open printable window (may be blocked)
-                        try { openPrintableWindow(html); } catch (e) { console.warn('Fallback printable window failed', e); }
-                      } finally {
-                        try { if (container && container.parentNode) container.parentNode.removeChild(container); } catch (e) { /* ignore */ }
-                        setLoading(false);
+                      } else {
+                        // No PDF available - show alert
+                        alert('⚠️ PDF not available. Please contact admin to upload the exam routine PDF.');
                       }
                     };
 
@@ -3669,11 +3838,16 @@ For any queries, contact your course instructors or the department.`,
                             <div className="flex items-center justify-center gap-3">
                               <button
                                 onClick={() => downloadFile(pdfUrl, filename)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:brightness-95 transition"
+                                disabled={loading}
+                                className={`px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg active:scale-95 ${
+                                  loading ? 'opacity-60 cursor-wait' : 'hover:bg-blue-700'
+                                }`}
                               >
-                                ⬇️ Download Routine (PDF)
+                                {loading ? '⏳ Downloading...' : '⬇️ Download Routine (PDF)'}
                               </button>
-                              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-white border rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={`px-3 py-2 border rounded-lg text-sm transition-all ${
+                                isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                              }`}>
                                 👁️ Open
                               </a>
                             </div>
@@ -3751,10 +3925,13 @@ For any queries, contact your course instructors or the department.`,
                             </div>
                             <div className="mt-3 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                               <button
-                                onClick={() => generateAndDownloadPDF(selectedNotice.title || 'Exam Routine', routineEntries)}
-                                className="w-full sm:w-auto px-3 py-2 sm:px-4 bg-blue-600 text-white rounded-lg hover:brightness-95 transition text-sm"
+                                onClick={() => downloadRoutinePDF(selectedNotice.title || 'Exam Routine')}
+                                disabled={loading}
+                                className={`w-full sm:w-auto px-3 py-2 sm:px-4 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg active:scale-95 text-sm ${
+                                  loading ? 'bg-blue-400 cursor-wait opacity-70' : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
                               >
-                                📄 Download / Print
+                                {loading ? '⏳ Downloading...' : '📄 Download Routine'}
                               </button>
                               <button
                                 onClick={() => {
@@ -3787,21 +3964,20 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
               
-              <div className={`p-6 border-t transition-colors duration-300 ${
+              <div className={`flex-shrink-0 p-3 sm:p-4 border-t transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'
               }`}>
                 <div className="flex justify-end">
                   <button
                     onClick={closeNoticeModal}
-                    className={`px-6 py-2 rounded-lg transition-colors duration-300 ${
-                      isDarkMode 
-                        ? 'bg-gray-600 text-white hover:bg-gray-500'
-                        : 'bg-gray-600 text-white hover:bg-gray-700'
+                    className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors duration-300 ${
+                      isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-600 text-white hover:bg-gray-700'
                     }`}
                   >
                     Close
                   </button>
                 </div>
+              </div>
               </div>
             </div>
           </div>

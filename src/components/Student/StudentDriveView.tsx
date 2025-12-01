@@ -116,10 +116,32 @@ export const StudentDriveView: React.FC<StudentDriveViewProps> = ({
         await new Promise((resolve) => {
           window.gapi.load('client', resolve);
         });
-        await window.gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-        });
+        try {
+          // Try with discovery docs first
+          await window.gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+          });
+          console.log('✅ GAPI client ready (StudentDriveView)');
+        } catch (error: any) {
+          console.warn('⚠️ Discovery docs failed, trying manual load:', error?.message);
+          // Fallback: Initialize without discovery docs and load Drive API manually
+          try {
+            await window.gapi.client.init({
+              apiKey: API_KEY,
+            });
+            await window.gapi.client.load('drive', 'v3');
+            console.log('✅ GAPI client ready (manual load)');
+          } catch (fallbackError: any) {
+            console.error('❌ Drive API init failed:', fallbackError?.message);
+            throw fallbackError; // Let outer catch handle it
+          }
+        }
+      }
+
+      // Ensure Drive API is loaded
+      if (!window.gapi?.client?.drive?.files) {
+        throw new Error('Google Drive API not properly initialized');
       }
 
       const filesData: Record<string, DriveFile[]> = {};

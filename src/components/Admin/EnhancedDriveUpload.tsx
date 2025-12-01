@@ -74,20 +74,36 @@ export const EnhancedDriveUpload: React.FC<EnhancedDriveUploadProps> = ({ onFile
       if (window.gapi) {
         window.gapi.load('client:auth2', async () => {
           try {
+            // Try with discovery docs
             await window.gapi.client.init({
               apiKey: API_KEY,
               clientId: CLIENT_ID,
               discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
               scope: SCOPES,
             });
-
-            // Listen for sign-in state changes
+            console.log('✅ GAPI client ready with discovery docs');
             window.gapi.auth2.getAuthInstance().isSignedIn.listen(setIsSignedIn);
             setIsSignedIn(window.gapi.auth2.getAuthInstance().isSignedIn.get());
             setIsGapiLoaded(true);
-          } catch (error) {
-            console.error('Error initializing GAPI:', error);
-            setMessage({ type: 'error', text: 'Failed to initialize Google Drive API' });
+          } catch (error: any) {
+            console.warn('⚠️ Discovery docs failed, trying manual load:', error?.message);
+            try {
+              // Fallback: init without discovery docs, then load Drive API
+              await window.gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                scope: SCOPES,
+              });
+              await window.gapi.client.load('drive', 'v3');
+              console.log('✅ GAPI client ready (manual load)');
+              window.gapi.auth2.getAuthInstance().isSignedIn.listen(setIsSignedIn);
+              setIsSignedIn(window.gapi.auth2.getAuthInstance().isSignedIn.get());
+              setIsGapiLoaded(true);
+            } catch (fallbackError: any) {
+              console.error('❌ Drive API init failed:', fallbackError?.message);
+              setMessage({ type: 'error', text: 'Failed to initialize Google Drive. Please refresh.' });
+              setIsGapiLoaded(false);
+            }
           }
         });
       }
