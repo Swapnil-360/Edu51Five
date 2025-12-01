@@ -2169,33 +2169,21 @@ For any queries, contact your course instructors or the department.`,
                 >
                   {/* Compact Banner Image Section */}
                   <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
-                  {/* Decorative Pattern */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute inset-0" style={{ 
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                      backgroundSize: '60px 60px'
-                    }}></div>
+                  {/* Cover Image */}
+                  <div className="absolute inset-0">
+                    <img 
+                      src="/cover.jpg" 
+                      alt="Section 5 Cover" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to gradient if image fails to load
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                   </div>
-
-                  {/* Central Icon - Smaller */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative">
-                      {/* Glow */}
-                      <div className="absolute inset-0 bg-white/30 rounded-full blur-2xl animate-pulse"></div>
-                      
-                      {/* Shield Icon */}
-                      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-5 border-2 border-white/30 shadow-xl">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 relative">
-                          <svg className="w-full h-full text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-5xl sm:text-6xl font-black text-white" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>5</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  
+                  {/* Gradient Overlay for better text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-indigo-900/40 to-purple-900/40"></div>
 
                   {/* Shine Effect on Hover */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
