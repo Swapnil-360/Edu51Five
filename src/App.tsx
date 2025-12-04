@@ -469,35 +469,54 @@ function App() {
     }
   }, [currentView]);
 
-  // Subscribe to active users changes (for admin panel)
+  // Subscribe to active users changes (for admin panel) - INSTANT real-time updates
   useEffect(() => {
     if (isAdmin && currentView === 'admin') {
       // Initial fetch
       fetchActiveUsersCount();
 
-      // Setup realtime subscription
+      // Setup realtime subscription for INSTANT updates when users join/leave
       const channel = supabase
-        .channel('active_users_changes')
+        .channel('active_users_realtime')
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'INSERT',
             schema: 'public',
             table: 'active_users'
           },
-          () => {
+          (payload) => {
+            // New user joined - fetch updated count instantly
+            fetchActiveUsersCount();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'active_users'
+          },
+          (payload) => {
+            // User activity updated - fetch count instantly
+            fetchActiveUsersCount();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'active_users'
+          },
+          (payload) => {
+            // User left - fetch updated count instantly
             fetchActiveUsersCount();
           }
         )
         .subscribe();
 
-      // Refresh count every 5 seconds for real-time updates (device-based, no duplicates on refresh)
-      const countInterval = setInterval(() => {
-        fetchActiveUsersCount();
-      }, 5000);
-
       return () => {
-        clearInterval(countInterval);
         supabase.removeChannel(channel);
       };
     }
