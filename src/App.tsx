@@ -2620,7 +2620,7 @@ For any queries, contact your course instructors or the department.`,
                   {/* Connect & Support (merged) with improved icons */}
                   <div className="mt-4 pt-4 border-t border-slate-700/30">
                     <div className="max-w-4xl mx-auto text-center">
-                      <h4 className="text-sm font-semibold text-slate-200 mb-2">Connect & Support</h4>
+                      <h3 className="text-sm font-semibold text-slate-200 mb-2">Connect & Support</h3>
                       <p className="text-xs text-slate-400 mb-3">Found a bug? Have suggestions? Reach out — we appreciate your feedback.</p>
 
                       <div className="flex items-center justify-center gap-3">
