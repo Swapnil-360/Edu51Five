@@ -125,7 +125,7 @@ export function Header({
             {isAdmin && onAdminLogout && (
               <button
                 onClick={onAdminLogout}
-                className="hidden sm:flex items-center px-4 py-2 rounded-xl font-medium bg-red-500/90 text-white hover:bg-red-600 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-red-500/25"
+                className="hidden sm:flex items-center px-4 py-2 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-red-600/25"
               >
                 Admin Logout
               </button>
@@ -172,7 +172,7 @@ export function Header({
                   {onAdminLogout && (
                     <button
                       onClick={onAdminLogout}
-                      className="w-full px-4 py-3 rounded-xl font-medium bg-red-500/90 text-white hover:bg-red-600 transition-all duration-200 shadow-lg"
+                      className="w-full px-4 py-3 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-all duration-200 shadow-lg"
                     >
                       Admin Logout
                     </button>

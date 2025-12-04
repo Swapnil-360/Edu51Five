@@ -2118,7 +2118,7 @@ For any queries, contact your course instructors or the department.`,
               {isAdmin && (
                 <button
                   onClick={handleAdminLogout}
-                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-colors text-xs md:text-sm"
+                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-red-600 text-white hover:bg-red-700 transition-colors text-xs md:text-sm"
                 >
                   <span className="hidden sm:inline">Admin Logout</span>
                   <span className="sm:hidden">Logout</span>
@@ -4273,7 +4273,7 @@ For any queries, contact your course instructors or the department.`,
           <div className="relative h-full">
             <button
               onClick={() => goToView('home')}
-              className="fixed top-2 right-2 sm:top-4 sm:right-4 z-60 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+              className="fixed top-2 right-2 sm:top-4 sm:right-4 z-60 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-colors"
               title="Close"
             >
               <X className="h-5 w-5 sm:h-6 sm:w-6" />
