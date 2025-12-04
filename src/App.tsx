@@ -2638,7 +2638,7 @@ For any queries, contact your course instructors or the department.`,
                         <a
                           href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Swapnil, I need help with Edu51Five.')}`}
                           onClick={handleWhatsAppClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-medium shadow-md hover:bg-emerald-600 transition"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-medium shadow-md hover:bg-emerald-800 transition"
                           target="_blank"
                           rel="noopener noreferrer"
                           title="WhatsApp Support"
@@ -3891,7 +3891,7 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
             <div className="min-h-screen flex items-center justify-center p-4">
               <div className={`relative w-full max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800' : 'bg-white'
@@ -3924,7 +3924,7 @@ For any queries, contact your course instructors or the department.`,
                       }`} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h2 className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 leading-tight ${
+                      <h2 id="notice-modal-title" className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 leading-tight ${
                         isDarkMode ? 'text-gray-100' : 'text-gray-900'
                       }`}>{selectedNotice.title}</h2>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -4262,14 +4262,14 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Semester Tracker Page */}
       {currentView === 'semester' && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <main className="fixed inset-0 z-50 overflow-hidden">
           <SemesterTracker onClose={() => goToView('home')} isDarkMode={isDarkMode} />
-        </div>
+        </main>
       )}
 
       {/* Exam Materials Dashboard */}
       {currentView === 'examMaterials' && (
-        <div className="fixed inset-0 z-50">
+        <main className="fixed inset-0 z-50">
           <div className="relative h-full">
             <button
               onClick={() => goToView('home')}
@@ -4280,7 +4280,7 @@ For any queries, contact your course instructors or the department.`,
             </button>
             <ExamMaterialsDashboard isDarkMode={isDarkMode} />
           </div>
-        </div>
+        </main>
       )}
     </div>
   );
