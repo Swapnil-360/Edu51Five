@@ -3266,11 +3266,11 @@ For any queries, contact your course instructors or the department.`,
                       <div className="flex-1 flex items-start space-x-4">
                           <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                           {(() => {
-                            if (material.type.includes('pdf')) return <FileText className="h-5 w-5 text-red-500" />;
-                            if (material.type.includes('image')) return <ImageIcon className="h-5 w-5 text-green-500" />;
-                            if (material.type.includes('video')) return <Play className="h-5 w-5 text-purple-500" />;
-                            if (material.type.includes('document') || material.type.includes('word')) return <FileText className="h-5 w-5 text-blue-500" />;
-                            return <FileText className="h-5 w-5 text-gray-500" />;
+                            if (material.type.includes('pdf')) return <FileText className={`h-5 w-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />;
+                            if (material.type.includes('image')) return <ImageIcon className={`h-5 w-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />;
+                            if (material.type.includes('video')) return <Play className={`h-5 w-5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />;
+                            if (material.type.includes('document') || material.type.includes('word')) return <FileText className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />;
+                            return <FileText className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />;
                           })()}
                         </div>
                         <div className="flex-1 min-w-0">
