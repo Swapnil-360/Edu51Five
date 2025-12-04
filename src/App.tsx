@@ -252,17 +252,20 @@ function App() {
     }
   };
 
-  // Get active users count
+  // Get active users count (only unique sessions from last 30 minutes)
   const fetchActiveUsersCount = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_active_user_count', { page_name: 'student' });
+        .from('active_users')
+        .select('session_id', { count: 'exact', head: true })
+        .eq('page_name', 'student')
+        .gt('last_seen', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Last 30 minutes
       
       if (!error && typeof data === 'number') {
         setActiveUsersCount(data);
       }
     } catch (err) {
-      // Silently fail if function doesn't exist
+      // Silently fail if table doesn't exist
     }
   };
 
@@ -431,8 +434,11 @@ function App() {
 
   // Track user presence and setup realtime subscription for active users
   useEffect(() => {
+    let sessionId: string | null = null;
+
     // Track presence on student page
     if (currentView === 'section5' || currentView === 'course' || currentView === 'home') {
+      sessionId = getSessionId();
       trackUserPresence('student');
       
       // Update presence every 30 seconds
@@ -445,6 +451,9 @@ function App() {
         clearInterval(presenceInterval);
         removeUserSession();
       };
+    } else {
+      // If not on student page, clean up the session immediately
+      removeUserSession();
     }
   }, [currentView]);
 
@@ -470,10 +479,10 @@ function App() {
         )
         .subscribe();
 
-      // Refresh count every 10 seconds
+      // Refresh count every 30 seconds (reduced from 10s to avoid duplicates on refresh)
       const countInterval = setInterval(() => {
         fetchActiveUsersCount();
-      }, 10000);
+      }, 30000);
 
       return () => {
         clearInterval(countInterval);
