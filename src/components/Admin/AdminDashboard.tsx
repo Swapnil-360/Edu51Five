@@ -255,7 +255,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <Bell className="w-5 h-5 mr-2 text-blue-500" />
+              <Bell className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               <span>Notices</span>
             </h2>
             <button
@@ -311,7 +311,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         }`}
                         title="Edit this notice"
                       >
-                        <Edit2 className="w-4 h-4 text-blue-500" />
+                        <Edit2 className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                       </button>
                       <button
                         onClick={() => onDeleteNotice && onDeleteNotice(notice.id)}
@@ -320,7 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         }`}
                         title="Delete this notice"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
                       </button>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <AlertCircle className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
               <span>Emergency Alerts</span>
             </h2>
             <button
@@ -404,7 +404,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} break-words`}>{alert.message}</p>
                     <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Status: <span className={alert.status === 'ACTIVE' ? 'text-green-500 font-medium' : 'text-gray-500'}>{alert.status}</span>
+                      Status: <span className={alert.status === 'ACTIVE' ? `font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}` : 'text-gray-500'}>{alert.status}</span>
                     </p>
                   </div>
                   <div className="flex space-x-2 flex-shrink-0">
@@ -422,7 +422,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900' : 'hover:bg-red-100'}`}
                       title="Delete alert"
                     >
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
                     </button>
                   </div>
                 </div>
@@ -435,8 +435,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className={`rounded-xl lg:rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-5 lg:p-6`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <h2 className={`text-base sm:text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              <LinkIcon className="w-5 h-5 mr-2 text-blue-500" />
-              <span>Emergency Links</span>
+              <LinkIcon className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              <span>Important Links</span>
             </h2>
             <button
               onClick={() => setShowAddLink(!showAddLink)}
@@ -515,7 +515,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {link.url}
                     </a>
                     <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Status: <span className={link.status === 'ACTIVE' ? 'text-green-500 font-medium' : 'text-gray-500'}>{link.status}</span>
+                      Status: <span className={link.status === 'ACTIVE' ? `font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}` : 'text-gray-500'}>{link.status}</span>
                     </p>
                   </div>
                   <div className="flex space-x-2 flex-shrink-0">
@@ -533,7 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900' : 'hover:bg-red-100'}`}
                       title="Delete link"
                     >
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
                     </button>
                   </div>
                 </div>
