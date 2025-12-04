@@ -268,31 +268,26 @@ function App() {
     }
   };
 
-  // Get active users count (only unique devices active in last 2 minutes - real-time)
+  // Get active users count (only unique devices active in last 30 seconds - INSTANT real-time)
   const fetchActiveUsersCount = async () => {
     try {
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-      console.log('🔍 Fetching active users count...');
+      const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
       
-      // Try to get count of all records first to debug
-      const { data: allData, error: allError } = await supabase
+      // FIRST: Delete stale sessions (older than 30 seconds) - handles closed browsers INSTANTLY
+      const { error: deleteError } = await supabase
         .from('active_users')
-        .select('*', { count: 'exact', head: true });
+        .delete()
+        .lt('updated_at', thirtySecondsAgo);
       
-      if (allError) {
-        console.error('❌ Table error:', allError.message);
-        setActiveUsersCount(0);
-        return;
+      if (deleteError) {
+        console.warn('⚠️ Cleanup failed:', deleteError.message);
       }
       
-      console.log(`📊 Total records in active_users:`, allData);
-      
-      // Now get count filtering by page_name and time
+      // THEN: Count remaining active users (all remaining records are fresh)
       const { count, error } = await supabase
         .from('active_users')
         .select('session_id', { count: 'exact', head: true })
-        .eq('page_name', 'student')
-        .gte('updated_at', twoMinutesAgo);
+        .eq('page_name', 'student');
       
       if (error) {
         console.error('❌ Count query error:', error);
@@ -300,7 +295,7 @@ function App() {
         return;
       }
       
-      console.log(`✅ Active student users (last 2 min): ${count}`);
+      console.log(`⚡ Active users: ${count}`);
       setActiveUsersCount(count || 0);
     } catch (err) {
       console.error('❌ Exception fetching user count:', err);
@@ -482,10 +477,10 @@ function App() {
       trackUserPresence(pageType);
       console.log(`✅ Tracking user presence as ${pageType}`, sessionId);
       
-      // Update presence every 10 seconds (device stays alive as long as they're on the page)
+      // Update presence every 5 seconds for INSTANT real-time tracking
       const presenceInterval = setInterval(() => {
         trackUserPresence(pageType);
-      }, 10000);
+      }, 5000);
 
       // Cleanup on unmount or view change
       return () => {
@@ -504,6 +499,11 @@ function App() {
     if (isAdmin && currentView === 'admin') {
       // Initial fetch
       fetchActiveUsersCount();
+      
+      // Periodic cleanup every 10 seconds to remove stale sessions INSTANTLY
+      const cleanupInterval = setInterval(() => {
+        fetchActiveUsersCount();
+      }, 10000);
 
       // Setup realtime subscription for INSTANT updates when users join/leave
       const channel = supabase
@@ -517,6 +517,7 @@ function App() {
           },
           (payload) => {
             // New user joined - fetch updated count instantly
+            console.log('➕ User joined');
             fetchActiveUsersCount();
           }
         )
@@ -528,7 +529,7 @@ function App() {
             table: 'active_users'
           },
           (payload) => {
-            // User activity updated - fetch count instantly
+            // User activity updated - recount
             fetchActiveUsersCount();
           }
         )
@@ -541,12 +542,14 @@ function App() {
           },
           (payload) => {
             // User left - fetch updated count instantly
+            console.log('➖ User left');
             fetchActiveUsersCount();
           }
         )
         .subscribe();
 
       return () => {
+        clearInterval(cleanupInterval);
         supabase.removeChannel(channel);
       };
     }
