@@ -227,7 +227,7 @@ function App() {
     return sessionIdRef.current;
   };
 
-  // Track user presence on student page
+  // Track user presence on student/admin page
   const trackUserPresence = async (page: string) => {
     try {
       const sessionId = getSessionId();
@@ -243,10 +243,13 @@ function App() {
         }, { onConflict: 'session_id' });
       
       if (error && error.code !== 'PGRST116') { // Ignore table not exists error
-        console.warn('User tracking error:', error.message);
+        console.warn('⚠️ User tracking error:', error.message);
+      } else if (!error) {
+        console.log(`✅ Presence tracked for ${page} page at ${now}`);
       }
     } catch (err) {
       // Silently fail if table doesn't exist yet
+      console.warn('⚠️ Presence tracking failed:', err);
     }
   };
 
@@ -275,9 +278,13 @@ function App() {
       
       if (!error && typeof data === 'number') {
         setActiveUsersCount(data);
+        console.log(`📊 Active users count: ${data}`);
+      } else if (error) {
+        console.warn('⚠️ Error fetching active users:', error.message);
       }
     } catch (err) {
       // Silently fail if table doesn't exist
+      console.warn('⚠️ User count query failed:', err);
     }
   };
 
@@ -448,26 +455,29 @@ function App() {
   useEffect(() => {
     let sessionId: string | null = null;
 
-    // Track presence on student page
-    if (currentView === 'section5' || currentView === 'course' || currentView === 'home') {
+    // Track presence on student OR admin pages
+    if (currentView === 'section5' || currentView === 'course' || currentView === 'home' || (currentView === 'admin' && isAdmin)) {
       sessionId = getSessionId();
-      trackUserPresence('student');
+      const pageType = (currentView === 'admin' && isAdmin) ? 'admin' : 'student';
+      trackUserPresence(pageType);
+      console.log(`✅ Tracking user presence as ${pageType}`, sessionId);
       
-      // Update presence every 10 seconds (device stays alive as long as they're on student page)
+      // Update presence every 10 seconds (device stays alive as long as they're on the page)
       const presenceInterval = setInterval(() => {
-        trackUserPresence('student');
+        trackUserPresence(pageType);
       }, 10000);
 
       // Cleanup on unmount or view change
       return () => {
         clearInterval(presenceInterval);
         removeUserSession();
+        console.log(`❌ Stopped tracking user presence`);
       };
     } else {
-      // If not on student page, clean up the session immediately
+      // If not on tracked page, clean up the session immediately
       removeUserSession();
     }
-  }, [currentView]);
+  }, [currentView, isAdmin]);
 
   // Subscribe to active users changes (for admin panel) - INSTANT real-time updates
   useEffect(() => {
