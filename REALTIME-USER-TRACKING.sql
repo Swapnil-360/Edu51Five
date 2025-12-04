@@ -4,19 +4,20 @@
 -- This creates a table to track active users and their sessions
 -- Run this in your Supabase SQL Editor
 
--- 1. Create active_users table
+-- 1. Create active_users table with correct schema
 CREATE TABLE IF NOT EXISTS active_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id TEXT UNIQUE NOT NULL,
-    page TEXT NOT NULL,
-    last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    page_name TEXT NOT NULL,
+    last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     user_agent TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 2. Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_active_users_page_time 
-ON active_users(page, last_active DESC);
+ON active_users(page_name, updated_at DESC);
 
 -- 3. Enable Row Level Security
 ALTER TABLE active_users ENABLE ROW LEVEL SECURITY;
@@ -47,7 +48,7 @@ ON active_users FOR SELECT
 TO public
 USING (true);
 
--- 5. Create function to cleanup stale sessions (older than 2 minutes)
+-- 5. Create function to cleanup stale sessions (older than 5 minutes)
 CREATE OR REPLACE FUNCTION cleanup_stale_sessions()
 RETURNS void
 SECURITY DEFINER
@@ -56,11 +57,11 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     DELETE FROM active_users 
-    WHERE last_active < NOW() - INTERVAL '2 minutes';
+    WHERE updated_at < NOW() - INTERVAL '5 minutes';
 END;
 $$;
 
--- 6. Create function to get active user count by page
+-- 6. Create function to get active user count by page (2-minute window)
 CREATE OR REPLACE FUNCTION get_active_user_count(page_name TEXT)
 RETURNS INTEGER
 SECURITY DEFINER
@@ -73,12 +74,12 @@ BEGIN
     -- First cleanup stale sessions
     PERFORM cleanup_stale_sessions();
     
-    -- Then count active users on the page (last active within 1 minute)
+    -- Then count active users on the page (active within 2 minutes)
     SELECT COUNT(DISTINCT session_id)
     INTO user_count
     FROM active_users
-    WHERE page = page_name 
-    AND last_active > NOW() - INTERVAL '1 minute';
+    WHERE page_name = $1
+    AND updated_at > NOW() - INTERVAL '2 minutes';
     
     RETURN user_count;
 END;

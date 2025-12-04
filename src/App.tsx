@@ -270,21 +270,29 @@ function App() {
   const fetchActiveUsersCount = async () => {
     try {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
+      console.log('🔍 Fetching active users... Filter: updated_at >', twoMinutesAgo);
+      
+      const { data, error, status } = await supabase
         .from('active_users')
         .select('session_id', { count: 'exact', head: true })
         .eq('page_name', 'student')
         .gt('updated_at', twoMinutesAgo); // Only count devices active in last 2 minutes
       
-      if (!error && typeof data === 'number') {
+      if (error) {
+        console.error('❌ Error fetching active users:', error);
+        setActiveUsersCount(0);
+        return;
+      }
+      
+      if (typeof data === 'number') {
         setActiveUsersCount(data);
-        console.log(`📊 Active users count: ${data}`);
-      } else if (error) {
-        console.warn('⚠️ Error fetching active users:', error.message);
+        console.log(`✅ Active users count updated: ${data}`);
+      } else {
+        console.warn('⚠️ Unexpected data type:', typeof data, data);
       }
     } catch (err) {
-      // Silently fail if table doesn't exist
-      console.warn('⚠️ User count query failed:', err);
+      console.error('❌ Exception fetching user count:', err);
+      setActiveUsersCount(0);
     }
   };
 
