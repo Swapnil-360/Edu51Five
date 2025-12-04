@@ -243,10 +243,12 @@ export const getCurrentRoutineType = () => {
   const currentMonth = now.getMonth();
   const currentDate = now.getDate();
   
-  if (currentMonth === 11 && currentDate >= 1 && currentDate <= 15) {
+  // Final exam period: December 4-14, 2025
+  if (currentMonth === 11 && currentDate >= 4 && currentDate <= 14) {
     return 'final_exam';
   }
   
+  // Mid-term exam period: September 14-24, 2025
   if (currentMonth === 8 && currentDate >= 14 && currentDate <= 24) {
     return 'midterm_exam';
   }
@@ -287,6 +289,13 @@ export const getRoutineDescription = (): string => {
 
 export const getTodaysSchedule = (): ClassSlot[] => {
   const today = new Date();
+  const routineType = getCurrentRoutineType();
+  
+  // During exam periods, no regular classes - return empty array
+  if (routineType === 'final_exam' || routineType === 'midterm_exam') {
+    return [];
+  }
+  
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayName = dayNames[today.getDay()];
   

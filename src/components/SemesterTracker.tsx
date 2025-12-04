@@ -433,12 +433,24 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 min-w-[100px]">Course</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 min-w-[120px]">Date & Day</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 min-w-[80px]">Teacher</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 min-w-[100px]">Time</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 min-w-[80px]">Status</th>
+                <tr className={`border-b transition-colors duration-300 ${
+                  isDarkMode ? 'border-emerald-700/50' : 'border-slate-200'
+                }`}>
+                  <th className={`text-left py-3 px-4 font-semibold min-w-[100px] transition-colors duration-300 ${
+                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                  }`}>Course</th>
+                  <th className={`text-left py-3 px-4 font-semibold min-w-[120px] transition-colors duration-300 ${
+                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                  }`}>Date & Day</th>
+                  <th className={`text-left py-3 px-4 font-semibold min-w-[80px] transition-colors duration-300 ${
+                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                  }`}>Teacher</th>
+                  <th className={`text-left py-3 px-4 font-semibold min-w-[100px] transition-colors duration-300 ${
+                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                  }`}>Time</th>
+                  <th className={`text-left py-3 px-4 font-semibold min-w-[80px] transition-colors duration-300 ${
+                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                  }`}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -452,40 +464,54 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   examDate.setHours(0, 0, 0, 0);
                   
                   let status = 'Upcoming';
-                  let statusColor = 'text-blue-600';
-                  let bgColor = 'bg-blue-50';
+                  let statusColor = isDarkMode ? 'text-blue-400' : 'text-blue-600';
+                  let bgColor = isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50';
                   
                   if (examDate < today) {
                     status = 'Completed';
-                    statusColor = 'text-green-600';
-                    bgColor = 'bg-green-50';
+                    statusColor = isDarkMode ? 'text-green-400' : 'text-green-600';
+                    bgColor = isDarkMode ? 'bg-green-900/30' : 'bg-green-50';
                   } else if (examDate.getTime() === today.getTime()) {
                     // Check if exam time has passed (exam ends at 11:30 AM)
                     const examEndTime = new Date();
                     examEndTime.setHours(11, 30, 0, 0); // 11:30 AM
                     
                     if (currentTime >= examEndTime) {
-                      status = 'Completed Today';
-                      statusColor = 'text-green-600';
-                      bgColor = 'bg-green-50';
+                      status = 'Completed';
+                      statusColor = isDarkMode ? 'text-green-400' : 'text-green-600';
+                      bgColor = isDarkMode ? 'bg-green-900/30' : 'bg-green-50';
                     } else {
                       status = 'Today';
-                      statusColor = 'text-red-600';
-                      bgColor = 'bg-red-50';
+                      statusColor = isDarkMode ? 'text-red-400' : 'text-red-600';
+                      bgColor = isDarkMode ? 'bg-red-900/30' : 'bg-red-50';
                     }
                   }
 
                   return (
-                    <tr key={courseCode} className={`${bgColor} border-b border-slate-100`}>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{courseCode}</td>
+                    <tr key={courseCode} className={`${bgColor} border-b transition-colors duration-300 ${
+                      isDarkMode ? 'border-emerald-700/30' : 'border-slate-100'
+                    }`}>
+                      <td className={`py-3 px-4 font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-100' : 'text-slate-800'
+                      }`}>{courseCode}</td>
                       <td className="py-3 px-4">
-                        <div className="text-slate-800">{exam.date.split('-').reverse().join('/')}</div>
-                        <div className="text-slate-600 text-sm">{exam.day}</div>
+                        <div className={`transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-100' : 'text-slate-800'
+                        }`}>{exam.date.split('-').reverse().join('/')}</div>
+                        <div className={`text-sm transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                        }`}>{exam.day}</div>
                       </td>
-                      <td className="py-3 px-4 text-slate-700">{exam.teacher}</td>
+                      <td className={`py-3 px-4 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-slate-700'
+                      }`}>{exam.teacher}</td>
                       <td className="py-3 px-4">
-                        <div className="text-slate-800 text-sm">{exam.time}</div>
-                        <div className="text-slate-600 text-xs">Room {exam.room}</div>
+                        <div className={`text-sm transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-100' : 'text-slate-800'
+                        }`}>{exam.time}</div>
+                        <div className={`text-xs transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                        }`}>Room {exam.room}</div>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`${statusColor} font-semibold`}>{status}</span>
@@ -635,8 +661,8 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     </p>
                   </div>
                 );
-              } else if (classesFinished && nextClass && !nextClass.isToday) {
-                // Show next day's first class when today's classes are done
+              } else if (classesFinished && nextClass && !nextClass.isToday && todaysClasses.length > 0) {
+                // Show next day's first class when today's classes are done (but only if there were actually classes today)
                 return (
                   <div>
                     <div className="text-4xl mb-2">✅</div>
@@ -670,41 +696,45 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 );
               } else if (todaysClasses.length === 0 && nextDaySchedule) {
                 // No classes today, show next day's schedule
+                const isExamPeriod = semesterStatus.isMidtermPeriod || semesterStatus.isFinalPeriod;
                 return (
                   <div>
-                    <div className="text-4xl mb-2">🎉</div>
+                    <div className="text-4xl mb-2">{isExamPeriod ? '📝' : '🎉'}</div>
                     <h3 className={`font-bold mb-2 ${
                       isDarkMode ? 'text-indigo-400' : 'text-indigo-800'
-                    }`}>No Classes Today!</h3>
+                    }`}>{isExamPeriod ? 'Exam Period - No Classes' : 'No Classes Today!'}</h3>
                     <p className={`text-sm ${
                       isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-                    }`}>Enjoy your free day!</p>
-                    <div className={`mt-3 pt-3 border-t ${
-                      isDarkMode ? 'border-gray-700' : 'border-indigo-200'
-                    }`}>
-                      <p className={`text-xs font-semibold mb-1 ${
-                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                    }`}>{isExamPeriod ? 'Focus on exam preparation!' : 'Enjoy your free day!'}</p>
+                    {!isExamPeriod && (
+                      <div className={`mt-3 pt-3 border-t ${
+                        isDarkMode ? 'border-gray-700' : 'border-indigo-200'
                       }`}>
-                        Next Classes: {nextDaySchedule.dayName} ({nextDaySchedule.date})
-                      </p>
-                      <p className={`text-xs ${
-                        isDarkMode ? 'text-blue-400' : 'text-blue-500'
-                      }`}>
-                        {nextDaySchedule.totalClasses} {nextDaySchedule.totalClasses === 1 ? 'class' : 'classes'} scheduled
-                      </p>
-                    </div>
+                        <p className={`text-xs font-semibold mb-1 ${
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        }`}>
+                          Next Classes: {nextDaySchedule.dayName} ({nextDaySchedule.date})
+                        </p>
+                        <p className={`text-xs ${
+                          isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                        }`}>
+                          {nextDaySchedule.totalClasses} {nextDaySchedule.totalClasses === 1 ? 'class' : 'classes'} scheduled
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               } else {
+                const isExamPeriod = semesterStatus.isMidtermPeriod || semesterStatus.isFinalPeriod;
                 return (
                   <div>
-                    <div className="text-4xl mb-2">🎉</div>
+                    <div className="text-4xl mb-2">{isExamPeriod ? '📝' : '🎉'}</div>
                     <h3 className={`font-bold mb-2 ${
                       isDarkMode ? 'text-indigo-400' : 'text-indigo-800'
-                    }`}>No Classes Today!</h3>
+                    }`}>{isExamPeriod ? 'Exam Period - No Classes' : 'No Classes Today!'}</h3>
                     <p className={`text-sm ${
                       isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-                    }`}>Enjoy your free day! Perfect for self-study.</p>
+                    }`}>{isExamPeriod ? 'Focus on your exam preparation!' : 'Enjoy your free day! Perfect for self-study.'}</p>
                   </div>
                 );
               }

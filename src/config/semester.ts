@@ -34,8 +34,8 @@ export const SEMESTER_CONFIG: SemesterConfig = {
   name: "Fall 2025",
   code: "FALL_2025", 
   startDate: "2025-07-15",      // Confirmed start date
-  endDate: "2025-12-15",        // Confirmed end date
-  totalDays: 153,               // July 15 to Dec 15 (5 months)
+  endDate: "2025-12-17",        // SDP-300 Defense/Viva on Dec 17
+  totalDays: 155,               // July 15 to Dec 17 (5 months + 2 days)
 
   periods: {
     regularClasses: {
@@ -71,7 +71,7 @@ export const SEMESTER_CONFIG: SemesterConfig = {
   breaks: {
     winterBreak: {
       name: "Winter Break",
-      startDate: "2025-12-16",   // Day after finals end
+      startDate: "2025-12-18",   // After SDP-300 Defense/Viva (Dec 17)
       endDate: "2025-12-31",     // End of year
       type: 'break'
     }
@@ -186,9 +186,21 @@ export const getBangladeshTime = () => {
   });
 };
 
+// Special academic events
+export const SPECIAL_EVENTS = {
+  sdpDefense: {
+    name: "SDP-300 Defense/Viva",
+    date: "2025-12-17",
+    description: "Project presentation and viva for Software Development Project",
+    icon: "🎓"
+  }
+};
+
 // Semester timeline data for UI
 export const getSemesterTimeline = () => {
   const progress = calculateSemesterProgress();
+  const now = new Date();
+  const sdpDate = new Date(SPECIAL_EVENTS.sdpDefense.date);
   
   return {
     phases: [
@@ -206,7 +218,7 @@ export const getSemesterTimeline = () => {
       },
       {
         name: "Mid-terms",
-        date: "Nov 1-15",
+        date: "Sep 14-24",
         status: progress.isMidtermPeriod ? "current" : progress.daysToMidterm <= 0 ? "completed" : "upcoming",
         icon: "📝"
       },
@@ -217,8 +229,14 @@ export const getSemesterTimeline = () => {
         icon: "🎯"
       },
       {
+        name: "SDP Viva",
+        date: "Dec 17",
+        status: now >= sdpDate ? "completed" : now.toDateString() === sdpDate.toDateString() ? "current" : "upcoming",
+        icon: "🎓"
+      },
+      {
         name: "Break",
-        date: "Dec 16",
+        date: "Dec 18",
         status: progress.isBreak ? "current" : "upcoming",
         icon: "🏖️"
       }

@@ -1,40 +1,40 @@
-// Mid-term exam schedule for BUBT Intake 51 Section 5
+// Final exam schedule for BUBT Intake 51 Section 5
 // All exams are 10:00 AM to 11:30 AM in Room 2710
 
 export const MID_TERM_SCHEDULE = {
   'CSE-319-20': {
-    date: '2025-09-14',
-    day: 'Sunday',
+    date: '2025-12-04',
+    day: 'Thursday',
     teacher: 'SHB',
     time: '10:00 AM to 11:30 AM',
     room: '2710'
   },
   'CSE-327': {
-    date: '2025-09-16', 
-    day: 'Tuesday',
+    date: '2025-12-07', 
+    day: 'Sunday',
     teacher: 'DMAa',
     time: '10:00 AM to 11:30 AM',
     room: '2710'
   },
   'CSE-407': {
-    date: '2025-09-18',
-    day: 'Thursday', 
+    date: '2025-12-09',
+    day: 'Tuesday', 
     teacher: 'NB',
     time: '10:00 AM to 11:30 AM',
     room: '2710'
   },
-  'CSE-417': {
-    date: '2025-09-22',
-    day: 'Monday',
-    teacher: 'TAB', 
-    time: '10:00 AM to 11:30 AM',
-    room: '2710'
-  },
   'CSE-351': {
-    date: '2025-09-24',
-    day: 'Wednesday',
+    date: '2025-12-11',
+    day: 'Thursday',
     teacher: 'SHD',
     time: '10:00 AM to 11:30 AM', 
+    room: '2710'
+  },
+  'CSE-417': {
+    date: '2025-12-14',
+    day: 'Sunday',
+    teacher: 'TAB', 
+    time: '10:00 AM to 11:30 AM',
     room: '2710'
   }
 };
