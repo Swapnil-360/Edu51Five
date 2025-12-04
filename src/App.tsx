@@ -213,7 +213,16 @@ function App() {
   // Generate or get session ID
   const getSessionId = () => {
     if (!sessionIdRef.current) {
-      sessionIdRef.current = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Try to get existing device ID from localStorage
+      let deviceId = localStorage.getItem('device_id');
+      
+      // If not found, create new device ID and persist it
+      if (!deviceId) {
+        deviceId = `device_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        localStorage.setItem('device_id', deviceId);
+      }
+      
+      sessionIdRef.current = deviceId;
     }
     return sessionIdRef.current;
   };
@@ -222,12 +231,14 @@ function App() {
   const trackUserPresence = async (page: string) => {
     try {
       const sessionId = getSessionId();
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('active_users')
         .upsert({
           session_id: sessionId,
-          page: page,
-          last_active: new Date().toISOString(),
+          page_name: page,
+          last_seen: now,
+          updated_at: now,
           user_agent: navigator.userAgent
         }, { onConflict: 'session_id' });
       
@@ -252,14 +263,15 @@ function App() {
     }
   };
 
-  // Get active users count (only unique sessions from last 30 minutes)
+  // Get active users count (only unique devices active in last 2 minutes - real-time)
   const fetchActiveUsersCount = async () => {
     try {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('active_users')
         .select('session_id', { count: 'exact', head: true })
         .eq('page_name', 'student')
-        .gt('last_seen', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Last 30 minutes
+        .gt('updated_at', twoMinutesAgo); // Only count devices active in last 2 minutes
       
       if (!error && typeof data === 'number') {
         setActiveUsersCount(data);
@@ -441,10 +453,10 @@ function App() {
       sessionId = getSessionId();
       trackUserPresence('student');
       
-      // Update presence every 30 seconds
+      // Update presence every 10 seconds (device stays alive as long as they're on student page)
       const presenceInterval = setInterval(() => {
         trackUserPresence('student');
-      }, 30000);
+      }, 10000);
 
       // Cleanup on unmount or view change
       return () => {
@@ -479,10 +491,10 @@ function App() {
         )
         .subscribe();
 
-      // Refresh count every 30 seconds (reduced from 10s to avoid duplicates on refresh)
+      // Refresh count every 5 seconds for real-time updates (device-based, no duplicates on refresh)
       const countInterval = setInterval(() => {
         fetchActiveUsersCount();
-      }, 30000);
+      }, 5000);
 
       return () => {
         clearInterval(countInterval);
