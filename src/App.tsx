@@ -2638,7 +2638,7 @@ For any queries, contact your course instructors or the department.`,
                         <a
                           href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Swapnil, I need help with Edu51Five.')}`}
                           onClick={handleWhatsAppClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium shadow-md hover:opacity-95 transition"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-medium shadow-md hover:bg-emerald-600 transition"
                           target="_blank"
                           rel="noopener noreferrer"
                           title="WhatsApp Support"
