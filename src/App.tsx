@@ -232,7 +232,9 @@ function App() {
     try {
       const sessionId = getSessionId();
       const now = new Date().toISOString();
-      const { error } = await supabase
+      console.log(`📝 Inserting presence: session=${sessionId}, page=${page}, time=${now}`);
+      
+      const { error, data } = await supabase
         .from('active_users')
         .upsert({
           session_id: sessionId,
@@ -242,14 +244,14 @@ function App() {
           user_agent: navigator.userAgent
         }, { onConflict: 'session_id' });
       
-      if (error && error.code !== 'PGRST116') { // Ignore table not exists error
-        console.warn('⚠️ User tracking error:', error.message);
-      } else if (!error) {
-        console.log(`✅ Presence tracked for ${page} page at ${now}`);
+      if (error) {
+        console.error('❌ Upsert error:', error.message, error.code);
+      } else {
+        console.log(`✅ Presence tracked: ${page} (${sessionId.slice(0, 12)}...)`);
       }
     } catch (err) {
       // Silently fail if table doesn't exist yet
-      console.warn('⚠️ Presence tracking failed:', err);
+      console.error('❌ Presence tracking exception:', err);
     }
   };
 
@@ -270,26 +272,36 @@ function App() {
   const fetchActiveUsersCount = async () => {
     try {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-      console.log('🔍 Fetching active users... Filter: updated_at >', twoMinutesAgo);
+      console.log('🔍 Fetching active users count...');
       
-      const { data, error, status } = await supabase
+      // Try to get count of all records first to debug
+      const { data: allData, error: allError } = await supabase
         .from('active_users')
-        .select('session_id', { count: 'exact', head: true })
-        .eq('page_name', 'student')
-        .gt('updated_at', twoMinutesAgo); // Only count devices active in last 2 minutes
+        .select('*', { count: 'exact', head: true });
       
-      if (error) {
-        console.error('❌ Error fetching active users:', error);
+      if (allError) {
+        console.error('❌ Table error:', allError.message);
         setActiveUsersCount(0);
         return;
       }
       
-      if (typeof data === 'number') {
-        setActiveUsersCount(data);
-        console.log(`✅ Active users count updated: ${data}`);
-      } else {
-        console.warn('⚠️ Unexpected data type:', typeof data, data);
+      console.log(`📊 Total records in active_users:`, allData);
+      
+      // Now get count filtering by page_name and time
+      const { count, error } = await supabase
+        .from('active_users')
+        .select('session_id', { count: 'exact', head: true })
+        .eq('page_name', 'student')
+        .gte('updated_at', twoMinutesAgo);
+      
+      if (error) {
+        console.error('❌ Count query error:', error);
+        setActiveUsersCount(0);
+        return;
       }
+      
+      console.log(`✅ Active student users (last 2 min): ${count}`);
+      setActiveUsersCount(count || 0);
     } catch (err) {
       console.error('❌ Exception fetching user count:', err);
       setActiveUsersCount(0);
