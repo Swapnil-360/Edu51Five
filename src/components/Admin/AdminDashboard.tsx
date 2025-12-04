@@ -510,7 +510,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 text-xs sm:text-sm hover:underline break-all block mt-1"
+                      className={`text-xs sm:text-sm hover:underline break-all block mt-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                     >
                       {link.url}
                     </a>
