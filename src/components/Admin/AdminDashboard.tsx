@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2 } from 'lucide-react';
+import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp } from 'lucide-react';
 import { DriveManager } from './DriveManager';
 
 interface Notice {
@@ -175,77 +175,103 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const semesterProgress = ((currentWeek / totalWeeks) * 100).toFixed(1);
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
       {/* Header Section */}
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm border-b`}>
+      <div className={`${isDarkMode ? 'bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-slate-700/50 backdrop-blur-sm' : 'bg-white/80 border-gray-200 backdrop-blur-sm'} shadow-sm border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 md:py-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isDarkMode ? 'bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent' : 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'}`}>
             Admin Dashboard
           </h1>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-1.5 sm:mt-2 text-sm sm:text-base`}>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 sm:mt-3 text-sm sm:text-base font-medium`}>
             Manage notices, emergencies, and view platform statistics
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
         {/* SECTION 1: Quick Stats Dashboard */}
         <div>
-          <h2 className={`text-base sm:text-lg font-semibold mb-3 sm:mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-            📊 Platform Statistics
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h2 className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Platform Statistics
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             {/* Courses Card */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
-                <p className="text-2xl sm:text-3xl font-bold">{coursesCount}</p>
-                <div className="text-xl sm:text-2xl opacity-50">📚</div>
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-blue-500/20 hover:border-blue-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-blue-500/20' : 'bg-gradient-to-br from-blue-50/80 to-blue-100/80 backdrop-blur-xl border border-blue-200/50 hover:border-blue-300/80 hover:shadow-lg hover:shadow-blue-200/50'}`}>
+              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-blue-500/5 to-transparent' : 'bg-gradient-to-br from-blue-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <div className="relative z-10 p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Courses</p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30' : 'bg-blue-200 text-blue-600 group-hover:bg-blue-300'} transition-all group-hover:scale-110`}>
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-blue-300 group-hover:text-blue-200' : 'text-blue-600 group-hover:text-blue-700'} transition-colors`}>{coursesCount}</p>
+                <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-blue-500 to-blue-400' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}></div>
               </div>
             </div>
 
             {/* Files Card */}
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <p className="text-emerald-100 text-xs sm:text-sm font-medium">Total Files</p>
-                <p className="text-2xl sm:text-3xl font-bold">{materialsCount}</p>
-                <div className="text-xl sm:text-2xl opacity-50">📁</div>
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-emerald-500/20' : 'bg-gradient-to-br from-emerald-50/80 to-emerald-100/80 backdrop-blur-xl border border-emerald-200/50 hover:border-emerald-300/80 hover:shadow-lg hover:shadow-emerald-200/50'}`}>
+              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-emerald-500/5 to-transparent' : 'bg-gradient-to-br from-emerald-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <div className="relative z-10 p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Files</p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30' : 'bg-emerald-200 text-emerald-600 group-hover:bg-emerald-300'} transition-all group-hover:scale-110`}>
+                    <Files className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-emerald-300 group-hover:text-emerald-200' : 'text-emerald-600 group-hover:text-emerald-700'} transition-colors`}>{materialsCount}</p>
+                <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-600'}`}></div>
               </div>
             </div>
 
-            {/* Online Users Card - Real-time */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden">
-              {/* Live indicator animation */}
-              <div className="absolute top-3 right-3">
-                <div className="relative">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <div className="absolute inset-0 w-2 h-2 bg-green-400 rounded-full animate-ping opacity-75"></div>
+            {/* Online Users Card */}
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-purple-500/20 hover:border-purple-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-purple-500/20' : 'bg-gradient-to-br from-purple-50/80 to-purple-100/80 backdrop-blur-xl border border-purple-200/50 hover:border-purple-300/80 hover:shadow-lg hover:shadow-purple-200/50'}`}>
+              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-purple-500/5 to-transparent' : 'bg-gradient-to-br from-purple-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <div className="relative z-10 p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Active</p>
+                    <span className={`inline-block mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDarkMode ? 'bg-green-500/30 text-green-300' : 'bg-green-200 text-green-700'}`}>
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 mr-1 animate-pulse"></span>
+                      LIVE
+                    </span>
+                  </div>
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30' : 'bg-purple-200 text-purple-600 group-hover:bg-purple-300'} transition-all group-hover:scale-110`}>
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
                 </div>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-purple-300 group-hover:text-purple-200' : 'text-purple-600 group-hover:text-purple-700'} transition-colors`}>{onlineUsers}</p>
+                <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-purple-500 to-purple-400' : 'bg-gradient-to-r from-purple-500 to-purple-600'}`}></div>
               </div>
-              
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <div className="flex items-center space-x-2">
-                  <p className="text-purple-100 text-xs sm:text-sm font-medium">Online Users</p>
-                  <span className="text-[10px] bg-green-400 text-green-900 px-1.5 py-0.5 rounded-full font-semibold">LIVE</span>
-                </div>
-                <p className="text-2xl sm:text-3xl font-bold">{onlineUsers}</p>
-                <div className="flex items-center space-x-1.5 text-purple-100 text-xs">
-                  <span className="opacity-75">Active now</span>
-                  <span className="opacity-50">•</span>
-                  <span className="opacity-75">Updates every 10s</span>
-                </div>
-              </div>
-              
-              {/* Decorative pulse effect */}
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
 
             {/* Semester Progress Card */}
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl text-white shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <p className="text-orange-100 text-xs sm:text-sm font-medium">Semester Progress</p>
-                <p className="text-2xl sm:text-3xl font-bold">Week {currentWeek}</p>
-                <p className="text-orange-100 text-xs sm:text-sm">{semesterProgress}%</p>
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-orange-500/20 hover:border-orange-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-orange-500/20' : 'bg-gradient-to-br from-orange-50/80 to-orange-100/80 backdrop-blur-xl border border-orange-200/50 hover:border-orange-300/80 hover:shadow-lg hover:shadow-orange-200/50'}`}>
+              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-orange-500/5 to-transparent' : 'bg-gradient-to-br from-orange-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <div className="relative z-10 p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Progress</p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-orange-500/20 text-orange-400 group-hover:bg-orange-500/30' : 'bg-orange-200 text-orange-600 group-hover:bg-orange-300'} transition-all group-hover:scale-110`}>
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-orange-300 group-hover:text-orange-200' : 'text-orange-600 group-hover:text-orange-700'} transition-colors`}>Week {currentWeek}</p>
+                <p className={`mt-1 text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{semesterProgress}%</p>
               </div>
             </div>
           </div>
