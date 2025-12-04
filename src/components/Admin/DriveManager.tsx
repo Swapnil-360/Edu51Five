@@ -418,7 +418,7 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
                         rel="noopener noreferrer"
                         className={`p-2 rounded flex items-center gap-1 text-sm ${
                           isDarkMode 
-                            ? 'text-blue-400 hover:bg-blue-900/30' 
+                            ? 'text-blue-300 hover:bg-blue-900/30' 
                             : 'text-blue-600 hover:bg-blue-50'
                         }`}
                       >
@@ -430,7 +430,7 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
                       onClick={() => deleteItem(item)}
                       className={`p-2 rounded flex items-center gap-1 text-sm ${
                         isDarkMode 
-                          ? 'text-red-400 hover:bg-red-900/30' 
+                          ? 'text-red-300 hover:bg-red-900/30' 
                           : 'text-red-600 hover:bg-red-50'
                       }`}
                     >
