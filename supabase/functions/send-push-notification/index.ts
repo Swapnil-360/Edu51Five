@@ -4,6 +4,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import webpush from 'npm:web-push'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,6 +61,16 @@ serve(async (req) => {
     }
 
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Configure VAPID for Web Push
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      throw new Error('Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY in environment')
+    }
+
+    webpush.setVapidDetails('mailto:admin@example.com', vapidPublicKey, vapidPrivateKey)
 
     // Get all active push subscriptions - Query table directly instead of RPC for reliability
     console.log('📡 Fetching active push subscriptions...')
@@ -121,27 +132,18 @@ serve(async (req) => {
       
       const sendPromises = batch.map(async (sub: PushSubscription) => {
         try {
-          // Send push notification directly to endpoint (no VAPID needed for simple POST)
-          const response = await fetch(sub.endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-              'TTL': '86400', // 24 hours
-              'Urgency': 'normal',
-            },
-            body: JSON.stringify(notificationPayload)
-          })
-
-        if (response.ok) {
+          // Send push via Web Push protocol (encrypted, VAPID-signed)
+          await webpush.sendNotification(sub.subscription, JSON.stringify(notificationPayload))
           successCount++
           console.log(`✅ Notification sent to ${sub.session_id}`)
           return { success: true, endpoint: sub.endpoint }
-        } else {
+        } catch (error: any) {
           failureCount++
-          console.warn(`⚠️ Failed to send to ${sub.session_id}: HTTP ${response.status}`)
+          const status = error?.statusCode
+          console.warn(`⚠️ Failed to send to ${sub.session_id}: ${status ?? error}`)
 
           // Remove invalid subscriptions (410 Gone = unsubscribed, 404 = endpoint invalid)
-          if (response.status === 410 || response.status === 404) {
+          if (status === 410 || status === 404) {
             console.log(`🗑️ Removing invalid subscription: ${sub.session_id}`)
             await supabaseClient
               .from('push_subscriptions')
@@ -150,13 +152,8 @@ serve(async (req) => {
               .catch((err) => console.error('Failed to delete subscription:', err))
           }
 
-          return { success: false, endpoint: sub.endpoint, status: response.status }
+          return { success: false, endpoint: sub.endpoint, status }
         }
-      } catch (error) {
-        failureCount++
-        console.error(`❌ Error sending to ${sub.session_id}:`, error)
-        return { success: false, endpoint: sub.endpoint, error: String(error) }
-      }
       })
 
       // Wait for batch to complete before next batch
@@ -188,79 +185,42 @@ serve(async (req) => {
       console.error('Error logging notification:', logError)
     }
 
-    // Return success response
-  
+     // Return success response
+     return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Push notifications sent',
+        sent: successCount,
+        failed: failureCount,
+        total: subscriptions.length,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+     )
 
-/* 
-DEPLOYMENT INSTRUCTIONS:
-========================
+    } catch (error) {
+     console.error('❌ Function error:', error)
+     return new Response(
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+     )
+    }
+  })
 
-1. Install Supabase CLI:
-   npm install -g supabase
+  /*
+  DEPLOYMENT (CLI):
+  1) supabase login
+  2) supabase link --project-ref YOUR_PROJECT_REF
+  3) supabase functions deploy send-push-notification
 
-2. Login to Supabase:
-   supabase login
-
-3. Link your project:
-   supabase link --project-ref YOUR_PROJECT_REF
-
-4. Deploy this function:
-   supabase functions deploy send-push-notification
-
-5. Test the function:
-   curl -i --location --request POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-push-notification' \
-   --header 'Authorization: Bearer YOUR_ANON_KEY' \
-   --header 'Content-Type: application/json' \
-   --data '{
-     "noticeId": "test-123",
-     "noticeType": "welcome-notice",
-     "title": "Test Notification",
-     "body": "This is a test notification from Edu51Five",
-     "url": "/"
-   }'
-
-6. Check function logs:
-   - Supabase Dashboard → Functions → send-push-notification → Invocations
-   - View real-time logs as function executes
-
-KEY IMPROVEMENTS:
-=================
-✅ Direct table query instead of RPC for better reliability
-✅ No VAPID keys needed - web push endpoints handle auth internally
-✅ Proper error handling and validation
-✅ Batch processing to avoid rate limits
-✅ Auto-cleanup of invalid subscriptions (410, 404 errors)
-✅ Detailed logging for debugging
-✅ 30-day subscription filtering
-✅ Proper TypeScript types
-
-NOTES:
-======
-- This simplified approach works for small-to-medium student bases
-- No web-push library needed
-- Suitable for educational use (< 10k concurrent subscriptions)
-*/
-2. Login to Supabase:
-   supabase login
-
-3. Link your project:
-   supabase link --project-ref YOUR_PROJECT_REF
-
-4. Generate VAPID keys (use web-push library):
-   npx web-push generate-vapid-keys
-
-5. Set secrets in Supabase:
-   supabase secrets set VAPID_PUBLIC_KEY="your_public_key"
-   supabase secrets set VAPID_PRIVATE_KEY="your_private_key"
-
-6. Deploy this function:
-   supabase functions deploy send-push-notification
-
-7. Update the VAPID_PUBLIC_KEY in src/lib/pushNotifications.ts with your generated public key
-
-8. Test the function:
-   curl -i --location --request POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-push-notification' \
-   --header 'Authorization: Bearer YOUR_ANON_KEY' \
-   --header 'Content-Type: application/json' \
-   --data '{"noticeId":"test","noticeType":"welcome-notice","title":"Test","body":"Test notification"}'
-*/
+  TEST (curl):
+  curl -i --location --request POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-push-notification' \
+    --header 'Authorization: Bearer YOUR_ANON_KEY' \
+    --header 'Content-Type': 'application/json' \
+    --data '{"noticeId":"test-123","noticeType":"welcome-notice","title":"Test","body":"Hello","url":"/"}'
+  */

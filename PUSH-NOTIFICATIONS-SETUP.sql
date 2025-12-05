@@ -17,6 +17,12 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_session_id ON push_subscriptio
 -- Create index on endpoint
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON push_subscriptions(endpoint);
 
+-- Create index on updated_at for cleanup and active queries
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_updated_at ON push_subscriptions(updated_at DESC);
+
+-- Create composite index for active subscription queries
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_active ON push_subscriptions(updated_at DESC, id);
+
 -- Enable Row Level Security
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
@@ -166,9 +172,11 @@ GRANT EXECUTE ON FUNCTION get_active_push_subscriptions() TO authenticated, anon
 GRANT EXECUTE ON FUNCTION log_notification_send(TEXT, TEXT, TEXT, TEXT, INTEGER, INTEGER, INTEGER) TO authenticated, anon;
 
 -- Create trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_push_subscription_timestamp()
+CREATE OR REPLACE FUNCTION public.update_push_subscription_timestamp()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
     NEW.updated_at = NOW();
