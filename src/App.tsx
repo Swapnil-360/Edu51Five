@@ -48,7 +48,8 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  Loader
+  Loader,
+  LogOut
 } from 'lucide-react';
 
 interface Course {
@@ -125,22 +126,6 @@ function App() {
     setCurrentView(view);
   }, []);
 
-  // Listen for browser back/forward events
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      if (path === '/admin') setCurrentView('admin');
-      else if (path === '/section5') setCurrentView('section5');
-      else if (path === '/semester') setCurrentView('semester');
-      else if (path === '/exam-materials') setCurrentView('examMaterials');
-      else if (path.startsWith('/course/')) setCurrentView('course');
-      else if (path === '/home') setCurrentView('home');
-      else setCurrentView('home');
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   // Check if admin route is accessed directly
   useEffect(() => {
     const path = window.location.pathname;
@@ -152,6 +137,35 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
+
+  // Force admin to stay on admin view until logout (no back/swipe escape)
+  useEffect(() => {
+    if (isAdmin && currentView !== 'admin') {
+      setCurrentView('admin');
+      window.history.pushState({}, '', '/admin');
+    }
+  }, [isAdmin, currentView]);
+
+  // Listen for browser back/forward events
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/admin') setCurrentView('admin');
+      else if (isAdmin) {
+        // Prevent navigating away from admin while logged in
+        window.history.pushState({}, '', '/admin');
+        setCurrentView('admin');
+      }
+      else if (path === '/section5') setCurrentView('section5');
+      else if (path === '/semester') setCurrentView('semester');
+      else if (path === '/exam-materials') setCurrentView('examMaterials');
+      else if (path.startsWith('/course/')) setCurrentView('course');
+      else if (path === '/home') setCurrentView('home');
+      else setCurrentView('home');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isAdmin]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(0);
@@ -556,7 +570,7 @@ function App() {
             schema: 'public',
             table: 'active_users'
           },
-          (payload) => {
+          (_payload: any) => {
             // New user joined - fetch updated count instantly
             console.log('➕ User joined');
             fetchActiveUsersCount();
@@ -569,7 +583,7 @@ function App() {
             schema: 'public',
             table: 'active_users'
           },
-          (payload) => {
+          (_payload: any) => {
             // User activity updated - recount
             fetchActiveUsersCount();
           }
@@ -581,7 +595,7 @@ function App() {
             schema: 'public',
             table: 'active_users'
           },
-          (payload) => {
+          (_payload: any) => {
             // User left - fetch updated count instantly
             console.log('➖ User left');
             fetchActiveUsersCount();
@@ -1721,14 +1735,14 @@ For queries, contact course instructors or the department.
         
         // Database operation in background (non-blocking)
         supabase.from('notices').upsert([notice], { onConflict: 'id' })
-          .then(({ error }) => {
+          .then(({ error }: { error: any }) => {
             if (error) {
               console.warn('Supabase upsert error:', error);
             } else {
               console.log('Final exam notice synced to database');
             }
           })
-          .catch(err => console.warn('Database sync failed:', err));
+          .catch((err: any) => console.warn('Database sync failed:', err));
 
         // Notify other windows/tabs
         window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
@@ -1982,8 +1996,8 @@ For any queries, contact your course instructors or the department.`,
               </button>
             </div>
 
-            {/* Real-time Semester Dashboard - Beautiful Display (Non-clickable) */}
-            <div className="hidden lg:flex items-center space-x-5 xl:space-x-6 glass-card px-6 py-3 transition-all duration-300 shadow-lg">
+            {/* Real-time Semester Dashboard - Beautiful Display (Non-clickable) - Hidden on md/sm */}
+            <div className="hidden xl:flex items-center space-x-5 xl:space-x-6 glass-card px-6 py-3 transition-all duration-300 shadow-lg">
               {/* Live Clock with Animation */}
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-600 bg-opacity-30 rounded-lg transition-all duration-300">
@@ -2087,7 +2101,7 @@ For any queries, contact your course instructors or the department.`,
             </div>
             
             {/* Right Side - Mobile-First Navigation */}
-            <div className="flex items-center flex-shrink-0">
+            <div className="flex items-center flex-shrink-0 gap-1 sm:gap-2 justify-end min-w-0">
               
               {/* Mobile Menu Button - Shows on mobile/tablet */}
               <div className="relative md:hidden">
@@ -2114,62 +2128,6 @@ For any queries, contact your course instructors or the department.`,
                       : 'bg-white/95 border-gray-200/50'
                   }`}>
                     <div className="p-4 sm:p-5 space-y-3">
-                      {/* Push Notifications Toggle for Mobile */}
-                      {isPushNotificationSupported() && (
-                        <button
-                          onClick={async () => {
-                            if (isPushEnabled) {
-                              if (confirm('Disable push notifications?')) {
-                                // Note: Full unsubscribe implementation would be needed here
-                                setIsPushEnabled(false);
-                                alert('Push notifications disabled. You can re-enable them anytime.');
-                              }
-                            } else {
-                              const enabled = await enablePushNotifications();
-                              if (enabled) {
-                                alert('Push notifications enabled! You will now receive updates when new notices are posted.');
-                              }
-                            }
-                          }}
-                          className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 group border shadow-lg ${
-                            isPushEnabled
-                              ? isDarkMode
-                                ? 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 hover:from-green-900/50 hover:to-emerald-900/50 border-green-500/30 hover:border-green-400/50'
-                                : 'bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-300/40 hover:border-green-400/60'
-                              : isDarkMode
-                              ? 'bg-gradient-to-r from-gray-700/40 to-gray-800/40 hover:from-gray-700/50 hover:to-gray-800/50 border-gray-600/30 hover:border-gray-500/50'
-                              : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 hover:border-gray-400'
-                          }`}
-                        >
-                          <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center shadow-md ${
-                            isPushEnabled
-                              ? 'bg-gradient-to-r from-green-600 to-emerald-600'
-                              : isDarkMode
-                              ? 'bg-gradient-to-r from-gray-600 to-gray-700'
-                              : 'bg-gradient-to-r from-gray-400 to-gray-500'
-                          }`}>
-                            <Bell className={`h-5 w-5 drop-shadow-lg ${
-                              isPushEnabled ? 'text-white' : isDarkMode ? 'text-gray-300' : 'text-white'
-                            }`} />
-                            {isPushEnabled && (
-                              <div className="absolute top-0 right-0 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            )}
-                          </div>
-                          <div className="flex-1 text-left">
-                            <span className={`font-bold text-base block ${
-                              isDarkMode ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              {isPushEnabled ? 'Notifications On' : 'Enable Notifications'}
-                            </span>
-                            <span className={`text-sm mt-0.5 block ${
-                              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                            }`}>
-                              {isPushEnabled ? 'Get alerts on new updates' : 'Stay updated with notices'}
-                            </span>
-                          </div>
-                        </button>
-                      )}
-
                       {/* Dark Mode Toggle for Mobile */}
                       <button
                         onClick={() => {
@@ -2379,10 +2337,10 @@ For any queries, contact your course instructors or the department.`,
               {isAdmin && (
                 <button
                   onClick={handleAdminLogout}
-                  className="px-2 py-1 md:px-4 md:py-2 rounded-lg font-medium bg-red-600 text-white hover:bg-red-700 transition-colors text-xs md:text-sm"
+                  className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-red-600 hover:bg-red-700 transition-all shadow-md hover:shadow-lg flex-shrink-0"
+                  title="Logout"
                 >
-                  <span className="hidden sm:inline">Admin Logout</span>
-                  <span className="sm:hidden">Logout</span>
+                  <LogOut className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white" />
                 </button>
               )}
             </div>
@@ -2403,8 +2361,8 @@ For any queries, contact your course instructors or the department.`,
               ? 'bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white'
               : 'bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 text-white'
           }`}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold flex items-center text-sm md:text-base">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center">
                 <div className={`p-2 rounded-xl mr-3 shadow-lg border transition-colors duration-300 ${
                   isDarkMode
                     ? 'bg-white/10 border-white/20'
@@ -2412,8 +2370,40 @@ For any queries, contact your course instructors or the department.`,
                 }`}>
                   <Bell className="h-4 w-4 text-white drop-shadow-lg" />
                 </div>
-                <span className="text-white drop-shadow-sm">Notifications</span>
-              </h3>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-white drop-shadow-sm font-bold text-sm md:text-base">Notifications</span>
+                  <span className={`text-[11px] md:text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-200'}`}>
+                    Stay updated with new notices
+                  </span>
+                </div>
+              </div>
+              {isPushNotificationSupported() && (
+                <button
+                  onClick={async () => {
+                    if (isPushEnabled) {
+                      if (confirm('Disable push notifications?')) {
+                        // Note: full unsubscribe would go here if needed
+                        setIsPushEnabled(false);
+                        alert('Push notifications disabled. You can re-enable them anytime.');
+                      }
+                    } else {
+                      const enabled = await enablePushNotifications();
+                      if (enabled) {
+                        alert('Push notifications enabled! You will now receive updates when new notices are posted.');
+                      }
+                    }
+                  }}
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg border backdrop-blur-sm ${
+                    isPushEnabled
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400/60 hover:from-emerald-500 hover:to-teal-500'
+                      : 'bg-white/15 text-white border-white/30 hover:bg-white/25'
+                  }`}
+                  title={isPushEnabled ? 'Notifications On' : 'Enable Notifications'}
+                >
+                  <Bell className="h-4 w-4" />
+                  <span>{isPushEnabled ? 'On' : 'Enable'}</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowNoticePanel(false)}
                 className={`p-2 rounded-2xl shadow-md border transition-all duration-300 ${
@@ -4242,16 +4232,16 @@ For any queries, contact your course instructors or the department.`,
                     const pdfMatch = content.match(/\[EXAM_ROUTINE_PDF\](.*?)\[\/EXAM_ROUTINE_PDF\]/);
 
                     // parse simple structured routine lines into entries
-                    const parseRoutineEntries = (text) => {
-                      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                      const entries = [];
+                    const parseRoutineEntries = (text: string) => {
+                      const lines = text.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
+                      const entries: any[] = [];
                       for (const line of lines) {
                         if (/Room\s*\d+/i.test(line) && /\d{2}\/\d{2}\/\d{4}/.test(line)) {
-                          const parts = line.split('•').map(p => p.trim()).filter(Boolean);
+                          const parts = line.split('•').map((p: string) => p.trim()).filter(Boolean);
                           const dateTime = parts[0] || '';
                           const course = parts[1] || '';
                           const hall = parts[2] || '';
-                          const roomText = parts.slice().reverse().find(p => /Room\s*\d+/i.test(p)) || '';
+                          const roomText = parts.slice().reverse().find((p: string) => /Room\s*\d+/i.test(p)) || '';
                           const roomMatch = roomText.match(/Room\s*(\d+)/i);
                           const roomNum = roomMatch ? roomMatch[1] : '';
                           let building = '';
