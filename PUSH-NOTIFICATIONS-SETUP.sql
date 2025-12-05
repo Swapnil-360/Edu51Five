@@ -20,6 +20,11 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON push_subscriptions
 -- Enable Row Level Security
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow public insert/update push subscriptions" ON push_subscriptions;
+DROP POLICY IF EXISTS "Allow public read push subscriptions" ON push_subscriptions;
+DROP POLICY IF EXISTS "Allow public delete push subscriptions" ON push_subscriptions;
+
 -- Create policy to allow anyone to insert/update their own subscription
 CREATE POLICY "Allow public insert/update push subscriptions" ON push_subscriptions
     FOR ALL
@@ -100,6 +105,10 @@ CREATE INDEX IF NOT EXISTS idx_notification_logs_sent_at ON notification_logs(se
 -- Enable Row Level Security for notification_logs
 ALTER TABLE notification_logs ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow public read notification logs" ON notification_logs;
+DROP POLICY IF EXISTS "Allow public insert notification logs" ON notification_logs;
+
 -- Create policy to allow anyone to read notification logs
 CREATE POLICY "Allow public read notification logs" ON notification_logs
     FOR SELECT
@@ -167,14 +176,29 @@ BEGIN
 END;
 $$;
 
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS update_push_subscriptions_timestamp ON push_subscriptions;
+
 CREATE TRIGGER update_push_subscriptions_timestamp
     BEFORE UPDATE ON push_subscriptions
     FOR EACH ROW
     EXECUTE FUNCTION update_push_subscription_timestamp();
 
 -- Enable Realtime for push_subscriptions table (optional, for admin monitoring)
-ALTER PUBLICATION supabase_realtime ADD TABLE push_subscriptions;
-ALTER PUBLICATION supabase_realtime ADD TABLE notification_logs;
+-- Note: These may fail if already added, which is fine
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE push_subscriptions;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE notification_logs;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Comments for documentation
 COMMENT ON TABLE push_subscriptions IS 'Stores browser push notification subscriptions for users';
