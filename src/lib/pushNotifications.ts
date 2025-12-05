@@ -206,8 +206,8 @@ export async function sendLocalNotification(title: string, body: string, url?: s
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification(title, {
     body,
-    icon: '/cover.jpg',
-    badge: '/cover.jpg',
+    icon: '/image.png',
+    badge: '/image.png',
     data: { url: url || '/' },
     tag: 'local-notification',
     requireInteraction: false,

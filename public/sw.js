@@ -5,7 +5,7 @@ const CACHE_NAME = 'edu51five-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/cover.jpg',
+  '/image.png',
 ];
 
 // Install event - cache resources
@@ -56,8 +56,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Edu51Five Update';
   const options = {
     body: data.body || 'New notification from Edu51Five',
-    icon: '/cover.jpg',
-    badge: '/cover.jpg',
+    icon: data.icon || '/image.png',
+    badge: data.badge || '/image.png',
     data: {
       url: data.url || '/',
       noticeId: data.noticeId
