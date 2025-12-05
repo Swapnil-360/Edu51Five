@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { Notice } from './types';
@@ -104,8 +104,8 @@ function App() {
     return 'home';
   });
 
-  // Helper to change view and update browser history
-  const goToView = (view: 'admin' | 'section5' | 'course' | 'home' | 'semester' | 'examMaterials', extra?: string | null) => {
+  // Helper to change view and update browser history (memoized)
+  const goToView = useCallback((view: 'admin' | 'section5' | 'course' | 'home' | 'semester' | 'examMaterials', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
     else if (view === 'section5') path = '/section5';
@@ -115,7 +115,7 @@ function App() {
     else if (view === 'home') path = '/home';
     window.history.pushState({}, '', path);
     setCurrentView(view);
-  };
+  }, []);
 
   // Listen for browser back/forward events
   useEffect(() => {
@@ -174,13 +174,36 @@ function App() {
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const hasInitializedPush = useRef(false);
   
-  // Exam period selection state
-  const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>('midterm');
+  // Exam period selection state - Auto-detect based on current semester phase
+  const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>(() => {
+    const status = getCurrentSemesterStatus();
+    // Show 'final' tab if we're in Final Exam Preparation or Final Examinations period
+    return (status.currentPhase === "Final Exam Preparation" || status.currentPhase === "Final Examinations") ? 'final' : 'midterm';
+  });
   
   // File viewer modal states
   const [showFileViewer, setShowFileViewer] = useState(false);
   const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
+  
+  // ===== MEMOIZED HOOKS (AFTER state declarations) =====
+  // Memoize filtered materials for current exam period
+  const filteredMaterials = useMemo(() => 
+    materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod),
+    [materials, selectedExamPeriod]
+  );
+  
+  // Memoize active notices count
+  const activeNotices = useMemo(() => 
+    notices.filter(n => n.is_active),
+    [notices]
+  );
+  
+  // Memoize unread notice count
+  const unreadCount = useMemo(() => 
+    notices.filter(notice => notice.is_active && !unreadNotices.includes(notice.id)).length,
+    [notices, unreadNotices]
+  );
   
   const [newCourse, setNewCourse] = useState({
     name: '',
@@ -1006,12 +1029,12 @@ Best of luck with your studies!
     }
   };
 
-  // Handle course click - load materials and navigate
-  const handleCourseClick = (course: Course) => {
+  // Handle course click - load materials and navigate (memoized)
+  const handleCourseClick = useCallback((course: Course) => {
     setSelectedCourse(course);
     loadMaterials(course.code);
     goToView('course', course.code);
-  };
+  }, [goToView]);
 
   // Handle notice click to show full content
   const handleNoticeClick = (notice: Notice) => {
@@ -1065,12 +1088,8 @@ Best of luck with your studies!
     setShowMobileMenu(!showMobileMenu);
   };
 
-  // Get unread notice count
-  const getUnreadNoticeCount = () => {
-    return notices.filter(notice => 
-      notice.is_active && !unreadNotices.includes(notice.id)
-    ).length;
-  };
+  // Get unread notice count (using memoized value)
+  const getUnreadNoticeCount = useCallback(() => unreadCount, [unreadCount]);
 
   // Mark notice as read
   const markNoticeAsRead = (noticeId: string) => {
@@ -1267,7 +1286,7 @@ Best of luck with your studies!
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = useCallback((type: string) => {
     switch (type) {
       case 'video': return <Play className="h-5 w-5" />;
       case 'pdf': 
@@ -1276,9 +1295,9 @@ Best of luck with your studies!
       case 'past_question': return <FileText className="h-5 w-5" />;
       default: return <FileText className="h-5 w-5" />;
     }
-  };
+  }, []);
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = useCallback((type: string) => {
     switch (type) {
       case 'video': return 'text-red-600 bg-red-100';
       case 'pdf': return 'text-blue-600 bg-blue-100';
@@ -1287,10 +1306,10 @@ Best of luck with your studies!
       case 'past_question': return 'text-purple-600 bg-purple-100';
       default: return 'text-gray-600 bg-gray-100';
     }
-  };
+  }, []);
 
-  // Course color schemes for unique visual identity
-  const getCourseColorScheme = (courseCode: string, index: number) => {
+  // Course color schemes for unique visual identity (memoized)
+  const getCourseColorScheme = useCallback((courseCode: string, index: number) => {
     const colorSchemes = [
       {
         gradient: 'from-blue-500 to-purple-600',
@@ -1343,10 +1362,10 @@ Best of luck with your studies!
     ];
     
     return colorSchemes[index % colorSchemes.length];
-  };
+  }, []);
 
-  // Material color schemes for diversity
-  const getMaterialColorScheme = (index: number) => {
+  // Material color schemes for diversity (memoized)
+  const getMaterialColorScheme = useCallback((index: number) => {
     const materialSchemes = [
       { bg: 'from-white via-blue-50 to-indigo-100', accent: 'from-blue-500 to-indigo-600' },
       { bg: 'from-white via-green-50 to-emerald-100', accent: 'from-green-500 to-emerald-600' },
@@ -1357,7 +1376,7 @@ Best of luck with your studies!
     ];
     
     return materialSchemes[index % materialSchemes.length];
-  };
+  }, []);
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2324,7 +2343,7 @@ For any queries, contact your course instructors or the department.`,
                 ))}
 
                 {/* Regular Notices Section */}
-                {notices.filter(notice => notice.is_active).map((notice, index) => (
+                {activeNotices.map((notice, index) => (
                 <div
                   key={notice.id}
                   className={`p-4 md:p-5 border-b cursor-pointer transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm ${
@@ -2819,43 +2838,58 @@ For any queries, contact your course instructors or the department.`,
               isDarkMode ? 'text-gray-400' : 'text-gray-600'
             }`}>{selectedCourse.description}</p>
 
-            {/* Exam Period Tabs */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0 w-full">
+            {/* Exam Period Tabs - Modern Design */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8 md:mb-10 px-2 sm:px-0 w-full">
+              {/* Midterm Button */}
               <button
                 onClick={() => setSelectedExamPeriod('midterm')}
-                className={`flex-1 py-3 sm:py-4 px-3 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition-all duration-300 ${
+                className={`flex-1 relative group overflow-hidden rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
                   selectedExamPeriod === 'midterm'
                     ? isDarkMode
-                      ? 'bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white shadow-2xl shadow-blue-500/50'
+                      : 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-400/50'
                     : isDarkMode
-                      ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gray-800/80 border border-gray-700 text-gray-300 hover:border-blue-500/50 hover:bg-gray-800'
+                      : 'bg-gray-100/80 border border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-gray-200'
                 }`}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+                {/* Animated background for active state */}
+                {selectedExamPeriod === 'midterm' && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 pointer-events-none" />
+                )}
+                <div className="relative flex items-center justify-center space-x-2.5 py-3 sm:py-4 px-4">
+                  <div className={`transition-transform duration-300 ${selectedExamPeriod === 'midterm' ? 'scale-110' : 'scale-100'}`}>
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
                   <span>Midterm Materials</span>
                 </div>
               </button>
+              
+              {/* Final Button */}
               <button
                 onClick={() => setSelectedExamPeriod('final')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                className={`flex-1 relative group overflow-hidden rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
                   selectedExamPeriod === 'final'
                     ? isDarkMode
-                      ? 'bg-gradient-to-r from-purple-900 to-pink-900 text-white shadow-lg'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                      ? 'bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white shadow-2xl shadow-pink-500/50'
+                      : 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-600 text-white shadow-2xl shadow-pink-400/50'
                     : isDarkMode
-                      ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gray-800/80 border border-gray-700 text-gray-300 hover:border-purple-500/50 hover:bg-gray-800'
+                      : 'bg-gray-100/80 border border-gray-200 text-gray-700 hover:border-purple-400 hover:bg-gray-200'
                 }`}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                {/* Animated background for active state */}
+                {selectedExamPeriod === 'final' && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 pointer-events-none" />
+                )}
+                <div className="relative flex items-center justify-center space-x-2.5 py-3 sm:py-4 px-4">
+                  <div className={`transition-transform duration-300 ${selectedExamPeriod === 'final' ? 'scale-110' : 'scale-100'}`}>
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
                   <span>Final Materials</span>
                 </div>
               </button>
@@ -2878,7 +2912,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}>Loading materials...</p>
               </div>
-            ) : materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).length === 0 ? (
+            ) : filteredMaterials.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className={`h-12 w-12 mx-auto mb-4 transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-600' : 'text-gray-400'
@@ -2910,7 +2944,7 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </div>
                 
-                {materials.filter(m => (m.exam_period || 'midterm') === selectedExamPeriod).map((material, index) => {
+                {filteredMaterials.map((material, index) => {
                   const materialScheme = getMaterialColorScheme(index);
                   return (
                     <div key={material.id} className={`rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border backdrop-blur-sm p-4 sm:p-5 md:p-6 lg:p-8 hover:shadow-lg sm:hover:shadow-2xl transition-all duration-300 transform hover:sm:-translate-y-1 md:hover:-translate-y-2 ${
@@ -3078,7 +3112,7 @@ For any queries, contact your course instructors or the department.`,
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                          <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{notices.filter(n => n.is_active).length} Active Notices</span>
+                          <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{activeNotices.length} Active Notices</span>
                       </div>
                     </div>
                   </div>
@@ -3223,7 +3257,7 @@ For any queries, contact your course instructors or the department.`,
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-purple-100 text-xs sm:text-sm font-medium">Active Notices</p>
-                      <p className="text-2xl sm:text-3xl font-bold mt-1">{notices.filter(n => n.is_active).length}</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1">{activeNotices.length}</p>
                     </div>
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-400 bg-opacity-50 rounded-xl flex items-center justify-center">
                       <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-purple-100" />
@@ -3418,8 +3452,8 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Create Course Modal */}
         {showCreateCourse && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
               <div className={`relative w-full max-w-[92vw] sm:max-w-md md:max-w-lg max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
               }`}>
@@ -3519,8 +3553,8 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Upload File Modal */}
         {showUploadFile && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
               <div className={`relative w-full max-w-[92vw] sm:max-w-md md:max-w-lg max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
               }`}>
@@ -3677,8 +3711,8 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Enhanced Categorized Notice Creation Modal */}
         {showCreateNotice && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100vh', height: '100dvh' }}>
-            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100vh', minHeight: '100dvh' }}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100dvh' }}>
+            <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
               <div className={`relative w-full max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
               }`}>
