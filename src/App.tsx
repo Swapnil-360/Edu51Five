@@ -1458,6 +1458,24 @@ Best of luck with your studies!
       }
       loadTotalMaterialsCount(); // Update total count
       
+      // Send push notification to all subscribed users about new material
+      try {
+        const newMaterialNotice: Notice = {
+          id: `material-${Date.now()}`,
+          title: `New Material: ${newMaterial.title}`,
+          content: `A new ${newMaterial.type} has been uploaded for ${selectedCourse?.name || newMaterial.course_id}${newMaterial.description ? ': ' + newMaterial.description.substring(0, 100) : ''}`,
+          type: 'success',
+          category: 'academic',
+          priority: 'normal',
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+        await sendNoticeNotification(newMaterialNotice);
+        console.log('✅ Push notification sent for new material');
+      } catch (notificationError) {
+        console.warn('⚠️ Could not send push notification, but file uploaded successfully:', notificationError);
+      }
+      
       alert('Material uploaded successfully!');
       
     } catch (error) {
