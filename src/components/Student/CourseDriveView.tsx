@@ -24,13 +24,15 @@ interface CourseDriveViewProps {
   courseName: string;
   examPeriod: 'midterm' | 'final';
   isDarkMode?: boolean;
+  onFileClick?: (file: DriveItem) => void;
 }
 
 export const CourseDriveView: React.FC<CourseDriveViewProps> = ({ 
   courseCode, 
   courseName, 
   examPeriod,
-  isDarkMode = false 
+  isDarkMode = false,
+  onFileClick
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -375,7 +377,13 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
               {/* File/Folder Icon and Name - Mobile Optimized */}
               <div
                 className="flex items-start gap-2 sm:gap-3 mb-3 cursor-pointer"
-                onClick={() => navigateToFolder(item)}
+                onClick={() => {
+                  if (item.mimeType === 'application/vnd.google-apps.folder') {
+                    navigateToFolder(item);
+                  } else if (onFileClick) {
+                    onFileClick(item);
+                  }
+                }}
               >
                 {item.mimeType === 'application/vnd.google-apps.folder' ? (
                   <Folder className="w-7 h-7 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
@@ -402,14 +410,16 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
                       href={item.webViewLink}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs sm:text-sm flex-1 justify-center transition-colors ${
                         isDarkMode
                           ? 'bg-blue-900/50 hover:bg-blue-900 text-blue-300'
                           : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
                       }`}
+                      title="Open in Google Drive (new tab)"
                     >
                       <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline">View</span>
+                      <span className="hidden sm:inline">Drive</span>
                     </a>
                   )}
                   {item.webContentLink && (

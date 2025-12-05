@@ -186,6 +186,10 @@ function App() {
   const [currentFileUrl, setCurrentFileUrl] = useState<string>('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
   
+  // Material viewer modal state
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const [showMaterialViewer, setShowMaterialViewer] = useState(false);
+  
   // ===== MEMOIZED HOOKS (AFTER state declarations) =====
   // Memoize filtered materials for current exam period
   const filteredMaterials = useMemo(() => 
@@ -672,7 +676,7 @@ function App() {
 
   // Lock background scrolling when any overlay/modal/panel is open
   useEffect(() => {
-    const overlaysOpen = showNoticePanel || showNoticeModal || showCreateNotice || showUploadFile || showCreateCourse || showFileViewer || showMobileMenu;
+    const overlaysOpen = showNoticePanel || showNoticeModal || showCreateNotice || showUploadFile || showCreateCourse || showFileViewer || showMobileMenu || showMaterialViewer;
     if (overlaysOpen) {
       const previousOverflow = document.body.style.overflow;
       const previousPaddingRight = document.body.style.paddingRight || '';
@@ -688,7 +692,7 @@ function App() {
       };
     }
     return;
-  }, [showNoticePanel, showNoticeModal, showCreateNotice, showUploadFile, showCreateCourse, showFileViewer, showMobileMenu]);
+  }, [showNoticePanel, showNoticeModal, showCreateNotice, showUploadFile, showCreateCourse, showFileViewer, showMobileMenu, showMaterialViewer]);
 
   // Initialize database tables if they don't exist
   const initializeDatabase = async () => {
@@ -1076,6 +1080,59 @@ Best of luck with your studies!
     setShowFileViewer(false);
     setCurrentFileUrl('');
     setCurrentFileName('');
+  };
+
+  // Material viewer function - open material in modal instead of new tab
+  const openMaterialViewer = (material: Material) => {
+    setSelectedMaterial(material);
+    setShowMaterialViewer(true);
+    // Lock body scroll when modal opens
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeMaterialViewer = () => {
+    setShowMaterialViewer(false);
+    setSelectedMaterial(null);
+    // Unlock body scroll when modal closes
+    document.body.style.overflow = 'unset';
+  };
+
+  // Handle file click from Google Drive - Convert DriveItem to Material and open viewer
+  const handleDriveFileClick = (file: any) => {
+    // Convert DriveItem to Material format
+    const material: Material = {
+      id: file.id,
+      title: file.name,
+      description: `Size: ${file.size ? formatBytes(file.size) : 'Unknown'}`,
+      file_url: file.webViewLink || file.webContentLink || '',
+      video_url: null,
+      type: getMimeTypeCategory(file.mimeType),
+      course_code: selectedCourse?.code || '',
+      size: file.size ? formatBytes(file.size) : null,
+      exam_period: selectedExamPeriod,
+      created_at: new Date().toISOString()
+    };
+    
+    openMaterialViewer(material);
+  };
+
+  // Helper: Convert bytes to readable format
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Helper: Convert MIME type to category
+  const getMimeTypeCategory = (mimeType: string): string => {
+    if (mimeType.includes('pdf')) return 'pdf';
+    if (mimeType.includes('video')) return 'video';
+    if (mimeType.includes('image')) return 'image';
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'slides';
+    if (mimeType.includes('document') || mimeType.includes('text')) return 'notes';
+    return 'document';
   };
 
   // Toggle notice panel
@@ -2901,6 +2958,7 @@ For any queries, contact your course instructors or the department.`,
               courseName={selectedCourse.name}
               examPeriod={selectedExamPeriod}
               isDarkMode={isDarkMode}
+              onFileClick={handleDriveFileClick}
             />
 
             {loading ? (
@@ -2997,12 +3055,10 @@ For any queries, contact your course instructors or the department.`,
                         </div>
                       
                       <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-                        {/* Preview Button */}
+                        {/* Preview Button - Opens in Modal */}
                         {material.type === 'video' && material.video_url ? (
-                          <a
-                            href={material.video_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => openMaterialViewer(material)}
                             className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
                               isDarkMode
                                 ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/30'
@@ -3011,12 +3067,10 @@ For any queries, contact your course instructors or the department.`,
                             title="Watch Video"
                           >
                             <Eye className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
-                          </a>
+                          </button>
                         ) : material.file_url ? (
-                          <a
-                            href={material.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => openMaterialViewer(material)}
                             className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all duration-300 ${
                               isDarkMode
                                 ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-900/30'
@@ -3025,7 +3079,7 @@ For any queries, contact your course instructors or the department.`,
                             title="Preview File"
                           >
                             <Eye className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
-                          </a>
+                          </button>
                         ) : (
                           <button
                             className={`p-2 sm:p-2.5 cursor-not-allowed rounded-lg sm:rounded-xl ${
@@ -4363,6 +4417,212 @@ For any queries, contact your course instructors or the department.`,
           isOpen={showFileViewer}
           onClose={closeFileViewer}
         />
+
+        {/* Material Viewer Modal */}
+        {showMaterialViewer && selectedMaterial && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="my-auto rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 border border-gray-700/50 dark:bg-slate-900">
+              {/* Modal Header */}
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-700/50 p-4 sm:p-6 sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 z-10">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                    {getTypeIcon(selectedMaterial.type)}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-100 truncate">{selectedMaterial.title}</h2>
+                    <p className="text-xs sm:text-sm text-gray-400 truncate">{selectedMaterial.description}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeMaterialViewer}
+                  className="ml-4 flex-shrink-0 p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                </button>
+              </div>
+
+              {/* Modal Body - Content Display */}
+              <div className="flex-1 overflow-auto min-h-0 flex flex-col">
+                {/* Video Content */}
+                {selectedMaterial.type === 'video' && selectedMaterial.video_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-black p-4 sm:p-6">
+                    <div className="w-full max-w-4xl aspect-video rounded-lg overflow-hidden shadow-2xl">
+                      {selectedMaterial.video_url.includes('youtube') || selectedMaterial.video_url.includes('youtu.be') ? (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={selectedMaterial.video_url.includes('watch?v=') 
+                            ? selectedMaterial.video_url.replace('watch?v=', 'embed/')
+                            : selectedMaterial.video_url.replace('youtu.be/', 'youtube.com/embed/')
+                          }
+                          title={selectedMaterial.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        />
+                      ) : (
+                        <video
+                          width="100%"
+                          height="100%"
+                          controls
+                          className="w-full h-full"
+                        >
+                          <source src={selectedMaterial.video_url} />
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* PDF/Document Content */}
+                {selectedMaterial.type === 'pdf' && selectedMaterial.file_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                    <iframe
+                      src={selectedMaterial.file_url.includes('drive.google.com') 
+                        ? selectedMaterial.file_url.includes('/preview')
+                          ? selectedMaterial.file_url
+                          : (() => {
+                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
+                            })()
+                        : selectedMaterial.file_url
+                      }
+                      title={selectedMaterial.title}
+                      width="100%"
+                      height="100%"
+                      className="rounded-lg"
+                      style={{ minHeight: '500px' }}
+                    />
+                  </div>
+                )}
+
+                {/* Notes/Text Content */}
+                {selectedMaterial.type === 'notes' && selectedMaterial.file_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                    <iframe
+                      src={selectedMaterial.file_url.includes('drive.google.com') 
+                        ? selectedMaterial.file_url.includes('/preview')
+                          ? selectedMaterial.file_url
+                          : (() => {
+                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
+                            })()
+                        : selectedMaterial.file_url
+                      }
+                      title={selectedMaterial.title}
+                      width="100%"
+                      height="100%"
+                      className="rounded-lg"
+                      style={{ minHeight: '500px' }}
+                    />
+                  </div>
+                )}
+
+                {/* Image Content */}
+                {selectedMaterial.type === 'image' && selectedMaterial.file_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                    <img
+                      src={selectedMaterial.file_url}
+                      alt={selectedMaterial.title}
+                      className="max-w-full max-h-full rounded-lg shadow-2xl"
+                    />
+                  </div>
+                )}
+
+                {/* Slides Content */}
+                {selectedMaterial.type === 'slides' && selectedMaterial.file_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                    <iframe
+                      src={selectedMaterial.file_url.includes('drive.google.com') 
+                        ? selectedMaterial.file_url.includes('/preview')
+                          ? selectedMaterial.file_url
+                          : (() => {
+                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
+                            })()
+                        : selectedMaterial.file_url
+                      }
+                      title={selectedMaterial.title}
+                      width="100%"
+                      height="100%"
+                      className="rounded-lg"
+                      style={{ minHeight: '500px' }}
+                    />
+                  </div>
+                )}
+
+                {/* Generic Document Content - Catch all for other file types */}
+                {selectedMaterial.type === 'document' && selectedMaterial.file_url && (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                    <iframe
+                      src={selectedMaterial.file_url.includes('drive.google.com') 
+                        ? selectedMaterial.file_url.includes('/preview')
+                          ? selectedMaterial.file_url
+                          : (() => {
+                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
+                            })()
+                        : selectedMaterial.file_url
+                      }
+                      title={selectedMaterial.title}
+                      width="100%"
+                      height="100%"
+                      className="rounded-lg"
+                      style={{ minHeight: '500px' }}
+                    />
+                  </div>
+                )}
+
+                {/* Fallback - Generic File Link */}
+                {!selectedMaterial.video_url && !selectedMaterial.file_url && (
+                  <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+                    <FileText className="h-16 w-16 text-gray-500 mb-4" />
+                    <p className="text-gray-300 text-center mb-4">No preview available for this material</p>
+                    <a
+                      href={selectedMaterial.file_url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Open in New Tab
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex-shrink-0 border-t border-gray-700/50 p-4 sm:p-6 flex flex-col sm:flex-row gap-3 justify-between items-center bg-gradient-to-r from-gray-900 to-gray-800">
+                <div className="flex gap-2 flex-wrap text-xs sm:text-sm">
+                  <span className="px-3 py-1 rounded-lg bg-blue-900/40 text-blue-300">Type: {selectedMaterial.type}</span>
+                  {selectedMaterial.size && <span className="px-3 py-1 rounded-lg bg-gray-700 text-gray-300">Size: {selectedMaterial.size}</span>}
+                  <span className="px-3 py-1 rounded-lg bg-emerald-900/40 text-emerald-300">
+                    {new Date(selectedMaterial.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  {selectedMaterial.file_url && (
+                    <a
+                      href={selectedMaterial.file_url}
+                      download
+                      className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </a>
+                  )}
+                  <button
+                    onClick={closeMaterialViewer}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       </main>
         )}
