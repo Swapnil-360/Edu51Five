@@ -40,7 +40,15 @@ import {
   ImageIcon,
   Clock,
   Moon,
-  Sun
+  Sun,
+  Maximize,
+  Minimize,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  Loader
 } from 'lucide-react';
 
 interface Course {
@@ -189,6 +197,12 @@ function App() {
   // Material viewer modal state
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [showMaterialViewer, setShowMaterialViewer] = useState(false);
+  
+  // Material viewer enhancement states
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [isViewerLoading, setIsViewerLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // ===== MEMOIZED HOOKS (AFTER state declarations) =====
   // Memoize filtered materials for current exam period
@@ -627,6 +641,48 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Keyboard shortcuts for material viewer
+  useEffect(() => {
+    if (!showMaterialViewer) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // ESC to close
+      if (e.key === 'Escape') {
+        closeMaterialViewer();
+      }
+      // Arrow keys for page navigation (for PDFs)
+      else if (e.key === 'ArrowRight') {
+        nextPage();
+      }
+      else if (e.key === 'ArrowLeft') {
+        previousPage();
+      }
+      // + for zoom in
+      else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        zoomIn();
+      }
+      // - for zoom out
+      else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        zoomOut();
+      }
+      // 0 to reset zoom
+      else if (e.key === '0') {
+        e.preventDefault();
+        resetZoom();
+      }
+      // F for fullscreen
+      else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showMaterialViewer]);
 
   // Initialize push notifications on mount (student pages only)
   useEffect(() => {
@@ -1086,6 +1142,10 @@ Best of luck with your studies!
   const openMaterialViewer = (material: Material) => {
     setSelectedMaterial(material);
     setShowMaterialViewer(true);
+    setIsViewerLoading(true);
+    setZoomLevel(100);
+    setCurrentPage(1);
+    setIsFullscreen(false);
     // Lock body scroll when modal opens
     document.body.style.overflow = 'hidden';
   };
@@ -1093,8 +1153,60 @@ Best of luck with your studies!
   const closeMaterialViewer = () => {
     setShowMaterialViewer(false);
     setSelectedMaterial(null);
+    setIsFullscreen(false);
+    setZoomLevel(100);
+    setCurrentPage(1);
     // Unlock body scroll when modal closes
     document.body.style.overflow = 'unset';
+  };
+
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Zoom controls
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(100);
+  };
+
+  // Page navigation
+  const nextPage = () => {
+    setCurrentPage(prev => prev + 1);
+  };
+
+  const previousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  // Normalize viewer URL and apply page hash for PDF-like types
+  const buildViewerUrl = (material: Material, page: number) => {
+    if (!material.file_url) return '';
+
+    const ensureDrivePreview = (url: string) => {
+      if (!url.includes('drive.google.com')) return url;
+      if (url.includes('/preview')) return url;
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      return match ? `https://drive.google.com/file/d/${match[1]}/preview` : url;
+    };
+
+    const normalized = ensureDrivePreview(material.file_url);
+    const [base] = normalized.split('#');
+
+    // Only append page anchor for PDF-like embeds
+    if (['pdf', 'notes', 'slides', 'document'].includes(material.type)) {
+      return `${base}#page=${page}`;
+    }
+
+    return base;
   };
 
   // Handle file click from Google Drive - Convert DriveItem to Material and open viewer
@@ -4418,35 +4530,95 @@ For any queries, contact your course instructors or the department.`,
           onClose={closeFileViewer}
         />
 
-        {/* Material Viewer Modal */}
+        {/* Material Viewer Modal - Enhanced with Fullscreen, Zoom, Navigation */}
         {showMaterialViewer && selectedMaterial && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="my-auto rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 border border-gray-700/50 dark:bg-slate-900">
-              {/* Modal Header */}
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-700/50 p-4 sm:p-6 sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 z-10">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="flex-shrink-0 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-                    {getTypeIcon(selectedMaterial.type)}
+          <div className={`fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center ${isFullscreen ? 'p-0' : 'p-2 sm:p-3 md:p-4'}`}>
+            <div className={`shadow-2xl flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 overflow-hidden ${
+              isFullscreen 
+                ? 'w-full h-full max-w-none rounded-none border-0' 
+                : 'w-[98vw] sm:w-[94vw] md:w-[90vw] lg:w-[85vw] xl:w-full xl:max-w-6xl h-[92vh] sm:h-[92vh] md:h-[92vh] lg:h-[90vh] rounded-xl lg:rounded-2xl border border-gray-700/50'
+            }`}>
+              {/* Modal Header with Controls */}
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-700/50 p-1 sm:p-1.5 md:p-2 sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 z-10 rounded-t-lg md:rounded-t-2xl">
+                <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-1 min-w-0 overflow-hidden">
+                  <div className="flex-shrink-0 p-1 sm:p-1.5 rounded-md bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                    <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4">
+                      {getTypeIcon(selectedMaterial.type)}
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-100 truncate">{selectedMaterial.title}</h2>
-                    <p className="text-xs sm:text-sm text-gray-400 truncate">{selectedMaterial.description}</p>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-xs sm:text-sm md:text-base font-bold text-gray-100 leading-tight line-clamp-2 break-words">{selectedMaterial.title}</h2>
+                    <p className="text-[9px] sm:text-xs text-gray-400 hidden md:block leading-tight line-clamp-2 break-words">{selectedMaterial.description}</p>
                   </div>
                 </div>
-                <button
-                  onClick={closeMaterialViewer}
-                  className="ml-4 flex-shrink-0 p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
-                </button>
+
+                {/* Control Buttons */}
+                <div className="flex items-center gap-0.5 sm:gap-1 ml-1 sm:ml-2 flex-shrink-0">
+                  {/* Zoom Controls - Only for PDFs and Images */}
+                  {(selectedMaterial.type === 'pdf' || selectedMaterial.type === 'image' || selectedMaterial.type === 'notes' || selectedMaterial.type === 'slides' || selectedMaterial.type === 'document') && (
+                    <>
+                      <button
+                        onClick={zoomOut}
+                        className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                        title="Zoom Out (-)"
+                      >
+                        <ZoomOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                      </button>
+                      <span className="text-[10px] sm:text-xs text-gray-400 px-0.5 sm:px-1 hidden md:inline">{zoomLevel}%</span>
+                      <button
+                        onClick={zoomIn}
+                        className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                        title="Zoom In (+)"
+                      >
+                        <ZoomIn className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                      </button>
+                      <button
+                        onClick={resetZoom}
+                        className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors hidden lg:block"
+                        title="Reset Zoom (0)"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Fullscreen Toggle */}
+                  <div className="w-px h-4 sm:h-5 md:h-6 bg-gray-700 mx-0.5 sm:mx-1"></div>
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                    title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+                  >
+                    {isFullscreen ? <Minimize className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" /> : <Maximize className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />}
+                  </button>
+
+                  {/* Close Button */}
+                  <button
+                    onClick={closeMaterialViewer}
+                    className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-red-700 rounded transition-colors"
+                    title="Close (ESC)"
+                  >
+                    <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                  </button>
+                </div>
               </div>
 
-              {/* Modal Body - Content Display */}
-              <div className="flex-1 overflow-auto min-h-0 flex flex-col">
+              {/* Modal Body - Content Display with Loading */}
+              <div className="flex-1 overflow-hidden min-h-0 flex flex-col relative">
+                {/* Loading Spinner Overlay */}
+                {isViewerLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-950/80 z-20">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader className="h-10 w-10 text-blue-500 animate-spin" />
+                      <p className="text-gray-300 text-sm">Loading content...</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Video Content */}
                 {selectedMaterial.type === 'video' && selectedMaterial.video_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-black p-4 sm:p-6">
-                    <div className="w-full max-w-4xl aspect-video rounded-lg overflow-hidden shadow-2xl">
+                  <div className="w-full h-full flex items-center justify-center bg-black p-1">
+                    <div className="w-full aspect-video rounded-sm md:rounded overflow-hidden shadow-xl" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center' }}>
                       {selectedMaterial.video_url.includes('youtube') || selectedMaterial.video_url.includes('youtu.be') ? (
                         <iframe
                           width="100%"
@@ -4460,6 +4632,7 @@ For any queries, contact your course instructors or the department.`,
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                           className="w-full h-full"
+                          onLoad={() => setIsViewerLoading(false)}
                         />
                       ) : (
                         <video
@@ -4467,6 +4640,7 @@ For any queries, contact your course instructors or the department.`,
                           height="100%"
                           controls
                           className="w-full h-full"
+                          onLoadedData={() => setIsViewerLoading(false)}
                         >
                           <source src={selectedMaterial.video_url} />
                           Your browser does not support the video tag.
@@ -4478,100 +4652,86 @@ For any queries, contact your course instructors or the department.`,
 
                 {/* PDF/Document Content */}
                 {selectedMaterial.type === 'pdf' && selectedMaterial.file_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
-                    <iframe
-                      src={selectedMaterial.file_url.includes('drive.google.com') 
-                        ? selectedMaterial.file_url.includes('/preview')
-                          ? selectedMaterial.file_url
-                          : (() => {
-                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
-                            })()
-                        : selectedMaterial.file_url
-                      }
-                      title={selectedMaterial.title}
-                      width="100%"
-                      height="100%"
-                      className="rounded-lg"
-                      style={{ minHeight: '500px' }}
-                    />
+                  <div className="w-full flex-1 min-h-0 flex items-center justify-center bg-gray-950 p-1 overflow-hidden">
+                    <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top', width: '100%', height: '100%' }}>
+                      <iframe
+                        key={`${selectedMaterial.id || selectedMaterial.file_url}-page-${currentPage}`}
+                        src={buildViewerUrl(selectedMaterial, currentPage)}
+                        title={selectedMaterial.title}
+                        width="100%"
+                        height="100%"
+                        className="rounded-lg w-full h-full"
+                        style={{ height: '100%' }}
+                        onLoad={() => setIsViewerLoading(false)}
+                      />
+                    </div>
                   </div>
                 )}
 
                 {/* Notes/Text Content */}
                 {selectedMaterial.type === 'notes' && selectedMaterial.file_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
-                    <iframe
-                      src={selectedMaterial.file_url.includes('drive.google.com') 
-                        ? selectedMaterial.file_url.includes('/preview')
-                          ? selectedMaterial.file_url
-                          : (() => {
-                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
-                            })()
-                        : selectedMaterial.file_url
-                      }
-                      title={selectedMaterial.title}
-                      width="100%"
-                      height="100%"
-                      className="rounded-lg"
-                      style={{ minHeight: '500px' }}
-                    />
+                  <div className="w-full flex-1 min-h-0 flex items-center justify-center bg-gray-950 p-1 overflow-hidden">
+                    <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top', width: '100%', height: '100%' }}>
+                      <iframe
+                        key={`${selectedMaterial.id || selectedMaterial.file_url}-page-${currentPage}`}
+                        src={buildViewerUrl(selectedMaterial, currentPage)}
+                        title={selectedMaterial.title}
+                        width="100%"
+                        height="100%"
+                        className="rounded-lg w-full h-full"
+                        style={{ height: '100%' }}
+                        onLoad={() => setIsViewerLoading(false)}
+                      />
+                    </div>
                   </div>
                 )}
 
                 {/* Image Content */}
                 {selectedMaterial.type === 'image' && selectedMaterial.file_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
+                  <div className="w-full flex-1 min-h-0 flex items-center justify-center bg-gray-950 p-1 overflow-hidden">
                     <img
                       src={selectedMaterial.file_url}
                       alt={selectedMaterial.title}
-                      className="max-w-full max-h-full rounded-lg shadow-2xl"
+                      className="rounded-lg shadow-2xl transition-transform"
+                      style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center', maxHeight: '100%', height: '100%', width: 'auto' }}
+                      onLoad={() => setIsViewerLoading(false)}
                     />
                   </div>
                 )}
 
                 {/* Slides Content */}
                 {selectedMaterial.type === 'slides' && selectedMaterial.file_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
-                    <iframe
-                      src={selectedMaterial.file_url.includes('drive.google.com') 
-                        ? selectedMaterial.file_url.includes('/preview')
-                          ? selectedMaterial.file_url
-                          : (() => {
-                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
-                            })()
-                        : selectedMaterial.file_url
-                      }
-                      title={selectedMaterial.title}
-                      width="100%"
-                      height="100%"
-                      className="rounded-lg"
-                      style={{ minHeight: '500px' }}
-                    />
+                  <div className="w-full flex-1 min-h-0 flex items-center justify-center bg-gray-950 p-1 overflow-hidden">
+                    <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top', width: '100%', height: '100%' }}>
+                      <iframe
+                        key={`${selectedMaterial.id || selectedMaterial.file_url}-page-${currentPage}`}
+                        src={buildViewerUrl(selectedMaterial, currentPage)}
+                        title={selectedMaterial.title}
+                        width="100%"
+                        height="100%"
+                        className="rounded-lg w-full h-full"
+                        style={{ height: '100%' }}
+                        onLoad={() => setIsViewerLoading(false)}
+                      />
+                    </div>
                   </div>
                 )}
 
                 {/* Generic Document Content - Catch all for other file types */}
                 {selectedMaterial.type === 'document' && selectedMaterial.file_url && (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-950 p-4 sm:p-6">
-                    <iframe
-                      src={selectedMaterial.file_url.includes('drive.google.com') 
-                        ? selectedMaterial.file_url.includes('/preview')
-                          ? selectedMaterial.file_url
-                          : (() => {
-                              const match = selectedMaterial.file_url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                              return match ? `https://drive.google.com/file/d/${match[1]}/preview` : selectedMaterial.file_url;
-                            })()
-                        : selectedMaterial.file_url
-                      }
-                      title={selectedMaterial.title}
-                      width="100%"
-                      height="100%"
-                      className="rounded-lg"
-                      style={{ minHeight: '500px' }}
-                    />
+                  <div className="w-full flex-1 min-h-0 flex items-center justify-center bg-gray-950 p-1 overflow-hidden">
+                    <div style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top', width: '100%', height: '100%' }}>
+                      <iframe
+                        key={`${selectedMaterial.id || selectedMaterial.file_url}-page-${currentPage}`}
+                        src={buildViewerUrl(selectedMaterial, currentPage)}
+                        title={selectedMaterial.title}
+                        width="100%"
+                        height="100%"
+                        className="rounded-lg w-full h-full"
+                        style={{ height: '100%' }}
+                        onLoad={() => setIsViewerLoading(false)}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -4592,31 +4752,50 @@ For any queries, contact your course instructors or the department.`,
                 )}
               </div>
 
-              {/* Modal Footer */}
-              <div className="flex-shrink-0 border-t border-gray-700/50 p-4 sm:p-6 flex flex-col sm:flex-row gap-3 justify-between items-center bg-gradient-to-r from-gray-900 to-gray-800">
-                <div className="flex gap-2 flex-wrap text-xs sm:text-sm">
-                  <span className="px-3 py-1 rounded-lg bg-blue-900/40 text-blue-300">Type: {selectedMaterial.type}</span>
-                  {selectedMaterial.size && <span className="px-3 py-1 rounded-lg bg-gray-700 text-gray-300">Size: {selectedMaterial.size}</span>}
-                  <span className="px-3 py-1 rounded-lg bg-emerald-900/40 text-emerald-300">
-                    {new Date(selectedMaterial.created_at).toLocaleDateString()}
-                  </span>
+              {/* Compact Footer - stays visible in fullscreen & mobile */}
+              <div className="flex-shrink-0 border-t border-gray-700/50 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-900/95 backdrop-blur-sm flex items-center gap-2 rounded-b-lg md:rounded-b-2xl">
+                {/* Left: File info (wrap on small) */}
+                <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-400 min-w-0 flex-1">
+                  <span className="truncate">{selectedMaterial.title}</span>
+                  <span className="hidden xs:inline">•</span>
+                  <span className="truncate">{selectedMaterial.type}</span>
+                  {selectedMaterial.size && (
+                    <>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="hidden sm:inline truncate">{selectedMaterial.size}</span>
+                    </>
+                  )}
                 </div>
-                <div className="flex gap-3">
+
+                {/* Right: Action Buttons */}
+                <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                  {selectedMaterial.file_url && (
+                    <a
+                      href={selectedMaterial.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-blue-400 rounded transition-all"
+                      title="Open in Google Drive"
+                    >
+                      <ExternalLink className="h-4 w-4 sm:h-4 sm:w-4" />
+                    </a>
+                  )}
                   {selectedMaterial.file_url && (
                     <a
                       href={selectedMaterial.file_url}
                       download
-                      className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                      className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-teal-400 rounded transition-all"
+                      title="Download"
                     >
-                      <Download className="h-4 w-4" />
-                      Download
+                      <Download className="h-4 w-4 sm:h-4 sm:w-4" />
                     </a>
                   )}
                   <button
                     onClick={closeMaterialViewer}
-                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+                    className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-red-400 rounded transition-all"
+                    title="Close (ESC)"
                   >
-                    Close
+                    <X className="h-4 w-4 sm:h-4 sm:w-4" />
                   </button>
                 </div>
               </div>
