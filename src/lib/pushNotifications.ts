@@ -3,9 +3,8 @@
 
 import { supabase } from './supabase';
 
-// VAPID public key - you'll need to generate this
-// Generate keys at: https://vapidkeys.com/ or using web-push library
-const VAPID_PUBLIC_KEY = 'BF-WJICTyL_alOI7J5-MZey8TkGBRk24S9utQlqJkNUHdQDAGtuh7lRTw0tP4WJ6CIJmBpWRcDP8W6YT_9xdxSU';
+// VAPID public key - must match the key set in Supabase Edge Function
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BGTEAag0_lKOToSElyiwSSMmtLG7V6paCY8EE51pC6FI6IJBl2uPoHb3KaVydzxQHmQJZ6izx_eN_Dq7bYv8dOk';
 
 export interface PushSubscription {
   endpoint: string;
