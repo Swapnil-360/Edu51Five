@@ -1650,11 +1650,17 @@ Best of luck with your studies!
     try {
       setIsSendingBroadcast(true);
 
+      // Format with brand for a more professional notification experience
+      const rawTitle = broadcastPush.title.trim();
+      const rawBody = broadcastPush.body.trim();
+      const formattedTitle = rawTitle ? `Edu51Five • ${rawTitle}` : 'Edu51Five Update';
+      const formattedBody = rawBody ? `${rawBody} — Stay ahead with Edu51Five.` : 'New update from Edu51Five.';
+
       // Call Supabase Edge Function to send push to all subscriptions
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: {
-          title: broadcastPush.title,
-          body: broadcastPush.body,
+          title: formattedTitle,
+          body: formattedBody,
           url: broadcastPush.url || '/',
           broadcast: true // Flag to send to all subscribers
         }

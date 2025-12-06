@@ -119,8 +119,9 @@ serve(async (req) => {
     const notificationPayload = {
       title: payload.title,
       body: payload.body,
-      icon: '/image.png',
-      badge: '/image.png',
+      // Use branded logo for both icon and badge so notifications look consistent across OS trays
+      icon: '/Edu_51_Logo.png',
+      badge: '/Edu_51_Logo.png',
       tag: payload.broadcast ? 'broadcast' : payload.noticeType,
       requireInteraction: false,
       vibrate: [200, 100, 200],
