@@ -12,11 +12,12 @@ const corsHeaders = {
 }
 
 interface PushPayload {
-  noticeId: string;
-  noticeType: string;
+  noticeId?: string;
+  noticeType?: string;
   title: string;
   body: string;
   url?: string;
+  broadcast?: boolean; // Flag for admin broadcast messages
 }
 
 interface PushSubscription {
@@ -45,9 +46,17 @@ serve(async (req) => {
     const payload: PushPayload = await req.json()
 
     // Validate payload
-    if (!payload.noticeId || !payload.title || !payload.body) {
+    if (!payload.title || !payload.body) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: noticeId, title, body' }),
+        JSON.stringify({ error: 'Missing required fields: title, body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // For non-broadcast mode, noticeId is required
+    if (!payload.broadcast && !payload.noticeId) {
+      return new Response(
+        JSON.stringify({ error: 'noticeId required for non-broadcast notifications' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -112,12 +121,13 @@ serve(async (req) => {
       body: payload.body,
       icon: '/image.png',
       badge: '/image.png',
-      tag: payload.noticeType,
+      tag: payload.broadcast ? 'broadcast' : payload.noticeType,
       requireInteraction: false,
       vibrate: [200, 100, 200],
       data: {
         url: payload.url || '/',
-        noticeId: payload.noticeId,
+        noticeId: payload.noticeId || null,
+        broadcast: payload.broadcast || false,
       },
       actions: [
         { action: 'open', title: 'View Now' },

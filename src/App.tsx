@@ -196,6 +196,14 @@ function App() {
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const hasInitializedPush = useRef(false);
   
+  // Admin broadcast push notification state
+  const [broadcastPush, setBroadcastPush] = useState({
+    title: '',
+    body: '',
+    url: '/'
+  });
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  
   // Exam period selection state - Auto-detect based on current semester phase
   const [selectedExamPeriod, setSelectedExamPeriod] = useState<'midterm' | 'final'>(() => {
     const status = getCurrentSemesterStatus();
@@ -1629,6 +1637,45 @@ Best of luck with your studies!
       alert('Material deleted from view. Database may need manual cleanup.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Admin: Send broadcast push notification to all subscribers
+  const handleSendBroadcastNotification = async () => {
+    if (!broadcastPush.title || !broadcastPush.body) {
+      alert('Please fill in notification title and message');
+      return;
+    }
+
+    try {
+      setIsSendingBroadcast(true);
+
+      // Call Supabase Edge Function to send push to all subscriptions
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          title: broadcastPush.title,
+          body: broadcastPush.body,
+          url: broadcastPush.url || '/',
+          broadcast: true // Flag to send to all subscribers
+        }
+      });
+
+      if (error) {
+        console.error('Error sending broadcast:', error);
+        alert('Failed to send notification. Make sure the Edge Function is deployed with VAPID keys configured.');
+        return;
+      }
+
+      console.log('Broadcast sent:', data);
+      alert(`✅ Push notification sent to ${data?.sent || 0} subscriber(s)!`);
+      
+      // Reset form
+      setBroadcastPush({ title: '', body: '', url: '/' });
+    } catch (err) {
+      console.error('Broadcast error:', err);
+      alert('Error sending notification');
+    } finally {
+      setIsSendingBroadcast(false);
     }
   };
 
@@ -3260,6 +3307,10 @@ For any queries, contact your course instructors or the department.`,
             onEditNotice={() => setShowCreateNotice(true)}
             onCreateNotice={() => setShowCreateNotice(true)}
             onDeleteNotice={handleDeleteNotice}
+            broadcastPush={broadcastPush}
+            onBroadcastPushChange={setBroadcastPush}
+            onSendBroadcast={handleSendBroadcastNotification}
+            isSendingBroadcast={isSendingBroadcast}
           />
         )}
 
@@ -3436,6 +3487,95 @@ For any queries, contact your course instructors or the department.`,
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-400 bg-opacity-50 rounded-xl flex items-center justify-center">
                       <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-purple-100" />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Broadcast Push Notification Section */}
+              <div className={`${isDarkMode ? 'bg-gradient-to-br from-indigo-900/50 to-purple-900/50 border-indigo-700' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200'} rounded-2xl shadow-lg border p-4 sm:p-6`}>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className={`w-10 h-10 ${isDarkMode ? 'bg-indigo-800/50' : 'bg-indigo-100'} rounded-xl flex items-center justify-center`}>
+                    <Bell className={`w-5 h-5 ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`} />
+                  </div>
+                  <div>
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📢 Broadcast Push Notification</h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Send instant notifications to all subscribed users</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Notification Title
+                      </label>
+                      <input
+                        type="text"
+                        value={broadcastPush.title}
+                        onChange={(e) => setBroadcastPush({ ...broadcastPush, title: e.target.value })}
+                        placeholder="e.g., New Study Material Uploaded"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                          isDarkMode
+                            ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400'
+                            : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Open URL (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={broadcastPush.url}
+                        onChange={(e) => setBroadcastPush({ ...broadcastPush, url: e.target.value })}
+                        placeholder="/course/CSE-319 or /"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                          isDarkMode
+                            ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400'
+                            : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                      Message Body
+                    </label>
+                    <textarea
+                      value={broadcastPush.body}
+                      onChange={(e) => setBroadcastPush({ ...broadcastPush, body: e.target.value })}
+                      placeholder="Check out the new CSE-319 notes uploaded in the Notes section!"
+                      rows={3}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        isDarkMode
+                          ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400'
+                          : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      💡 Requires Edge Function with VAPID keys configured
+                    </p>
+                    <button
+                      onClick={handleSendBroadcastNotification}
+                      disabled={isSendingBroadcast || !broadcastPush.title || !broadcastPush.body}
+                      className={`px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
+                        isSendingBroadcast || !broadcastPush.title || !broadcastPush.body
+                          ? isDarkMode
+                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : isDarkMode
+                          ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl'
+                      }`}
+                    >
+                      {isSendingBroadcast ? '⏳ Sending...' : '🚀 Send to All Subscribers'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -3932,9 +4072,12 @@ For any queries, contact your course instructors or the department.`,
                 {/* Modal Body - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6">
               
-              {/* Category Selection */}
-              <div className="mb-6">
-                <label className={`block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Notice Category</label>
+              {/* Section: Category Selection */}
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`h-8 w-1 rounded-full mr-3 ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}></div>
+                  <h3 className={`text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Select Notice Category</h3>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
                     { value: 'announcement', icon: '📢', label: 'General', desc: 'Regular announcements' },
@@ -3963,9 +4106,16 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {/* Title with smart suggestions */}
+              {/* Section: Basic Information */}
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`h-8 w-1 rounded-full mr-3 ${isDarkMode ? 'bg-purple-400' : 'bg-purple-600'}`}></div>
+                  <h3 className={`text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Basic Information</h3>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    {/* Title with smart suggestions */}
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                       Title
@@ -4084,10 +4234,16 @@ For any queries, contact your course instructors or the department.`,
                     </label>
                   </div>
                 </div>
+                </div>
               </div>
 
-              {/* Content */}
-              <div className="mt-6">
+              {/* Section: Content */}
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`h-8 w-1 rounded-full mr-3 ${isDarkMode ? 'bg-green-400' : 'bg-green-600'}`}></div>
+                  <h3 className={`text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Notice Content</h3>
+                </div>
+                <div>
                 <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Notice Content</label>
                 <textarea
                   value={newNotice.content}
@@ -4111,6 +4267,7 @@ For any queries, contact your course instructors or the department.`,
                       🎯 {newNotice.exam_type === 'midterm' ? 'Mid-term' : 'Final'} Exam Notice
                     </span>
                   )}
+                </div>
                 </div>
               </div>
 

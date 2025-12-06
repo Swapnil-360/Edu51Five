@@ -38,6 +38,10 @@ interface AdminDashboardProps {
   onEditNotice: () => void;
   onCreateNotice: () => void;
   onDeleteNotice?: (noticeId: string) => void;
+  broadcastPush?: { title: string; body: string; url: string };
+  onBroadcastPushChange?: (data: { title: string; body: string; url: string }) => void;
+  onSendBroadcast?: () => void;
+  isSendingBroadcast?: boolean;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -51,6 +55,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onEditNotice,
   onCreateNotice,
   onDeleteNotice,
+  broadcastPush = { title: '', body: '', url: '/' },
+  onBroadcastPushChange,
+  onSendBroadcast,
+  isSendingBroadcast = false,
 }) => {
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     courseManagement: false,
@@ -272,6 +280,102 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-orange-300 group-hover:text-orange-200' : 'text-orange-600 group-hover:text-orange-700'} transition-colors`}>Week {currentWeek}</p>
                 <p className={`mt-1 text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{semesterProgress}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Broadcast Push Notification Section */}
+        <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-indigo-900/50 to-purple-900/50 backdrop-blur-xl border border-indigo-500/30 hover:border-indigo-400/50 hover:from-indigo-900/60 hover:to-purple-900/60 hover:shadow-lg hover:shadow-indigo-500/20' : 'bg-gradient-to-br from-indigo-50/80 to-purple-50/80 backdrop-blur-xl border border-indigo-200/50 hover:border-indigo-300/80 hover:shadow-lg hover:shadow-indigo-200/50'}`}>
+          <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-indigo-500/5 to-transparent' : 'bg-gradient-to-br from-indigo-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+          <div className="relative z-10 p-4 sm:p-5 lg:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-200 text-indigo-600'}`}>
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className={`text-base sm:text-lg font-bold ${isDarkMode ? 'text-indigo-200' : 'text-indigo-900'}`}>
+                  📢 Broadcast Push Notification
+                </h2>
+                <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-indigo-300/70' : 'text-indigo-600/70'}`}>
+                  Send instant notifications to all subscribed users
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-indigo-200' : 'text-indigo-900'}`}>
+                    Notification Title
+                  </label>
+                  <input
+                    type="text"
+                    value={broadcastPush.title}
+                    onChange={(e) => onBroadcastPushChange?.({ ...broadcastPush, title: e.target.value })}
+                    placeholder="e.g., New Study Material Uploaded"
+                    className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                      isDarkMode
+                        ? 'bg-slate-800/50 border-slate-600/50 text-gray-100 placeholder-gray-400 focus:bg-slate-800 focus:border-indigo-500/50'
+                        : 'bg-white/70 border-indigo-200 text-gray-900 placeholder-gray-500 focus:bg-white focus:border-indigo-400'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-indigo-200' : 'text-indigo-900'}`}>
+                    Open URL (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={broadcastPush.url}
+                    onChange={(e) => onBroadcastPushChange?.({ ...broadcastPush, url: e.target.value })}
+                    placeholder="/course/CSE-319 or /"
+                    className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                      isDarkMode
+                        ? 'bg-slate-800/50 border-slate-600/50 text-gray-100 placeholder-gray-400 focus:bg-slate-800 focus:border-indigo-500/50'
+                        : 'bg-white/70 border-indigo-200 text-gray-900 placeholder-gray-500 focus:bg-white focus:border-indigo-400'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-indigo-200' : 'text-indigo-900'}`}>
+                  Message Body
+                </label>
+                <textarea
+                  value={broadcastPush.body}
+                  onChange={(e) => onBroadcastPushChange?.({ ...broadcastPush, body: e.target.value })}
+                  placeholder="Check out the new CSE-319 notes uploaded in the Notes section!"
+                  rows={3}
+                  className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none ${
+                    isDarkMode
+                      ? 'bg-slate-800/50 border-slate-600/50 text-gray-100 placeholder-gray-400 focus:bg-slate-800 focus:border-indigo-500/50'
+                      : 'bg-white/70 border-indigo-200 text-gray-900 placeholder-gray-500 focus:bg-white focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-indigo-300/20">
+                <p className={`text-xs ${isDarkMode ? 'text-indigo-300/60' : 'text-indigo-600/60'}`}>
+                  💡 Requires Edge Function with VAPID keys configured
+                </p>
+                <button
+                  onClick={onSendBroadcast}
+                  disabled={isSendingBroadcast || !broadcastPush.title || !broadcastPush.body}
+                  className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isSendingBroadcast || !broadcastPush.title || !broadcastPush.body
+                      ? isDarkMode
+                        ? 'bg-slate-700 text-slate-400'
+                        : 'bg-gray-300 text-gray-500'
+                      : isDarkMode
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:shadow-indigo-500/50 hover:scale-105'
+                      : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:shadow-indigo-400/50 hover:scale-105'
+                  }`}
+                >
+                  {isSendingBroadcast ? '⏳ Sending...' : '🚀 Send to All Subscribers'}
+                </button>
               </div>
             </div>
           </div>
