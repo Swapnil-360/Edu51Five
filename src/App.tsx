@@ -839,7 +839,7 @@ FOR ALL USING (true) WITH CHECK (true);
       // Fallback to hardcoded courses if database fails
       setCourses([
         { id: '1', name: 'Networking', code: 'CSE-319-20', description: 'Computer Networks and Security', created_at: new Date().toISOString() },
-        { id: '2', name: 'Software Development', code: 'CSE-327', description: 'Software Engineering Principles', created_at: new Date().toISOString() },
+        { id: '2', name: 'Software Engineering', code: 'CSE-327', description: 'Software Engineering Principles', created_at: new Date().toISOString() },
         { id: '3', name: 'Project Management and Professional Ethics', code: 'CSE-407', description: 'Project Management & Ethics', created_at: new Date().toISOString() },
         { id: '4', name: 'Distributed Database', code: 'CSE-417', description: 'Database Systems and Management', created_at: new Date().toISOString() },
         { id: '5', name: 'Artificial Intelligence', code: 'CSE-351', description: 'AI and Machine Learning', created_at: new Date().toISOString() },

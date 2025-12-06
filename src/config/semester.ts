@@ -191,7 +191,7 @@ export const SPECIAL_EVENTS = {
   sdpDefense: {
     name: "SDP-300 Defense/Viva",
     date: "2025-12-17",
-    description: "Project presentation and viva for Software Development Project",
+    description: "Project presentation and viva for Software Engineering Project",
     icon: "🎓"
   }
 };

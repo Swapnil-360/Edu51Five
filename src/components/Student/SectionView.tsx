@@ -20,7 +20,7 @@ export function SectionView({ sectionId, sectionName, onSelectCourse }: SectionV
     },
     { 
       id: '2', 
-      name: 'Software Development', 
+      name: 'Software Engineering', 
       code: 'CSE-327', 
       instructor: 'Prof. Rahman',
       materialCount: 18,

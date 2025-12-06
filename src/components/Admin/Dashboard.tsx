@@ -12,7 +12,7 @@ export function AdminDashboard() {
 
   const courses = [
     { id: '1', name: 'Networking', code: 'CSE-319-20', materialCount: 12 },
-    { id: '2', name: 'Software Development', code: 'CSE-327', materialCount: 18 },
+    { id: '2', name: 'Software Engineering', code: 'CSE-327', materialCount: 18 },
     { id: '3', name: 'Project Management and Professional Ethics', code: 'CSE-407', materialCount: 14 },
     { id: '4', name: 'Distributed Database', code: 'CSE-417', materialCount: 16 },
     { id: '5', name: 'Artificial Intelligence', code: 'CSE-351', materialCount: 20 },

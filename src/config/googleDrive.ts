@@ -25,7 +25,7 @@ export const GOOGLE_DRIVE_FOLDERS = {
       }
     },
     "CSE-327": {
-      name: "Software Development", 
+      name: "Software Engineering", 
       midterm: {
         "ct-questions": "https://drive.google.com/drive/folders/1TnHTiq8jVf7K0aqoOvhBQzxgW-Zt-A1b?usp=drive_link",
         notes: "https://drive.google.com/drive/folders/1lHY1VHo-2BpvEgRVuBt2UkR7ye05XJoU?usp=drive_link",
@@ -246,8 +246,8 @@ export const getCourseFiles = (courseCode: string, category: string, examPeriod:
           { id: "cse327_ct3", name: "CT-3 Questions.pdf", url: "https://drive.google.com/file/d/14R0je8S2BzWEi_Rrnp0nNP-0w7u204Ho/view", embedUrl: "https://drive.google.com/file/d/14R0je8S2BzWEi_Rrnp0nNP-0w7u204Ho/preview" },
         ],
         "notes": [
-          { id: "cse327_notes1", name: "Software Development Notes 1.pdf", url: "https://drive.google.com/file/d/1XboKCrT6zBZgw6sNr-4oQP1iYOI4c6Gi/view", embedUrl: "https://drive.google.com/file/d/1XboKCrT6zBZgw6sNr-4oQP1iYOI4c6Gi/preview" },
-          { id: "cse327_notes2", name: "Software Development Notes 2.pdf", url: "https://drive.google.com/file/d/1OB8deUuNorK-_gjlB2kgoScOZFy4yw3D/view", embedUrl: "https://drive.google.com/file/d/1OB8deUuNorK-_gjlB2kgoScOZFy4yw3D/preview" },
+          { id: "cse327_notes1", name: "Software Engineering Notes 1.pdf", url: "https://drive.google.com/file/d/1XboKCrT6zBZgw6sNr-4oQP1iYOI4c6Gi/view", embedUrl: "https://drive.google.com/file/d/1XboKCrT6zBZgw6sNr-4oQP1iYOI4c6Gi/preview" },
+          { id: "cse327_notes2", name: "Software Engineering Notes 2.pdf", url: "https://drive.google.com/file/d/1OB8deUuNorK-_gjlB2kgoScOZFy4yw3D/view", embedUrl: "https://drive.google.com/file/d/1OB8deUuNorK-_gjlB2kgoScOZFy4yw3D/preview" },
         ],
         "slides": [],
         "suggestions": [

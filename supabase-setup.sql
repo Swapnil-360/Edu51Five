@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS materials (
 -- Insert sample courses
 INSERT INTO courses (name, code, description) VALUES
     ('Networking', 'CSE-319-20', 'Computer Networks and Security'),
-    ('Software Development', 'CSE-327', 'Software Engineering Principles'),
+    ('Software Engineering', 'CSE-327', 'Software Engineering Principles'),
     ('Project Management and Professional Ethics', 'CSE-407', 'Project Management & Ethics'),
     ('Distributed Database', 'CSE-417', 'Database Systems and Management'),
     ('Artificial Intelligence', 'CSE-351', 'AI and Machine Learning')

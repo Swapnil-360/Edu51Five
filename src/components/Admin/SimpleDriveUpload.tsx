@@ -27,7 +27,7 @@ export const SimpleDriveUpload: React.FC<SimpleDriveUploadProps> = ({ onFileAdde
   // Course list
   const courses = [
     { code: 'CSE-319-20', name: 'Networking' },
-    { code: 'CSE-327', name: 'Software Development' },
+    { code: 'CSE-327', name: 'Software Engineering' },
     { code: 'CSE-407', name: 'Project Management' },
     { code: 'CSE-417', name: 'Distributed Database' },
     { code: 'CSE-351', name: 'Artificial Intelligence' },
