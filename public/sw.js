@@ -51,61 +51,120 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+  console.log('📨 Push event received!', event);
   
-  const title = data.title || 'Edu51Five Update';
+  let data = {};
+  let title = 'Edu51Five';
+  let body = 'New notification';
+  
+  try {
+    if (event.data) {
+      // Try to parse JSON payload
+      const text = event.data.text();
+      console.log('Raw push data:', text);
+      
+      if (text) {
+        data = JSON.parse(text);
+        console.log('Parsed notification data:', data);
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing push data:', error);
+  }
+  
+  // Extract title and body from data
+  title = data.title || 'Edu51Five Update';
+  body = data.body || 'New notification from Edu51Five';
+  
   const options = {
-    body: data.body || 'New notification from Edu51Five',
-    icon: data.icon || '/image.png',
-    badge: data.badge || '/image.png',
-    data: {
+    body: body,
+    icon: data.icon || '/Edu_51_Logo.png',
+    badge: data.badge || '/Edu_51_Logo.png',
+    image: data.image || null, // Optional large image
+    data: data.data || {
       url: data.url || '/',
-      noticeId: data.noticeId
+      noticeId: data.noticeId || null
     },
-    tag: data.tag || 'default',
+    tag: data.tag || 'edu51five-notification',
     requireInteraction: false,
     vibrate: [200, 100, 200],
     actions: [
       {
         action: 'open',
-        title: 'View Now'
+        title: '📖 View Now',
+        icon: '/Edu_51_Logo.png'
       },
       {
         action: 'close',
-        title: 'Dismiss'
+        title: '❌ Dismiss'
       }
-    ]
+    ],
+    // Additional options for better visibility
+    silent: false,
+    renotify: true,
+    timestamp: Date.now()
   };
+
+  console.log('Showing notification with options:', { title, options });
 
   event.waitUntil(
     self.registration.showNotification(title, options)
+      .then(() => console.log('✅ Notification shown successfully'))
+      .catch(err => console.error('❌ Error showing notification:', err))
   );
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
+  console.log('🔔 Notification clicked:', event.action);
+  
   event.notification.close();
 
+  // If user clicked "close", just dismiss
   if (event.action === 'close') {
+    console.log('User dismissed notification');
     return;
   }
 
-  const urlToOpen = event.notification.data.url || '/';
+  // Get the URL to open (default to home page)
+  const urlToOpen = new URL(
+    event.notification.data?.url || '/',
+    self.location.origin
+  ).href;
+
+  console.log('Opening URL:', urlToOpen);
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if there's already a window open
-        for (let client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({ 
+      type: 'window', 
+      includeUncontrolled: true 
+    })
+    .then((clientList) => {
+      // Try to find an existing window with the app
+      for (const client of clientList) {
+        const clientUrl = new URL(client.url);
+        const targetUrl = new URL(urlToOpen);
+        
+        // If same origin, focus and navigate
+        if (clientUrl.origin === targetUrl.origin && 'focus' in client) {
+          console.log('Focusing existing window');
+          return client.focus().then(() => {
+            // Navigate to the specific URL if different
+            if (client.url !== urlToOpen && 'navigate' in client) {
+              return client.navigate(urlToOpen);
+            }
+            return client;
+          });
         }
-        // If no window is open, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
+      }
+      
+      // No existing window found, open a new one
+      if (clients.openWindow) {
+        console.log('Opening new window');
+        return clients.openWindow(urlToOpen);
+      }
+    })
+    .catch(err => console.error('Error handling notification click:', err))
   );
 });
 

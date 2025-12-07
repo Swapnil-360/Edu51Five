@@ -205,11 +205,46 @@ export async function sendLocalNotification(title: string, body: string, url?: s
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification(title, {
     body,
-    icon: '/image.png',
-    badge: '/image.png',
+    icon: '/Edu_51_Logo.png',
+    badge: '/Edu_51_Logo.png',
     data: { url: url || '/' },
-    tag: 'local-notification',
+    tag: 'local-test-notification',
     requireInteraction: false,
-    vibrate: [200, 100, 200]
+    vibrate: [200, 100, 200],
+    actions: [
+      {
+        action: 'open',
+        title: '📖 View Now'
+      },
+      {
+        action: 'close',
+        title: '❌ Dismiss'
+      }
+    ]
   });
+  
+  console.log('✅ Test notification shown locally');
+}
+
+/**
+ * Test the service worker by simulating a push event
+ */
+export async function testPushNotification(): Promise<void> {
+  if (!isPushNotificationSupported()) {
+    throw new Error('Push notifications not supported');
+  }
+
+  const permission = await requestNotificationPermission();
+  if (permission !== 'granted') {
+    throw new Error('Notification permission denied');
+  }
+
+  // Send a local test notification
+  await sendLocalNotification(
+    '🧪 Test Notification',
+    'This is a test notification from Edu51Five. If you see this, notifications are working!',
+    '/'
+  );
+  
+  console.log('Test notification triggered');
 }

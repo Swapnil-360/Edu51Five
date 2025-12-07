@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Push Notifications - Edu51Five</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-test { background: #2196F3; }
+        .btn-test:hover { background: #0b7dda; }
+        .btn-push { background: #FF9800; }
+        .btn-push:hover { background: #e68900; }
+        .log {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-entry.success { color: #155724; }
+        .log-entry.error { color: #721c24; }
+        .log-entry.info { color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Push Notification Test Center</h1>
+        <p>Test push notifications for Edu51Five</p>
+
+        <div id="status" class="status info">
+            Checking notification support...
+        </div>
+
+        <div>
+            <button id="requestPermission" onclick="requestPermission()">
+                1️⃣ Request Permission
+            </button>
+            
+            <button id="testLocal" onclick="testLocalNotification()" class="btn-test">
+                2️⃣ Test Local Notification
+            </button>
+            
+            <button id="sendPush" onclick="sendPushNotification()" class="btn-push">
+                3️⃣ Send Real Push Notification
+            </button>
+        </div>
+
+        <div class="log" id="log">
+            <div class="log-entry info">📝 Logs will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('status');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        // Check support on load
+        window.addEventListener('load', async () => {
+            if (!('serviceWorker' in navigator)) {
+                updateStatus('❌ Service Workers not supported in this browser', 'error');
+                log('Service Workers not supported', 'error');
+                return;
+            }
+
+            if (!('PushManager' in window)) {
+                updateStatus('❌ Push notifications not supported in this browser', 'error');
+                log('Push notifications not supported', 'error');
+                return;
+            }
+
+            if (!('Notification' in window)) {
+                updateStatus('❌ Notifications not supported in this browser', 'error');
+                log('Notifications not supported', 'error');
+                return;
+            }
+
+            log('✅ Browser supports all required features', 'success');
+
+            // Register service worker
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                log('✅ Service Worker registered successfully', 'success');
+                
+                await navigator.serviceWorker.ready;
+                log('✅ Service Worker is ready', 'success');
+                
+                updateStatus('✅ Ready! Current permission: ' + Notification.permission, 'success');
+            } catch (error) {
+                updateStatus('❌ Service Worker registration failed', 'error');
+                log('❌ Error: ' + error.message, 'error');
+            }
+        });
+
+        async function requestPermission() {
+            log('Requesting notification permission...');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Permission result: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                
+                if (permission === 'granted') {
+                    updateStatus('✅ Permission granted! You can now receive notifications.', 'success');
+                } else if (permission === 'denied') {
+                    updateStatus('❌ Permission denied. Please enable in browser settings.', 'error');
+                } else {
+                    updateStatus('⚠️ Permission dismissed. Please try again.', 'info');
+                }
+            } catch (error) {
+                log('❌ Error requesting permission: ' + error.message, 'error');
+                updateStatus('❌ Error requesting permission', 'error');
+            }
+        }
+
+        async function testLocalNotification() {
+            log('Testing local notification...');
+            
+            if (Notification.permission !== 'granted') {
+                updateStatus('⚠️ Please grant permission first!', 'error');
+                log('Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                await registration.showNotification('🧪 Test Notification', {
+                    body: 'This is a test notification from Edu51Five. If you see this, local notifications are working! 🎉',
+                    icon: '/Edu_51_Logo.png',
+                    badge: '/Edu_51_Logo.png',
+                    tag: 'test-notification',
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200],
+                    actions: [
+                        { action: 'open', title: '📖 View Now' },
+                        { action: 'close', title: '❌ Dismiss' }
+                    ],
+                    data: { url: '/' }
+                });
+                
+                log('✅ Local notification sent successfully', 'success');
+                updateStatus('✅ Local notification sent! Check your system notifications.', 'success');
+            } catch (error) {
+                log('❌ Error sending local notification: ' + error.message, 'error');
+                updateStatus('❌ Failed to send local notification', 'error');
+            }
+        }
+
+        async function sendPushNotification() {
+            log('Sending push notification via Edge Function...');
+            
+            if (Notification.permission !== 'granted') {
+                updateStatus('⚠️ Please grant permission first!', 'error');
+                log('Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                // Use your actual Supabase URL and anon key
+                const response = await fetch('https://aljnyhxthmwgesnkqwzu.supabase.co/functions/v1/send-push-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + prompt('Enter your Supabase anon key:')
+                    },
+                    body: JSON.stringify({
+                        title: '📱 Real Push Notification',
+                        body: 'This is a real push notification sent via the Edge Function! If you see this, everything is working perfectly! 🎉',
+                        broadcast: true,
+                        url: '/'
+                    })
+                });
+
+                const result = await response.json();
+                log('📊 Response: ' + JSON.stringify(result, null, 2), 'info');
+                
+                if (result.success && result.sent > 0) {
+                    log(`✅ Push notification sent to ${result.sent} subscriber(s)!`, 'success');
+                    updateStatus(`✅ Push notification sent successfully! (${result.sent}/${result.total})`, 'success');
+                } else {
+                    log(`⚠️ Sent to ${result.sent}/${result.total} subscribers`, 'error');
+                    updateStatus('⚠️ Push notification sent but may have failed', 'error');
+                }
+            } catch (error) {
+                log('❌ Error sending push: ' + error.message, 'error');
+                updateStatus('❌ Failed to send push notification', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
