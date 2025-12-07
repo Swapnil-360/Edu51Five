@@ -1668,7 +1668,15 @@ Best of luck with your studies!
 
       if (error) {
         console.error('Error sending broadcast:', error);
-        alert('Failed to send notification. Make sure the Edge Function is deployed with VAPID keys configured.');
+        const errorMsg = error?.message || 'Unknown error';
+        console.error('Full error response:', error);
+        alert(`Failed to send notification:\n${errorMsg}\n\nMake sure:\n1. Edge Function is deployed\n2. VAPID keys are set in Supabase secrets\n3. At least one user has notifications enabled`);
+        return;
+      }
+
+      if (data?.success === false) {
+        console.error('Function returned error:', data?.error);
+        alert(`Notification failed: ${data?.error || 'Unknown error'}`);
         return;
       }
 

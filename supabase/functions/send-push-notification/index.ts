@@ -4,7 +4,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import webpush from 'npm:web-push'
+import { encrypt, uint8ArrayToBase64Url, base64UrlToUint8Array } from './webpush-encrypt.ts'
+import { generateVapidAuthToken } from './vapid-jwt-jose.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,24 +18,16 @@ interface PushPayload {
   title: string;
   body: string;
   url?: string;
-  broadcast?: boolean; // Flag for admin broadcast messages
-}
-
-interface PushSubscription {
-  id: string;
-  session_id: string;
-  endpoint: string;
-  subscription: Record<string, any>;
+  broadcast?: boolean;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Only accept POST requests
     if (req.method !== 'POST') {
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
@@ -42,7 +35,6 @@ serve(async (req) => {
       )
     }
 
-    // Get payload from request
     const payload: PushPayload = await req.json()
 
     // Validate payload
@@ -53,46 +45,42 @@ serve(async (req) => {
       )
     }
 
-    // For non-broadcast mode, noticeId is required
-    if (!payload.broadcast && !payload.noticeId) {
-      return new Response(
-        JSON.stringify({ error: 'noticeId required for non-broadcast notifications' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-    
-    // Initialize Supabase client
+    console.log('📨 Processing notification request:', { title: payload.title, broadcast: payload.broadcast })
+
+    // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+    const vapidEmail = Deno.env.get('VAPID_EMAIL') || 'mailto:admin@example.com'
 
+    // Validate environment variables
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Missing Supabase env vars')
       throw new Error('Missing Supabase environment variables')
     }
 
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Configure VAPID for Web Push
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-
     if (!vapidPublicKey || !vapidPrivateKey) {
-      throw new Error('Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY in environment')
+      console.error('❌ Missing VAPID keys:', { hasPublic: !!vapidPublicKey, hasPrivate: !!vapidPrivateKey })
+      throw new Error('Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY in Supabase secrets')
     }
 
-    webpush.setVapidDetails('mailto:admin@example.com', vapidPublicKey, vapidPrivateKey)
+    console.log('✅ Environment variables validated')
 
-    // Get all active push subscriptions - Query table directly instead of RPC for reliability
-    console.log('📡 Fetching active push subscriptions...')
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    // Initialize Supabase client
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Fetch active subscriptions
+    console.log('📡 Fetching push subscriptions...')
     
     const { data: subscriptions, error: subError } = await supabaseClient
       .from('push_subscriptions')
-      .select('id, session_id, endpoint, subscription')
-      .gt('updated_at', thirtyDaysAgo)
+      .select('id, session_id, endpoint, subscription, updated_at')
+      .order('updated_at', { ascending: false })
 
     if (subError) {
-      console.error('❌ Subscription fetch error:', subError)
-      throw new Error(`Failed to get subscriptions: ${subError.message}`)
+      console.error('❌ Database error:', subError.message)
+      throw new Error(`Failed to fetch subscriptions: ${subError.message}`)
     }
 
     if (!subscriptions || subscriptions.length === 0) {
@@ -100,7 +88,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: 'No active subscriptions to notify',
+          message: 'No active subscriptions',
           sent: 0,
           failed: 0,
           total: 0
@@ -109,129 +97,133 @@ serve(async (req) => {
       )
     }
 
-    console.log(`📬 Found ${subscriptions.length} active subscriptions to notify`)
+    console.log(`📊 Found ${subscriptions.length} active subscriptions`)
+    
+    // Log first subscription structure for debugging
+    if (subscriptions.length > 0) {
+      console.log('Sample subscription structure:', JSON.stringify(subscriptions[0], null, 2))
+    }
 
-    // Send push notification to all subscriptions
     let successCount = 0
     let failureCount = 0
+    const results: Array<{session_id: string, status: string, error?: string}> = []
 
-    // Prepare notification payload for browser
-    const notificationPayload = {
+    // Prepare notification payload
+    const notificationPayload = JSON.stringify({
       title: payload.title,
       body: payload.body,
-      // Use branded logo for both icon and badge so notifications look consistent across OS trays
       icon: '/Edu_51_Logo.png',
       badge: '/Edu_51_Logo.png',
       tag: payload.broadcast ? 'broadcast' : payload.noticeType,
-      requireInteraction: false,
-      vibrate: [200, 100, 200],
-      data: {
-        url: payload.url || '/',
-        noticeId: payload.noticeId || null,
-        broadcast: payload.broadcast || false,
-      },
-      actions: [
-        { action: 'open', title: 'View Now' },
-        { action: 'close', title: 'Dismiss' },
-      ],
-    }
+      data: { url: payload.url || '/' }
+    })
 
-    // Send notifications in batches to avoid rate limiting
-    const batchSize = 10
-    for (let i = 0; i < subscriptions.length; i += batchSize) {
-      const batch = subscriptions.slice(i, i + batchSize) as PushSubscription[]
-      
-      const sendPromises = batch.map(async (sub: PushSubscription) => {
-        try {
-          // Send push via Web Push protocol (encrypted, VAPID-signed)
-          await webpush.sendNotification(sub.subscription, JSON.stringify(notificationPayload))
-          successCount++
-          console.log(`✅ Notification sent to ${sub.session_id}`)
-          return { success: true, endpoint: sub.endpoint }
-        } catch (error: any) {
+    console.log('📦 Notification payload prepared:', notificationPayload.substring(0, 100) + '...')
+
+    // Send to each subscription with proper Web Push encryption
+    for (const sub of subscriptions) {
+      try {
+        console.log(`\n📤 Processing ${sub.session_id}...`)
+        
+        const userPublicKey = sub.subscription?.keys?.p256dh
+        const userAuth = sub.subscription?.keys?.auth
+
+        console.log(`   Keys present: p256dh=${!!userPublicKey}, auth=${!!userAuth}`)
+
+        if (!userPublicKey || !userAuth) {
+          console.warn(`⚠️ Missing encryption keys for ${sub.session_id}`)
           failureCount++
-          const status = error?.statusCode
-          console.warn(`⚠️ Failed to send to ${sub.session_id}: ${status ?? error}`)
-
-          // Remove invalid subscriptions (410 Gone = unsubscribed, 404 = endpoint invalid)
-          if (status === 410 || status === 404) {
-            console.log(`🗑️ Removing invalid subscription: ${sub.session_id}`)
-            await supabaseClient
-              .from('push_subscriptions')
-              .delete()
-              .eq('id', sub.id)
-              .catch((err) => console.error('Failed to delete subscription:', err))
-          }
-
-          return { success: false, endpoint: sub.endpoint, status }
+          continue
         }
-      })
 
-      // Wait for batch to complete before next batch
-      await Promise.all(sendPromises)
-    }
+        console.log(`   p256dh length: ${userPublicKey.length}`)
+        console.log(`   auth length: ${userAuth.length}`)
+        console.log(`   Endpoint: ${sub.endpoint.substring(0, 60)}...`)
 
-    console.log(`📊 Notification send complete: ${successCount} succeeded, ${failureCount} failed`)
+        // Encrypt the payload
+        console.log(`   🔐 Starting encryption...`)
+        const encrypted = await encrypt(userPublicKey, userAuth, notificationPayload)
+        console.log(`   ✅ Encryption complete. Ciphertext length: ${encrypted.ciphertext.length}`)
 
-    // Log the notification send event
-    try {
-      const { error: logError } = await supabaseClient
-        .from('notification_logs')
-        .insert({
-          notice_id: payload.noticeId,
-          notice_type: payload.noticeType,
-          title: payload.title,
-          body: payload.body,
-          recipients_count: subscriptions.length,
-          success_count: successCount,
-          failure_count: failureCount,
+        // Generate VAPID JWT for authorization
+        const url = new URL(sub.endpoint)
+        const audience = `${url.protocol}//${url.hostname}`
+        
+        console.log(`   🔑 Generating VAPID JWT...`)
+        const vapidJwt = await generateVapidAuthToken(audience, vapidEmail, vapidPrivateKey, vapidPublicKey)
+        console.log(`   ✅ JWT generated`)
+
+        // Send encrypted notification to FCM
+        console.log(`   📡 Sending to FCM...`)
+        const response = await fetch(sub.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Encoding': 'aesgcm',
+            'Encryption': `salt=${uint8ArrayToBase64Url(encrypted.salt)}`,
+            'Crypto-Key': `dh=${uint8ArrayToBase64Url(encrypted.serverPublicKey)};p256ecdsa=${vapidPublicKey}`,
+            'Authorization': `vapid t=${vapidJwt}, k=${vapidPublicKey}`,
+            'TTL': '86400'
+          },
+          body: encrypted.ciphertext
         })
 
-      if (logError) {
-        console.error('❌ Failed to log notification:', logError)
-      } else {
-        console.log('✅ Notification event logged')
+        console.log(`   📊 FCM Response: ${response.status} ${response.statusText}`)
+
+        if (response.ok || response.status === 201) {
+          successCount++
+          console.log(`   ✅ SUCCESS for ${sub.session_id}`)
+          results.push({ session_id: sub.session_id, status: 'success' })
+        } else if (response.status === 410 || response.status === 404) {
+          failureCount++
+          console.log(`   🗑️ Expired subscription, removing ${sub.session_id}`)
+          results.push({ session_id: sub.session_id, status: 'expired', error: `${response.status}: ${response.statusText}` })
+          await supabaseClient
+            .from('push_subscriptions')
+            .delete()
+            .eq('id', sub.id)
+        } else {
+          failureCount++
+          const errorBody = await response.text()
+          console.error(`   ❌ FAILED for ${sub.session_id}`)
+          console.error(`   Status: ${response.status}`)
+          console.error(`   Error body: ${errorBody}`)
+          results.push({ session_id: sub.session_id, status: 'failed', error: `${response.status}: ${errorBody}` })
+        }
+      } catch (error: any) {
+        failureCount++
+        console.error(`   ❌ EXCEPTION for ${sub.session_id}`)
+        console.error(`   Error: ${error.message}`)
+        console.error(`   Stack: ${error.stack}`)
+        results.push({ session_id: sub.session_id, status: 'error', error: error.message })
       }
-    } catch (logError) {
-      console.error('Error logging notification:', logError)
     }
 
-     // Return success response
-     return new Response(
+    console.log(`📊 Send complete: ${successCount} succeeded, ${failureCount} failed`)
+
+    return new Response(
       JSON.stringify({
         success: true,
-        message: 'Push notifications sent',
+        message: 'Notification campaign sent',
         sent: successCount,
         failed: failureCount,
         total: subscriptions.length,
+        results: results
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-     )
+    )
 
-    } catch (error) {
-     console.error('❌ Function error:', error)
-     return new Response(
+  } catch (error) {
+    console.error('❌ Function error:', error.message)
+    return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error.message || 'Unknown error occurred'
       }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-     )
-    }
-  })
-
-  /*
-  DEPLOYMENT (CLI):
-  1) supabase login
-  2) supabase link --project-ref YOUR_PROJECT_REF
-  3) supabase functions deploy send-push-notification
-
-  TEST (curl):
-  curl -i --location --request POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-push-notification' \
-    --header 'Authorization: Bearer YOUR_ANON_KEY' \
-    --header 'Content-Type': 'application/json' \
-    --data '{"noticeId":"test-123","noticeType":"welcome-notice","title":"Test","body":"Hello","url":"/"}'
-  */
+    )
+  }
+})
