@@ -108,17 +108,20 @@ serve(async (req) => {
     let failureCount = 0
     const results: Array<{session_id: string, status: string, error?: string}> = []
 
-    // Prepare notification payload
+    // Prepare notification payload - MUST be valid JSON that service worker can parse
+    // The Web Push encryption will handle the encryption, this is just the content
     const notificationPayload = JSON.stringify({
-      title: payload.title,
-      body: payload.body,
+      title: payload.title || 'Edu51Five',
+      body: payload.body || 'New notification',
       icon: '/Edu_51_Logo.png',
       badge: '/Edu_51_Logo.png',
-      tag: payload.broadcast ? 'broadcast' : payload.noticeType,
-      data: { url: payload.url || '/' }
+      tag: payload.broadcast ? 'broadcast' : payload.noticeType || 'notification',
+      url: payload.url || '/',
+      noticeId: payload.noticeId || null
     })
 
     console.log('📦 Notification payload prepared:', notificationPayload.substring(0, 100) + '...')
+    console.log('   Payload length:', notificationPayload.length, 'bytes')
 
     // Send to each subscription with proper Web Push encryption
     for (const sub of subscriptions) {
