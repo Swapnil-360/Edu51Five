@@ -8,12 +8,25 @@ const urlsToCache = [
   '/image.png',
 ];
 
+console.log('[SW STARTUP] Service Worker starting...');
+
+// Global error handler
+self.addEventListener('error', (event) => {
+  console.error('[SW ERROR] Global error:', event.error, event.message);
+});
+
+// Global unhandled promise rejection handler
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('[SW UNHANDLED REJECTION]', event.reason);
+});
+
 // Install event - cache resources
 self.addEventListener('install', (event) => {
+  console.log('[SW INSTALL] Installing service worker...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
+        console.log('[SW INSTALL] Cache opened');
         return cache.addAll(urlsToCache);
       })
   );
@@ -22,6 +35,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW ACTIVATE] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -34,6 +48,7 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+  console.log('[SW ACTIVATE] Service worker activated and claimed clients');
 });
 
 // Fetch event - serve from cache, fallback to network
@@ -51,84 +66,68 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  console.log('📨 Push event received!', event);
-  console.log('   Has data:', !!event.data);
+  console.log('📨 [SW] Push event received');
   
-  let data = {};
-  let title = 'Edu51Five';
-  let body = 'New notification';
-  
-  try {
-    if (event.data) {
-      // Get the text content from the push event
-      const text = event.data.text();
-      console.log('Raw push text:', text);
-      console.log('Text length:', text.length);
-      
-      if (text && text.trim()) {
-        // Try to parse as JSON
-        try {
-          data = JSON.parse(text);
-          console.log('✅ Successfully parsed JSON:', data);
-        } catch (parseError) {
-          console.warn('⚠️ Failed to parse as JSON, treating as plain text:', parseError);
-          // If JSON parsing fails, use text as body
-          data = {
-            title: 'Notification',
-            body: text
-          };
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error processing push data:', error);
-  }
-  
-  // Extract title and body - be flexible about structure
-  title = data.title || data.notification?.title || 'Edu51Five Update';
-  body = data.body || data.notification?.body || 'New notification from Edu51Five';
-  
-  console.log('📋 Final notification:', { title, body });
-  
-  const options = {
-    body: body,
-    icon: '/Edu_51_Logo.png',
-    badge: '/Edu_51_Logo.png',
-    image: data.image || null,
-    data: {
-      url: data.url || data.data?.url || '/',
-      noticeId: data.noticeId || data.data?.noticeId || null
-    },
-    tag: data.tag || 'edu51five-notification',
-    requireInteraction: false,
-    vibrate: [200, 100, 200],
-    actions: [
-      {
-        action: 'open',
-        title: '📖 View',
-        icon: '/Edu_51_Logo.png'
-      },
-      {
-        action: 'close',
-        title: '❌ Dismiss'
-      }
-    ],
-    silent: false,
-    renotify: true,
-    timestamp: Date.now()
-  };
-
-  console.log('🔔 Displaying notification with:', { title, ...options });
-
+  // event.waitUntil MUST be called immediately
   event.waitUntil(
-    self.registration.showNotification(title, options)
-      .then(() => {
-        console.log('✅ Notification displayed successfully');
-      })
-      .catch(err => {
-        console.error('❌ Error showing notification:', err);
-      })
+    (async () => {
+      try {
+        let data = {};
+        let title = 'Edu51Five';
+        let body = 'New notification';
+        
+        console.log('📨 [SW] Event has data:', !!event.data);
+        
+        if (event.data) {
+          try {
+            const text = await event.data.text();
+            console.log('📨 [SW] Got text, length:', text.length);
+            
+            if (text && text.trim()) {
+              data = JSON.parse(text);
+              console.log('📨 [SW] Parsed JSON, keys:', Object.keys(data).join(','));
+            }
+          } catch (e) {
+            console.error('📨 [SW] Error parsing:', e.message);
+          }
+        }
+        
+        title = data.title || 'Edu51Five Update';
+        body = data.body || 'New notification from Edu51Five';
+        
+        console.log('📨 [SW] Ready to show:', { title, body });
+        
+        // Simplified notification options
+        const options = {
+          body: body,
+          icon: '/Edu_51_Logo.png',
+          badge: '/Edu_51_Logo.png',
+          tag: 'edu51five',
+          requireInteraction: true,
+          vibrate: [200, 100, 200],
+          data: {
+            url: data.url || '/'
+          }
+        };
+
+        console.log('📨 [SW] Calling showNotification...');
+        await self.registration.showNotification(title, options);
+        console.log('📨 [SW] ✅ Notification shown!');
+        
+      } catch (error) {
+        console.error('📨 [SW] FAILED:', error.message, error.stack);
+      }
+    })()
   );
+});
+
+// Message handler - for testing
+self.addEventListener('message', (event) => {
+  console.log('[SW MESSAGE] Received message:', event.data);
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW MESSAGE] Skipping waiting...');
+    self.skipWaiting();
+  }
 });
 
 // Notification click event
