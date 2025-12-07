@@ -15,6 +15,13 @@ import {
   isPushSubscribed,
   validateCurrentSubscription
 } from './lib/pushNotifications';
+import { 
+  sendEmailToAllStudents,
+  sendEmailNotification,
+  EmailNotification
+} from './lib/emailNotifications';
+import { RegisterModal } from './components/RegisterModal';
+import { UserRegistration } from './components/Student/UserRegistration';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
 import MarqueeTicker from './components/MarqueeTicker';
 import PDFViewer from './components/PDFViewer';
@@ -110,7 +117,7 @@ function App() {
     if (path === '/semester') return 'semester';
     if (path === '/exam-materials') return 'examMaterials';
     if (path.startsWith('/course/')) return 'course';
-    if (path === '/home') return 'home';
+    if (path === '/home' || path === '/' || path === '') return 'home';
     return 'home';
   });
 
@@ -138,6 +145,8 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   // Force admin to stay on admin view until logout (no back/swipe escape)
   useEffect(() => {
@@ -161,7 +170,7 @@ function App() {
       else if (path === '/semester') setCurrentView('semester');
       else if (path === '/exam-materials') setCurrentView('examMaterials');
       else if (path.startsWith('/course/')) setCurrentView('course');
-      else if (path === '/home') setCurrentView('home');
+      else if (path === '/home' || path === '/' || path === '') setCurrentView('home');
       else setCurrentView('home');
     };
     window.addEventListener('popstate', handlePopState);
@@ -453,28 +462,40 @@ function App() {
     }
   };
 
-  // Send push notification when notice is created (admin only)
+  // Send notifications (push + email) when notice is created (admin only)
   const sendNoticeNotification = async (notice: Notice) => {
     try {
-      // Call Supabase Edge Function to send push notifications
-      const { data, error } = await supabase.functions.invoke('send-push-notification', {
-        body: {
-          noticeId: notice.id,
-          noticeType: notice.id, // 'welcome-notice' or 'exam-routine-notice'
-          title: notice.title,
-          body: notice.content.substring(0, 100), // Truncate to 100 chars
-          url: '/'
-        }
-      });
+      // 1. Send push notifications (backup notification method)
+      try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+          body: {
+            noticeId: notice.id,
+            noticeType: notice.id, // 'welcome-notice' or 'exam-routine-notice'
+            title: notice.title,
+            body: notice.content.substring(0, 100), // Truncate to 100 chars
+            url: '/'
+          }
+        });
 
-      if (error) {
-        console.error('Failed to send push notification:', error);
-        return;
+        if (!error) {
+          console.log('✅ Push notification sent:', data);
+        }
+      } catch (pushError) {
+        console.warn('⚠️ Push notification sending attempted (non-blocking):', pushError);
       }
 
-      console.log('Push notification sent:', data);
+      // 2. Send email notifications (primary method - more reliable)
+      console.log('📧 Sending email notifications to all students...');
+      const { sent, failed } = await sendEmailToAllStudents(
+        `${notice.title} - Edu51Five`,
+        notice.title,
+        notice.content,
+        '/'
+      );
+      
+      console.log(`✅ Email notifications: ${sent} sent, ${failed} failed`);
     } catch (error) {
-      console.error('Error sending push notification:', error);
+      console.error('Error sending notifications:', error);
     }
   };
 
@@ -1662,7 +1683,7 @@ Best of luck with your studies!
     }
   };
 
-  // Admin: Send broadcast push notification to all subscribers
+  // Admin: Send broadcast push notification AND email to all subscribers
   const handleSendBroadcastNotification = async () => {
     if (!broadcastPush.title || !broadcastPush.body) {
       alert('Please fill in notification title and message');
@@ -1678,38 +1699,50 @@ Best of luck with your studies!
       const formattedTitle = rawTitle ? `Edu51Five • ${rawTitle}` : 'Edu51Five Update';
       const formattedBody = rawBody ? `${rawBody} — Stay ahead with Edu51Five.` : 'New update from Edu51Five.';
 
-      // Call Supabase Edge Function to send push to all subscriptions
-      const { data, error } = await supabase.functions.invoke('send-push-notification', {
-        body: {
-          title: formattedTitle,
-          body: formattedBody,
-          url: broadcastPush.url || '/',
-          broadcast: true // Flag to send to all subscribers
+      // 1. Send Push Notifications (backup method)
+      let pushSent = 0;
+      try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: formattedTitle,
+            body: formattedBody,
+            url: broadcastPush.url || '/',
+            broadcast: true
+          }
+        });
+
+        if (!error && data?.sent) {
+          pushSent = data.sent;
+          console.log('✅ Push notifications sent:', pushSent);
         }
-      });
-
-      if (error) {
-        console.error('Error sending broadcast:', error);
-        const errorMsg = error?.message || 'Unknown error';
-        console.error('Full error response:', error);
-        alert(`Failed to send notification:\n${errorMsg}\n\nMake sure:\n1. Edge Function is deployed\n2. VAPID keys are set in Supabase secrets\n3. At least one user has notifications enabled`);
-        return;
+      } catch (pushError) {
+        console.warn('⚠️ Push notification sending attempted (non-blocking):', pushError);
       }
 
-      if (data?.success === false) {
-        console.error('Function returned error:', data?.error);
-        alert(`Notification failed: ${data?.error || 'Unknown error'}`);
-        return;
-      }
+      // 2. Send Email Notifications (primary method - more reliable)
+      console.log('📧 Sending email notifications to all registered users...');
+      const { sent: emailSent, failed: emailFailed } = await sendEmailToAllStudents(
+        formattedTitle,
+        rawTitle,
+        rawBody,
+        broadcastPush.url || '/'
+      );
 
-      console.log('Broadcast sent:', data);
-      alert(`✅ Push notification sent to ${data?.sent || 0} subscriber(s)!`);
+      console.log(`✅ Emails: ${emailSent} sent, ${emailFailed} failed`);
+      
+      // Show success message
+      const totalSent = pushSent + emailSent;
+      if (totalSent > 0) {
+        alert(`✅ Broadcast sent successfully!\n\n📧 Emails: ${emailSent} delivered\n🔔 Push: ${pushSent} sent\n\nTotal: ${totalSent} notifications`);
+      } else {
+        alert('⚠️ No users found with notifications enabled.\n\nAsk students to register via the "Register" button on the homepage.');
+      }
       
       // Reset form
       setBroadcastPush({ title: '', body: '', url: '/' });
     } catch (err) {
       console.error('Broadcast error:', err);
-      alert('Error sending notification');
+      alert('Error sending notification: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSendingBroadcast(false);
     }
@@ -2778,17 +2811,27 @@ For any queries, contact your course instructors or the department.`,
               </h1>
 
               {/* Subtitle and Description */}
-              <div className="max-w-2xl mx-auto space-y-2">
-                <p className={`text-xl sm:text-2xl font-semibold transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                }`}>
-                  BUBT Intake 51 Excellence Platform
-                </p>
-                <p className={`text-sm sm:text-base transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                }`}>
-                  Department of Computer Science & Engineering
-                </p>
+              <div className="max-w-2xl mx-auto space-y-4">
+                <div className="space-y-2">
+                  <p className={`text-xl sm:text-2xl font-semibold transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                  }`}>
+                    BUBT Intake 51 Excellence Platform
+                  </p>
+                  <p className={`text-sm sm:text-base transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                  }`}>
+                    Department of Computer Science & Engineering
+                  </p>
+                </div>
+                
+                {/* Registration Call-to-Action */}
+                <button
+                  onClick={() => setShowRegisterModal(true)}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95"
+                >
+                  ✨ Join Exclusive
+                </button>
               </div>
             </div>
 
@@ -5029,6 +5072,24 @@ For any queries, contact your course instructors or the department.`,
           </div>
         </main>
       )}
+
+      {/* User Registration Modal */}
+      {showRegistration && (
+        <UserRegistration 
+          onClose={() => setShowRegistration(false)}
+          onSuccess={() => {
+            // Optional: trigger any post-registration actions
+            console.log('User registered successfully!');
+          }}
+        />
+      )}
+
+      {/* Register Modal */}
+      <RegisterModal 
+        isOpen={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }
