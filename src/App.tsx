@@ -12,7 +12,8 @@ import {
   savePushSubscription,
   isPushNotificationSupported,
   getNotificationPermission,
-  isPushSubscribed
+  isPushSubscribed,
+  validateCurrentSubscription
 } from './lib/pushNotifications';
 import { ExamMaterialsDashboard } from './components/Student/ExamMaterialsDashboard';
 import MarqueeTicker from './components/MarqueeTicker';
@@ -386,6 +387,19 @@ function App() {
       const isSubscribed = await isPushSubscribed();
       setIsPushEnabled(isSubscribed);
 
+      // Auto-validate and repair subscriptions if already subscribed
+      if (isSubscribed && currentPermission === 'granted') {
+        const sessionId = getSessionId();
+        console.log('🔍 Validating current subscription...');
+        const isValid = await validateCurrentSubscription(sessionId);
+        if (isValid) {
+          console.log('✅ Subscription is valid and has encryption keys');
+        } else {
+          console.log('⚠️ Subscription was repaired (fresh subscription created)');
+          setIsPushEnabled(true); // Ensure state reflects fresh subscription
+        }
+      }
+
       console.log('Push notifications initialized:', { permission: currentPermission, subscribed: isSubscribed });
     } catch (error) {
       console.error('Failed to initialize push notifications:', error);
@@ -417,9 +431,17 @@ function App() {
       const saved = await savePushSubscription(subscription, sessionId);
 
       if (saved) {
-        setIsPushEnabled(true);
-        console.log('Push notifications enabled successfully');
-        return true;
+        // Validate the new subscription has encryption keys
+        const isValid = await validateCurrentSubscription(sessionId);
+        
+        if (isValid) {
+          setIsPushEnabled(true);
+          console.log('Push notifications enabled successfully with valid encryption keys');
+          return true;
+        } else {
+          alert('Failed to validate push subscription. Please try again.');
+          return false;
+        }
       } else {
         alert('Failed to save notification subscription');
         return false;

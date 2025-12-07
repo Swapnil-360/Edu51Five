@@ -248,3 +248,56 @@ export async function testPushNotification(): Promise<void> {
   
   console.log('Test notification triggered');
 }
+
+/**
+ * Validate current subscription has valid encryption keys
+ * Returns true if subscription is valid and can receive push notifications
+ */
+export async function validateCurrentSubscription(sessionId: string): Promise<boolean> {
+  try {
+    // Get the current subscription from the browser
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      console.log('❌ No active subscription in browser');
+      return false;
+    }
+
+    // Check if subscription has required keys
+    const subJson = subscription.toJSON();
+    const hasP256dh = !!subJson.keys?.p256dh;
+    const hasAuth = !!subJson.keys?.auth;
+
+    if (!hasP256dh || !hasAuth) {
+      console.warn('⚠️ Subscription missing encryption keys');
+      console.log('Unsubscribing and requesting fresh subscription...');
+
+      // Remove from database
+      await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('session_id', sessionId);
+
+      // Unsubscribe from browser
+      await subscription.unsubscribe();
+
+      // Request fresh subscription
+      const newSub = await subscribeToPushNotifications();
+      if (newSub) {
+        await savePushSubscription(newSub, sessionId);
+        console.log('✅ Fresh subscription created and saved');
+        return true;
+      }
+
+      return false;
+    }
+
+    console.log('✅ Subscription is valid with encryption keys');
+    return true;
+  } catch (error) {
+    console.error('Error validating subscription:', error);
+    return false;
+  }
+}
+
