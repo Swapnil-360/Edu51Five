@@ -59,7 +59,16 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request).catch((error) => {
+          // If fetch fails, just return a network error response
+          // Don't block the request
+          console.error('[SW FETCH ERROR]', error.message);
+          throw error; // Re-throw to let browser handle it
+        });
+      })
+      .catch((error) => {
+        // Silently fail - let browser handle network errors
+        console.error('[SW] Request failed:', error.message);
       })
   );
 });
