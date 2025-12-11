@@ -21,12 +21,24 @@ interface SemesterTrackerProps {
 }
 
 const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode = false }) => {
+  function makeDayKey(schedule: { day: string; date?: string }) {
+    return schedule.date ? `${schedule.day}-${schedule.date}` : schedule.day;
+  }
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [semesterStatus, setSemesterStatus] = useState(getCurrentSemesterStatus());
   const [nextExam, setNextExam] = useState(getNextExamCountdown());
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set([
-    ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]
-  ]));
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(() => {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const schedule = getCurrentSchedule();
+    const todayName = dayNames[new Date().getDay()];
+    const todayEntry = schedule.find(day => day.day === todayName);
+    const defaultKey = todayEntry ? makeDayKey(todayEntry) : todayName;
+    return new Set([defaultKey]);
+  });
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const currentSchedule = getCurrentSchedule();
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,23 +55,27 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
   const upcomingExam = getUpcomingExam(currentTime);
   
   // Helper functions for collapsible schedule
-  const toggleDay = (day: string) => {
+  const toggleDay = (dayKey: string) => {
     const newExpanded = new Set(expandedDays);
-    if (newExpanded.has(day)) {
-      newExpanded.delete(day);
+    if (newExpanded.has(dayKey)) {
+      newExpanded.delete(dayKey);
     } else {
-      newExpanded.add(day);
+      newExpanded.add(dayKey);
     }
     setExpandedDays(newExpanded);
   };
 
   const expandAllDays = () => {
-    setExpandedDays(new Set(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']));
+    const allKeys = getCurrentSchedule().map(makeDayKey);
+    setExpandedDays(new Set(allKeys));
   };
 
   const collapseAllDays = () => {
-    const today = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()];
-    setExpandedDays(new Set([today]));
+    const schedule = getCurrentSchedule();
+    const todayName = dayNames[new Date().getDay()];
+    const todayEntry = schedule.find(day => day.day === todayName);
+    const todayKey = todayEntry ? makeDayKey(todayEntry) : todayName;
+    setExpandedDays(new Set([todayKey]));
   };
   
   const formatTime = (date: Date) => {
@@ -809,16 +825,16 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
 
             {/* Collapsible Days */}
             <div className="space-y-2">
-              {getCurrentSchedule().map((daySchedule) => {
+              {currentSchedule.map((daySchedule) => {
                 const today = new Date();
-                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 const isToday = daySchedule.day === dayNames[today.getDay()];
-                const isExpanded = expandedDays.has(daySchedule.day);
+                const dayKey = makeDayKey(daySchedule);
+                const isExpanded = expandedDays.has(dayKey);
                 const hasClasses = daySchedule.slots.length > 0;
 
                 return (
                   <div
-                    key={daySchedule.day}
+                    key={dayKey}
                     className={`rounded-xl border-2 overflow-hidden transition-all ${
                       isToday
                         ? isDarkMode
@@ -831,7 +847,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   >
                     {/* Day Header - Clickable */}
                     <button
-                      onClick={() => toggleDay(daySchedule.day)}
+                      onClick={() => toggleDay(dayKey)}
                       className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
                         isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50'
                       }`}

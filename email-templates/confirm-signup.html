@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Signup - Edu51Five</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 36px; font-weight: bold; letter-spacing: -0.5px;">
+                                Edu51Five
+                            </h1>
+                            <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">
+                                BUBT Intake 51, Section 5 - CSE
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+                                Welcome to Edu51Five! 🎉
+                            </h2>
+                            
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Hi there,
+                            </p>
+                            
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Thank you for joining <strong>Edu51Five</strong> - your academic portal for course materials, exam tracking, and semester progress. We're excited to have you onboard!
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                To complete your registration and activate your account, please confirm your email address by clicking the button below:
+                            </p>
+                            
+                            <!-- Confirmation Button -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td align="center" style="padding: 0 0 30px 0;">
+                                        <a href="{{ .ConfirmationURL }}" 
+                                           style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: transform 0.2s;">
+                                            Confirm Your Email
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                                Or copy and paste this link into your browser:
+                            </p>
+                            
+                            <p style="margin: 0 0 30px 0; padding: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; color: #667eea; font-size: 13px; word-break: break-all;">
+                                {{ .ConfirmationURL }}
+                            </p>
+                            
+                            <!-- Features Section -->
+                            <div style="margin: 30px 0; padding: 20px; background-color: #f9fafb; border-left: 4px solid #667eea; border-radius: 4px;">
+                                <h3 style="margin: 0 0 12px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+                                    What's inside Edu51Five:
+                                </h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
+                                    <li>📚 Access course materials (notes, slides, CT questions)</li>
+                                    <li>📅 Real-time semester progress tracking</li>
+                                    <li>📝 Exam schedules and countdown timers</li>
+                                    <li>🎯 Study suggestions and super tips</li>
+                                    <li>🔔 Important notices and updates</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                                This confirmation link will expire in <strong>24 hours</strong>. If you didn't create an account with Edu51Five, you can safely ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 12px 12px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">
+                                Need help? Contact us at <a href="mailto:support@edu51five.com" style="color: #667eea; text-decoration: none;">support@edu51five.com</a>
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                © 2025 Edu51Five - BUBT Intake 51, Section 5 (CSE)
+                            </p>
+                            <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 11px;">
+                                Bangladesh University of Business & Technology
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

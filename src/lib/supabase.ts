@@ -9,6 +9,7 @@ const isSupabaseConfigured = Boolean(
   !supabaseUrl.includes('your-supabase') &&
   !supabaseAnonKey.includes('your-supabase')
 );
+export const supabaseConfigured = isSupabaseConfigured;
 
 // Provide a safe no-op Supabase mock when env is missing so UI can still render and tests can run
 function createSupabaseMock() {
@@ -47,10 +48,15 @@ function createSupabaseMock() {
     })
   } as any;
 
+  const auth = {
+    signInWithOAuth: async () => ({ data: null, error: { message: 'Supabase not configured', code: 'MOCK_AUTH' } }),
+  } as any;
+
   // Count queries: .select('*', { count: 'exact', head: true })
   return {
     from: (_table: string) => queryStub(),
     storage,
+    auth,
   } as any;
 }
 
