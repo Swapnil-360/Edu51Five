@@ -100,14 +100,40 @@ if (typeof window !== 'undefined') {
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
       global: {
-        fetch: (...args: any[]) => {
-          return fetch(...args).catch((error) => {
-            // Suppress connection errors silently
+        fetch: async (...args: any[]) => {
+          try {
+            const res: Response = await fetch(...args);
+            if (!res.ok) {
+              // Try to read response text/json for debugging
+              let bodyText = '';
+              try {
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                  const json = await res.clone().json();
+                  bodyText = JSON.stringify(json);
+                } else {
+                  bodyText = await res.clone().text();
+                }
+              } catch (e) {
+                bodyText = `Failed to read body: ${e?.message || e}`;
+              }
+              console.error('Supabase fetch error', {
+                url: args[0],
+                options: args[1],
+                status: res.status,
+                statusText: res.statusText,
+                body: bodyText,
+              });
+            }
+            return res;
+          } catch (error: any) {
+            // Suppress connection errors silently but log others for debugging
             if (error?.message?.includes('Could not establish connection')) {
               return new Response(JSON.stringify({ error: 'offline' }), { status: 0 });
             }
+            console.error('Supabase fetch exception', error);
             throw error;
-          });
+          }
         },
       },
     })
