@@ -1,10 +1,11 @@
 // Service Worker for Push Notifications and Offline Support
 // File: public/sw.js
 
-const CACHE_NAME = 'edu51five-v1';
+// Bump cache name on deploy to invalidate older cached index.html/assets
+const CACHE_NAME = 'edu51five-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
+  // Keep only static assets that are safe to cache across deploys
+  '/Edu_51_Logo.png',
   '/image.png',
 ];
 
@@ -41,8 +42,10 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('[SW ACTIVATE] Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
+          return Promise.resolve();
         })
       );
     })
@@ -53,23 +56,41 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  // Use network-first strategy for navigation requests to always get latest index.html
+  if (request.mode === 'navigate' || (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'))) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          // Update the cache with the latest navigation response
+          caches.open(CACHE_NAME).then((cache) => {
+            try { cache.put(request, networkResponse.clone()); } catch (e) { /* ignore */ }
+          });
+          return networkResponse;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // For other requests use cache-first then network fallback
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
+    caches.match(request).then((response) => {
+      if (response) return response;
+      return fetch(request).then((networkResponse) => {
+        // Optionally cache certain responses (non-opaque successful GETs)
+        if (networkResponse && networkResponse.status === 200 && request.method === 'GET' && networkResponse.type !== 'opaque') {
+          caches.open(CACHE_NAME).then((cache) => {
+            try { cache.put(request, networkResponse.clone()); } catch (e) { /* ignore */ }
+          });
         }
-        return fetch(event.request).catch((error) => {
-          // If fetch fails, just return a network error response
-          // Don't block the request
-          console.error('[SW FETCH ERROR]', error.message);
-          throw error; // Re-throw to let browser handle it
-        });
-      })
-      .catch((error) => {
-        // Silently fail - let browser handle network errors
-        console.error('[SW] Request failed:', error.message);
-      })
+        return networkResponse;
+      }).catch((error) => {
+        console.error('[SW FETCH ERROR]', error && error.message ? error.message : error);
+        throw error;
+      });
+    })
   );
 });
 
