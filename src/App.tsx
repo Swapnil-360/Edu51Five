@@ -233,7 +233,7 @@ function App() {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('avatar_url')
-        .eq('email', email)
+        .eq('bubt_email', email)
         .limit(1);
       if (profiles && profiles[0]?.avatar_url) {
         const avatarUrl = profiles[0].avatar_url;
