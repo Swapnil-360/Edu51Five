@@ -25,6 +25,11 @@
   --color-gray-100: #f3f4f6;
 }
 
+/* Responsive root font sizing for better scaling on different viewports */
+html {
+  font-size: clamp(14px, 1.2vw + 0.5rem, 16px);
+}
+
 /* Modern glassmorphism and animations */
 @keyframes float {
 
@@ -255,6 +260,11 @@
   /* Global responsive and smooth settings */
   * {
     box-sizing: border-box;
+  }
+
+  /* Hint to the browser for smoother transforms on main content */
+  .main-content {
+    will-change: transform, opacity;
   }
 
   html {
@@ -784,4 +794,14 @@
   overflow: hidden;
   white-space: nowrap;
   position: relative;
+}
+
+/* Respect user preference to reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
