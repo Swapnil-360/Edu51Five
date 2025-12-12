@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, UserPlus, Image as ImageIcon } from 'lucide-react';
+import { X, UserPlus, Image as ImageIcon, Mail } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface SignUpModalProps {
@@ -17,6 +17,8 @@ interface SignUpModalProps {
     profilePic: string;
   };
   onSave: (profile: { name: string; section: string; major: string; bubtEmail: string; notificationEmail: string; phone: string; password: string; profilePic: string }) => void;
+  onResetPassword?: () => void;
+  onChangeEmail?: () => void;
 }
 
 export function SignUpModal({
@@ -24,23 +26,27 @@ export function SignUpModal({
   onClose,
   isDarkMode,
   initialProfile,
-  onSave
+  onSave,
+  onResetPassword,
+  onChangeEmail
 }: SignUpModalProps) {
-  const [name, setName] = useState(initialProfile?.name || '');
-  const [section, setSection] = useState(initialProfile?.section || '');
-  const [major, setMajor] = useState(initialProfile?.major || '');
-  const [bubtEmail, setBubtEmail] = useState(initialProfile?.bubtEmail || '');
-  const [notificationEmail, setNotificationEmail] = useState(initialProfile?.notificationEmail || '');
-  const [phone, setPhone] = useState(initialProfile?.phone || '');
-  const [password, setPassword] = useState(initialProfile?.password || '');
+  // Only initialize with initialProfile data if editing (privacy: don't auto-populate on signup)
+  const [name, setName] = useState(initialProfile ? initialProfile.name : '');
+  const [section, setSection] = useState(initialProfile ? initialProfile.section : '');
+  const [major, setMajor] = useState(initialProfile ? initialProfile.major : '');
+  const [bubtEmail, setBubtEmail] = useState(initialProfile ? initialProfile.bubtEmail : '');
+  const [notificationEmail, setNotificationEmail] = useState(initialProfile ? initialProfile.notificationEmail : '');
+  const [phone, setPhone] = useState(initialProfile ? initialProfile.phone : '');
+  const [password, setPassword] = useState(initialProfile ? initialProfile.password : '');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [profilePic, setProfilePic] = useState(initialProfile?.profilePic || '');
+  const [profilePic, setProfilePic] = useState(initialProfile ? initialProfile.profilePic : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Update form fields when initialProfile changes
+  // Update form fields when initialProfile changes (only in edit mode)
   useEffect(() => {
     if (initialProfile) {
       setName(initialProfile.name || '');
@@ -51,8 +57,44 @@ export function SignUpModal({
       setPhone(initialProfile.phone || '');
       setPassword(initialProfile.password || '');
       setProfilePic(initialProfile.profilePic || '');
+    } else {
+      // Clear all fields when opening signup (not edit mode)
+      setName('');
+      setSection('');
+      setMajor('');
+      setBubtEmail('');
+      setNotificationEmail('');
+      setPhone('');
+      setPassword('');
+      setConfirmPassword('');
+      setProfilePic('');
+      setError('');
+      setSuccess(false);
     }
-  }, [initialProfile]);
+  }, [initialProfile, isOpen]);
+
+  // Resend verification email
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    try {
+      if (supabaseConfigured) {
+        const { error } = await (supabase as any).auth?.resend({
+          type: 'signup',
+          email: bubtEmail
+        });
+        if (error) {
+          setError(error.message || 'Failed to resend verification email');
+        } else {
+          setError('');
+        }
+      }
+    } catch (err) {
+      console.error('Resend error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -279,6 +321,8 @@ export function SignUpModal({
           </div>
         </div>
 
+
+
         {/* Content */}
         <div className="px-6 py-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           {success ? (
@@ -291,11 +335,51 @@ export function SignUpModal({
                 </svg>
               </div>
               <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                Profile Saved!
+                {initialProfile?.name ? 'Profile Updated' : 'Account Created'}
               </p>
-              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Your profile has been updated successfully
-              </p>
+              {initialProfile?.name ? (
+                <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Your profile has been updated successfully.
+                </p>
+              ) : (
+                <div className="space-y-3 mt-2">
+                  <div>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>
+                      We just sent a confirmation email to <span className="font-semibold">{bubtEmail}</span>.
+                    </p>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-xs mt-1`}>
+                      Please check your inbox (or spam). After confirming, you can log in to Edu51Five.
+                    </p>
+                  </div>
+                  {error && (
+                    <div className="p-2 rounded-lg bg-amber-100/20 border border-amber-400/50">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">{error}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium shadow ${
+                        isDarkMode ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'
+                      }`}
+                    >
+                      Got it
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1 ${
+                        isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                      } ${isResending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      {isResending ? 'Sending...' : 'Resend'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -405,9 +489,34 @@ export function SignUpModal({
 
               {/* BUBT Email (Account) */}
               <div>
-                <label htmlFor="bubtEmail" className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  BUBT Email (Account) *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="bubtEmail" className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    BUBT Email (Account) *
+                  </label>
+                  {/* Security Buttons - Only for Edit Profile */}
+                  {initialProfile?.name && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={onResetPassword}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                          isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700'
+                        }`}
+                      >
+                        Reset Password
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onChangeEmail}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                          isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700'
+                        }`}
+                      >
+                        Change Email
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <input
                   id="bubtEmail"
                   type="email"
@@ -442,9 +551,15 @@ export function SignUpModal({
                       : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400'
                   }`}
                 />
-                <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  For updates and notifications
-                </p>
+                {notificationEmail.trim() === '' ? (
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`}>
+                    Warning: Without a Notification Email, you won’t receive any updates.
+                  </p>
+                ) : (
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    For updates and notifications
+                  </p>
+                )}
               </div>
 
               {/* Phone Number (Optional, can be used for login) */}

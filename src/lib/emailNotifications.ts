@@ -110,18 +110,18 @@ export function generateEmailHTML(notification: EmailNotification): string {
         .notification-title {
             font-size: 24px;
             font-weight: 700;
-            color: ${primaryColor};
+            color: #1e40af;
             margin-bottom: 15px;
             line-height: 1.3;
         }
         
         .notification-body {
-            font-size: 15px;
-            color: #4b5563;
+            font-size: 16px;
+            color: #1f2937;
             line-height: 1.8;
             margin-bottom: 30px;
             padding: 20px;
-            background: #f9fafb;
+            background: #f0f4ff;
             border-left: 4px solid ${primaryColor};
             border-radius: 4px;
         }
@@ -130,21 +130,26 @@ export function generateEmailHTML(notification: EmailNotification): string {
             display: inline-block;
             background: linear-gradient(135deg, ${primaryColor} 0%, #1e3a8a 100%);
             color: white;
-            padding: 14px 32px;
+            padding: 16px 36px;
             border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
+            font-weight: 700;
+            font-size: 16px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.4);
             margin-top: 20px;
             display: block;
             text-align: center;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.5);
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
         }
         
         .divider {
@@ -237,7 +242,7 @@ export function generateEmailHTML(notification: EmailNotification): string {
             <div class="logo">
                 <img src="${logoUrl}" alt="Edu51Five Logo" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
-            <h1>Edu<span style="color: #fca5a5;">51</span>Five</h1>
+            <h1>Edu<span style="color: #dc2626; font-weight: 900;">51</span>Five</h1>
             <p class="subtitle">BUBT Intake 51 - Academic Portal</p>
         </div>
         
@@ -252,15 +257,19 @@ export function generateEmailHTML(notification: EmailNotification): string {
             </div>
             
             ${notification.actionUrl ? `
-            <a href="${escapeHtml(notification.actionUrl)}" class="cta-button">
-                ${escapeHtml(notification.actionText || 'View Update')}
+            <a href="${baseUrl}${escapeHtml(notification.actionUrl)}" class="cta-button" style="display: block; text-decoration: none; color: white;">
+                 ${escapeHtml(notification.actionText || 'View on Edu51Five')}
             </a>
-            ` : ''}
+            ` : `
+            <a href="${baseUrl}" class="cta-button" style="display: block; text-decoration: none; color: white;">
+                View on Edu51Five
+            </a>
+            `}
             
             <div class="divider"></div>
             
             <p style="font-size: 14px; color: #6b7280; margin: 20px 0;">
-                You're receiving this email because you're a member of <strong>Edu51Five</strong> and have opted in to notifications.
+                You're receiving this email because you're a member of <strong>Edu<span style="color: #dc2626;">51</span>Five</strong> and have opted in to notifications.
             </p>
         </div>
         
@@ -347,9 +356,9 @@ export async function sendEmailToAllStudents(
   try {
     // Get all registered users with notifications enabled
     const { data: users, error } = await supabase
-      .from('users')
-      .select('email, full_name')
-      .eq('enable_notifications', true);
+      .from('profiles')
+      .select('notification_email, name')
+      .neq('notification_email', null);
 
     if (error || !users) {
       console.error('Error fetching registered users:', error);
@@ -363,9 +372,9 @@ export async function sendEmailToAllStudents(
 
     // Send email to each registered student
     for (const user of users) {
-      if (user.email) {
+      if (user.notification_email) {
         const success = await sendEmailNotification({
-          recipientEmail: user.email,
+          recipientEmail: user.notification_email,
           subject,
           title,
           body,

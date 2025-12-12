@@ -21,6 +21,8 @@ import {
   EmailNotification
 } from './lib/emailNotifications';
 import { SignUpModal } from './components/SignUpModal';
+import { ResetPasswordModal } from './components/ResetPasswordModal';
+import { ChangeEmailModal } from './components/ChangeEmailModal';
 import { SignInModal } from './components/SignInModal';
 import MarqueeTicker from './components/MarqueeTicker';
 import PDFViewer from './components/PDFViewer';
@@ -111,22 +113,24 @@ function App() {
 
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
-  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester'>(() => {
+  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester' | 'privacy'>(() => {
     const path = window.location.pathname;
     if (path === '/admin') return 'admin';
     if (path === '/section5') return 'section5';
     if (path === '/semester') return 'semester';
+    if (path === '/privacy') return 'privacy';
     if (path.startsWith('/course/')) return 'course';
     if (path === '/home' || path === '/' || path === '') return 'home';
     return 'home';
   });
 
   // Helper to change view and update browser history (memoized)
-  const goToView = useCallback((view: 'admin' | 'section5' | 'course' | 'home' | 'semester', extra?: string | null) => {
+  const goToView = useCallback((view: 'admin' | 'section5' | 'course' | 'home' | 'semester' | 'privacy', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
     else if (view === 'section5') path = '/section5';
     else if (view === 'semester') path = '/semester';
+    else if (view === 'privacy') path = '/privacy';
     else if (view === 'course' && extra) path = `/course/${extra}`;
     else if (view === 'home') path = '/home';
     window.history.pushState({}, '', path);
@@ -165,6 +169,7 @@ function App() {
       }
       else if (path === '/section5') setCurrentView('section5');
       else if (path === '/semester') setCurrentView('semester');
+      else if (path === '/privacy') setCurrentView('privacy');
       else if (path.startsWith('/course/')) setCurrentView('course');
       else if (path === '/home' || path === '/' || path === '') setCurrentView('home');
       else setCurrentView('home');
@@ -192,6 +197,8 @@ function App() {
   const [showNoticePanel, setShowNoticePanel] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem('userProfileBubtEmail')));
@@ -206,8 +213,43 @@ function App() {
     notificationEmail: localStorage.getItem('userProfileNotificationEmail') || '',
     phone: localStorage.getItem('userProfilePhone') || '',
     password: localStorage.getItem('userProfilePassword') || '',
-    profilePic: localStorage.getItem('userProfilePic') || ''
+    profilePic: localStorage.getItem('userProfilePic') || '',
+    avatar_url: localStorage.getItem('userProfileAvatarUrl') || ''
   });
+
+  // Extract BUBT ID from email (22235103183 from 22235103183@cse.bubt.edu.bd)
+  const extractBubtId = (email?: string) => {
+    if (!email) return '';
+    const local = email.split('@')[0] || '';
+    const match = local.match(/^\d+/);
+    return match ? match[0] : local;
+  };
+
+  // Load user avatar from Supabase profiles table
+  const loadUserAvatarFromSupabase = async () => {
+    try {
+      const email = userProfile.bubtEmail || localStorage.getItem('userProfileBubtEmail');
+      if (!email) return;
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('email', email)
+        .limit(1);
+      if (profiles && profiles[0]?.avatar_url) {
+        const avatarUrl = profiles[0].avatar_url;
+        localStorage.setItem('userProfileAvatarUrl', avatarUrl);
+        setUserProfile((prev) => ({ ...prev, avatar_url: avatarUrl }));
+      }
+    } catch (e) {
+      console.warn('Failed to load avatar from Supabase', e);
+    }
+  };
+
+  useEffect(() => {
+    if (userProfile.bubtEmail) {
+      loadUserAvatarFromSupabase();
+    }
+  }, [userProfile.bubtEmail]);
   
   // Real-time active users tracking
   const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
@@ -2108,7 +2150,7 @@ For any queries, contact your course instructors or the department.`,
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100'
     }`}>
       {/* Enhanced Mobile-First Responsive Header */}
-      <header className={`fixed top-0 left-0 right-0 shadow-2xl border-b z-40 transition-colors duration-300 ${
+      <header className={`fixed top-0 left-0 right-0 w-full shadow-2xl border-b z-50 transition-colors duration-300 ${
         isDarkMode
           ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 border-gray-700/40 text-white'
           : 'bg-white border-gray-200 text-gray-900'
@@ -2157,20 +2199,20 @@ For any queries, contact your course instructors or the department.`,
             <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0 min-w-0 invisible">
             </div>
 
-            {/* Right: Theme Toggle & Notification Bell */}
-            <div className="flex items-center gap-1">
+            {/* Right: Theme Toggle & Notification Bell & Admin Logout */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-end flex-shrink-0">
               {/* Theme Toggle Button */}
               <button
                 onClick={toggleDarkMode}
-                className={`p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
+                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
                   isDarkMode ? 'hover:bg-white' : 'hover:bg-gray-900'
                 }`}
                 title={isDarkMode ? "Light Mode" : "Dark Mode"}
               >
                 {isDarkMode ? (
-                  <Sun className="h-6 w-6 text-yellow-400" />
+                  <Sun className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
                 ) : (
-                  <Moon className="h-6 w-6 text-gray-700" />
+                  <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
                 )}
               </button>
 
@@ -2178,13 +2220,13 @@ For any queries, contact your course instructors or the department.`,
               <div className="relative">
                 <button
                   onClick={toggleNoticePanel}
-                  className={`p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
+                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
                     isDarkMode ? 'hover:bg-white' : 'hover:bg-gray-900'
                   }`}
                   title="Notifications"
                 >
                   <div className="relative">
-                    <Bell className={`h-6 w-6 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} />
+                    <Bell className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} />
                     {getUnreadNoticeCount() > 0 && (
                       <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
                         {getUnreadNoticeCount()}
@@ -2193,18 +2235,20 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </button>
               </div>
-            </div>
 
-              {/* Admin Button - Only visible when admin is logged in */}
+              {/* Admin Logout Button - Only visible when admin is logged in */}
               {isAdmin && (
                 <button
                   onClick={handleAdminLogout}
-                  className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-12 xl:h-12 rounded-xl bg-red-600 hover:bg-red-700 transition-all shadow-md hover:shadow-lg flex-shrink-0"
+                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
+                    isDarkMode ? 'hover:bg-white' : 'hover:bg-gray-900'
+                  }`}
                   title="Logout"
                 >
-                  <LogOut className="h-4 w-4 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-6 xl:w-6 text-white" />
+                  <LogOut className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
                 </button>
               )}
+            </div>
             </div>
           </div>
       </header>
@@ -2214,13 +2258,13 @@ For any queries, contact your course instructors or the department.`,
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] transition-opacity duration-300"
             onClick={() => setShowMobileMenu(false)}
           />
           
           {/* Sidebar */}
           <div
-            className={`fixed top-0 left-0 h-screen w-64 sm:w-72 md:w-80 shadow-2xl z-40 transition-all duration-300 overflow-y-auto flex flex-col ${
+            className={`fixed top-0 left-0 h-screen w-64 sm:w-72 md:w-80 shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
               isDarkMode
                 ? 'bg-gradient-to-b from-gray-900 via-slate-900 to-gray-800'
                 : 'bg-gradient-to-b from-slate-50 via-white to-gray-50'
@@ -2248,36 +2292,38 @@ For any queries, contact your course instructors or the department.`,
             <div className={`p-4 sm:p-6 border-b transition-colors duration-300 ${
               isDarkMode ? 'border-gray-700/30 bg-gray-900/40' : 'border-gray-200/50 bg-white/60'
             }`}>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden shadow-lg border-2 border-indigo-500/50 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  {userProfile.profilePic ? (
-                    <img src={userProfile.profilePic} alt="Profile" className="w-full h-full object-cover" />
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shadow-lg border-2 border-indigo-500/50 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  {userProfile.profilePic || userProfile.avatar_url ? (
+                    <img src={userProfile.profilePic || userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm sm:text-base truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {userProfile.name || 'Guest'}
+                <div className="flex-1 min-w-0 pt-1">
+                  <p className={`font-bold text-base sm:text-lg leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {userProfile.name}
                   </p>
-                  <p className={`text-xs sm:text-sm truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {userProfile.section || 'BUBT Intake 51'}
+                  <p className={`text-xs sm:text-sm mt-1 font-medium ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                    ID: {extractBubtId(userProfile.bubtEmail)}
                   </p>
-                  <button
-                    onClick={() => {
-                      setIsEditingProfile(true);
-                      setShowSignUpModal(true);
-                      setShowMobileMenu(false);
-                    }}
-                    className={`text-xs sm:text-sm mt-2 px-2 py-1 rounded font-medium transition-all ${
-                      isDarkMode ? 'text-blue-300 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-50'
-                    }`}
-                  >
-                    Edit Profile
-                  </button>
                 </div>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setIsEditingProfile(true);
+                    setShowSignUpModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                    isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  Edit Profile
+                </button>
               </div>
             </div>
 
@@ -2345,20 +2391,33 @@ For any queries, contact your course instructors or the department.`,
                 </button>
               ) : (
                 <>
-                  <button
-                    onClick={() => {
-                      setShowSignInModal(true);
-                      setShowMobileMenu(false);
-                    }}
-                    className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                      isDarkMode
-                        ? 'bg-white text-gray-900 hover:bg-gray-100'
-                        : 'bg-gray-900 text-white hover:bg-gray-800'
-                    }`}
-                  >
-                    <LogIn className="h-5 w-5" />
-                    <span>Sign In</span>
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setShowSignInModal(true);
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                        isDarkMode
+                          ? 'bg-white text-gray-900 hover:bg-gray-100'
+                          : 'bg-gray-900 text-white hover:bg-gray-800'
+                      }`}
+                    >
+                      <LogIn className="h-5 w-5" />
+                      <span>Sign In</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowResetPasswordModal(true);
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                      }`}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
 
                   <p className={`text-xs text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     New here? Join our community for exclusive study materials & features! 📚
@@ -2383,13 +2442,13 @@ For any queries, contact your course instructors or the department.`,
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] transition-opacity duration-300"
             onClick={() => setShowNoticePanel(false)}
           />
           
           {/* Notification Sidebar */}
           <div
-            className={`fixed top-0 right-0 h-screen w-64 sm:w-72 md:w-80 lg:w-96 shadow-2xl z-40 transition-all duration-300 overflow-y-auto flex flex-col ${
+            className={`fixed top-0 right-0 h-screen w-64 sm:w-72 md:w-80 lg:w-96 shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
               isDarkMode
                 ? 'bg-gradient-to-b from-gray-900 via-slate-900 to-gray-800'
                 : 'bg-gradient-to-b from-slate-50 via-white to-gray-50'
@@ -2690,6 +2749,54 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
+            {/* New Version CTA - Compact headline strip (moved above section cards) */}
+            <div className={`rounded-xl shadow-md border overflow-hidden transition-colors duration-300 ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-indigo-900 via-slate-900 to-gray-900 border-indigo-900/60'
+                : 'bg-gradient-to-r from-indigo-50 via-blue-50 to-white border-indigo-100'
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-2xs font-semibold backdrop-blur-sm border shadow-sm ${
+                    isDarkMode ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-indigo-100 text-indigo-700'
+                  }`}>
+                    <span className="text-amber-300">⚡</span>
+                    <span>New version</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm sm:text-base font-semibold leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Get verified for next semester and enable email/push alerts
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 text-2xs sm:text-xs">
+                      <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                        Verified badge
+                      </span>
+                      <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-blue-500/20 text-blue-200 border border-blue-500/40' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                        Email + push
+                      </span>
+                      <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-purple-500/20 text-purple-200 border border-purple-500/40' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
+                        Early materials
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      setShowSignUpModal(true);
+                    }}
+                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 transition-transform duration-150 hover:-translate-y-0.5"
+                  >
+                    Register now
+                  </button>
+                  <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-2xs sm:text-xs whitespace-nowrap`}>
+                    1 min setup with BUBT email
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Section 5 Entry Card - 10 Minute School Style */}
             <div className="w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
@@ -2800,6 +2907,8 @@ For any queries, contact your course instructors or the department.`,
             </div>
           </div>
 
+            {/* New Version CTA moved above; removing duplicate here */}
+
             {/* Platform Features - Floating Pills Grid */}
             <div className="max-w-14xl mx-auto px-4">
               <div className="text-center mb-4">
@@ -2864,6 +2973,12 @@ For any queries, contact your course instructors or the department.`,
                       <p className="text-slate-400 text-xs">
                         BUBT Intake 51 • All rights reserved
                       </p>
+                      <button
+                        onClick={() => goToView('privacy')}
+                        className="text-blue-400 hover:text-blue-300 text-xs underline mt-1 transition-colors duration-200"
+                      >
+                        Privacy Policy
+                      </button>
                     </div>
                   </div>
 
@@ -3225,6 +3340,239 @@ For any queries, contact your course instructors or the department.`,
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Privacy Policy Page */}
+        {currentView === 'privacy' && (
+          <div className="space-y-8 max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="text-center">
+              <div className="flex justify-center mb-6">
+                <div className={`rounded-3xl shadow-xl p-4 transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
+                  <img 
+                    src="/image.png" 
+                    alt="BUBT Logo" 
+                    className="h-16 w-16 object-contain" 
+                  />
+                </div>
+              </div>
+              <h1 className={`text-3xl sm:text-4xl font-bold mb-4 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+              }`}>
+                Privacy Policy
+              </h1>
+              <p className={`text-sm transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Privacy Content */}
+            <div className={`rounded-2xl shadow-xl p-6 sm:p-8 transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="space-y-6">
+                {/* Introduction */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Introduction
+                  </h2>
+                  <p className={`leading-relaxed transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Welcome to Edu<span className="text-red-500 font-bold">51</span>Five. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our academic portal designed for BUBT (Bangladesh University of Business & Technology) Intake 51, Section 5, CSE students.
+                  </p>
+                </section>
+
+                {/* Information We Collect */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Information We Collect
+                  </h2>
+                  <div className="space-y-3">
+                    <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
+                      Personal Information
+                    </h3>
+                    <ul className={`list-disc list-inside space-y-2 ml-4 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      <li>Student information (name, BUBT student ID, section)</li>
+                      <li>Email addresses (BUBT email and notification email)</li>
+                      <li>Google account information (when using Google Drive integration)</li>
+                      <li>Profile information (major, phone number, profile picture)</li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* How We Use Your Information */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    How We Use Your Information
+                  </h2>
+                  <ul className={`list-disc list-inside space-y-2 ml-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <li>To provide access to course materials and academic resources</li>
+                    <li>To send academic notifications and important announcements</li>
+                    <li>To track semester progress and exam schedules</li>
+                    <li>To manage user authentication and access control</li>
+                    <li>To improve our platform and user experience</li>
+                  </ul>
+                </section>
+
+                {/* Google Drive Integration */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Google Drive Integration
+                  </h2>
+                  <p className={`leading-relaxed mb-3 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Our platform integrates with Google Drive to:
+                  </p>
+                  <ul className={`list-disc list-inside space-y-2 ml-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <li>Allow administrators to upload study materials, lecture slides, and exam resources</li>
+                    <li>Provide students with access to shared course materials</li>
+                    <li>Display PDF previews and video content directly in the platform</li>
+                  </ul>
+                  <p className={`leading-relaxed mt-3 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    We only request the minimum necessary permissions for Google Drive access. We do not access your personal Google Drive files outside of the shared course materials.
+                  </p>
+                </section>
+
+                {/* Third-Party Services */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Third-Party Services
+                  </h2>
+                  <p className={`leading-relaxed mb-3 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    We use the following third-party services:
+                  </p>
+                  <ul className={`list-disc list-inside space-y-2 ml-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <li><strong>Supabase:</strong> Database and authentication services</li>
+                    <li><strong>Google Drive:</strong> File storage and delivery</li>
+                    <li><strong>Resend:</strong> Email notification delivery</li>
+                    <li><strong>Vercel:</strong> Hosting and deployment</li>
+                  </ul>
+                </section>
+
+                {/* Data Security */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Data Security
+                  </h2>
+                  <p className={`leading-relaxed transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    We implement appropriate security measures to protect your personal information. However, no method of transmission over the internet is 100% secure. We use industry-standard encryption and secure protocols for data transmission and storage.
+                  </p>
+                </section>
+
+                {/* Your Rights */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Your Rights
+                  </h2>
+                  <p className={`leading-relaxed mb-3 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    You have the right to:
+                  </p>
+                  <ul className={`list-disc list-inside space-y-2 ml-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <li>Access and update your personal information</li>
+                    <li>Opt-out of email notifications</li>
+                    <li>Request deletion of your account and data</li>
+                    <li>Withdraw consent for data processing</li>
+                  </ul>
+                </section>
+
+                {/* Contact Information */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Contact Us
+                  </h2>
+                  <p className={`leading-relaxed transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    If you have any questions about this Privacy Policy or your data, please contact us at:
+                  </p>
+                  <div className={`mt-4 p-4 rounded-lg transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}>
+                    <p className={`font-medium transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
+                      Email: <a href="mailto:edu51five@gmail.com" className="text-blue-500 hover:underline">edu51five@gmail.com</a>
+                    </p>
+                    <p className={`mt-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Organization: BUBT - Intake 51, Section 5, CSE
+                    </p>
+                  </div>
+                </section>
+
+                {/* Changes to Privacy Policy */}
+                <section>
+                  <h2 className={`text-2xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    Changes to This Privacy Policy
+                  </h2>
+                  <p className={`leading-relaxed transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
+                  </p>
+                </section>
+              </div>
+            </div>
+
+            {/* Back to Home Button */}
+            <div className="flex justify-center pb-8">
+              <button
+                onClick={() => goToView('home')}
+                className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  isDarkMode
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                } shadow-lg hover:shadow-xl transform hover:-translate-y-1`}
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         )}
 
@@ -4263,9 +4611,9 @@ For any queries, contact your course instructors or the department.`,
 
         {/* Notice Modal */}
         {showNoticeModal && selectedNotice && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
             <div className="grid place-items-center h-dvh w-full px-4">
-              <div className={`relative z-50 w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
+              <div className={`relative z-[120] w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
                 isDarkMode ? 'bg-gray-800' : 'bg-white'
               }`}>
               <div className={`flex-shrink-0 p-3 sm:p-4 border-l-4 transition-colors duration-300 ${
@@ -4934,6 +5282,18 @@ For any queries, contact your course instructors or the department.`,
         }}
       />
 
+      <ResetPasswordModal
+        isOpen={showResetPasswordModal}
+        onClose={() => setShowResetPasswordModal(false)}
+        isDarkMode={isDarkMode}
+      />
+
+      <ChangeEmailModal
+        isOpen={showChangeEmailModal}
+        onClose={() => setShowChangeEmailModal(false)}
+        isDarkMode={isDarkMode}
+      />
+
       {/* Sign Up / Profile Modal */}
       <SignUpModal
         isOpen={showSignUpModal}
@@ -4958,6 +5318,14 @@ For any queries, contact your course instructors or the department.`,
           setIsLoggedIn(true);
           setIsEditingProfile(false);
           // localStorage update already done in SignUpModal
+        }}
+        onResetPassword={() => {
+          setShowSignUpModal(false);
+          setShowResetPasswordModal(true);
+        }}
+        onChangeEmail={() => {
+          setShowSignUpModal(false);
+          setShowChangeEmailModal(true);
         }}
       />
     </div>
