@@ -120,7 +120,9 @@ function App() {
     if (path === '/semester') return 'semester';
     if (path === '/privacy') return 'privacy';
     if (path.startsWith('/course/')) return 'course';
-    if (path === '/home' || path === '/' || path === '') return 'home';
+    // Always treat root, /home, or empty as home
+    if (path === '/' || path === '/home' || path === '' || !path) return 'home';
+    // Fallback: if path is not recognized, force home view
     return 'home';
   });
 
@@ -171,7 +173,9 @@ function App() {
       else if (path === '/semester') setCurrentView('semester');
       else if (path === '/privacy') setCurrentView('privacy');
       else if (path.startsWith('/course/')) setCurrentView('course');
-      else if (path === '/home' || path === '/' || path === '') setCurrentView('home');
+      // Always treat root, /home, or empty as home
+      else if (path === '/' || path === '/home' || path === '' || !path) setCurrentView('home');
+      // Fallback: if path is not recognized, force home view
       else setCurrentView('home');
     };
     window.addEventListener('popstate', handlePopState);
