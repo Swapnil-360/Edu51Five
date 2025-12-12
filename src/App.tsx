@@ -229,23 +229,30 @@ function App() {
     return match ? match[0] : local;
   };
 
-  // Load user avatar from Supabase profiles table
+  // Load user avatar/profile picture from Supabase `profiles` table
+  // Note: the DB column is `profile_pic` (not `avatar_url`) in our schema.
   const loadUserAvatarFromSupabase = async () => {
     try {
       const email = userProfile.bubtEmail || localStorage.getItem('userProfileBubtEmail');
       if (!email) return;
-      const { data: profiles } = await supabase
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('profile_pic')
         .eq('bubt_email', email)
         .limit(1);
-      if (profiles && profiles[0]?.avatar_url) {
-        const avatarUrl = profiles[0].avatar_url;
-        localStorage.setItem('userProfileAvatarUrl', avatarUrl);
-        setUserProfile((prev) => ({ ...prev, avatar_url: avatarUrl }));
+      if (error) {
+        console.warn('Supabase error when loading profile picture', error);
+        return;
+      }
+      if (profiles && profiles[0]?.profile_pic) {
+        const profilePic = profiles[0].profile_pic;
+        // Keep both keys for backwards compatibility with older code/pathways
+        localStorage.setItem('userProfilePic', profilePic);
+        localStorage.setItem('userProfileAvatarUrl', profilePic);
+        setUserProfile((prev) => ({ ...prev, profilePic: profilePic, avatar_url: profilePic }));
       }
     } catch (e) {
-      console.warn('Failed to load avatar from Supabase', e);
+      console.warn('Failed to load avatar/profile picture from Supabase', e);
     }
   };
 
