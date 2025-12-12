@@ -1,13 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Prefer build-time Vite envs, but allow runtime fallbacks (useful for advanced deploys)
+const _envUrl = import.meta.env.VITE_SUPABASE_URL ?? (typeof window !== 'undefined' ? (window as any).__SUPABASE_URL : undefined);
+const _envKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? (typeof window !== 'undefined' ? (window as any).__SUPABASE_ANON_KEY : undefined);
+
+// Normalize values and strip trailing slashes from URL
+const supabaseUrlRaw = typeof _envUrl === 'string' ? _envUrl.trim() : String(_envUrl || '');
+const supabaseAnonKeyRaw = typeof _envKey === 'string' ? _envKey.trim() : String(_envKey || '');
+const supabaseUrl = supabaseUrlRaw.replace(/\/+$/g, '');
+const supabaseAnonKey = supabaseAnonKeyRaw;
+
+// Basic validation to avoid creating a client with placeholder/invalid values that trigger 400s
+function looksLikeValidUrl(url: string) {
+  return /^https?:\/\/.+/.test(url) && !url.includes('your-supabase');
+}
+
+function looksLikeAnonKey(key: string) {
+  if (!key) return false;
+  // anon keys are typically long (JWT-like) strings — use a conservative length check
+  return key.length > 30 && !key.includes('your-supabase');
+}
 
 const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-  supabaseAnonKey &&
-  !supabaseUrl.includes('your-supabase') &&
-  !supabaseAnonKey.includes('your-supabase')
+  looksLikeValidUrl(supabaseUrl) && looksLikeAnonKey(supabaseAnonKey)
 );
 export const supabaseConfigured = isSupabaseConfigured;
 
