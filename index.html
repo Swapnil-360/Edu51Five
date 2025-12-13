@@ -29,9 +29,96 @@
     <meta property="twitter:title" content="Edu51Five - BUBT Intake 51 Learning Platform" />
     <meta property="twitter:description" content="Comprehensive learning platform for BUBT Intake 51 Section 5. Access study materials, exam routines, and real-time updates." />
     <meta property="twitter:image" content="/Edu_51_Logo.png" />
+    <style>
+      /* Page layout to keep footer at bottom when content is short */
+      html,body{height:100%;}
+      body{display:flex;flex-direction:column;min-height:100vh;margin:0;background:var(--page-bg,#fff);}
+      #root{flex:1;display:block}
+
+      /* Footer styles with improved contrast and responsive layout */
+      .site-footer{max-width:1100px;margin:36px auto 24px auto;padding:18px 20px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit}
+      .site-footer .meta{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+      .site-footer .brand{margin-bottom:6px}
+      .site-footer .contact{font-size:14px}
+      @media(min-width:480px){
+        .site-footer .meta{flex-direction:row;align-items:center;justify-content:space-between;text-align:left}
+        .site-footer .brand{margin-bottom:0}
+        .site-footer .contact{text-align:right}
+      }
+      .site-footer .brand{display:flex;align-items:center;gap:12px}
+      .site-footer .brand .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
+      .site-footer .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
+      .site-footer .brand .subtitle{font-size:13px;color:#475569}
+      .site-footer a{color:#1e40af;text-decoration:underline}
+
+      /* Skeleton (pre-mount placeholder) */
+      .skeleton{display:flex;align-items:center;justify-content:center;min-height:56vh;padding:24px 12px;box-sizing:border-box}
+      .skeleton-inner{display:flex;align-items:center;gap:14px;max-width:900px}
+      .skeleton-logo{height:48px;width:48px;object-fit:cover;border-radius:8px}
+      .skeleton-title{font-weight:700;color:#0b1220;font-size:16px}
+      .skeleton-sub{color:#475569;font-size:13px}
+      .skeleton-contact{margin-top:6px;color:#475569}
+      .skeleton-contact a{color:#1e40af}
+        /* Skeleton (pre-mount placeholder) - minimal, non-duplicative */
+        .skeleton{display:flex;align-items:center;justify-content:center;min-height:58vh;padding:24px 12px;box-sizing:border-box}
+        .skeleton-inner{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:540px;padding:18px}
+        .skeleton-logo{height:64px;width:64px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+        .skeleton-title{font-weight:700;color:var(--skeleton-title,#0f172a);font-size:18px}
+        .skeleton-sub{color:var(--skeleton-sub,#64748b);font-size:14px}
+        .skeleton-loading{display:flex;align-items:center;gap:10px;margin-top:6px}
+        .skeleton-spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:rgba(30,64,175,0.9);animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .skeleton{display:flex;align-items:center;justify-content:center;min-height:58vh;padding:24px 12px;box-sizing:border-box}
+        .skeleton-inner{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:540px;padding:18px}
+        .skeleton-logo{height:64px;width:64px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+        .skeleton-title{font-weight:700;color:var(--skeleton-title,#0f172a);font-size:18px}
+        .skeleton-sub{color:var(--skeleton-sub,#64748b);font-size:14px}
+        .skeleton-loading{display:flex;align-items:center;gap:10px;margin-top:6px}
+        .skeleton-spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:rgba(30,64,175,0.9);animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+      /* Dark theme adjustments */
+      @media (prefers-color-scheme: dark){
+        .site-footer{border-top:1px solid rgba(255,255,255,0.06); color: #cbd5e1}
+        .site-footer .title{color:#e6eef8}
+        .site-footer .brand .title{color:#e6eef8}
+        .site-footer .subtitle{color:#94a3b8}
+        .site-footer a{color:#60a5fa}
+        .skeleton-title{color:#e6eef8}
+        .skeleton-sub,.skeleton-contact{color:#94a3b8}
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="skeleton" aria-hidden="false">
+        <div class="skeleton-inner">
+          <img src="/Edu_51_Logo.png" alt="Edu51Five" class="skeleton-logo" />
+          <div class="skeleton-title">Edu51Five</div>
+          <div class="skeleton-sub">Student portal for BUBT Intake 51</div>
+          <div class="skeleton-loading"><span class="skeleton-spinner" aria-hidden="true"></span><span style="color:var(--skeleton-sub,#64748b);font-size:13px">Loading…</span></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="meta">
+        <div class="brand">
+          <img alt="Edu51Five logo" src="/Edu_51_Logo.png" style="height:40px;width:40px;object-fit:cover;border-radius:8px" />
+          <div>
+            <div class="title">Edu51Five</div>
+            <div class="subtitle">Student portal for BUBT Intake 51 — course materials & tracking</div>
+          </div>
+        </div>
+        <div class="contact" style="text-align:right;font-size:14px;">
+          <div>Contact: <a href="mailto:edu51five@gmail.com">edu51five@gmail.com</a></div>
+          <div><a href="/privacy">Privacy Policy</a></div>
+        </div>
+      </div>
+
+      
+    </footer>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

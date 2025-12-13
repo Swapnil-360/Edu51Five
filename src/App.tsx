@@ -3002,42 +3002,42 @@ For any queries, contact your course instructors or the department.`,
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={handleEmailClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-pink-600 text-white text-sm font-medium shadow-md hover:opacity-95 transition"
                           title="Email Support"
+                          aria-label="Email Support"
+                          className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center shadow-sm transition"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
-                          <span>Email</span>
                         </button>
 
                         <a
                           href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Swapnil, I need help with Edu51Five.')}`}
                           onClick={handleWhatsAppClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-medium shadow-md hover:bg-emerald-800 transition"
+                          className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-sm transition"
                           target="_blank"
                           rel="noopener noreferrer"
                           title="WhatsApp Support"
+                          aria-label="WhatsApp Support"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-4.2-1L3 21l1.9-5.7a8.38 8.38 0 01-1.1-4 8.5 8.5 0 0115.2-5.9 8.5 8.5 0 01.0 11z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13c-.5-.3-1.3-.6-1.5-.6-.2 0-.4-.1-.6.1s-.7.6-.8.7c-.1.1-.3.1-.5 0-.5-.1-1-1.9-1.1-2.2-.1-.3 0-.5.2-.7.2-.2.5-.5.8-.8.3-.3.4-.5.6-.8.2-.3 0-.6-.1-.8-.1-.2-.6-.5-1.1-.8-.6-.3-1-.3-1.5-.2s-1 .5-1.6 1.1c-.6.6-1 1.3-1 1.9s.4 1 .9 1.4c.5.4 1.2.9 2 .9.8 0 1.5-.2 2.1-.4.6-.2 1.1-.4 1.4-.3.3.1.7.2.9.4.2.2.2.6 0 .9z" />
                           </svg>
-                          <span>WhatsApp</span>
                         </a>
 
                         <a
                           href="https://www.facebook.com/mr.swapnil360"
                           onClick={handleFacebookClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-medium shadow-md hover:opacity-95 transition"
+                          className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-sm transition"
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Facebook"
+                          aria-label="Facebook"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v8h4v-8h3l1-4h-4V6a1 1 0 011-1h3V2z" />
                           </svg>
-                          <span>Facebook</span>
                         </a>
                       </div>
                     </div>
