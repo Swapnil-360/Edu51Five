@@ -52,21 +52,23 @@
       .site-footer a{color:#1e40af;text-decoration:underline}
 
       /* Skeleton (pre-mount placeholder) */
-      .skeleton{display:flex;align-items:center;justify-content:center;min-height:56vh;padding:24px 12px;box-sizing:border-box}
+      /* Make skeleton a full-viewport overlay so footer cannot show through */
+      .skeleton{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px 12px;box-sizing:border-box;background:#fff !important;z-index:9999}
       .skeleton-inner{display:flex;align-items:center;gap:14px;max-width:900px}
-      .skeleton-logo{height:48px;width:48px;object-fit:cover;border-radius:8px}
-      .skeleton-title{font-weight:700;color:#0b1220;font-size:16px}
-      .skeleton-sub{color:#475569;font-size:13px}
+      .skeleton-logo{height:64px;width:64px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+      /* Strong, explicit colors for loading text to ensure visibility on white */
+      .skeleton-title{font-weight:800;color:#0f172a!important;font-size:20px;line-height:1.1}
+      .skeleton-sub{color:#475569!important;font-size:14px}
       .skeleton-contact{margin-top:6px;color:#475569}
       .skeleton-contact a{color:#1e40af}
         /* Skeleton (pre-mount placeholder) - minimal, non-duplicative */
         .skeleton{display:flex;align-items:center;justify-content:center;min-height:58vh;padding:24px 12px;box-sizing:border-box}
         .skeleton-inner{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:540px;padding:18px}
         .skeleton-logo{height:64px;width:64px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
-        .skeleton-title{font-weight:700;color:var(--skeleton-title,#0f172a);font-size:18px}
-        .skeleton-sub{color:var(--skeleton-sub,#64748b);font-size:14px}
+        .skeleton-title{font-weight:700;color:var(--skeleton-title,#0f172a)!important;font-size:18px}
+        .skeleton-sub{color:var(--skeleton-sub,#64748b)!important;font-size:14px}
         .skeleton-loading{display:flex;align-items:center;gap:10px;margin-top:6px}
-        .skeleton-spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:rgba(30,64,175,0.9);animation:spin 1s linear infinite}
+        .skeleton-spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:#1e40af;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
         .skeleton{display:flex;align-items:center;justify-content:center;min-height:58vh;padding:24px 12px;box-sizing:border-box}
         .skeleton-inner{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:540px;padding:18px}
@@ -87,7 +89,32 @@
         .skeleton-title{color:#e6eef8}
         .skeleton-sub,.skeleton-contact{color:#94a3b8}
       }
+      /* JS-driven fallback: when the page has class `skeleton-active` hide footer */
+      .skeleton-active .site-footer{display:none !important}
     </style>
+    <script>
+      // Ensure footer is hidden while the initial loading skeleton is active.
+      // Add a flag class, then remove it when the skeleton is hidden or removed.
+      document.documentElement.classList.add('skeleton-active');
+      (function(){
+        var root = document.getElementById('root');
+        if(!root) return document.documentElement.classList.remove('skeleton-active');
+        var skeleton = root.querySelector('.skeleton');
+        if(!skeleton) return document.documentElement.classList.remove('skeleton-active');
+        var observer = new MutationObserver(function(){
+          try{
+            if(skeleton.getAttribute('aria-hidden') === 'true' || !document.body.contains(skeleton)){
+              document.documentElement.classList.remove('skeleton-active');
+              observer.disconnect();
+            }
+          }catch(e){
+            document.documentElement.classList.remove('skeleton-active');
+            observer.disconnect();
+          }
+        });
+        observer.observe(skeleton, {attributes:true,childList:true});
+      })();
+    </script>
   </head>
   <body>
     <div id="root">

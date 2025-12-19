@@ -2981,15 +2981,7 @@ For any queries, contact your course instructors or the department.`,
                       <p className="text-slate-300 text-sm font-medium">
                         © {new Date().getFullYear()} Edu51Five
                       </p>
-                      <p className="text-slate-400 text-xs">
-                        BUBT Intake 51 • All rights reserved
-                      </p>
-                      <button
-                        onClick={() => goToView('privacy')}
-                        className="text-blue-400 hover:text-blue-300 text-xs underline mt-1 transition-colors duration-200"
-                      >
-                        Privacy Policy
-                      </button>
+                      <p className="text-slate-400 text-xs">BUBT Intake 51 • All rights reserved</p>
                     </div>
                   </div>
 
