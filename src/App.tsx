@@ -3537,7 +3537,7 @@ For any queries, contact your course instructors or the department.`,
                     <p className={`font-medium transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-200' : 'text-gray-800'
                     }`}>
-                      Email: <a href="mailto:edu51five@gmail.com" className="text-blue-500 hover:underline">edu51five@gmail.com</a>
+                      Email: <a href="mailto:edu51five@gmail.com" className="text-blue-500 hover:underline inline-block px-2 py-1 min-h-[24px]">edu51five@gmail.com</a>
                     </p>
                     <p className={`mt-2 transition-colors duration-300 ${
                       isDarkMode ? 'text-gray-300' : 'text-gray-700'
@@ -4617,49 +4617,35 @@ For any queries, contact your course instructors or the department.`,
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
             <div className="grid place-items-center h-dvh w-full px-4">
               <div className={`relative z-[120] w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
-                isDarkMode ? 'bg-gray-800' : 'bg-white'
+                isDarkMode ? 'bg_gray-800' : 'bg-[#E6F5FF]'
               }`}>
               <div className={`flex-shrink-0 p-3 sm:p-4 border-l-4 transition-colors duration-300 ${
-                selectedNotice.type === 'info' 
-                  ? isDarkMode ? 'border-blue-400 bg-blue-900/30' : 'border-blue-400 bg-blue-50'
-                  : selectedNotice.type === 'warning' 
-                  ? isDarkMode ? 'border-yellow-400 bg-yellow-900/30' : 'border-yellow-400 bg-yellow-50'
-                  : selectedNotice.type === 'success' 
-                  ? isDarkMode ? 'border-green-400 bg-green-900/30' : 'border-green-400 bg-green-50'
-                  : isDarkMode ? 'border-red-400 bg-red-900/30' : 'border-red-400 bg-red-50'
+                // In light mode, use muted-blue accents for the full modal header
+                isDarkMode
+                  ? (selectedNotice.type === 'info' 
+                      ? 'border-blue-400 bg-blue-900/30'
+                      : selectedNotice.type === 'warning' 
+                      ? 'border-yellow-400 bg-yellow-900/30'
+                      : selectedNotice.type === 'success' 
+                      ? 'border-green-400 bg-green-900/30'
+                      : 'border-red-400 bg-red-900/30')
+                  : 'border-[#2B7CBF] bg-[#D1ECFF]'
               }`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
                     <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg transition-colors duration-300 ${
-                      selectedNotice.type === 'info' 
-                        ? isDarkMode ? 'bg-blue-700/50' : 'bg-blue-100'
-                        : selectedNotice.type === 'warning' 
-                        ? isDarkMode ? 'bg-yellow-700/50' : 'bg-yellow-100'
-                        : selectedNotice.type === 'success' 
-                        ? isDarkMode ? 'bg-green-700/50' : 'bg-green-100'
-                        : isDarkMode ? 'bg-red-700/50' : 'bg-red-100'
+                      isDarkMode
+                        ? (selectedNotice.type === 'info' ? 'bg-blue-700/50' : selectedNotice.type === 'warning' ? 'bg-yellow-700/50' : selectedNotice.type === 'success' ? 'bg-green-700/50' : 'bg-red-700/50')
+                        : 'bg-[#D1ECFF]'
                     }`}>
-                      <Bell className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                        selectedNotice.type === 'info' ? 'text-blue-600' :
-                        selectedNotice.type === 'warning' ? 'text-yellow-600' :
-                        selectedNotice.type === 'success' ? 'text-green-600' :
-                        'text-red-600'
-                      }`} />
+                      <Bell className={`h-4 w-4 sm:h-5 sm:w-5 ${isDarkMode ? (selectedNotice.type === 'info' ? 'text-blue-600' : selectedNotice.type === 'warning' ? 'text-yellow-600' : selectedNotice.type === 'success' ? 'text-green-600' : 'text-red-600') : 'text-[#2B7CBF]'}`} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <h2 id="notice-modal-title" className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 leading-tight ${
                         isDarkMode ? 'text-gray-100' : 'text-gray-900'
                       }`}>{selectedNotice.title}</h2>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
-                          selectedNotice.type === 'info' 
-                            ? isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
-                            : selectedNotice.type === 'warning' 
-                            ? isDarkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
-                            : selectedNotice.type === 'success' 
-                            ? isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-800'
-                            : isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${isDarkMode ? (selectedNotice.type === 'info' ? 'bg-blue-900/50 text-blue-300' : selectedNotice.type === 'warning' ? 'bg-yellow-900/50 text-yellow-300' : selectedNotice.type === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300') : 'bg-[#D1ECFF] text-[#2B7CBF]'}`}>
                           {selectedNotice.type.toUpperCase()}
                         </span>
                         <span className={`text-xs transition-colors duration-300 ${

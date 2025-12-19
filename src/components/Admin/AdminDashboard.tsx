@@ -382,19 +382,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* SECTION 2: Notice Management (PRIMARY) */}
-        <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-cyan-500/20 hover:border-cyan-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-cyan-500/20' : 'bg-gradient-to-br from-cyan-50/80 to-cyan-100/80 backdrop-blur-xl border border-cyan-200/50 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-200/50'}`}>
-          <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-cyan-500/5 to-transparent' : 'bg-gradient-to-br from-cyan-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+        <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-cyan-500/20 hover:border-cyan-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-cyan-500/20' : 'bg-gradient-to-br from-[#E6F5FF] to-white/60 backdrop-blur-xl border border-[#D1ECFF] hover:border-[#B0D6F0] hover:shadow-lg hover:shadow-[#2B7CBF]/10'}`}>
+          <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-cyan-500/5 to-transparent' : 'bg-gradient-to-br from-[#D1ECFF] to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
           <div className="relative z-10 p-4 sm:p-5 lg:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
-              <h2 className={`text-base sm:text-lg font-bold uppercase tracking-wider flex items-center ${isDarkMode ? 'text-cyan-300 group-hover:text-cyan-200' : 'text-cyan-600 group-hover:text-cyan-700'} transition-colors`}>
-                <div className={`p-2 rounded-lg mr-3 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-200 text-cyan-600'}`}>
+              <h2 className={`text-base sm:text-lg font-bold uppercase tracking-wider flex items-center ${isDarkMode ? 'text-cyan-300 group-hover:text-cyan-200' : 'text-[#2B7CBF] group-hover:text-[#1f6aa0]'} transition-colors`}>
+                <div className={`p-2 rounded-lg mr-3 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-[#E6F5FF] text-[#2B7CBF]'}`}>
                   <Bell className="w-5 h-5" />
                 </div>
                 <span>Notices</span>
               </h2>
               <button
                 onClick={onCreateNotice}
-                className={`flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 group/btn ${isDarkMode ? 'bg-cyan-500/30 text-cyan-200 hover:bg-cyan-500/50 border border-cyan-400/50 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-500/30' : 'bg-cyan-500/20 text-cyan-700 hover:bg-cyan-500/30 border border-cyan-300/50 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-200/50'} w-full sm:w-auto`}
+                className={`flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 group/btn ${isDarkMode ? 'bg-cyan-500/30 text-cyan-200 hover:bg-cyan-500/50 border border-cyan-400/50 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-500/30' : 'bg-[#D1ECFF] text-[#2B7CBF] hover:bg-[#B0D6F0] border border-[#C6E6F8] hover:border-[#A6CFE9] hover:shadow-lg hover:shadow-[#2B7CBF]/10'} w-full sm:w-auto`}
               >
                 <Plus className="w-4 h-4 flex-shrink-0 transition-transform group-hover/btn:rotate-90" />
                 <span>Add Notice</span>
@@ -411,7 +411,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       notice.is_active
                         ? isDarkMode
                           ? 'bg-cyan-500/15 border border-cyan-500/40 hover:bg-cyan-500/25 hover:border-cyan-500/60 hover:shadow-lg hover:shadow-cyan-500/20'
-                          : 'bg-cyan-200/30 border border-cyan-300/60 hover:bg-cyan-200/50 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-200/30'
+                          : 'bg-[#E6F5FF] border border-[#D1ECFF] hover:bg-[#D1ECFF] hover:border-[#B0D6F0] hover:shadow-lg hover:shadow-[#2B7CBF]/10'
                         : isDarkMode
                         ? 'bg-slate-700/20 border border-slate-600/40 opacity-60 hover:opacity-80'
                         : 'bg-gray-200/30 border border-gray-300/40 opacity-60 hover:opacity-80'
@@ -419,7 +419,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center flex-wrap gap-2 mb-2">
-                        <p className={`font-bold text-sm break-words ${isDarkMode ? 'text-cyan-200' : 'text-cyan-700'}`}>
+                        <p className={`font-bold text-sm break-words ${isDarkMode ? 'text-cyan-200' : 'text-[#2B7CBF]'}`}>
                           {notice.title || notice.id}
                         </p>
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${notice.is_active ? (isDarkMode ? 'bg-green-500/30 text-green-300' : 'bg-green-200 text-green-700') : (isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-300 text-gray-600')}`}>
@@ -427,17 +427,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {notice.is_active ? 'LIVE' : 'INACTIVE'}
                         </span>
                       </div>
-                      <p className={`text-sm mt-1 line-clamp-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      <p className={`text-sm mt-1 line-clamp-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                         {notice.content}
                       </p>
                     </div>
                     <div className="flex space-x-2 flex-shrink-0">
                       <button
                         onClick={onEditNotice}
-                        className={`p-2.5 rounded-lg transition-all duration-300 group-hover/notice:scale-110 ${isDarkMode ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-blue-200 text-blue-600 hover:bg-blue-300'}`}
+                        className={`p-2.5 rounded-lg transition-all duration-300 group-hover/notice:scale-110 ${isDarkMode ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-[#2B7CBF]/10 text-[#2B7CBF] hover:bg-[#2B7CBF]/20'}`}
                         title="Edit this notice"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4" color={isDarkMode ? undefined : '#2B7CBF'} />
                       </button>
                       <button
                         onClick={() => onDeleteNotice && onDeleteNotice(notice.id)}
@@ -451,7 +451,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </div>
             ) : (
-              <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-400' : 'text-cyan-600/60'}`}>
+              <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-400' : 'text-[#2B7CBF]/60'}`}>
                 No notices yet. Click "Add Notice" to create one.
               </p>
             )}

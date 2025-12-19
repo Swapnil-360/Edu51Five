@@ -36,20 +36,34 @@
       #root{flex:1;display:block}
 
       /* Footer styles with improved contrast and responsive layout */
-      .site-footer{max-width:1100px;margin:36px auto 24px auto;padding:18px 20px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit}
-      .site-footer .meta{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
-      .site-footer .brand{margin-bottom:6px}
-      .site-footer .contact{font-size:14px}
-      @media(min-width:480px){
-        .site-footer .meta{flex-direction:row;align-items:center;justify-content:space-between;text-align:left}
-        .site-footer .brand{margin-bottom:0}
-        .site-footer .contact{text-align:right}
-      }
+      .site-footer{width:100%;box-sizing:border-box;padding:20px 14px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit}
+      .site-footer .inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;align-items:center}
+      .site-footer .meta{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
       .site-footer .brand{display:flex;align-items:center;gap:12px}
       .site-footer .brand .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
       .site-footer .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
-      .site-footer .brand .subtitle{font-size:13px;color:#475569}
+      .site-footer .brand .subtitle{font-size:13px;color:#0f172a}
+      .site-footer .contact{font-size:14px}
       .site-footer a{color:#1e40af;text-decoration:underline}
+
+      /* Mobile-first: stack content and center align */
+      @media (max-width:479px){
+        .site-footer{padding:18px 12px}
+        .site-footer .inner{padding:4px 6px}
+        .site-footer .meta{gap:6px}
+        .site-footer .brand{justify-content:center}
+        .site-footer .contact{width:100%;text-align:center}
+        .site-footer .contact div{margin:2px 0}
+      }
+
+      /* Desktop: align brand left and contact right */
+      @media(min-width:480px){
+        .site-footer .inner{flex-direction:row;align-items:center;justify-content:space-between}
+        .site-footer .meta{flex-direction:row;align-items:center;justify-content:space-between;text-align:left}
+        .site-footer .brand{margin-bottom:0}
+        .site-footer .contact{text-align:right}
+        .site-footer .contact{display:flex;flex-direction:column;align-items:flex-end}
+      }
 
       /* Skeleton (pre-mount placeholder) */
       /* Make skeleton a full-viewport overlay so footer cannot show through */
@@ -85,6 +99,21 @@
         .site-footer .title{color:#e6eef8}
         .site-footer .brand .title{color:#e6eef8}
         .site-footer .subtitle{color:#94a3b8}
+
+        /* Ensure the brand subtitle specifically is readable in dark mode */
+        .site-footer .brand .subtitle{color:#94a3b8}
+        .dark .site-footer .brand .subtitle{color:#94a3b8 !important}
+        .dark .site-footer .subtitle{color:#94a3b8 !important}
+
+        /* Ensure mail and privacy links meet 24px touch target and have sufficient contrast */
+        a[href^="mailto:"], a[href$="/privacy"], .site-footer a {
+          display: inline-block;
+          padding: 6px 8px;
+          min-height: 24px;
+          min-width: 24px;
+          line-height: 1;
+          border-radius: 6px;
+        }
         .site-footer a{color:#60a5fa}
         .skeleton-title{color:#e6eef8}
         .skeleton-sub,.skeleton-contact{color:#94a3b8}
