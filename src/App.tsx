@@ -31,6 +31,8 @@ import { DriveManager } from './components/Admin/DriveManager';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import { StudentDriveView } from './components/Student/StudentDriveView';
 import { CourseDriveView } from './components/Student/CourseDriveView';
+import { GDriveFolderBrowser } from './components/Student/GDriveFolderBrowser';
+import { GDriveCourseView } from './components/Student/GDriveCourseView';
 import { 
   FileText, 
   Play, 
@@ -113,10 +115,12 @@ function App() {
 
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
-  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'course' | 'home' | 'semester' | 'privacy'>(() => {
+  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy'>(() => {
     const path = window.location.pathname;
     if (path === '/admin') return 'admin';
-    if (path === '/section5') return 'section5';
+    if (path === '/section5' || path === '/ai') return 'ai';
+    if (path === '/software') return 'software';
+    if (path === '/networking') return 'networking';
     if (path === '/semester') return 'semester';
     if (path === '/privacy') return 'privacy';
     if (path.startsWith('/course/')) return 'course';
@@ -127,10 +131,12 @@ function App() {
   });
 
   // Helper to change view and update browser history (memoized)
-  const goToView = useCallback((view: 'admin' | 'section5' | 'course' | 'home' | 'semester' | 'privacy', extra?: string | null) => {
+  const goToView = useCallback((view: 'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
-    else if (view === 'section5') path = '/section5';
+    else if (view === 'section5' || view === 'ai') path = '/ai';
+    else if (view === 'software') path = '/software';
+    else if (view === 'networking') path = '/networking';
     else if (view === 'semester') path = '/semester';
     else if (view === 'privacy') path = '/privacy';
     else if (view === 'course' && extra) path = `/course/${extra}`;
@@ -169,7 +175,9 @@ function App() {
         window.history.pushState({}, '', '/admin');
         setCurrentView('admin');
       }
-      else if (path === '/section5') setCurrentView('section5');
+      else if (path === '/section5' || path === '/ai') setCurrentView('ai');
+      else if (path === '/software') setCurrentView('software');
+      else if (path === '/networking') setCurrentView('networking');
       else if (path === '/semester') setCurrentView('semester');
       else if (path === '/privacy') setCurrentView('privacy');
       else if (path.startsWith('/course/')) setCurrentView('course');
@@ -190,6 +198,12 @@ function App() {
   const [emergencyAlerts, setEmergencyAlerts] = useState<Array<{id: string; message: string; status: string; created_at: string}>>([]);
   const [emergencyLinks, setEmergencyLinks] = useState<Array<{id: string; title: string; url: string; status: string; created_at: string}>>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedDriveCourse, setSelectedDriveCourse] = useState<{
+    courseCode: string;
+    courseName: string;
+    folderId: string;
+    folderLink: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -205,7 +219,9 @@ function App() {
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem('userProfileBubtEmail')));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authSession, setAuthSession] = useState<any>(null);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   
   // User profile state
@@ -255,6 +271,132 @@ function App() {
       console.warn('Failed to load avatar/profile picture from Supabase', e);
     }
   };
+
+  // Initialize Supabase auth session listener
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Check for existing session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Auth session error:', error);
+          setAuthLoading(false);
+          return;
+        }
+
+        if (session && session.user) {
+          setAuthSession(session);
+          setIsLoggedIn(true);
+          
+          // Load profile from Supabase
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (!profileError && profileData) {
+            const updatedProfile = {
+              name: profileData.name || 'Welcome Student',
+              section: profileData.section || '',
+              major: profileData.major || '',
+              bubtEmail: profileData.bubt_email || session.user.email || '',
+              notificationEmail: profileData.notification_email || '',
+              phone: profileData.phone || '',
+              password: '', // Never store password in state
+              profilePic: profileData.profile_pic || '',
+              avatar_url: profileData.profile_pic || ''
+            };
+            setUserProfile(updatedProfile);
+            
+            // Update last login timestamp
+            await supabase
+              .from('profiles')
+              .update({ last_login_at: new Date().toISOString() })
+              .eq('id', session.user.id);
+          }
+        } else {
+          // No session, check localStorage fallback
+          const storedEmail = localStorage.getItem('userProfileBubtEmail');
+          if (storedEmail) {
+            setIsLoggedIn(true);
+          }
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        setAuthSession(session);
+        setIsLoggedIn(true);
+        
+        // Load profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileData) {
+          const updatedProfile = {
+            name: profileData.name || 'Welcome Student',
+            section: profileData.section || '',
+            major: profileData.major || '',
+            bubtEmail: profileData.bubt_email || session.user.email || '',
+            notificationEmail: profileData.notification_email || '',
+            phone: profileData.phone || '',
+            password: '',
+            profilePic: profileData.profile_pic || '',
+            avatar_url: profileData.profile_pic || ''
+          };
+          setUserProfile(updatedProfile);
+          
+          // Store in localStorage for offline access
+          localStorage.setItem('userProfileBubtEmail', updatedProfile.bubtEmail);
+          localStorage.setItem('userProfileName', updatedProfile.name);
+          localStorage.setItem('userProfileMajor', updatedProfile.major);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setAuthSession(null);
+        setIsLoggedIn(false);
+        setUserProfile({
+          name: 'Welcome Student',
+          section: '',
+          major: '',
+          bubtEmail: '',
+          notificationEmail: '',
+          phone: '',
+          password: '',
+          profilePic: '',
+          avatar_url: ''
+        });
+        
+        // Clear localStorage
+        localStorage.removeItem('userProfileBubtEmail');
+        localStorage.removeItem('userProfileName');
+        localStorage.removeItem('userProfileMajor');
+        localStorage.removeItem('userProfileSection');
+        localStorage.removeItem('userProfileNotificationEmail');
+        localStorage.removeItem('userProfilePhone');
+        localStorage.removeItem('userProfilePic');
+        localStorage.removeItem('userProfileAvatarUrl');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (userProfile.bubtEmail) {
@@ -642,7 +784,7 @@ function App() {
     let sessionId: string | null = null;
 
     // Track presence on student OR admin pages
-    if (currentView === 'section5' || currentView === 'course' || currentView === 'home' || (currentView === 'admin' && isAdmin)) {
+    if (currentView === 'section5' || currentView === 'ai' || currentView === 'software' || currentView === 'networking' || currentView === 'course' || currentView === 'home' || (currentView === 'admin' && isAdmin)) {
       sessionId = getSessionId();
       const pageType = (currentView === 'admin' && isAdmin) ? 'admin' : 'student';
       trackUserPresence(pageType);
@@ -931,27 +1073,28 @@ FOR ALL USING (true) WITH CHECK (true);
     }
   };
 
-  // Load all courses from database
+  // Load courses from Google Drive folders based on user's major
+  // NOTE: This function is now deprecated. Courses are loaded and displayed
+  // by the GDriveFolderBrowser component directly from Google Drive folders.
+  // This function is kept for legacy compatibility but returns empty courses.
   const loadCourses = async () => {
+    if (!authSession || !isLoggedIn) {
+      console.log('Authentication required to load courses');
+      setCourses([]);
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCourses(data || []);
+      
+      // Courses are now managed through Google Drive folders
+      // This function is deprecated and no longer used
+      setCourses([]);
+      
+      console.log('✅ GDriveFolderBrowser will handle course loading from Google Drive');
     } catch (error) {
       console.error('Error loading courses:', error);
-      // Fallback to hardcoded courses if database fails
-      setCourses([
-        { id: '1', name: 'Networking', code: 'CSE-319-20', description: 'Computer Networks and Security', created_at: new Date().toISOString() },
-        { id: '2', name: 'Software Engineering', code: 'CSE-327', description: 'Software Engineering Principles', created_at: new Date().toISOString() },
-        { id: '3', name: 'Project Management and Professional Ethics', code: 'CSE-407', description: 'Project Management & Ethics', created_at: new Date().toISOString() },
-        { id: '4', name: 'Distributed Database', code: 'CSE-417', description: 'Database Systems and Management', created_at: new Date().toISOString() },
-        { id: '5', name: 'Artificial Intelligence', code: 'CSE-351', description: 'AI and Machine Learning', created_at: new Date().toISOString() },
-      ]);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
@@ -996,13 +1139,15 @@ FOR ALL USING (true) WITH CHECK (true);
   // Initialize default notices (Welcome + Exam Routine slots)
   const initializeDefaultNotices = async (): Promise<Notice[]> => {
     try {
-      console.log('Checking for default notices...');
+      console.log('🏗️ [initializeDefaultNotices] Starting...');
       
       // Check database for existing welcome and routine notices
       const { data } = await supabase
         .from('notices')
         .select('*')
         .in('id', ['welcome-notice', 'exam-routine-notice']);
+
+      console.log('🏗️ [initializeDefaultNotices] DB query for existing notices returned:', data?.length || 0, 'records');
 
       let welcomeNotice = null;
       let routineNotice = null;
@@ -1016,6 +1161,7 @@ FOR ALL USING (true) WITH CHECK (true);
 
       // Create default welcome notice if it doesn't exist
       if (!welcomeNotice) {
+        console.log('🏗️ [initializeDefaultNotices] Creating welcome notice...');
         welcomeNotice = {
           id: 'welcome-notice',
           title: '🎉 Welcome to Edu51Five - BUBT Intake 51 Section 5',
@@ -1042,14 +1188,17 @@ Best of luck with your studies!
         // Try to save to database
         try {
           await supabase.from('notices').insert([welcomeNotice]);
-          console.log('Default welcome notice created in database');
+          console.log('🏗️ [initializeDefaultNotices] Welcome notice saved to database');
         } catch (dbError) {
-          console.log('Welcome notice saved locally only');
+          console.log('🏗️ [initializeDefaultNotices] Welcome notice: database save failed, will save to localStorage only');
         }
+      } else {
+        console.log('🏗️ [initializeDefaultNotices] Welcome notice already exists in database');
       }
 
       // Create placeholder for exam routine if it doesn't exist
       if (!routineNotice) {
+        console.log('🏗️ [initializeDefaultNotices] Creating exam routine notice...');
         routineNotice = {
           id: 'exam-routine-notice',
           title: '📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)',
@@ -1079,10 +1228,12 @@ Best of luck with your studies!
         // Try to save to database
         try {
           await supabase.from('notices').insert([routineNotice]);
-          console.log('Default routine notice created in database');
+          console.log('🏗️ [initializeDefaultNotices] Routine notice saved to database');
         } catch (dbError) {
-          console.log('Routine notice saved locally only');
+          console.log('🏗️ [initializeDefaultNotices] Routine notice: database save failed, will save to localStorage only');
         }
+      } else {
+        console.log('🏗️ [initializeDefaultNotices] Routine notice already exists in database');
       }
 
       // Always show these 2 notices (welcome + routine)
@@ -1091,18 +1242,53 @@ Best of luck with your studies!
       // Filter only active notices and allow up to 5
       const activeNotices = defaultNotices.filter(n => n && n.is_active).slice(0, 5);
 
-      setNotices(activeNotices);
+      // CRITICAL: Save to localStorage so they persist even if database is unavailable
       localStorage.setItem('edu51five_notices', JSON.stringify(activeNotices));
+      console.log('✅ [initializeDefaultNotices] Saved', activeNotices.length, 'default notices to localStorage');
 
-      console.log('Initialized with default notices:', activeNotices.length);
+      // NOTE: Don't call setNotices here - let the caller handle state update
+      // setNotices(activeNotices);
+
+      console.log('✅ [initializeDefaultNotices] Returning', activeNotices.length, 'notices');
 
       return activeNotices;
 
     } catch (error) {
-      console.error('Error initializing default notices:', error);
-      // Fallback to empty notices
-      setNotices([]);
-      return [];
+      console.error('❌ [initializeDefaultNotices] Error:', error);
+      // Fallback: Create bare minimum default notices
+      const bareMinimumNotices: Notice[] = [
+        {
+          id: 'welcome-notice',
+          title: '🎉 Welcome to Edu51Five',
+          content: 'Welcome to Edu51Five, your academic platform!',
+          type: 'info',
+          category: 'announcement',
+          priority: 'normal',
+          exam_type: null,
+          event_date: '',
+          is_active: true,
+          created_at: new Date().toISOString()
+        } as Notice,
+        {
+          id: 'exam-routine-notice',
+          title: '📅 Exam Information',
+          content: 'Check your exam schedule on the platform.',
+          type: 'warning',
+          category: 'exam',
+          priority: 'high',
+          exam_type: 'final',
+          event_date: '',
+          is_active: true,
+          created_at: new Date().toISOString()
+        } as Notice
+      ];
+      
+      // Save even minimal notices to localStorage
+      localStorage.setItem('edu51five_notices', JSON.stringify(bareMinimumNotices));
+      // NOTE: Don't call setNotices here - let the caller handle state update
+      // setNotices(bareMinimumNotices);
+      console.log('⚠️ [initializeDefaultNotices] Created bare minimum notices as fallback, saved to localStorage');
+      return bareMinimumNotices;
     }
   };
 
@@ -1132,6 +1318,7 @@ Best of luck with your studies!
       
       // PRIMARY SOURCE: Try to load ALL notices from database
       try {
+        console.log('🔍 Attempting database query for notices...');
         const { data: dbNotices, error } = await supabase
           .from('notices')
           .select('*')
@@ -1139,21 +1326,26 @@ Best of luck with your studies!
           .order('created_at', { ascending: false })
           .limit(5);
 
+        console.log('📊 Database response:', { hasData: !!dbNotices, dataLength: dbNotices?.length || 0, hasError: !!error, errorMsg: error?.message });
+
         if (!error && dbNotices && dbNotices.length > 0) {
           allNotices = dbNotices as Notice[];
           console.log('✅ Database notices loaded:', allNotices.length);
           // Save to localStorage for offline access
           localStorage.setItem('edu51five_notices', JSON.stringify(allNotices));
           setNotices(allNotices);
+          setIsLoadingNotices(false);
           return; // Success! Exit early with database data
         } else if (error) {
-          console.warn('Database error:', error.message);
+          console.warn('⚠️ Database error:', error.message);
         } else {
-          console.log('No notices in database');
+          console.log('ℹ️ No notices in database');
         }
       } catch (dbErr) {
-        console.error('Database connection error:', dbErr);
+        console.error('❌ Database connection error:', dbErr);
       }
+      
+      console.log('💾 Checking localStorage for cached notices...');
 
       // FALLBACK: If database is empty or unavailable, try localStorage
       const localNoticesStr = localStorage.getItem('edu51five_notices');
@@ -1163,33 +1355,52 @@ Best of luck with your studies!
           allNotices = Array.isArray(localNotices) 
             ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
             : [];
-          console.log('⚠️ Using local storage fallback:', allNotices.length, 'notices');
+          console.log('💾 localStorage fallback successful:', allNotices.length, 'notices');
         } catch (e) {
-          console.error('Error parsing local notices:', e);
+          console.error('❌ Error parsing localStorage notices:', e);
         }
+      } else {
+        console.log('📭 localStorage is empty - will initialize defaults');
       }
 
       // If there are no notices from DB/localStorage, initialize defaults (welcome + routine)
       if (!allNotices || allNotices.length === 0) {
+        console.log('🆕 Initializing default notices...');
         try {
           const defaults = await initializeDefaultNotices();
           if (defaults && defaults.length > 0) {
             allNotices = defaults;
+            console.log('✅ Using initialized default notices:', allNotices.length);
           } else {
             // as a last resort try to read what was written
             const stored = localStorage.getItem('edu51five_notices');
             if (stored) {
               allNotices = JSON.parse(stored) as Notice[];
+              console.log('⚠️ Using notices from localStorage after initialization failed:', allNotices.length);
             }
           }
         } catch (e) {
-          console.error('Error creating default notices:', e);
+          console.error('❌ Error creating default notices:', e);
+          // Final fallback: check localStorage one more time
+          const finalFallback = localStorage.getItem('edu51five_notices');
+          if (finalFallback) {
+            allNotices = JSON.parse(finalFallback) as Notice[];
+            console.log('⚠️ Final fallback: Using localStorage notices:', allNotices.length);
+          } else {
+            console.error('❌ No notices available from any source!');
+            allNotices = [];
+          }
         }
       }
 
-      setNotices(allNotices);
-
-      console.log('All notices loaded:', allNotices.length, 'notices');
+      // Only set state if we have notices, otherwise state stays empty with a message
+      if (allNotices && allNotices.length > 0) {
+        setNotices(allNotices);
+        console.log('✅ All notices loaded:', allNotices.length, 'notices');
+      } else {
+        console.warn('⚠️ No notices found after all fallback attempts');
+        setNotices([]);
+      }
       
     } catch (err) {
       console.error('Error loading notices:', err);
@@ -1447,7 +1658,13 @@ Best of luck with your studies!
   const handleBackToSection = () => {
     setSelectedCourse(null);
     setMaterials([]);
-    goToView('section5');
+    // Navigate back to the user's major section
+    const majorViewMap: { [key: string]: 'ai' | 'software' | 'networking' } = {
+      'AI': 'ai',
+      'Software Engineering': 'software',
+      'Networking': 'networking'
+    };
+    goToView(majorViewMap[userProfile.major] || 'ai');
   };
 
   // Admin: Create new course
@@ -1460,7 +1677,10 @@ Best of luck with your studies!
         .insert([{
           name: newCourse.name,
           code: newCourse.code,
-          description: newCourse.description
+          description: newCourse.description,
+          major: 'Common', // Default to Common so all majors can access
+          semester: 'SPRING_2026',
+          is_active: true
         }]);
 
       if (error) throw error;
@@ -1468,7 +1688,8 @@ Best of luck with your studies!
       // Reset form and reload courses
       setNewCourse({ name: '', code: '', description: '', section_id: '1' });
       setShowCreateCourse(false);
-      loadCourses();
+      await loadCourses();
+      alert('Course created successfully!');
     } catch (error) {
       console.error('Error creating course:', error);
       alert('Error creating course. Please try again.');
@@ -1863,6 +2084,9 @@ Best of luck with your studies!
       // Dispatch event for instant UI update
       window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
       
+      // Reload notices from database to sync
+      await loadNotices();
+      
       // Send push notification to all subscribers
       await sendNoticeNotification(notice);
       
@@ -1879,7 +2103,7 @@ Best of luck with your studies!
       });
       setShowCreateNotice(false);
       
-      alert(`Global ${noticeId === 'welcome-notice' ? 'Welcome' : 'Exam Routine'} notice updated successfully! Push notifications sent.`);
+      alert('Notice published successfully! Push notifications sent.');
       
     } catch (error) {
       console.error('Error creating notice:', error);
@@ -2367,29 +2591,14 @@ For any queries, contact your course instructors or the department.`,
             <div className={`px-4 py-3 space-y-2 border-t ${isDarkMode ? 'border-gray-700/30' : 'border-gray-200/50'}`}>
               {isLoggedIn ? (
                 <button
-                  onClick={() => {
-                    // Sign out: clear all user data
-                    localStorage.removeItem('userProfileName');
-                    localStorage.removeItem('userProfileSection');
-                    localStorage.removeItem('userProfileMajor');
-                    localStorage.removeItem('userProfileBubtEmail');
-                    localStorage.removeItem('userProfileNotificationEmail');
-                    localStorage.removeItem('userProfilePhone');
-                    localStorage.removeItem('userProfilePassword');
-                    localStorage.removeItem('userProfilePic');
-                    localStorage.removeItem('userProfile');
-                    setUserProfile({
-                      name: 'Welcome Student',
-                      section: 'Intake 51, Section 5',
-                      major: '',
-                      bubtEmail: '',
-                      notificationEmail: '',
-                      phone: '',
-                      password: '',
-                      profilePic: ''
-                    });
-                    setIsLoggedIn(false);
-                    setShowMobileMenu(false);
+                  onClick={async () => {
+                    try {
+                      await supabase.auth.signOut();
+                      setShowMobileMenu(false);
+                      console.log('User signed out successfully');
+                    } catch (error) {
+                      console.error('Sign out error:', error);
+                    }
                   }}
                   className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                     isDarkMode
@@ -2713,7 +2922,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
       {currentView !== 'semester' && (
-        <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-22 xl:pt-24 min-h-screen overflow-x-hidden">
+        <main className="pt-16 sm:pt-20 md:pt-20 lg:pt-24 xl:pt-24 min-h-screen overflow-x-hidden">
           <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
         {/* Home Page */}
         {currentView === 'home' && (
@@ -2791,7 +3000,7 @@ For any queries, contact your course instructors or the department.`,
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-center text-center sm:justify-end sm:text-left">
                   <button
                     onClick={() => {
                       setIsEditingProfile(false);
@@ -2808,116 +3017,207 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* Section 5 Entry Card - 10 Minute School Style */}
+            {/* Major-Based Sections - Spring 2026 */}
             <div className="w-full">
+              <div className="mb-4 text-center">
+                <p className={`text-sm font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  {isLoggedIn ? 'Select your major section' : '⚠️ Sign in required to access course materials'}
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-                {/* Section 5 Card */}
+                {/* AI Major Card */}
                 <button
-                  onClick={() => goToView('section5')}
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setShowSignInModal(true);
+                      return;
+                    }
+                    if (userProfile.major !== 'AI') {
+                      alert(`This section is for AI major students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      return;
+                    }
+                    goToView('ai');
+                  }}
+                  disabled={!isLoggedIn}
                   className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
                     isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-                  }`}
+                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  {/* Compact Banner Image Section */}
-                  <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
-                  {/* Cover Image */}
-                  <div className="absolute inset-0">
-                    <img 
-                      src="/cover.jpg" 
-                      alt="Section 5 Cover" 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Fallback to gradient if image fails to load
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                  <div
+                    className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
+                    style={{ backgroundImage: "url('/Ai_Cover.jpg')" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-fuchsia-900/40 to-pink-900/40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                    {!isLoggedIn && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                        🔒 Login Required
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Gradient Overlay for better text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-indigo-900/40 to-purple-900/40"></div>
-
-                  {/* Shine Effect on Hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                </div>
-
-                {/* Compact Content Section */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <h2 className={`text-lg sm:text-xl font-bold mb-1 group-hover:text-indigo-600 transition-colors ${
-                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                      }`}>
-                        Section 5 - CSE
-                      </h2>
-                      <p className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        BUBT Intake 51 • Computer Science & Engineering
-                      </p>
-                      
-                      {/* Compact Info Tags */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                          {courses.length} Courses
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          
+                          <h2 className={`text-lg sm:text-xl font-bold group-hover:text-purple-600 transition-colors ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            Artificial Intelligence 🤖
+                          </h2>
                         </div>
-                        <div className="inline-flex items-center bg-green-50 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Materials
+                        <p className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Artificial Intelligence • Intake 51
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <div className="inline-flex items-center bg-purple-50 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                             Machine Learning 🧠
+                          </div>
+                          <div className="inline-flex items-center bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                            Deep Learning 🔮
+                          </div>
                         </div>
-                        <div className="inline-flex items-center bg-purple-50 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? 'bg-purple-600 text-white group-hover:bg-purple-700' : 'bg-gray-400 text-white'}`}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                           </svg>
-                          Schedule
                         </div>
                       </div>
                     </div>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600"></div>
+                </button>
 
-                    {/* Compact Action Arrow */}
-                    <div className="flex-shrink-0">
-                      <div className="bg-indigo-600 text-white rounded-full p-2.5 group-hover:bg-indigo-700 transition-all shadow-md group-hover:shadow-lg">
-                        <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
+                {/* Software Engineering Major Card */}
+                <button
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setShowSignInModal(true);
+                      return;
+                    }
+                    if (userProfile.major !== 'Software Engineering') {
+                      alert(`This section is for Software Engineering students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      return;
+                    }
+                    goToView('software');
+                  }}
+                  disabled={!isLoggedIn}
+                  className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
+                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <div
+                    className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
+                    style={{ backgroundImage: "url('/SE_cover.jpg')" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 via-cyan-900/40 to-teal-900/40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                    {!isLoggedIn && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                        🔒 Login Required
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          
+                          <h2 className={`text-lg sm:text-xl font-bold group-hover:text-indigo-600 transition-colors ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            Software Engineering 💻
+                          </h2>
+                        </div>
+                        <p className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Software Engineering • Intake 51
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                             Web Development ⚡
+                          </div>
+                          <div className="inline-flex items-center bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                            Database Systems 🗄️
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? 'bg-indigo-600 text-white group-hover:bg-indigo-700' : 'bg-gray-400 text-white'}`}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                  <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+                </button>
 
-                {/* Bottom Accent */}
-                <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
-              </button>
-
-              {/* Placeholder Cards - Coming Soon */}
-              <div className={`rounded-xl shadow-md border p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none transition-colors duration-300 ${
-                isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300'
-              }`}>
-                <div className="text-center">
-                  <div className="text-4xl mb-2">🚧</div>
-                  <p className={`font-semibold text-sm transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>Section Coming Soon</p>
-                </div>
-              </div>
-
-              <div className={`rounded-xl shadow-md border p-4 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60 select-none transition-colors duration-300 ${
-                isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300'
-              }`}>
-                <div className="text-center">
-                  <div className="text-4xl mb-2">🚧</div>
-                  <p className={`font-semibold text-sm transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>Section Coming Soon</p>
-                </div>
+                {/* Networking Major Card */}
+                <button
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setShowSignInModal(true);
+                      return;
+                    }
+                    if (userProfile.major !== 'Networking') {
+                      alert(`This section is for Networking students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      return;
+                    }
+                    goToView('networking');
+                  }}
+                  disabled={!isLoggedIn}
+                  className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
+                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <div
+                    className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
+                    style={{ backgroundImage: "url('/Networking_cover.jpg')" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-emerald-900/40 to-teal-900/40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                    {!isLoggedIn && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                        🔒 Login Required
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          
+                          <h2 className={`text-lg sm:text-xl font-bold group-hover:text-emerald-600 transition-colors ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            Networking 🌐
+                          </h2>
+                        </div>
+                        <p className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Networking • Intake 51
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          <div className="inline-flex items-center bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                            Network Security 📡
+                          </div>
+                          <div className="inline-flex items-center bg-teal-50 text-teal-700 text-xs font-semibold px-2.5 py-1 rounded-md">
+                            Wireless Systems 📶
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? 'bg-emerald-600 text-white group-hover:bg-emerald-700' : 'bg-gray-400 text-white'}`}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+                </button>
               </div>
             </div>
-          </div>
-
             {/* New Version CTA moved above; removing duplicate here */}
 
             {/* Platform Features - Floating Pills Grid */}
@@ -2941,9 +3241,15 @@ For any queries, contact your course instructors or the department.`,
             {/* Compact Connect & Support Section removed - moved into main footer below */}
 
             {/* Developer & Copyright Footer */}
-            <div className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl shadow-lg border border-slate-700/50 overflow-hidden mt-4">
+            <div
+              className={`rounded-2xl shadow-lg overflow-hidden mt-4 border transition-colors duration-300 ${
+                isDarkMode
+                  ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 border-slate-700/50'
+                  : 'bg-gradient-to-br from-white via-slate-50 to-blue-50 border-slate-200 shadow-slate-200/70'
+              }`}
+            >
               <div className="relative z-10 p-6">
-                <div className="border-t border-slate-700/50 pt-6">
+                <div className={`pt-6 border-t transition-colors duration-300 ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
                   <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     {/* Developer Info */}
                     <div className="text-center md:text-left">
@@ -2956,12 +3262,12 @@ For any queries, contact your course instructors or the department.`,
                           />
                         </div>
                         <div>
-                          <p className="text-slate-200 text-sm">
+                          <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                             Developed by{' '}
                             <a 
                               href="https://www.facebook.com/mr.swapnil360" 
                               onClick={handleFacebookClick}
-                              className="text-blue-400 hover:text-blue-300 transition-colors duration-200 font-semibold hover:underline inline-flex items-center space-x-1"
+                              className={`transition-colors duration-200 font-semibold hover:underline inline-flex items-center space-x-1 ${isDarkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-600 hover:text-blue-700'}`}
                               title="Connect with Swapnil on Facebook"
                             >
                               <span>Swapnil</span>
@@ -2970,33 +3276,37 @@ For any queries, contact your course instructors or the department.`,
                               </svg>
                             </a>
                           </p>
-                          <p className="text-slate-400 text-xs">Intake 51, Sec 5</p>
-                          <p className="text-slate-400 text-xs">Dept. of CSE, BUBT</p>
+                          <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Intake 51, Sec 2(Ai)</p>
+                          <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Dept. of CSE, BUBT</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Copyright & Legal */}
                     <div className="text-center md:text-right">
-                      <p className="text-slate-300 text-sm font-medium">
+                      <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}`}>
                         © {new Date().getFullYear()} Edu51Five
                       </p>
-                      <p className="text-slate-400 text-xs">BUBT Intake 51 • All rights reserved</p>
+                      <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>BUBT Intake 51 • All rights reserved</p>
                     </div>
                   </div>
 
                   {/* Connect & Support (merged) with improved icons */}
-                  <div className="mt-4 pt-4 border-t border-slate-700/30">
+                  <div className={`mt-4 pt-4 border-t transition-colors duration-300 ${isDarkMode ? 'border-slate-700/30' : 'border-slate-200'}`}>
                     <div className="max-w-4xl mx-auto text-center">
-                      <h3 className="text-sm font-semibold text-slate-200 mb-2">Connect & Support</h3>
-                      <p className="text-xs text-slate-400 mb-3">Found a bug? Have suggestions? Reach out — we appreciate your feedback.</p>
+                      <h3 className={`text-sm font-semibold mb-2 transition-colors duration-300 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Connect & Support</h3>
+                      <p className={`text-xs mb-3 transition-colors duration-300 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Found a bug? Have suggestions? Reach out — we appreciate your feedback.</p>
 
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={handleEmailClick}
                           title="Email Support"
                           aria-label="Email Support"
-                          className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center shadow-sm transition"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
+                            isDarkMode
+                              ? 'bg-slate-700 hover:bg-slate-600 text-white border-slate-600'
+                              : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
+                          }`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -3006,7 +3316,9 @@ For any queries, contact your course instructors or the department.`,
                         <a
                           href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Swapnil, I need help with Edu51Five.')}`}
                           onClick={handleWhatsAppClick}
-                          className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-sm transition"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition ${
+                            isDarkMode ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                          }`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="WhatsApp Support"
@@ -3021,7 +3333,9 @@ For any queries, contact your course instructors or the department.`,
                         <a
                           href="https://www.facebook.com/mr.swapnil360"
                           onClick={handleFacebookClick}
-                          className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-sm transition"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition ${
+                            isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-400 text-white'
+                          }`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Facebook"
@@ -3040,60 +3354,144 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* Section 5 Courses */}
-        {currentView === 'section5' && (
+        {/* Major Section Courses */}
+        {(currentView === 'section5' || currentView === 'ai' || currentView === 'software' || currentView === 'networking') && (
           <div className="space-y-8">
-            <div className="text-center">
-              <div className="relative inline-block mb-6">
-                <img src="/image.png" alt="Edu51Five Logo" className="h-20 w-20 mx-auto object-contain" />
-                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
+            {!isLoggedIn ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">🔒</div>
+                <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                  Authentication Required
+                </h2>
+                <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Please sign in to access course materials
+                </p>
+                <button
+                  onClick={() => setShowSignInModal(true)}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Sign In Now
+                </button>
               </div>
-              <h2 className={`text-3xl font-bold bg-clip-text transition-colors duration-300 ${
-                isDarkMode 
-                  ? 'text-transparent bg-gradient-to-r from-gray-100 via-blue-300 to-purple-300 bg-clip-text' 
-                  : 'text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text'
-              } mb-4`}>Section 5 - Department of CSE</h2>
-              <p className={`text-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Choose your course to access materials</p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {courses.map((course, index) => {
-                const colorScheme = getCourseColorScheme(course.code, index);
-                return (
-                  <div
-                    key={course.id}
-                    onClick={() => handleCourseClick(course)}
-                    className={`p-6 md:p-8 rounded-2xl shadow-xl border backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 group ${
-                      isDarkMode
-                        ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50'
-                        : `bg-gradient-to-br ${colorScheme.bgGradient} border-white/30 hover:${colorScheme.border}`
-                    }`}
-                  >
-                    <h3 className={`text-xl md:text-2xl font-bold mb-3 transition-all duration-300 ${
-                      isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                    }`}>{course.name}</h3>
-                    <p className={`font-semibold mb-3 text-sm md:text-base px-3 py-1 rounded-full inline-block transition-colors duration-300 ${
-                      isDarkMode 
-                        ? 'bg-blue-900/50 text-blue-300' 
-                        : colorScheme.badge
-                    }`}>{course.code}</p>
-                    <p className={`text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed transition-colors duration-300 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>{course.description}</p>
-                    <p className={`text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300 ${
-                      isDarkMode 
-                        ? 'text-blue-400' 
-                        : `text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text`
-                    }`}>
-                      Access Materials 
-                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+            ) : (
+              <>
+                {/* Show individual course view if selected */}
+                {selectedDriveCourse ? (
+                  <GDriveCourseView
+                    courseCode={selectedDriveCourse.courseCode}
+                    courseName={selectedDriveCourse.courseName}
+                    folderId={selectedDriveCourse.folderId}
+                    folderLink={selectedDriveCourse.folderLink}
+                    onBack={() => setSelectedDriveCourse(null)}
+                    onFileClick={(file) => {
+                      // Open file in modal viewer
+                      const material: Material = {
+                        id: file.id,
+                        title: file.name,
+                        description: `Size: ${formatBytes(file.size || 0)}`,
+                        file_url: file.webViewLink || file.webContentLink || '',
+                        video_url: null,
+                        type: getMimeTypeCategory(file.mimeType),
+                        course_code: selectedDriveCourse.courseCode,
+                        size: file.size ? formatBytes(file.size) : null,
+                        created_at: new Date().toISOString()
+                      };
+                      openMaterialViewer(material);
+                    }}
+                    isDarkMode={isDarkMode}
+                  />
+                ) : (
+                  <>
+                <div className="text-center">
+                  <div className="relative inline-block mb-6">
+                    <img src="/image.png" alt="Edu51Five Logo" className="h-20 w-20 mx-auto object-contain" />
+                    <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
+                  </div>
+                  <h2 className={`text-3xl font-bold mb-4 transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-gray-100' 
+                      : 'text-gray-900'
+                  }`}>
+                    {userProfile.major === 'AI'
+                      ? '🤖 AI Section'
+                      : userProfile.major === 'Software Engineering'
+                        ? '💻 Software Engineering Section'
+                        : userProfile.major === 'Networking'
+                          ? '🌐 Networking Section'
+                          : 'Department of CSE'} - Intake 51
+                  </h2>
+                  <p className={`text-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                    {userProfile.major ? `${userProfile.major} Major` : 'Select your major'} • Choose your course to access materials
+                  </p>
+                </div>
+
+                <GDriveFolderBrowser 
+                  userMajor={userProfile.major} 
+                  isDarkMode={isDarkMode}
+                  onCourseSelect={(course) => {
+                    // Open course view in website
+                    setSelectedDriveCourse({
+                      courseCode: course.code,
+                      courseName: course.name,
+                      folderId: course.folderId,
+                      folderLink: course.folderLink
+                    });
+                  }}
+                />
+
+                {/* Keep this section hidden for database courses - no longer used */}
+                {courses.length === 0 ? (
+                  <div className={`text-center py-12 rounded-2xl border ${isDarkMode ? 'border-gray-700 bg-gray-800/50 text-gray-300' : 'border-gray-200 bg-white text-gray-700'}`} style={{display: 'none'}}>
+                    <p className="text-2xl mb-2">📦</p>
+                    <p className="font-semibold text-lg">No courses available for your major yet.</p>
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Please check back soon or contact admin to add your courses.
                     </p>
                   </div>
-                );
-              })}
-            </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8" style={{display: 'none'}}>
+                    {courses.map((course, index) => {
+                      const colorScheme = getCourseColorScheme(course.code, index);
+                      return (
+                        <div
+                          key={course.id}
+                          onClick={() => handleCourseClick(course)}
+                          className={`p-6 md:p-8 rounded-2xl shadow-xl border backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 group ${
+                            isDarkMode
+                              ? 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50'
+                              : `bg-gradient-to-br ${colorScheme.bgGradient} border-white/30 hover:${colorScheme.border}`
+                          }`}
+                        >
+                          <h3 className={`text-xl md:text-2xl font-bold mb-3 transition-all duration-300 ${
+                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                          }`}>{course.name}</h3>
+                          <p className={`font-semibold mb-3 text-sm md:text-base px-3 py-1 rounded-full inline-block transition-colors duration-300 ${
+                            isDarkMode 
+                              ? 'bg-blue-900/50 text-blue-300' 
+                              : colorScheme.badge
+                          }`}>{course.code}</p>
+                          <p className={`text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>{course.description}</p>
+                          <p className={`text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300 ${
+                            isDarkMode 
+                              ? 'text-blue-400' 
+                              : `text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text`
+                          }`}>
+                            Access Materials 
+                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                </>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -3627,8 +4025,10 @@ For any queries, contact your course instructors or the department.`,
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 order-2">
+                    {/* Add Course button - DEPRECATED: Courses now from Google Drive folders */}
                     <button
                       onClick={() => setShowCreateCourse(true)}
+                      style={{display: 'none'}}
                       className="group flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                       <Plus className="h-4 sm:h-5 w-4 sm:w-5 group-hover:rotate-90 transition-transform duration-200" />
@@ -4049,8 +4449,8 @@ For any queries, contact your course instructors or the department.`,
           </div>
         )}
 
-        {/* Create Course Modal */}
-        {showCreateCourse && (
+        {/* Create Course Modal - DEPRECATED: Courses now come from Google Drive folders */}
+        {showCreateCourse && false && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto" style={{ height: '100dvh' }}>
             <div className="min-h-screen flex items-center justify-center p-4" style={{ minHeight: '100dvh' }}>
               <div className={`relative w-full max-w-[92vw] sm:max-w-md md:max-w-lg max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
@@ -4617,7 +5017,7 @@ For any queries, contact your course instructors or the department.`,
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
             <div className="grid place-items-center h-dvh w-full px-4">
               <div className={`relative z-[120] w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
-                isDarkMode ? 'bg_gray-800' : 'bg-[#E6F5FF]'
+                isDarkMode ? 'bg-gray-800' : 'bg-[#E6F5FF]'
               }`}>
               <div className={`flex-shrink-0 p-3 sm:p-4 border-l-4 transition-colors duration-300 ${
                 // In light mode, use muted-blue accents for the full modal header
@@ -5254,15 +5654,10 @@ For any queries, contact your course instructors or the department.`,
         isOpen={showSignInModal}
         onClose={() => setShowSignInModal(false)}
         isDarkMode={isDarkMode}
-        onSignIn={(identifier, password) => {
-          // Load user profile from localStorage on successful sign-in
-          const storedProfile = localStorage.getItem('userProfile');
-          if (storedProfile) {
-            const profile = JSON.parse(storedProfile);
-            setUserProfile(profile);
-            setIsLoggedIn(true);
-            console.log('User signed in successfully:', profile.name);
-          }
+        onSignIn={async (identifier, password) => {
+          // Auth is already handled by SignInModal through Supabase
+          // Session state will be updated by onAuthStateChange listener
+          console.log('User signed in successfully');
         }}
         onOpenSignUp={() => {
           setShowSignInModal(false);

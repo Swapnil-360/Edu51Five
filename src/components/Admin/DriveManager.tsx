@@ -1,16 +1,17 @@
 /**
- * Google Drive Manager - Full folder management for centralized storage
- * Root folder: 1pwtRJ3AcPVztKq2nBebj0oP5b2G-iugq
+ * Google Drive Manager - Full folder management for admin uploads
+ * Admin folder: 1lFktSbOz-voVmiSnYJzuHbtSfpeqsuAx
  * Admin can: browse, create folders, upload, delete, organize
  */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, LogIn, LogOut, FolderPlus, Trash2, Eye, RefreshCw, Folder, File } from 'lucide-react';
+import { ADMIN_UPLOAD_FOLDER } from '../../config/courseFolders';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const SCOPES = 'https://www.googleapis.com/auth/drive';
-const ROOT_FOLDER_ID = '1pwtRJ3AcPVztKq2nBebj0oP5b2G-iugq';
+const ROOT_FOLDER_ID = ADMIN_UPLOAD_FOLDER.folderId; // Use admin upload folder from config
 
 let accessToken: string | null = null;
 // Global flag to prevent duplicate initialization (survives React StrictMode)
@@ -39,7 +40,7 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
   
   const [currentFolderId, setCurrentFolderId] = useState(ROOT_FOLDER_ID);
   const [folderPath, setFolderPath] = useState<Array<{id: string, name: string}>>([
-    { id: ROOT_FOLDER_ID, name: 'Storage Root' }
+    { id: ROOT_FOLDER_ID, name: 'Admin Uploads' }
   ]);
   const [items, setItems] = useState<DriveItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -131,7 +132,7 @@ export const DriveManager: React.FC<DriveManagerProps> = ({ isDarkMode = false }
     accessToken = null;
     setIsSignedIn(false);
     setItems([]);
-    setFolderPath([{ id: ROOT_FOLDER_ID, name: 'Storage Root' }]);
+    setFolderPath([{ id: ROOT_FOLDER_ID, name: 'Admin Uploads' }]);
     setCurrentFolderId(ROOT_FOLDER_ID);
   };
 

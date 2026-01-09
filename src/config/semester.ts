@@ -1,5 +1,5 @@
-// Academic Calendar Configuration for BUBT Intake 51 Section 5
-// Fall 2025 Semester - Real-time tracking system
+// Academic Calendar Configuration for BUBT Intake 51
+// Spring 2026 Semester - Tri-semester system - Real-time tracking
 
 export interface SemesterPeriod {
   name: string;
@@ -21,7 +21,7 @@ export interface SemesterConfig {
     finalExams: SemesterPeriod;
   };
   breaks: {
-    winterBreak: SemesterPeriod;
+    summerBreak: SemesterPeriod;
   };
   nextSemester: {
     name: string;
@@ -29,67 +29,66 @@ export interface SemesterConfig {
   };
 }
 
-// CONFIRMED ACADEMIC CALENDAR
+// SPRING 2026 ACADEMIC CALENDAR (Tri-Semester System)
 export const SEMESTER_CONFIG: SemesterConfig = {
-  name: "Fall 2025",
-  code: "FALL_2025", 
-  startDate: "2025-07-15",      // Confirmed start date
-  endDate: "2025-12-17",        // SDP-300 Defense/Viva on Dec 17
-  totalDays: 155,               // July 15 to Dec 17 (5 months + 2 days)
+  name: "Spring 2026",
+  code: "SPRING_2026", 
+  startDate: "2026-01-15",      // Spring semester start
+  endDate: "2026-05-15",        // Spring semester end (4 months)
+  totalDays: 121,               // January 15 to May 15
 
   periods: {
     regularClasses: {
       name: "Regular Classes",
-      startDate: "2025-07-15",
-      endDate: "2025-09-13",     // Until mid-terms start
+      startDate: "2026-01-15",
+      endDate: "2026-03-10",     // Until mid-terms start
       type: 'regular'
     },
     
     midtermExams: {
       name: "Mid-term Examinations",
-      startDate: "2025-09-14",   // ACTUAL MID-TERM START (from schedule)
-      endDate: "2025-09-24",     // ACTUAL MID-TERM END (from schedule)
+      startDate: "2026-03-11",   // Mid-term exams period
+      endDate: "2026-03-20",     // 10 days for midterms
       type: 'midterm'
     },
     
     finalPrep: {
       name: "Final Exam Preparation",
-      startDate: "2025-09-25",   // After mid-terms end
-      endDate: "2025-11-30",     // Before finals
+      startDate: "2026-03-21",   // After mid-terms end
+      endDate: "2026-04-25",     // Before finals
       type: 'regular'
     },
     
     finalExams: {
       name: "Final Examinations",
-      // Updated to match the official final exam routine for Section 5
-      startDate: "2025-12-04",   // First final exam: 04/12/2025
-      endDate: "2025-12-14",     // Last final exam: 14/12/2025
+      startDate: "2026-04-26",   // Final exams begin
+      endDate: "2026-05-10",     // Final exams end
       type: 'final'
     }
   },
 
   breaks: {
-    winterBreak: {
-      name: "Winter Break",
-      startDate: "2025-12-18",   // After SDP-300 Defense/Viva (Dec 17)
-      endDate: "2025-12-31",     // End of year
+    summerBreak: {
+      name: "Summer Break",
+      startDate: "2026-05-16",   // After semester ends
+      endDate: "2026-06-14",     // 30-day break before Summer 2026
       type: 'break'
     }
   },
 
   nextSemester: {
-    name: "Spring 2026",
-    startDate: "2026-01-01"      // CONFIRMED next semester start
+    name: "Summer 2026",
+    startDate: "2026-06-15"      // Next tri-semester starts
   }
 };
 
-// Previous semester for reference
+// Previous semester for reference (Fall 2025)
 export const PREVIOUS_SEMESTER = {
-  name: "Spring 2025",
-  startDate: "2025-01-15",       // Estimated
-  endDate: "2025-05-31",         // Estimated
-  breakStart: "2025-06-01",
-  breakEnd: "2025-07-14"         // 14-16 days break confirmed
+  name: "Fall 2025",
+  startDate: "2025-09-01",
+  endDate: "2025-12-31",
+  breakStart: "2026-01-01",
+  breakEnd: "2026-01-14"         // 14-day winter break
 };
 
 // Real-time semester progress calculator
@@ -120,7 +119,7 @@ export const calculateSemesterProgress = (currentDate: Date = new Date()) => {
     nextMilestone = "Mid-term Exams";
     daysToMilestone = daysToMidterm;
   } else if (currentDate >= midtermStart && currentDate <= midtermEnd) {
-    currentPhase = "Mid-term Examinations"; // WE ARE HERE NOW!
+    currentPhase = "Mid-term Examinations";
     nextMilestone = "Final Exams";
     daysToMilestone = daysToFinal;
   } else if (currentDate < finalStart) {
@@ -129,11 +128,11 @@ export const calculateSemesterProgress = (currentDate: Date = new Date()) => {
     daysToMilestone = daysToFinal;
   } else if (currentDate <= semesterEnd) {
     currentPhase = "Final Examinations";
-    nextMilestone = "Winter Break";
+    nextMilestone = "Summer Break";
     daysToMilestone = daysRemaining;
   } else {
-    currentPhase = "Winter Break";
-    nextMilestone = "Spring 2026";
+    currentPhase = "Summer Break";
+    nextMilestone = "Summer 2026";
     daysToMilestone = Math.ceil((new Date(SEMESTER_CONFIG.nextSemester.startDate).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   }
   
@@ -188,11 +187,17 @@ export const getBangladeshTime = () => {
 
 // Special academic events
 export const SPECIAL_EVENTS = {
-  sdpDefense: {
-    name: "SDP-300 Defense/Viva",
-    date: "2025-12-17",
-    description: "Project presentation and viva for Software Engineering Project",
+  orientation: {
+    name: "Spring 2026 Orientation",
+    date: "2026-01-14",
+    description: "Welcome session and course registration for Spring 2026",
     icon: "🎓"
+  },
+  projectPresentation: {
+    name: "Final Project Presentations",
+    date: "2026-05-12",
+    description: "End of semester project presentations",
+    icon: "💼"
   }
 };
 
@@ -200,43 +205,43 @@ export const SPECIAL_EVENTS = {
 export const getSemesterTimeline = () => {
   const progress = calculateSemesterProgress();
   const now = new Date();
-  const sdpDate = new Date(SPECIAL_EVENTS.sdpDefense.date);
+  const orientationDate = new Date(SPECIAL_EVENTS.orientation.date);
   
   return {
     phases: [
       {
         name: "Start",
-        date: "Jul 15",
+        date: "Jan 15",
         status: "completed",
         icon: "🚀"
       },
       {
         name: "Regular Classes",
-        date: "Jul-Oct",
-        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 77 ? "completed" : "upcoming",
+        date: "Jan-Mar",
+        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 55 ? "completed" : "upcoming",
         icon: "📚"
       },
       {
         name: "Mid-terms",
-        date: "Sep 14-24",
+        date: "Mar 11-20",
         status: progress.isMidtermPeriod ? "current" : progress.daysToMidterm <= 0 ? "completed" : "upcoming",
         icon: "📝"
       },
       {
         name: "Finals",
-        date: "Dec 4-14",
+        date: "Apr 26-May 10",
         status: progress.isFinalPeriod ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
         icon: "🎯"
       },
       {
-        name: "SDP Viva",
-        date: "Dec 17",
-        status: now >= sdpDate ? "completed" : now.toDateString() === sdpDate.toDateString() ? "current" : "upcoming",
-        icon: "🎓"
+        name: "Projects",
+        date: "May 12",
+        status: now >= new Date(SPECIAL_EVENTS.projectPresentation.date) ? "completed" : now.toDateString() === new Date(SPECIAL_EVENTS.projectPresentation.date).toDateString() ? "current" : "upcoming",
+        icon: "💼"
       },
       {
         name: "Break",
-        date: "Dec 18",
+        date: "May 16",
         status: progress.isBreak ? "current" : "upcoming",
         icon: "🏖️"
       }

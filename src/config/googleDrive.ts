@@ -99,6 +99,82 @@ export const GOOGLE_DRIVE_FOLDERS = {
         "super-tips": "https://drive.google.com/drive/folders/FINAL_CSE351_SUPERTIPS?usp=drive_link",
         videos: "https://drive.google.com/drive/folders/FINAL_CSE351_VIDEOS?usp=drive_link"
       }
+    },
+    "CSE-341": {
+      name: "Computer Graphics",
+      midterm: {
+        "ct-questions": "https://drive.google.com/drive/folders/MID_CSE341_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/MID_CSE341_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/MID_CSE341_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/MID_CSE341_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/MID_CSE341_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/MID_CSE341_VIDEOS?usp=drive_link"
+      },
+      final: {
+        "ct-questions": "https://drive.google.com/drive/folders/FINAL_CSE341_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/FINAL_CSE341_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/FINAL_CSE341_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/FINAL_CSE341_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/FINAL_CSE341_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/FINAL_CSE341_VIDEOS?usp=drive_link"
+      }
+    },
+    "CSE-425": {
+      name: "Internet of Things",
+      midterm: {
+        "ct-questions": "https://drive.google.com/drive/folders/MID_CSE425_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/MID_CSE425_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/MID_CSE425_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/MID_CSE425_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/MID_CSE425_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/MID_CSE425_VIDEOS?usp=drive_link"
+      },
+      final: {
+        "ct-questions": "https://drive.google.com/drive/folders/FINAL_CSE425_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/FINAL_CSE425_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/FINAL_CSE425_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/FINAL_CSE425_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/FINAL_CSE425_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/FINAL_CSE425_VIDEOS?usp=drive_link"
+      }
+    },
+    "CSE-475": {
+      name: "Data Mining",
+      midterm: {
+        "ct-questions": "https://drive.google.com/drive/folders/MID_CSE475_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/MID_CSE475_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/MID_CSE475_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/MID_CSE475_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/MID_CSE475_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/MID_CSE475_VIDEOS?usp=drive_link"
+      },
+      final: {
+        "ct-questions": "https://drive.google.com/drive/folders/FINAL_CSE475_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/FINAL_CSE475_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/FINAL_CSE475_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/FINAL_CSE475_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/FINAL_CSE475_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/FINAL_CSE475_VIDEOS?usp=drive_link"
+      }
+    },
+    "CSE-498A": {
+      name: "Capstone Project 1",
+      midterm: {
+        "ct-questions": "https://drive.google.com/drive/folders/MID_CSE498A_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/MID_CSE498A_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/MID_CSE498A_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/MID_CSE498A_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/MID_CSE498A_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/MID_CSE498A_VIDEOS?usp=drive_link"
+      },
+      final: {
+        "ct-questions": "https://drive.google.com/drive/folders/FINAL_CSE498A_CT?usp=drive_link",
+        notes: "https://drive.google.com/drive/folders/FINAL_CSE498A_NOTES?usp=drive_link",
+        slides: "https://drive.google.com/drive/folders/FINAL_CSE498A_SLIDES?usp=drive_link",
+        suggestions: "https://drive.google.com/drive/folders/FINAL_CSE498A_SUGGESTIONS?usp=drive_link",
+        "super-tips": "https://drive.google.com/drive/folders/FINAL_CSE498A_SUPERTIPS?usp=drive_link",
+        videos: "https://drive.google.com/drive/folders/FINAL_CSE498A_VIDEOS?usp=drive_link"
+      }
     }
   }
 };
