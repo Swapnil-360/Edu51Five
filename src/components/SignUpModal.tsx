@@ -204,8 +204,13 @@ export function SignUpModal({
           }
 
           const userId = data?.user?.id;
-          const { error: profileError } = await supabase.from('profiles').upsert({
-            id: userId ?? undefined,
+          if (!userId) {
+            setError('Failed to create user account. Please try again.');
+            return;
+          }
+
+          const { error: profileError } = await supabase.from('profiles').insert([{
+            id: userId,
             name,
             section,
             major,
@@ -213,9 +218,12 @@ export function SignUpModal({
             notification_email: notificationEmail,
             phone,
             profile_pic: profilePic,
-          });
+            created_at: new Date().toISOString(),
+            last_login_at: new Date().toISOString(),
+          }]);
           if (profileError) {
             setError(profileError.message || 'Could not save profile');
+            console.error('Profile creation error:', profileError);
             return;
           }
         } else {

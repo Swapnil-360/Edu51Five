@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Folder, File, Eye, Download, RefreshCw, ChevronRight, Home } from 'lucide-react';
+import { loadDriveClient } from '../../lib/googleDriveClient';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 const ROOT_FOLDER_ID = '1pwtRJ3AcPVztKq2nBebj0oP5b2G-iugq';
@@ -47,77 +48,35 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
    * Initialize Google API
    */
   useEffect(() => {
-    // Check if API key is configured
-    if (!API_KEY) {
-      console.warn('VITE_GOOGLE_API_KEY not configured in environment');
-      setError('Google Drive API key not configured. Please set VITE_GOOGLE_API_KEY in environment variables.');
-      return;
-    }
+    let cancelled = false;
 
-    const script = document.createElement('script');
-    script.src = 'https://apis.google.com/js/api.js';
-    script.onload = () => {
-      window.gapi.load('client', async () => {
-        try {
-          // Initialize GAPI client without discovery docs (more reliable)
-          await window.gapi.client.init({
-            apiKey: API_KEY,
-          });
-          
-          // Load Drive API v3 directly (bypasses problematic discovery service)
-          await window.gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
-          
-          // Verify Drive API is loaded
-          if (window.gapi.client.drive?.files) {
-            console.log('✅ Google Drive API loaded successfully');
-            setIsLoaded(true);
-            findCourseFolder();
-          } else {
-            throw new Error('Drive API failed to load');
-          }
-        } catch (error: any) {
-          console.warn('⚠️ Direct load failed, trying alternative method...');
-          // Ultimate fallback: load by name instead of URL
-          try {
-            await window.gapi.client.init({
-              apiKey: API_KEY,
-            });
-            await window.gapi.client.load('drive', 'v3');
-            
-            if (window.gapi.client.drive?.files) {
-              console.log('✅ Google Drive API loaded (fallback method)');
-              setIsLoaded(true);
-              findCourseFolder();
-            } else {
-              throw new Error('Drive API not available');
-            }
-          } catch (fallbackError: any) {
-            console.error('❌ All initialization methods failed');
-            console.error('Possible causes:', 
-              '\n  • Google API servers temporarily down',
-              '\n  • API key restrictions',
-              '\n  • Network/firewall blocking googleapis.com');
-            setError('Unable to connect to Google Drive. Please try again in a few minutes.');
-            setIsLoaded(false);
-            setLoading(false);
-          }
-        }
-      });
-    };
-    
-    script.onerror = () => {
-      setError('Failed to load Google API. Check your internet connection.');
+    const init = async () => {
+      if (!API_KEY) {
+        console.warn('VITE_GOOGLE_API_KEY not configured in environment');
+        setError('Google Drive API key not configured. Please set VITE_GOOGLE_API_KEY.');
+        return;
+      }
+
+      try {
+        await loadDriveClient();
+        if (cancelled) return;
+        setIsLoaded(true);
+        findCourseFolder();
+      } catch (err) {
+        console.error('❌ Drive API init failed', err);
+        if (cancelled) return;
+        setError('Unable to connect to Google Drive. Please try again.');
+        setIsLoaded(false);
+        setLoading(false);
+      }
     };
 
-    if (!document.querySelector('script[src="https://apis.google.com/js/api.js"]')) {
-      document.body.appendChild(script);
-    } else {
-      setIsLoaded(true);
-      findCourseFolder();
-    }
-    
-    // Reset retry counter when course/period changes
+    init();
     setRetryCount(0);
+
+    return () => {
+      cancelled = true;
+    };
   }, [courseCode, examPeriod]);
 
   /**
@@ -125,17 +84,9 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
    */
   const findCourseFolder = async () => {
     if (!window.gapi?.client?.drive?.files) {
-      if (retryCount < MAX_RETRIES) {
-        console.warn(`Drive API not ready yet, retry ${retryCount + 1}/${MAX_RETRIES} in 1 second...`);
-        setRetryCount(retryCount + 1);
-        setTimeout(findCourseFolder, 1000);
-        return;
-      } else {
-        console.error('❌ Drive API failed to initialize after multiple retries');
-        setError('Unable to connect to Google Drive. Please refresh the page and try again.');
-        setLoading(false);
-        return;
-      }
+      setError('Google Drive API not ready. Please refresh.');
+      setLoading(false);
+      return;
     }
     
     setLoading(true);
@@ -198,7 +149,23 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
   const loadFolder = async (folderId: string) => {
     setLoading(true);
     setError(null);
-    
+
+    const cacheKey = `drive-folder:${folderId}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as { ts: number; items: DriveItem[] };
+        const isFresh = Date.now() - parsed.ts < 5 * 60 * 1000;
+        if (isFresh) {
+          setItems(parsed.items);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // fall through to fetch
+      }
+    }
+
     try {
       const response = await window.gapi.client.drive.files.list({
         q: `'${folderId}' in parents and trashed=false`,
@@ -206,7 +173,9 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
         orderBy: 'folder,name',
       });
 
-      setItems(response.result.files || []);
+      const nextItems = response.result.files || [];
+      setItems(nextItems);
+      sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items: nextItems }));
     } catch (error: any) {
       console.error('Error loading folder:', error);
       setError('Failed to load materials');
@@ -345,17 +314,61 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
 
       {/* Initializing API Loading State */}
       {!isLoaded && !error && (
-        <div className="text-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Initializing Google Drive...</p>
+        <div className="flex justify-center py-10 sm:py-12 px-4">
+          <div
+            className={`w-full max-w-sm rounded-2xl border p-6 flex flex-col items-center gap-4 text-center shadow-md ${
+              isDarkMode ? 'bg-slate-900/70 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+            }`}
+          >
+            <div className="relative h-12 w-12">
+              <div className={`absolute inset-0 rounded-full border-2 opacity-30 ${isDarkMode ? 'border-blue-200/40' : 'border-blue-500/40'}`} />
+              <div className={`absolute inset-0 rounded-full border-t-2 animate-spin ${isDarkMode ? 'border-t-blue-400' : 'border-t-blue-600'}`} style={{ animationDuration: '0.9s' }} />
+            </div>
+            <div className="text-sm font-semibold">Initializing Google Drive…</div>
+            <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              One-time setup for this session.
+            </p>
+            <div className="w-full space-y-2">
+              {[0, 1].map((i) => (
+                <div
+                  key={`init-${i}`}
+                  className={`h-3 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                >
+                  <div className="h-full w-1/2 animate-pulse bg-white/40" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Files/Folders Grid - Mobile Responsive */}
       {isLoaded && loading ? (
-        <div className="text-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading materials...</p>
+        <div className="flex justify-center py-10 sm:py-12 px-4">
+          <div
+            className={`w-full max-w-sm rounded-2xl border p-6 flex flex-col items-center gap-4 text-center shadow-md ${
+              isDarkMode ? 'bg-slate-900/70 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+            }`}
+          >
+            <div className="relative h-12 w-12">
+              <div className={`absolute inset-0 rounded-full border-2 opacity-30 ${isDarkMode ? 'border-blue-200/40' : 'border-blue-500/40'}`} />
+              <div className={`absolute inset-0 rounded-full border-t-2 animate-spin ${isDarkMode ? 'border-t-blue-400' : 'border-t-blue-600'}`} style={{ animationDuration: '0.9s' }} />
+            </div>
+            <div className="text-sm font-semibold">Loading course materials…</div>
+            <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Fetching folders and files from Drive. Recent views load faster.
+            </p>
+            <div className="w-full space-y-2">
+              {[0, 1].map((i) => (
+                <div
+                  key={`load-${i}`}
+                  className={`h-3 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                >
+                  <div className="h-full w-1/2 animate-pulse bg-white/40" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : isLoaded && items.length === 0 && !error ? (
         <div className="text-center py-8 sm:py-12">

@@ -313,14 +313,30 @@ export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
-            isDarkMode ? 'border-blue-400' : 'border-blue-600'
-          }`}></div>
-          <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Loading course materials...
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div
+          className={`w-full max-w-sm rounded-2xl border p-6 flex flex-col items-center gap-4 text-center shadow-md ${
+            isDarkMode ? 'bg-slate-900/70 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+          }`}
+        >
+          <div className="relative h-12 w-12">
+            <div className={`absolute inset-0 rounded-full border-2 opacity-30 ${isDarkMode ? 'border-blue-200/40' : 'border-blue-500/40'}`} />
+            <div className={`absolute inset-0 rounded-full border-t-2 animate-spin ${isDarkMode ? 'border-t-blue-400' : 'border-t-blue-600'}`} style={{ animationDuration: '0.9s' }} />
+          </div>
+          <div className="text-sm font-semibold">Loading course materials…</div>
+          <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            Pulling folders and files from Google Drive.
           </p>
+          <div className="w-full space-y-2">
+            {[0, 1].map((i) => (
+              <div
+                key={`load-${i}`}
+                className={`h-3 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+              >
+                <div className="h-full w-1/2 animate-pulse bg-white/40" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

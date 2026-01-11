@@ -779,9 +779,12 @@ html {
 }
 
 .animate-marquee {
-  display: inline-block;
-  /* Slightly faster, smooth linear loop */
-  animation: marquee 28s linear infinite;
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-width: 200%;
+  /* Faster loop and guaranteed width so the ticker visibly scrolls */
+  animation: marquee 16s linear infinite;
 }
 
 /* Pause animation when user hovers for accessibility */
@@ -803,5 +806,11 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Allow marquee to keep scrolling even if system reduce-motion is on */
+  .animate-marquee {
+    animation-duration: 16s !important;
+    animation-iteration-count: infinite !important;
   }
 }

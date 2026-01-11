@@ -8,9 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { File, Eye, Download, Loader, AlertCircle } from 'lucide-react';
-
-// Google Drive API configuration
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
+import { loadDriveClient } from '../../lib/googleDriveClient';
 
 // Course folder IDs (from googleDrive.ts)
 const FOLDER_IDS = {
@@ -110,63 +108,54 @@ export const StudentDriveView: React.FC<StudentDriveViewProps> = ({
     setIsLoading(true);
     setError(null);
 
-    try {
-      // Initialize gapi client if needed
-      if (!window.gapi.client) {
-        await new Promise((resolve) => {
-          window.gapi.load('client', resolve);
-        });
-        try {
-          // Try with discovery docs first
-          await window.gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-          });
-          console.log('✅ GAPI client ready (StudentDriveView)');
-        } catch (error: any) {
-          console.warn('⚠️ Discovery docs failed, trying manual load:', error?.message);
-          // Fallback: Initialize without discovery docs and load Drive API manually
-          try {
-            await window.gapi.client.init({
-              apiKey: API_KEY,
-            });
-            await window.gapi.client.load('drive', 'v3');
-            console.log('✅ GAPI client ready (manual load)');
-          } catch (fallbackError: any) {
-            console.error('❌ Drive API init failed:', fallbackError?.message);
-            throw fallbackError; // Let outer catch handle it
-          }
+    const cacheKey = `drive-files:${courseCode}:${examPeriod}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as { ts: number; data: Record<string, DriveFile[]> };
+        const isFresh = Date.now() - parsed.ts < 5 * 60 * 1000; // 5 minutes
+        if (isFresh) {
+          setFilesByCategory(parsed.data);
+          setIsLoading(false);
+          return;
         }
+      } catch (e) {
+        // Ignore cache parse errors and fetch fresh
       }
+    }
 
-      // Ensure Drive API is loaded
-      if (!window.gapi?.client?.drive?.files) {
-        throw new Error('Google Drive API not properly initialized');
-      }
+    try {
+      await loadDriveClient();
 
       const filesData: Record<string, DriveFile[]> = {};
+      // Load all categories in parallel for faster response
+      await Promise.allSettled(
+        categories.map(async (category) => {
+          const folderId = getFolderId(courseCode, examPeriod, category.value);
+          if (!folderId) {
+            filesData[category.value] = [];
+            return;
+          }
 
-      // Load files for each category
-      for (const category of categories) {
-        const folderId = getFolderId(courseCode, examPeriod, category.value);
-        if (!folderId) continue;
+          try {
+            const response = await window.gapi.client.drive.files.list({
+              q: `'${folderId}' in parents and trashed=false`,
+              fields: 'files(id, name, size, mimeType, createdTime, webViewLink)',
+              orderBy: 'createdTime desc',
+              pageSize: 100,
+            });
 
-        try {
-          const response = await window.gapi.client.drive.files.list({
-            q: `'${folderId}' in parents and trashed=false`,
-            fields: 'files(id, name, size, mimeType, createdTime, webViewLink)',
-            orderBy: 'createdTime desc',
-            pageSize: 100,
-          });
-
-          filesData[category.value] = response.result.files || [];
-        } catch (err) {
-          console.error(`Error loading ${category.label}:`, err);
-          filesData[category.value] = [];
-        }
-      }
+            filesData[category.value] = response.result.files || [];
+          } catch (err) {
+            console.error(`Error loading ${category.label}:`, err);
+            filesData[category.value] = [];
+          }
+        })
+      );
 
       setFilesByCategory(filesData);
+      // Cache for 5 minutes to speed up re-opens
+      sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: filesData }));
     } catch (err) {
       console.error('Error loading files:', err);
       setError('Failed to load files from Google Drive');
