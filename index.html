@@ -36,15 +36,15 @@
       #root{flex:1;display:block}
 
       /* Footer styles with improved contrast and responsive layout */
-      .site-footer{width:100%;box-sizing:border-box;padding:20px 14px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit}
+      .site-footer{width:100%;box-sizing:border-box;padding:20px 14px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit;background:#ffffff;transition:background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease}
       .site-footer .inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;align-items:center}
       .site-footer .meta{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
       .site-footer .brand{display:flex;align-items:center;gap:12px}
-      .site-footer .brand .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
-      .site-footer .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px}
-      .site-footer .brand .subtitle{font-size:13px;color:#0f172a}
-      .site-footer .contact{font-size:14px}
-      .site-footer a{color:#1e40af;text-decoration:underline}
+      .site-footer .brand .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px;transition:color 0.3s ease}
+      .site-footer .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px;transition:color 0.3s ease}
+      .site-footer .brand .subtitle{font-size:13px;color:#0f172a;transition:color 0.3s ease}
+      .site-footer .contact{font-size:14px;transition:color 0.3s ease}
+      .site-footer a{color:#1e40af;text-decoration:underline;transition:color 0.3s ease}
 
       /* Mobile-first: stack content and center align */
       @media (max-width:479px){
@@ -93,15 +93,25 @@
         .skeleton-spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:rgba(30,64,175,0.9);animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
 
-      /* Dark theme adjustments */
+      /* Dark theme adjustments - using .dark class for manual toggle */
+      .dark .site-footer{background:#1f2937;border-top:1px solid rgba(255,255,255,0.06);color:#cbd5e1}
+      .dark .site-footer .title{color:#e6eef8}
+      .dark .site-footer .brand .title{color:#e6eef8}
+      .dark .site-footer .brand .subtitle{color:#94a3b8}
+      .dark .site-footer .subtitle{color:#94a3b8}
+      .dark .site-footer .contact{color:#cbd5e1}
+      .dark .site-footer a{color:#60a5fa}
+      
+      /* Fallback: Also support system preference */
       @media (prefers-color-scheme: dark){
-        .site-footer{border-top:1px solid rgba(255,255,255,0.06); color: #cbd5e1}
+        .site-footer{background:#1f2937;border-top:1px solid rgba(255,255,255,0.06);color:#cbd5e1}
         .site-footer .title{color:#e6eef8}
         .site-footer .brand .title{color:#e6eef8}
+        .site-footer .brand .subtitle{color:#94a3b8}
         .site-footer .subtitle{color:#94a3b8}
+        .site-footer .contact{color:#cbd5e1}
 
         /* Ensure the brand subtitle specifically is readable in dark mode */
-        .site-footer .brand .subtitle{color:#94a3b8}
         .dark .site-footer .brand .subtitle{color:#94a3b8 !important}
         .dark .site-footer .subtitle{color:#94a3b8 !important}
 

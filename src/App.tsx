@@ -2527,10 +2527,10 @@ For any queries, contact your course instructors or the department.`,
       )}
 
       {/* Enhanced Mobile-First Responsive Header */}
-      <header className={`fixed top-0 left-0 right-0 w-full shadow-2xl border-b z-50 transition-colors duration-300 ${
+      <header className={`fixed top-0 left-0 right-0 w-full shadow-2xl border-b z-50 transition-colors duration-300 backdrop-blur-md ${
         isDarkMode
-          ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 border-gray-700/40 text-white'
-          : 'bg-white border-gray-200 text-gray-900'
+          ? 'bg-gray-900/95 border-gray-700/40 text-white'
+          : 'bg-white/95 border-gray-200 text-gray-900'
       }`}>
         <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24 gap-2 sm:gap-3 md:gap-4">
@@ -3493,45 +3493,50 @@ For any queries, contact your course instructors or the department.`,
                           aria-label="Email Support"
                           className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
                             isDarkMode
-                              ? 'bg-slate-700 hover:bg-slate-600 text-white border-slate-600'
-                              : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
+                              ? 'bg-slate-700 hover:bg-slate-600 border-slate-600'
+                              : 'bg-white hover:bg-slate-100 border-slate-200'
                           }`}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="#ef4444" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </button>
 
                         <a
                           href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Swapnil, I need help with Edu51Five.')}`}
                           onClick={handleWhatsAppClick}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition ${
-                            isDarkMode ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
+                            isDarkMode
+                              ? 'bg-slate-700 hover:bg-slate-600 border-slate-600'
+                              : 'bg-white hover:bg-slate-100 border-slate-200'
                           }`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="WhatsApp Support"
                           aria-label="WhatsApp Support"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-4.2-1L3 21l1.9-5.7a8.38 8.38 0 01-1.1-4 8.5 8.5 0 0115.2-5.9 8.5 8.5 0 01.0 11z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13c-.5-.3-1.3-.6-1.5-.6-.2 0-.4-.1-.6.1s-.7.6-.8.7c-.1.1-.3.1-.5 0-.5-.1-1-1.9-1.1-2.2-.1-.3 0-.5.2-.7.2-.2.5-.5.8-.8.3-.3.4-.5.6-.8.2-.3 0-.6-.1-.8-.1-.2-.6-.5-1.1-.8-.6-.3-1-.3-1.5-.2s-1 .5-1.6 1.1c-.6.6-1 1.3-1 1.9s.4 1 .9 1.4c.5.4 1.2.9 2 .9.8 0 1.5-.2 2.1-.4.6-.2 1.1-.4 1.4-.3.3.1.7.2.9.4.2.2.2.6 0 .9z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#10b981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M8 10h.01M12 10h.01M16 10h.01" stroke="#10b981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </a>
 
                         <a
                           href="https://www.facebook.com/mr.swapnil360"
                           onClick={handleFacebookClick}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition ${
-                            isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-400 text-white'
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
+                            isDarkMode
+                              ? 'bg-slate-700 hover:bg-slate-600 border-slate-600'
+                              : 'bg-white hover:bg-slate-100 border-slate-200'
                           }`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Facebook"
                           aria-label="Facebook"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v8h4v-8h3l1-4h-4V6a1 1 0 011-1h3V2z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#1877f2" strokeWidth={2}/>
+                            <path d="M16 8h-2a2 2 0 0 0-2 2v8M11 13h6" stroke="#1877f2" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </a>
                       </div>
@@ -5778,9 +5783,15 @@ For any queries, contact your course instructors or the department.`,
               </div>
 
               {/* Compact Footer - stays visible in fullscreen & mobile */}
-              <div className="flex-shrink-0 border-t border-gray-700/50 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-900/95 backdrop-blur-sm flex items-center gap-2 rounded-b-lg md:rounded-b-2xl">
+              <div className={`flex-shrink-0 border-t px-1.5 sm:px-2 py-1 sm:py-1.5 flex items-center gap-2 rounded-b-lg md:rounded-b-2xl transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'border-gray-700/50 bg-gray-900/95 backdrop-blur-sm' 
+                  : 'border-gray-200/50 bg-white/95 backdrop-blur-sm'
+              }`}>
                 {/* Left: File info (wrap on small) */}
-                <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-400 min-w-0 flex-1">
+                <div className={`flex items-center gap-1 text-[10px] sm:text-xs min-w-0 flex-1 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   <span className="truncate">{selectedMaterial.title}</span>
                   <span className="hidden xs:inline">•</span>
                   <span className="truncate">{selectedMaterial.type}</span>
