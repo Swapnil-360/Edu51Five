@@ -6,7 +6,7 @@ interface SignInModalProps {
   isOpen: boolean;
   onClose: () => void;
   isDarkMode: boolean;
-  onSignIn: (identifier: string, password: string) => void;
+  onSignIn: (identifier: string, password: string, profile?: any) => void;
   onOpenSignUp: () => void;
 }
 
@@ -79,62 +79,79 @@ export function SignInModal({
       const normalizedIdentifier = trimmedIdentifier.toLowerCase();
       // Try Supabase auth first if configured and email provided
       if (supabaseConfigured && trimmedIdentifier.includes('@') && (supabase as any).auth?.signInWithPassword) {
-        const { data, error } = await (supabase as any).auth.signInWithPassword({
-          email: normalizedIdentifier,
-          password,
-        });
+        try {
+          const { data, error } = await (supabase as any).auth.signInWithPassword({
+            email: normalizedIdentifier,
+            password,
+          });
 
-        if (error) {
-          setError(error.message || 'Invalid credentials. Please try again.');
+          if (error) {
+            console.error('Supabase auth error:', error);
+            if (error.message.includes('Invalid login credentials')) {
+              setError('Invalid email or password. Please check and try again.');
+            } else if (error.message.includes('Email not confirmed')) {
+              setError('Please verify your email before signing in.');
+            } else {
+              setError(error.message || 'Invalid credentials. Please try again.');
+            }
+            return;
+          }
+
+          // Load profile from database
+          const { data: profileRows, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('bubt_email', normalizedIdentifier)
+            .limit(1);
+
+          if (profileError) {
+            console.warn('Profile load failed, using fallback:', profileError.message);
+          }
+
+          const profile = (profileRows && profileRows[0]) || {
+            name: data?.user?.user_metadata?.name || 'Welcome Student',
+            section: '',
+            major: '',
+            bubt_email: normalizedIdentifier,
+            notification_email: '',
+            phone: '',
+            profile_pic: '',
+          };
+
+          // Persist locally for offline usage
+          const profileData = {
+            name: profile.name,
+            section: profile.section,
+            major: profile.major,
+            bubtEmail: profile.bubt_email,
+            notificationEmail: profile.notification_email,
+            phone: profile.phone,
+            password,
+            profilePic: profile.profile_pic,
+          };
+          
+          localStorage.setItem('userProfile', JSON.stringify(profileData));
+          localStorage.setItem('userProfileName', profile.name || 'Welcome Student');
+          localStorage.setItem('userProfileSection', profile.section || '');
+          localStorage.setItem('userProfileMajor', profile.major || '');
+          localStorage.setItem('userProfileBubtEmail', profile.bubt_email || '');
+          localStorage.setItem('userProfileNotificationEmail', profile.notification_email || '');
+          localStorage.setItem('userProfilePhone', profile.phone || '');
+          if (profile.profile_pic) {
+            localStorage.setItem('userProfilePic', profile.profile_pic);
+          }
+          localStorage.setItem('userProfilePassword', password);
+
+          setIsSubmitting(false);
+          console.log('✅ Sign in successful, closing modal');
+          onClose();
+          onSignIn(identifier, password, profile);
+          return;
+        } catch (authError: any) {
+          console.error('Supabase authentication exception:', authError);
+          setError('Unable to sign in. Please check your connection and try again.');
           return;
         }
-
-        const { data: profileRows, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('bubt_email', normalizedIdentifier)
-          .limit(1);
-
-        if (profileError) {
-          setError(profileError.message || 'Could not load profile');
-          return;
-        }
-
-        const profile = (profileRows && profileRows[0]) || {
-          name: data?.user?.user_metadata?.name || 'Welcome Student',
-          section: '',
-          major: '',
-          bubt_email: normalizedIdentifier,
-          notification_email: '',
-          phone: '',
-          profile_pic: '',
-        };
-
-        // Persist locally for offline usage
-        localStorage.setItem('userProfile', JSON.stringify({
-          name: profile.name,
-          section: profile.section,
-          major: profile.major,
-          bubtEmail: profile.bubt_email,
-          notificationEmail: profile.notification_email,
-          phone: profile.phone,
-          password,
-          profilePic: profile.profile_pic,
-        }));
-        localStorage.setItem('userProfileName', profile.name || 'Welcome Student');
-        localStorage.setItem('userProfileSection', profile.section || '');
-        localStorage.setItem('userProfileMajor', profile.major || '');
-        localStorage.setItem('userProfileBubtEmail', profile.bubt_email || '');
-        localStorage.setItem('userProfileNotificationEmail', profile.notification_email || '');
-        localStorage.setItem('userProfilePhone', profile.phone || '');
-        if (profile.profile_pic) {
-          localStorage.setItem('userProfilePic', profile.profile_pic);
-        }
-        localStorage.setItem('userProfilePassword', password);
-
-        onSignIn(identifier, password);
-        onClose();
-        return;
       }
 
       // Fallback: local-only profile check
@@ -151,8 +168,10 @@ export function SignInModal({
       const passwordMatch = profile.password === password;
 
       if (identifierMatch && passwordMatch) {
-        onSignIn(identifier, password);
+        setIsSubmitting(false);
+        console.log('✅ Sign in successful (local fallback)');
         onClose();
+        onSignIn(identifier, password, profile);
       } else {
         setError('Invalid credentials. Please check your email/phone and password.');
       }

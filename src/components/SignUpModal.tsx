@@ -222,25 +222,40 @@ export function SignUpModal({
             last_login_at: new Date().toISOString(),
           }]);
           if (profileError) {
-            setError(profileError.message || 'Could not save profile');
+            // Check for duplicate email error
+            if (profileError.message.includes('duplicate key value') || 
+                profileError.message.includes('profiles_bubt_email_key') ||
+                profileError.code === '23505') {
+              setError('This email is already registered. Please sign in instead.');
+            } else {
+              setError(profileError.message || 'Could not save profile');
+            }
             console.error('Profile creation error:', profileError);
             return;
           }
         } else {
           // Update profile details only - use update instead of upsert to avoid duplicate key error
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-              name,
-              section,
-              major,
-              notification_email: notificationEmail,
-              phone,
-              profile_pic: profilePic,
-            })
-            .eq('bubt_email', bubtEmail);
-          if (profileError) {
-            setError(profileError.message || 'Could not update profile');
+          try {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update({
+                name,
+                section,
+                major,
+                notification_email: notificationEmail,
+                phone,
+                profile_pic: profilePic,
+              })
+              .eq('bubt_email', bubtEmail);
+            
+            if (profileError) {
+              console.error('Profile update error:', profileError);
+              setError('Could not update profile. Please try again.');
+              return;
+            }
+          } catch (updateError: any) {
+            console.error('Profile update exception:', updateError);
+            setError('An error occurred while updating profile.');
             return;
           }
         }

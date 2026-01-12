@@ -237,12 +237,122 @@ function App() {
     avatar_url: localStorage.getItem('userProfileAvatarUrl') || ''
   });
 
+  // Major access notification state
+  const [majorAccessMessage, setMajorAccessMessage] = useState<{type: 'error' | 'success' | 'info', message: string} | null>(null);
+
+  // Helper to show major access messages
+  const showMajorAccessNotification = (type: 'error' | 'success' | 'info', message: string) => {
+    setMajorAccessMessage({ type, message });
+    setTimeout(() => setMajorAccessMessage(null), 4000);
+  };
+
   // Extract BUBT ID from email (22235103183 from 22235103183@cse.bubt.edu.bd)
   const extractBubtId = (email?: string) => {
     if (!email) return '';
     const local = email.split('@')[0] || '';
     const match = local.match(/^\d+/);
     return match ? match[0] : local;
+  };
+
+  // Load profile from Supabase by email and update state/localStorage
+  const loadProfileFromSupabase = async (email: string, password: string = ''): Promise<boolean> => {
+    try {
+      if (!email) return false;
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('bubt_email', email.toLowerCase())
+        .single();
+
+      if (error) {
+        console.warn('Profile fetch error:', error.message);
+        return false;
+      }
+
+      const updatedProfile = {
+        name: profileData?.name || 'Welcome Student',
+        section: profileData?.section || '',
+        major: profileData?.major || '',
+        bubtEmail: profileData?.bubt_email || email,
+        notificationEmail: profileData?.notification_email || '',
+        phone: profileData?.phone || '',
+        password,
+        profilePic: profileData?.profile_pic || '',
+        avatar_url: profileData?.profile_pic || ''
+      };
+
+      // Persist for offline usage
+      localStorage.setItem('userProfileBubtEmail', updatedProfile.bubtEmail);
+      localStorage.setItem('userProfileName', updatedProfile.name);
+      localStorage.setItem('userProfileSection', updatedProfile.section);
+      localStorage.setItem('userProfileMajor', updatedProfile.major);
+      localStorage.setItem('userProfileNotificationEmail', updatedProfile.notificationEmail);
+      localStorage.setItem('userProfilePhone', updatedProfile.phone);
+      if (updatedProfile.profilePic) {
+        localStorage.setItem('userProfilePic', updatedProfile.profilePic);
+        localStorage.setItem('userProfileAvatarUrl', updatedProfile.profilePic);
+      }
+      if (password) {
+        localStorage.setItem('userProfilePassword', password);
+      }
+
+      setUserProfile(updatedProfile);
+      console.log('Profile loaded from Supabase');
+      return true;
+    } catch (err) {
+      console.error('Error loading profile from Supabase:', err);
+      return false;
+    }
+  };
+
+  // Load profile using Supabase user id (preferred)
+  const loadProfileFromSupabaseById = async (userId: string, password: string = ''): Promise<boolean> => {
+    try {
+      if (!userId) return false;
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.warn('Profile fetch by ID error:', error.message);
+        return false;
+      }
+
+      const updatedProfile = {
+        name: profileData?.name || 'Welcome Student',
+        section: profileData?.section || '',
+        major: profileData?.major || '',
+        bubtEmail: profileData?.bubt_email || '',
+        notificationEmail: profileData?.notification_email || '',
+        phone: profileData?.phone || '',
+        password,
+        profilePic: profileData?.profile_pic || '',
+        avatar_url: profileData?.profile_pic || ''
+      };
+
+      localStorage.setItem('userProfileBubtEmail', updatedProfile.bubtEmail);
+      localStorage.setItem('userProfileName', updatedProfile.name);
+      localStorage.setItem('userProfileSection', updatedProfile.section);
+      localStorage.setItem('userProfileMajor', updatedProfile.major);
+      localStorage.setItem('userProfileNotificationEmail', updatedProfile.notificationEmail);
+      localStorage.setItem('userProfilePhone', updatedProfile.phone);
+      if (updatedProfile.profilePic) {
+        localStorage.setItem('userProfilePic', updatedProfile.profilePic);
+        localStorage.setItem('userProfileAvatarUrl', updatedProfile.profilePic);
+      }
+      if (password) {
+        localStorage.setItem('userProfilePassword', password);
+      }
+
+      setUserProfile(updatedProfile);
+      console.log('Profile loaded from Supabase by ID');
+      return true;
+    } catch (err) {
+      console.error('Error loading profile by ID from Supabase:', err);
+      return false;
+    }
   };
 
   // Load user avatar/profile picture from Supabase `profiles` table
@@ -333,7 +443,7 @@ function App() {
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       console.log('Auth state change:', event);
       
       if (event === 'SIGNED_IN' && session) {
@@ -2384,6 +2494,38 @@ For any queries, contact your course instructors or the department.`,
         ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800' 
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100'
     }`}>
+      {/* Major Access Notification Toast */}
+      {majorAccessMessage && (
+        <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-fade-in-down max-w-md w-full mx-4`}>
+          <div className={`rounded-lg shadow-2xl p-4 border-2 ${
+            majorAccessMessage.type === 'error'
+              ? 'bg-red-50 border-red-500 text-red-900'
+              : majorAccessMessage.type === 'success'
+                ? 'bg-green-50 border-green-500 text-green-900'
+                : 'bg-blue-50 border-blue-500 text-blue-900'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                majorAccessMessage.type === 'error'
+                  ? 'bg-red-100'
+                  : majorAccessMessage.type === 'success'
+                    ? 'bg-green-100'
+                    : 'bg-blue-100'
+              }`}>
+                {majorAccessMessage.type === 'error' ? '❌' : majorAccessMessage.type === 'success' ? '✅' : 'ℹ️'}
+              </div>
+              <p className="flex-1 font-semibold text-sm">{majorAccessMessage.message}</p>
+              <button
+                onClick={() => setMajorAccessMessage(null)}
+                className="flex-shrink-0 text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Enhanced Mobile-First Responsive Header */}
       <header className={`fixed top-0 left-0 right-0 w-full shadow-2xl border-b z-50 transition-colors duration-300 ${
         isDarkMode
@@ -2523,7 +2665,8 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* User Profile Section */}
+            {/* User Profile Section - Only show when logged in */}
+            {isLoggedIn && (
             <div className={`p-4 sm:p-6 border-b transition-colors duration-300 ${
               isDarkMode ? 'border-gray-700/30 bg-gray-900/40' : 'border-gray-200/50 bg-white/60'
             }`}>
@@ -2561,6 +2704,7 @@ For any queries, contact your course instructors or the department.`,
                 </button>
               </div>
             </div>
+            )}
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
@@ -2593,11 +2737,50 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={async () => {
                     try {
-                      await supabase.auth.signOut();
+                      console.log('[SIGN OUT] Button clicked');
                       setShowMobileMenu(false);
-                      console.log('User signed out successfully');
+                      
+                      // Call Supabase sign out with proper error handling
+                      try {
+                        await supabase.auth.signOut();
+                        console.log('[SIGN OUT] Supabase signOut completed');
+                      } catch (supabaseError: any) {
+                        console.error('[SIGN OUT] Supabase error:', supabaseError);
+                        // Continue with local sign out even if Supabase fails
+                      }
+                      
+                      // Clear state
+                      setIsLoggedIn(false);
+                      setAuthSession(null);
+                      setUserProfile({
+                        name: 'Welcome Student',
+                        section: '',
+                        major: '',
+                        bubtEmail: '',
+                        notificationEmail: '',
+                        phone: '',
+                        password: '',
+                        profilePic: '',
+                        avatar_url: ''
+                      });
+                      
+                      // Clear all localStorage
+                      const keysToRemove = [
+                        'userProfileBubtEmail', 'userProfileName', 'userProfileMajor',
+                        'userProfileSection', 'userProfileNotificationEmail', 'userProfilePhone',
+                        'userProfilePic', 'userProfilePassword', 'userProfileAvatarUrl', 'userProfile'
+                      ];
+                      keysToRemove.forEach(key => localStorage.removeItem(key));
+                      
+                      // Navigate to home
+                      goToView('home');
+                      showMajorAccessNotification('success', '👋 Signed out successfully. See you soon!');
+                      console.log('[SIGN OUT] Complete - guest mode enabled');
                     } catch (error) {
-                      console.error('Sign out error:', error);
+                      console.error('[SIGN OUT] Unexpected error:', error);
+                      showMajorAccessNotification('error', '⚠️ Sign out encountered an issue, but you are now logged out.');
+                      // Force logout anyway
+                      goToView('home');
                     }
                   }}
                   className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
@@ -3032,13 +3215,15 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
+                      showMajorAccessNotification('error', '🔒 Please sign in to access AI major materials');
                       setShowSignInModal(true);
                       return;
                     }
                     if (userProfile.major !== 'AI') {
-                      alert(`This section is for AI major students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      showMajorAccessNotification('error', `⚠️ Access Denied: This section is for AI major students only. Your major: ${userProfile.major || 'Not set'}`);
                       return;
                     }
+                    showMajorAccessNotification('success', '✅ Welcome to AI Major Section!');
                     goToView('ai');
                   }}
                   disabled={!isLoggedIn}
@@ -3095,13 +3280,15 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
+                      showMajorAccessNotification('error', '🔒 Please sign in to access Software Engineering materials');
                       setShowSignInModal(true);
                       return;
                     }
                     if (userProfile.major !== 'Software Engineering') {
-                      alert(`This section is for Software Engineering students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      showMajorAccessNotification('error', `⚠️ Access Denied: This section is for Software Engineering students only. Your major: ${userProfile.major || 'Not set'}`);
                       return;
                     }
+                    showMajorAccessNotification('success', '✅ Welcome to Software Engineering Section!');
                     goToView('software');
                   }}
                   disabled={!isLoggedIn}
@@ -3158,13 +3345,15 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
+                      showMajorAccessNotification('error', '🔒 Please sign in to access Networking materials');
                       setShowSignInModal(true);
                       return;
                     }
                     if (userProfile.major !== 'Networking') {
-                      alert(`This section is for Networking students only. Your registered major: ${userProfile.major || 'Not set'}`);
+                      showMajorAccessNotification('error', `⚠️ Access Denied: This section is for Networking students only. Your major: ${userProfile.major || 'Not set'}`);
                       return;
                     }
+                    showMajorAccessNotification('success', '✅ Welcome to Networking Section!');
                     goToView('networking');
                   }}
                   disabled={!isLoggedIn}
@@ -5654,10 +5843,50 @@ For any queries, contact your course instructors or the department.`,
         isOpen={showSignInModal}
         onClose={() => setShowSignInModal(false)}
         isDarkMode={isDarkMode}
-        onSignIn={async (identifier, password) => {
-          // Auth is already handled by SignInModal through Supabase
-          // Session state will be updated by onAuthStateChange listener
-          console.log('User signed in successfully');
+        onSignIn={(identifier, password, profile) => {
+          // Use profile data passed from SignInModal (already loaded from Supabase)
+          if (profile) {
+            setUserProfile({
+              name: profile.name || 'Welcome Student',
+              section: profile.section || '',
+              major: profile.major || '',
+              bubtEmail: profile.bubt_email || profile.bubtEmail || '',
+              notificationEmail: profile.notification_email || profile.notificationEmail || '',
+              phone: profile.phone || '',
+              password,
+              profilePic: profile.profile_pic || profile.profilePic || '',
+              avatar_url: profile.profile_pic || profile.profilePic || ''
+            });
+            console.log('✅ Profile loaded from SignInModal:', profile.name);
+          } else {
+            // Fallback to localStorage if no profile passed
+            const name = localStorage.getItem('userProfileName') || 'Welcome Student';
+            const section = localStorage.getItem('userProfileSection') || '';
+            const major = localStorage.getItem('userProfileMajor') || '';
+            const bubtEmail = localStorage.getItem('userProfileBubtEmail') || '';
+            const notificationEmail = localStorage.getItem('userProfileNotificationEmail') || '';
+            const phone = localStorage.getItem('userProfilePhone') || '';
+            const profilePic = localStorage.getItem('userProfilePic') || '';
+            const avatarUrl = localStorage.getItem('userProfileAvatarUrl') || '';
+
+            setUserProfile({
+              name,
+              section,
+              major,
+              bubtEmail,
+              notificationEmail,
+              phone,
+              password,
+              profilePic,
+              avatar_url: avatarUrl || profilePic
+            });
+            console.warn('Loaded profile from localStorage fallback');
+          }
+
+          // Set logged in state immediately
+          setIsLoggedIn(true);
+          setShowSignInModal(false);
+          console.log('✅ User signed in successfully');
         }}
         onOpenSignUp={() => {
           setShowSignInModal(false);
@@ -5697,11 +5926,49 @@ For any queries, contact your course instructors or the department.`,
             notificationEmail: profile.notificationEmail,
             phone: profile.phone,
             password: profile.password,
-            profilePic: profile.profilePic
+            profilePic: profile.profilePic,
+            avatar_url: profile.profilePic
           });
           setIsLoggedIn(true);
           setIsEditingProfile(false);
-          // localStorage update already done in SignUpModal
+          setShowSignUpModal(false);
+          
+          // Reload profile from database in realtime
+          const loadUpdatedProfile = async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('bubt_email', profile.bubtEmail)
+                .single();
+              
+              if (error) {
+                console.warn('⚠️ Could not reload profile from database:', error);
+                return;
+              }
+              
+              if (profileData) {
+                const updatedProfile = {
+                  name: profileData.name || 'Welcome Student',
+                  section: profileData.section || '',
+                  major: profileData.major || '',
+                  bubtEmail: profileData.bubt_email || '',
+                  notificationEmail: profileData.notification_email || '',
+                  phone: profileData.phone || '',
+                  password: profile.password,
+                  profilePic: profileData.profile_pic || '',
+                  avatar_url: profileData.profile_pic || ''
+                };
+                setUserProfile(updatedProfile);
+                console.log('✅ Profile reloaded from database in realtime');
+              }
+            } catch (err) {
+              console.error('Error reloading profile:', err);
+            }
+          };
+          
+          loadUpdatedProfile();
+          console.log('Profile saved successfully');
         }}
         onResetPassword={() => {
           setShowSignUpModal(false);
