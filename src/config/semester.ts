@@ -29,40 +29,40 @@ export interface SemesterConfig {
   };
 }
 
-// SPRING 2026 ACADEMIC CALENDAR (Tri-Semester System)
+// SPRING 2026 ACADEMIC CALENDAR - BUBT Official Dates
 export const SEMESTER_CONFIG: SemesterConfig = {
   name: "Spring 2026",
   code: "SPRING_2026", 
-  startDate: "2026-01-15",      // Spring semester start
-  endDate: "2026-05-15",        // Spring semester end (4 months)
-  totalDays: 121,               // January 15 to May 15
+  startDate: "2026-01-01",      // Orientation and commencement (Jan 1)
+  endDate: "2026-05-04",        // Final Results publication (May 4)
+  totalDays: 124,               // January 1 to May 4
 
   periods: {
     regularClasses: {
       name: "Regular Classes",
-      startDate: "2026-01-15",
-      endDate: "2026-03-10",     // Until mid-terms start
+      startDate: "2026-01-01",
+      endDate: "2026-02-11",     // Last day of classes before Midterm (Feb 11)
       type: 'regular'
     },
     
     midtermExams: {
       name: "Mid-term Examinations",
-      startDate: "2026-03-11",   // Mid-term exams period
-      endDate: "2026-03-20",     // 10 days for midterms
+      startDate: "2026-02-13",   // Mid-term exam period (Feb 13-20)
+      endDate: "2026-02-20",     // 8 days for midterms
       type: 'midterm'
     },
     
     finalPrep: {
       name: "Final Exam Preparation",
-      startDate: "2026-03-21",   // After mid-terms end
-      endDate: "2026-04-25",     // Before finals
+      startDate: "2026-02-22",   // Classes resume after Midterm (Feb 22)
+      endDate: "2026-04-21",     // Last day of classes before Final (Apr 21)
       type: 'regular'
     },
     
     finalExams: {
       name: "Final Examinations",
-      startDate: "2026-04-26",   // Final exams begin
-      endDate: "2026-05-10",     // Final exams end
+      startDate: "2026-04-23",   // Final exams begin (Apr 23)
+      endDate: "2026-04-30",     // Final exams end (Apr 30) - 8 days
       type: 'final'
     }
   },
@@ -70,15 +70,15 @@ export const SEMESTER_CONFIG: SemesterConfig = {
   breaks: {
     summerBreak: {
       name: "Summer Break",
-      startDate: "2026-05-16",   // After semester ends
-      endDate: "2026-06-14",     // 30-day break before Summer 2026
+      startDate: "2026-05-05",   // Semester break (May 5)
+      endDate: "2026-06-05",     // Before Summer 2026 starts
       type: 'break'
     }
   },
 
   nextSemester: {
     name: "Summer 2026",
-    startDate: "2026-06-15"      // Next tri-semester starts
+    startDate: "2026-06-06"      // Summer semester commencement
   }
 };
 
@@ -185,63 +185,98 @@ export const getBangladeshTime = () => {
   });
 };
 
-// Special academic events
+// Special academic events - BUBT Spring 2026 Key Dates
 export const SPECIAL_EVENTS = {
   orientation: {
-    name: "Spring 2026 Orientation",
-    date: "2026-01-14",
-    description: "Welcome session and course registration for Spring 2026",
-    icon: "🎓"
+    name: "Spring 2026 Orientation & Classes Start",
+    date: "2026-01-01",
+    description: "Orientation and commencement of classes",
+    icon: "🚀"
   },
-  projectPresentation: {
-    name: "Final Project Presentations",
-    date: "2026-05-12",
-    description: "End of semester project presentations",
-    icon: "💼"
+  midtermStart: {
+    name: "Mid-term Examinations Begin",
+    date: "2026-02-13",
+    description: "8-day mid-term examination period",
+    icon: "📝"
+  },
+  classesResumeAfterMidterm: {
+    name: "Classes Resume",
+    date: "2026-02-22",
+    description: "Regular classes resume after mid-term break",
+    icon: "📚"
+  },
+  finalStart: {
+    name: "Final Examinations Begin",
+    date: "2026-04-23",
+    description: "8-day final examination period",
+    icon: "🎯"
+  },
+  resultsPublication: {
+    name: "Final Results Publication",
+    date: "2026-05-04",
+    description: "Publication of final examination results",
+    icon: "📊"
+  },
+  semesterBreak: {
+    name: "Semester Break",
+    date: "2026-05-05",
+    description: "Summer break before next semester",
+    icon: "🏖️"
+  },
+  summerSemesterStart: {
+    name: "Summer 2026 Begins",
+    date: "2026-06-06",
+    description: "Orientation and commencement of Summer Semester 2026",
+    icon: "☀️"
   }
 };
 
-// Semester timeline data for UI
+// Semester timeline data for UI with BUBT official dates
 export const getSemesterTimeline = () => {
   const progress = calculateSemesterProgress();
   const now = new Date();
-  const orientationDate = new Date(SPECIAL_EVENTS.orientation.date);
   
   return {
     phases: [
       {
-        name: "Start",
-        date: "Jan 15",
+        name: "Classes Start",
+        date: "Jan 1",
         status: "completed",
         icon: "🚀"
       },
       {
         name: "Regular Classes",
-        date: "Jan-Mar",
-        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 55 ? "completed" : "upcoming",
+        date: "Jan-Feb",
+        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 42 ? "completed" : "upcoming",
         icon: "📚"
       },
       {
         name: "Mid-terms",
-        date: "Mar 11-20",
+        date: "Feb 13-20",
         status: progress.isMidtermPeriod ? "current" : progress.daysToMidterm <= 0 ? "completed" : "upcoming",
         icon: "📝"
       },
       {
+        name: "Class Prep",
+        date: "Feb-Apr",
+        status: progress.currentPhase === "Final Exam Preparation" ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
+        icon: "📖"
+      },
+      {
         name: "Finals",
-        date: "Apr 26-May 10",
+        date: "Apr 23-30",
         status: progress.isFinalPeriod ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
         icon: "🎯"
       },
       {
-        name: "Projects",
-        date: "May 12",
-        status: now >= new Date(SPECIAL_EVENTS.projectPresentation.date) ? "completed" : now.toDateString() === new Date(SPECIAL_EVENTS.projectPresentation.date).toDateString() ? "current" : "upcoming",
-        icon: "💼"
+        name: "Results",
+        date: "May 4",
+        status: now >= new Date("2026-05-04") ? "completed" : "upcoming",
+        icon: "📊"
       },
       {
         name: "Break",
-        date: "May 16",
+        date: "May 5+",
         status: progress.isBreak ? "current" : "upcoming",
         icon: "🏖️"
       }

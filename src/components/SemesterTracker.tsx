@@ -122,7 +122,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               }`}>Semester Tracker</h1>
               <p className={`text-xs sm:text-sm md:text-base hidden sm:block transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-400' : 'text-slate-600'
-              }`}>BUBT Intake 51 - Section 5</p>
+              }`}>BUBT Intake 51 - All Sections</p>
             </div>
           </div>
           {onClose && (
@@ -265,7 +265,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   }`}>Semester Started</div>
                   <div className={`text-sm transition-colors duration-300 ${
                     isDarkMode ? 'text-green-500' : 'text-green-600'
-                  }`}>July 15, 2025</div>
+                  }`}>{new Date(semesterStatus.currentPhase === 'Regular Classes' ? '2026-01-01' : '2026-01-01').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               </div>
@@ -285,7 +285,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   }`}>Mid-term Exams</div>
                   <div className={`text-sm ${
                     semesterStatus.currentPhase === 'Mid-term Examinations' ? 'text-red-600' : 'text-blue-600'
-                  }`}>Sept 14-24, 2025</div>
+                  }`}>Feb 13-20, 2026</div>
                 </div>
                 <div className={`w-3 h-3 rounded-full ${
                   semesterStatus.currentPhase === 'Mid-term Examinations' 
@@ -301,11 +301,286 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               }`}>
                 <div>
                   <div className={`font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Final Exams</div>
-                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Dec 4-14, 2025</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Apr 23-30, 2026</div>
                 </div>
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Academic Calendar Section */}
+        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-purple-900/40 via-pink-900/30 to-purple-800/40 border border-purple-700/50'
+            : 'bg-gradient-to-br from-purple-100 via-pink-50 to-purple-100 border border-purple-300'
+        }`}>
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className={`text-xl font-bold transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-100' : 'text-slate-800'
+              }`}>Academic Calendar</h2>
+              <p className={`text-sm transition-colors duration-300 ${
+                isDarkMode ? 'text-purple-400' : 'text-purple-700'
+              }`}>Spring 2026 - Key Dates & Events</p>
+            </div>
+          </div>
+
+          {/* Current Phase Indicator */}
+          <div className={`mb-6 p-4 rounded-xl border-2 ${
+            isDarkMode
+              ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-600/50'
+              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="flex-1">
+                <div className={`font-bold text-sm ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
+                  Current Phase: {semesterStatus.currentPhase}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>
+                  {semesterStatus.daysToMilestone} days until {semesterStatus.nextMilestone}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar Events Grid */}
+          <div className="space-y-3">
+            {/* Orientation & Classes Start */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              new Date() < new Date('2026-01-01')
+                ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
+                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  new Date() < new Date('2026-01-01')
+                    ? 'bg-blue-600 text-white'
+                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">🚀</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Classes Commence
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    January 1, 2026 (Wednesday)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Orientation and start of Spring Semester
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration Deadline */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              new Date() < new Date('2026-01-14')
+                ? isDarkMode ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200'
+                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  new Date() < new Date('2026-01-14')
+                    ? 'bg-orange-600 text-white'
+                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">📝</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Add/Drop & Withdrawal Deadline
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    January 14, 2026 (Wednesday)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Last day for course changes
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mid-term Period */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              semesterStatus.isMidtermPeriod
+                ? isDarkMode ? 'bg-red-900/30 border-red-700/50 ring-2 ring-red-500/50' : 'bg-red-50 border-red-200 ring-2 ring-red-400/50'
+                : new Date() < new Date('2026-02-13')
+                  ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
+                  : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  semesterStatus.isMidtermPeriod
+                    ? 'bg-red-600 text-white animate-pulse'
+                    : new Date() < new Date('2026-02-13')
+                      ? 'bg-blue-600 text-white'
+                      : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">📝</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Mid-term Examinations
+                    {semesterStatus.isMidtermPeriod && (
+                      <span className="ml-2 text-xs px-2 py-1 bg-red-500 text-white rounded-full">ONGOING</span>
+                    )}
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    February 13-20, 2026 (8 days)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Preparatory leave: Feb 12
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mid-term Results */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              new Date() < new Date('2026-03-11')
+                ? isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-200'
+                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  new Date() < new Date('2026-03-11')
+                    ? 'bg-indigo-600 text-white'
+                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">📊</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Mid-term Results Submission
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    March 11, 2026 (Wednesday)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Deadline for faculty to submit grades
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Final Examinations */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              semesterStatus.isFinalPeriod
+                ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50 ring-2 ring-purple-500/50' : 'bg-purple-50 border-purple-200 ring-2 ring-purple-400/50'
+                : new Date() < new Date('2026-04-23')
+                  ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50' : 'bg-purple-50 border-purple-200'
+                  : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  semesterStatus.isFinalPeriod
+                    ? 'bg-purple-600 text-white animate-pulse'
+                    : new Date() < new Date('2026-04-23')
+                      ? 'bg-purple-600 text-white'
+                      : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">🎯</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Final Examinations
+                    {semesterStatus.isFinalPeriod && (
+                      <span className="ml-2 text-xs px-2 py-1 bg-purple-500 text-white rounded-full">ONGOING</span>
+                    )}
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    April 23-30, 2026 (8 days)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Preparatory leave: Apr 22
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Final Results */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              new Date() < new Date('2026-05-04')
+                ? isDarkMode ? 'bg-green-900/30 border-green-700/50' : 'bg-green-50 border-green-200'
+                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  new Date() < new Date('2026-05-04')
+                    ? 'bg-green-600 text-white'
+                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  <span className="text-lg">📢</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Final Results Publication
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    May 4, 2026 (Monday)
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Spring 2026 semester results
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Semester Break */}
+            <div className={`p-4 rounded-xl border transition-all ${
+              semesterStatus.isBreak
+                ? isDarkMode ? 'bg-teal-900/30 border-teal-700/50 ring-2 ring-teal-500/50' : 'bg-teal-50 border-teal-200 ring-2 ring-teal-400/50'
+                : isDarkMode ? 'bg-teal-900/30 border-teal-700/50' : 'bg-teal-50 border-teal-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  semesterStatus.isBreak
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-teal-600 text-white'
+                }`}>
+                  <span className="text-lg">🏖️</span>
+                </div>
+                <div className="flex-1">
+                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Semester Break
+                    {semesterStatus.isBreak && (
+                      <span className="ml-2 text-xs px-2 py-1 bg-teal-500 text-white rounded-full">ACTIVE</span>
+                    )}
+                  </div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    May 5, 2026 onwards
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Summer 2026 starts: June 6
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Info */}
+          <div className={`mt-6 p-4 rounded-xl border ${
+            isDarkMode
+              ? 'bg-purple-900/20 border-purple-700/50'
+              : 'bg-purple-50 border-purple-200'
+          }`}>
+            <div className={`text-xs font-semibold mb-2 ${
+              isDarkMode ? 'text-purple-400' : 'text-purple-700'
+            }`}>📌 Important Notes:</div>
+            <ul className={`text-xs space-y-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              <li>• Payment deadlines: 1st installment (Jan 1-14), 2nd installment (Feb 1-12), Final (Apr 1-16)</li>
+              <li>• Sports Week: April 1-7 | Research Showcase: April 15-21</li>
+              <li>• Teachers Evaluation: April 12-18</li>
+              <li>• Some holiday dates marked with * are subject to moon appearance</li>
+            </ul>
           </div>
         </div>
 
@@ -541,482 +816,6 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
         </div>
         )}
 
-        {/* SMART CLASS ROUTINE SECTION - Now using config */}
-        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-blue-900/40 border border-indigo-700/50'
-            : 'bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 border border-indigo-300'
-        }`}>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-3 bg-indigo-600 rounded-xl shadow-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className={`text-xl font-bold transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>{getRoutineTitle()}</h2>
-              <p className={`text-sm transition-colors duration-300 ${
-                isDarkMode ? 'text-indigo-400' : 'text-indigo-700'
-              }`}>{getRoutineDescription()}</p>
-            </div>
-            <div className="ml-auto">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                📚 LIVE
-              </span>
-            </div>
-          </div>
-
-          {/* Weekly Stats from config */}
-          <div className={`mb-6 p-4 backdrop-blur-sm rounded-xl border transition-colors duration-300 ${
-            isDarkMode
-              ? 'bg-gray-800/70 border-indigo-700/50'
-              : 'bg-white/70 border-indigo-200'
-          }`}>
-            <h3 className={`font-bold mb-3 transition-colors duration-300 ${
-              isDarkMode ? 'text-indigo-400' : 'text-indigo-800'
-            }`}>📊 Weekly Overview</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {(() => {
-                const summary = getWeeklyClassSummary();
-                return (
-                  <>
-                    <div className={`text-center p-2 rounded-lg ${
-                      isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'
-                    }`}>
-                      <div className={`text-lg font-bold ${
-                        isDarkMode ? 'text-blue-400' : 'text-blue-700'
-                      }`}>{summary.totalClasses}</div>
-                      <div className={`text-xs ${
-                        isDarkMode ? 'text-blue-300' : 'text-blue-600'
-                      }`}>Total Classes</div>
-                    </div>
-                    <div className={`text-center p-2 rounded-lg ${
-                      isDarkMode ? 'bg-green-900/30' : 'bg-green-50'
-                    }`}>
-                      <div className={`text-lg font-bold ${
-                        isDarkMode ? 'text-green-400' : 'text-green-700'
-                      }`}>{summary.theoryClasses}</div>
-                      <div className={`text-xs ${
-                        isDarkMode ? 'text-green-300' : 'text-green-600'
-                      }`}>Theory</div>
-                    </div>
-                    <div className={`text-center p-2 rounded-lg ${
-                      isDarkMode ? 'bg-purple-900/30' : 'bg-purple-50'
-                    }`}>
-                      <div className={`text-lg font-bold ${
-                        isDarkMode ? 'text-purple-400' : 'text-purple-700'
-                      }`}>{summary.labClasses}</div>
-                      <div className={`text-xs ${
-                        isDarkMode ? 'text-purple-300' : 'text-purple-600'
-                      }`}>Lab</div>
-                    </div>
-                    <div className={`text-center p-2 rounded-lg ${
-                      isDarkMode ? 'bg-orange-900/30' : 'bg-orange-50'
-                    }`}>
-                      <div className={`text-lg font-bold ${
-                        isDarkMode ? 'text-orange-400' : 'text-orange-700'
-                      }`}>{summary.activeDays}</div>
-                      <div className={`text-xs ${
-                        isDarkMode ? 'text-orange-300' : 'text-orange-600'
-                      }`}>Active Days</div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Today's Schedule from config */}
-          <div className={`mb-6 p-4 backdrop-blur-sm rounded-xl border text-center ${
-            isDarkMode
-              ? 'bg-gray-800/70 border-gray-700'
-              : 'bg-white/70 border-indigo-200'
-          }`}>
-            {(() => {
-              const todaysClasses = getTodaysSchedule();
-              const nextClass = getNextClass();
-              const classStatus = getCurrentClassStatus();
-              const classesFinished = areTodaysClassesFinished();
-              const nextDaySchedule = getNextDaySchedule();
-              
-              if (classStatus.status === 'ongoing') {
-                return (
-                  <div>
-                    <div className="text-4xl mb-2">⏰</div>
-                    <h3 className={`font-bold mb-2 ${
-                      isDarkMode ? 'text-green-400' : 'text-green-800'
-                    }`}>Class Ongoing!</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-green-300' : 'text-green-600'
-                    }`}>
-                      {classStatus.currentClass?.courseCode} - {classStatus.currentClass?.courseName}
-                    </p>
-                    <p className={`text-xs mt-1 ${
-                      isDarkMode ? 'text-green-400' : 'text-green-500'
-                    }`}>
-                      Room {classStatus.currentClass?.room} • {formatTimeRemaining(classStatus.minutesRemaining || 0)} left
-                    </p>
-                  </div>
-                );
-              } else if (nextClass && nextClass.isToday) {
-                return (
-                  <div>
-                    <div className="text-4xl mb-2">⏳</div>
-                    <h3 className={`font-bold mb-2 ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-800'
-                    }`}>Next Class Today</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-blue-300' : 'text-blue-600'
-                    }`}>
-                      {nextClass.courseCode} - {nextClass.courseName}
-                    </p>
-                    <p className={`text-xs mt-1 ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-500'
-                    }`}>
-                      Room {nextClass.room} • Starts in {formatTimeRemaining(nextClass.minutesToStart)}
-                    </p>
-                  </div>
-                );
-              } else if (classesFinished && nextClass && !nextClass.isToday && todaysClasses.length > 0) {
-                // Show next day's first class when today's classes are done (but only if there were actually classes today)
-                return (
-                  <div>
-                    <div className="text-4xl mb-2">✅</div>
-                    <h3 className={`font-bold mb-2 ${
-                      isDarkMode ? 'text-green-400' : 'text-green-800'
-                    }`}>Today's Classes Complete!</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-green-300' : 'text-green-600'
-                    }`}>All {todaysClasses.length} classes finished</p>
-                    <div className={`mt-3 pt-3 border-t ${
-                      isDarkMode ? 'border-gray-700' : 'border-indigo-200'
-                    }`}>
-                      <p className={`text-xs font-semibold mb-1 ${
-                        isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-                      }`}>Next Class: {nextClass.dayName}</p>
-                      <p className={`text-sm ${
-                        isDarkMode ? 'text-indigo-300' : 'text-indigo-700'
-                      }`}>{nextClass.courseCode} - {nextClass.courseName}</p>
-                      <p className={`text-xs mt-1 ${
-                        isDarkMode ? 'text-indigo-400' : 'text-indigo-500'
-                      }`}>
-                        Room {nextClass.room} • {nextClass.time}
-                      </p>
-                      <p className={`text-xs mt-1 ${
-                        isDarkMode ? 'text-indigo-500' : 'text-indigo-400'
-                      }`}>
-                        {'daysUntil' in nextClass && nextClass.daysUntil === 1 ? 'Tomorrow' : 'daysUntil' in nextClass ? `In ${nextClass.daysUntil} days` : 'Soon'} • {'hoursUntil' in nextClass ? `${nextClass.hoursUntil}h away` : 'Soon'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              } else if (todaysClasses.length === 0 && nextDaySchedule) {
-                // No classes today, show next day's schedule
-                const isExamPeriod = semesterStatus.isMidtermPeriod || semesterStatus.isFinalPeriod;
-                return (
-                  <div>
-                    <div className="text-4xl mb-2">{isExamPeriod ? '📝' : '🎉'}</div>
-                    <h3 className={`font-bold mb-2 ${
-                      isDarkMode ? 'text-indigo-400' : 'text-indigo-800'
-                    }`}>{isExamPeriod ? 'Exam Period - No Classes' : 'No Classes Today!'}</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-                    }`}>{isExamPeriod ? 'Focus on exam preparation!' : 'Enjoy your free day!'}</p>
-                    {!isExamPeriod && (
-                      <div className={`mt-3 pt-3 border-t ${
-                        isDarkMode ? 'border-gray-700' : 'border-indigo-200'
-                      }`}>
-                        <p className={`text-xs font-semibold mb-1 ${
-                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                        }`}>
-                          Next Classes: {nextDaySchedule.dayName} ({nextDaySchedule.date})
-                        </p>
-                        <p className={`text-xs ${
-                          isDarkMode ? 'text-blue-400' : 'text-blue-500'
-                        }`}>
-                          {nextDaySchedule.totalClasses} {nextDaySchedule.totalClasses === 1 ? 'class' : 'classes'} scheduled
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              } else {
-                const isExamPeriod = semesterStatus.isMidtermPeriod || semesterStatus.isFinalPeriod;
-                return (
-                  <div>
-                    <div className="text-4xl mb-2">{isExamPeriod ? '📝' : '🎉'}</div>
-                    <h3 className={`font-bold mb-2 ${
-                      isDarkMode ? 'text-indigo-400' : 'text-indigo-800'
-                    }`}>{isExamPeriod ? 'Exam Period - No Classes' : 'No Classes Today!'}</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-                    }`}>{isExamPeriod ? 'Focus on your exam preparation!' : 'Enjoy your free day! Perfect for self-study.'}</p>
-                  </div>
-                );
-              }
-            })()}
-          </div>
-
-          {/* Weekly Schedule from config - Collapsible */}
-          <div>
-            {/* Section 5 Notice Banner */}
-            <div className={`mb-4 p-4 rounded-xl border-2 shadow-sm ${
-              isDarkMode
-                ? 'bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 border-gray-600'
-                : 'bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 border-indigo-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                    isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'
-                  }`}>
-                    <span className="text-white font-bold text-lg">5</span>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h4 className={`font-bold mb-1 flex items-center gap-2 ${
-                    isDarkMode ? 'text-gray-100' : 'text-indigo-900'
-                  }`}>
-                    <span>📚 Section 5 Class Routine</span>
-                    <span className="px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full">LIVE</span>
-                  </h4>
-                  <p className={`text-sm leading-relaxed ${
-                    isDarkMode ? 'text-gray-300' : 'text-indigo-700'
-                  }`}>
-                    <strong>B.Sc. Engg. in CSE | Intake: 51-5 | Semester: Fall 2025</strong>
-                  </p>
-                  <p className={`text-xs mt-1 ${
-                    isDarkMode ? 'text-gray-400' : 'text-indigo-600'
-                  }`}>
-                    📌 Currently showing schedule for <strong>Section 5 only</strong>. More sections coming soon!
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className={`text-lg font-semibold ${
-                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>📅 Weekly Schedule</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={expandAllDays}
-                  className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                    isDarkMode
-                      ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
-                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                  }`}
-                >
-                  Expand All
-                </button>
-                <button
-                  onClick={collapseAllDays}
-                  className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                    isDarkMode
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Today Only
-                </button>
-              </div>
-            </div>
-
-            {/* Collapsible Days */}
-            <div className="space-y-2">
-              {currentSchedule.map((daySchedule) => {
-                const today = new Date();
-                const isToday = daySchedule.day === dayNames[today.getDay()];
-                const dayKey = makeDayKey(daySchedule);
-                const isExpanded = expandedDays.has(dayKey);
-                const hasClasses = daySchedule.slots.length > 0;
-
-                return (
-                  <div
-                    key={dayKey}
-                    className={`rounded-xl border-2 overflow-hidden transition-all ${
-                      isToday
-                        ? isDarkMode
-                          ? 'border-blue-500 bg-blue-900/30 shadow-md'
-                          : 'border-blue-400 bg-blue-50/50 shadow-md'
-                        : isDarkMode
-                          ? 'border-gray-700 bg-gray-800'
-                          : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    {/* Day Header - Clickable */}
-                    <button
-                      onClick={() => toggleDay(dayKey)}
-                      className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-                        isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`text-lg font-bold ${
-                          isToday
-                            ? isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                            : isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          {daySchedule.day}
-                        </span>
-                        {isToday && (
-                          <span className={`px-2 py-0.5 text-white text-xs font-bold rounded-full ${
-                            isDarkMode ? 'bg-blue-600' : 'bg-blue-500'
-                          }`}>
-                            TODAY
-                          </span>
-                        )}
-                        {!hasClasses && (
-                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                            isDarkMode
-                              ? 'bg-green-900/40 text-green-400'
-                              : 'bg-green-100 text-green-700'
-                          }`}>
-                            FREE DAY
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {hasClasses ? `${daySchedule.slots.length} class${daySchedule.slots.length > 1 ? 'es' : ''}` : 'No classes'}
-                        </span>
-                        <svg
-                          className={`w-5 h-5 transition-transform ${
-                            isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                          } ${isExpanded ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </button>
-
-                    {/* Day Content - Collapsible */}
-                    {isExpanded && hasClasses && (
-                      <div className="px-3 pb-3 space-y-2">
-                        {daySchedule.slots.map((slot, slotIndex) => {
-                          const classStatus = getCurrentClassStatus();
-                          const isCurrentClass = classStatus.status === 'ongoing' && 
-                                                  classStatus.currentClass?.courseCode === slot.courseCode && 
-                                                  classStatus.currentClass?.time === slot.time && 
-                                                  isToday;
-                          
-                          return (
-                            <div
-                              key={slotIndex}
-                              className={`p-3 rounded-lg border transition-all ${
-                                isCurrentClass
-                                  ? isDarkMode
-                                    ? 'border-green-500 bg-green-900/30 shadow-sm'
-                                    : 'border-green-400 bg-green-50 shadow-sm'
-                                  : isDarkMode
-                                    ? 'border-gray-700 bg-gray-700/50 hover:border-gray-600'
-                                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                {/* Left: Course Info */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <span className={`font-bold text-sm ${
-                                      isCurrentClass
-                                        ? isDarkMode ? 'text-green-400' : 'text-green-700'
-                                        : isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                                    }`}>
-                                      {slot.courseCode}
-                                    </span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                      slot.type === 'lab'
-                                        ? isDarkMode
-                                          ? 'bg-purple-900/40 text-purple-300'
-                                          : 'bg-purple-100 text-purple-700'
-                                        : isDarkMode
-                                          ? 'bg-blue-900/40 text-blue-300'
-                                          : 'bg-blue-100 text-blue-700'
-                                    }`}>
-                                      {slot.type === 'lab' ? '🧪 Lab' : '📖 Theory'}
-                                    </span>
-                                    {isCurrentClass && (
-                                      <span className="text-xs px-2 py-0.5 bg-green-500 text-white rounded-full font-semibold animate-pulse">
-                                        LIVE
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className={`text-sm line-clamp-1 ${
-                                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                  }`}>
-                                    {slot.courseName}
-                                  </p>
-                                </div>
-
-                                {/* Right: Time & Room */}
-                                <div className="text-right flex-shrink-0">
-                                  <div className={`text-sm font-semibold ${
-                                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                                  }`}>
-                                    {slot.time.split(' - ')[0]}
-                                  </div>
-                                  <div className={`text-xs ${
-                                    isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                                  }`}>
-                                    🏢 {slot.room}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Progress bar for current class */}
-                              {isCurrentClass && classStatus.minutesRemaining && (
-                                <div className={`mt-2 pt-2 border-t ${
-                                  isDarkMode ? 'border-green-700' : 'border-green-200'
-                                }`}>
-                                  <div className={`flex justify-between text-xs mb-1 ${
-                                    isDarkMode ? 'text-green-400' : 'text-green-700'
-                                  }`}>
-                                    <span>In Progress</span>
-                                    <span className="font-semibold">{classStatus.minutesRemaining} min left</span>
-                                  </div>
-                                  <div className={`w-full rounded-full h-1.5 ${
-                                    isDarkMode ? 'bg-green-900/50' : 'bg-green-200'
-                                  }`}>
-                                    <div
-                                      className="bg-green-500 h-1.5 rounded-full transition-all"
-                                      style={{ width: `${Math.max(0, Math.min(100, ((75 - classStatus.minutesRemaining) / 75) * 100))}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Smart Schedule Info */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl border border-blue-200">
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">📚</span>
-              </div>
-              <span className="font-semibold text-blue-800">{getRoutineTitle()}</span>
-            </div>
-            <p className="text-sm text-blue-700">
-              • Live schedule updates with real-time class status<br/>
-              • 🟣 Purple = Lab Classes | 🔵 Blue = Theory Classes<br/>
-              • Room numbers and timings from official routine<br/>
-              • Friday & Saturday are free days for self-study
-            </p>
-          </div>
-        </div>
         </div>
       </div>
     </div>

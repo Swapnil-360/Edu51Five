@@ -2729,6 +2729,30 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </button>
 
+              {/* Track All Routine */}
+              <a
+                href="https://routine.bubt.edu.bd/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowMobileMenu(false)}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? 'hover:bg-indigo-900/30 border-gray-700/50 hover:border-indigo-500/50 text-gray-100'
+                    : 'hover:bg-indigo-50 border-gray-200/50 hover:border-indigo-300 text-gray-900'
+                }`}
+              >
+                <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? 'bg-indigo-900/40' : 'bg-indigo-100'}`}>
+                  <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-semibold text-sm">Track All Routine</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>All intakes & sections</p>
+                </div>
+                <svg className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+
             </div>
 
             {/* Authentication Section - At Bottom */}
@@ -3168,7 +3192,7 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                   <div className="min-w-0">
                     <p className={`text-sm sm:text-base font-semibold leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Get verified for next semester and enable email/push alerts
+                      Register for full access and enable email/push notifications
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mt-1 text-2xs sm:text-xs">
                       <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
@@ -3194,7 +3218,7 @@ For any queries, contact your course instructors or the department.`,
                     Register now
                   </button>
                   <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-2xs sm:text-xs whitespace-nowrap`}>
-                    1 min setup with BUBT email
+                    Quick setup with your BUBT email
                   </span>
                 </div>
               </div>

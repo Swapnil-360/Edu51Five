@@ -5,12 +5,14 @@ interface MarqueeTickerProps {
 
 export default function MarqueeTicker({ isDarkMode }: MarqueeTickerProps) {
     const features = [
-        { icon: '📚', label: 'Course Materials' },
-        { icon: '📝', label: 'Past Questions' },
-        { icon: '🔔', label: 'Smart Notices' },
-        { icon: '📁', label: 'Google Drive' },
-        { icon: '⏰', label: 'Class Schedule' },
-        { icon: '📊', label: 'Semester Tracker' }
+        { icon: '📚', label: 'Course Materials & Resources' },
+        { icon: '📋', label: 'Exam Questions Archive' },
+        { icon: '🔔', label: 'Real-time Notifications' },
+        { icon: '☁️', label: 'Cloud Storage Integration' },
+        { icon: '📅', label: 'Academic Calendar Tracking' },
+        { icon: '📊', label: 'Semester Progress Monitor' },
+        { icon: '🗓️', label: 'Class Routine Management' },
+        { icon: '👥', label: 'Multi-Section Support' }
     ];
 
     return (
