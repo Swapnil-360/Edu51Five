@@ -25,9 +25,6 @@
     "react-router-dom": "^7.8.2",
     "swiper": "^12.0.3"
   },
-  "optionalDependencies": {
-    "html2pdf.js": "^0.9.3"
-  },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",

@@ -5,6 +5,7 @@ import { Notice } from './types';
 import { getGoogleDriveLink, getCourseCategories, getCategoryInfo, getCourseFiles } from './config/googleDrive';
 import { getCurrentSemesterStatus } from './config/semester';
 import SemesterTracker from './components/SemesterTracker';
+import CustomRoutine from './components/Student/CustomRoutine.tsx';
 import { 
   registerServiceWorker, 
   requestNotificationPermission, 
@@ -115,13 +116,14 @@ function App() {
 
   // Removed unused navigate and location from partial router migration
   // --- Browser history sync for currentView ---
-  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy'>(() => {
+  const [currentView, setCurrentView] = useState<'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy' | 'custom'>(() => {
     const path = window.location.pathname;
     if (path === '/admin') return 'admin';
     if (path === '/section5' || path === '/ai') return 'ai';
     if (path === '/software') return 'software';
     if (path === '/networking') return 'networking';
     if (path === '/semester') return 'semester';
+    if (path === '/custom-routine') return 'custom';
     if (path === '/privacy') return 'privacy';
     if (path.startsWith('/course/')) return 'course';
     // Always treat root, /home, or empty as home
@@ -131,7 +133,7 @@ function App() {
   });
 
   // Helper to change view and update browser history (memoized)
-  const goToView = useCallback((view: 'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy', extra?: string | null) => {
+  const goToView = useCallback((view: 'admin' | 'section5' | 'ai' | 'software' | 'networking' | 'course' | 'home' | 'semester' | 'privacy' | 'custom', extra?: string | null) => {
     let path = '/';
     if (view === 'admin') path = '/admin';
     else if (view === 'section5' || view === 'ai') path = '/ai';
@@ -139,6 +141,7 @@ function App() {
     else if (view === 'networking') path = '/networking';
     else if (view === 'semester') path = '/semester';
     else if (view === 'privacy') path = '/privacy';
+    else if (view === 'custom') path = '/custom-routine';
     else if (view === 'course' && extra) path = `/course/${extra}`;
     else if (view === 'home') path = '/home';
     window.history.pushState({}, '', path);
@@ -179,6 +182,7 @@ function App() {
       else if (path === '/software') setCurrentView('software');
       else if (path === '/networking') setCurrentView('networking');
       else if (path === '/semester') setCurrentView('semester');
+      else if (path === '/custom-routine') setCurrentView('custom');
       else if (path === '/privacy') setCurrentView('privacy');
       else if (path.startsWith('/course/')) setCurrentView('course');
       // Always treat root, /home, or empty as home
@@ -2711,6 +2715,12 @@ For any queries, contact your course instructors or the department.`,
               {/* Semester Tracker */}
               <button
                 onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification('error', '🔒 Please sign in to access Semester Tracker');
+                    setShowSignInModal(true);
+                    setShowMobileMenu(false);
+                    return;
+                  }
                   goToView('semester');
                   setShowMobileMenu(false);
                 }}
@@ -2718,10 +2728,10 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? 'hover:bg-blue-900/30 border-gray-700/50 hover:border-blue-500/50 text-gray-100'
                     : 'hover:bg-blue-50 border-gray-200/50 hover:border-blue-300 text-gray-900'
-                }`}
+                } ${!isLoggedIn ? 'opacity-60' : ''}`}
               >
                 <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                  <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <Clock className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 </div>
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-semibold text-sm">Semester Tracker</p>
@@ -2742,7 +2752,7 @@ For any queries, contact your course instructors or the department.`,
                 }`}
               >
                 <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? 'bg-indigo-900/40' : 'bg-indigo-100'}`}>
-                  <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                  <ExternalLink className={`w-5 h-5 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
                 </div>
                 <div className="text-left flex-1 min-w-0">
                   <p className="font-semibold text-sm">Track All Routine</p>
@@ -2752,6 +2762,33 @@ For any queries, contact your course instructors or the department.`,
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
+
+              {/* Custom Routine */}
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification('error', '🔒 Please sign in to access Custom Routine');
+                    setShowSignInModal(true);
+                    setShowMobileMenu(false);
+                    return;
+                  }
+                  goToView('custom');
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? 'hover:bg-purple-900/30 border-gray-700/50 hover:border-purple-500/50 text-gray-100'
+                    : 'hover:bg-purple-50 border-gray-200/50 hover:border-purple-300 text-gray-900'
+                } ${!isLoggedIn ? 'opacity-60' : ''}`}
+              >
+                <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? 'bg-purple-900/40' : 'bg-purple-100'}`}>
+                  <BookOpen className={`w-5 h-5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-semibold text-sm">Custom Routine</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Build your own schedule</p>
+                </div>
+              </button>
 
             </div>
 
@@ -3176,7 +3213,8 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* New Version CTA - Compact headline strip (moved above section cards) */}
+            {/* New Version CTA - Compact headline strip (moved above section cards) - Only show for guests */}
+            {!isLoggedIn && (
             <div className={`rounded-xl shadow-md border overflow-hidden transition-colors duration-300 ${
               isDarkMode
                 ? 'bg-gradient-to-r from-indigo-900 via-slate-900 to-gray-900 border-indigo-900/60'
@@ -3223,6 +3261,7 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
             </div>
+            )}
 
             {/* Major-Based Sections - Spring 2026 */}
             <div className="w-full">
@@ -5870,6 +5909,13 @@ For any queries, contact your course instructors or the department.`,
       {currentView === 'semester' && (
         <main className="fixed inset-0 z-50 overflow-hidden">
           <SemesterTracker onClose={() => goToView('home')} isDarkMode={isDarkMode} />
+        </main>
+      )}
+
+      {/* Custom Routine Page */}
+      {currentView === 'custom' && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <CustomRoutine onClose={() => goToView('home')} isDarkMode={isDarkMode} />
         </main>
       )}
 
