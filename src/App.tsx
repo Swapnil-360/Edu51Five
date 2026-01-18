@@ -2496,7 +2496,7 @@ For any queries, contact your course instructors or the department.`,
     <div className={`min-h-screen transition-colors duration-300 ${
       isDarkMode 
         ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800' 
-        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100'
+        : 'bg-white'
     }`}>
       {/* Major Access Notification Toast */}
       {majorAccessMessage && (
@@ -3175,14 +3175,13 @@ For any queries, contact your course instructors or the department.`,
             <div className="text-center py-8 sm:py-10">
               {/* Logo */}
               <div className="flex justify-center mb-6">
-                <div className={`rounded-3xl shadow-xl p-4 sm:p-5 transition-colors duration-300 ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-white'
-                }`}>
+                <div className="relative inline-block">
                   <img 
                     src="/image.png" 
                     alt="BUBT Logo" 
                     className="h-16 w-16 sm:h-20 sm:w-20 object-contain" 
                   />
+                  <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
                 </div>
               </div>
 
@@ -3215,10 +3214,10 @@ For any queries, contact your course instructors or the department.`,
 
             {/* New Version CTA - Compact headline strip (moved above section cards) - Only show for guests */}
             {!isLoggedIn && (
-            <div className={`rounded-xl shadow-md border overflow-hidden transition-colors duration-300 ${
+            <div className={`rounded-xl shadow-lg border overflow-hidden transition-colors duration-300 ${
               isDarkMode
                 ? 'bg-gradient-to-r from-indigo-900 via-slate-900 to-gray-900 border-indigo-900/60'
-                : 'bg-gradient-to-r from-indigo-50 via-blue-50 to-white border-indigo-100'
+                : 'bg-white border-gray-200'
             }`}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4">
                 <div className="flex items-center gap-3 min-w-0">
