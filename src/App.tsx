@@ -1433,6 +1433,9 @@ Best of luck with your studies!
       // PRIMARY SOURCE: Try to load ALL notices from database
       try {
         console.log('🔍 Attempting database query for notices...');
+        console.log('🔗 Supabase URL:', import.meta.env.VITE_SUPABASE_URL || 'NOT SET');
+        console.log('🔑 Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+        
         const { data: dbNotices, error } = await supabase
           .from('notices')
           .select('*')
@@ -1440,7 +1443,15 @@ Best of luck with your studies!
           .order('created_at', { ascending: false })
           .limit(5);
 
-        console.log('📊 Database response:', { hasData: !!dbNotices, dataLength: dbNotices?.length || 0, hasError: !!error, errorMsg: error?.message });
+        console.log('📊 Database response:', { 
+          hasData: !!dbNotices, 
+          dataLength: dbNotices?.length || 0, 
+          hasError: !!error, 
+          errorMsg: error?.message,
+          errorCode: error?.code,
+          errorDetails: error?.details,
+          errorHint: error?.hint
+        });
 
         if (!error && dbNotices && dbNotices.length > 0) {
           allNotices = dbNotices as Notice[];
@@ -1451,12 +1462,14 @@ Best of luck with your studies!
           setIsLoadingNotices(false);
           return; // Success! Exit early with database data
         } else if (error) {
-          console.warn('⚠️ Database error:', error.message);
+          console.error('⚠️ Database error:', error);
+          console.error('⚠️ Error details:', { message: error.message, code: error.code, details: error.details, hint: error.hint });
         } else {
-          console.log('ℹ️ No notices in database');
+          console.log('ℹ️ No notices in database (query returned empty array)');
         }
       } catch (dbErr) {
         console.error('❌ Database connection error:', dbErr);
+        console.error('❌ Error stack:', dbErr instanceof Error ? dbErr.stack : 'No stack trace');
       }
       
       console.log('💾 Checking localStorage for cached notices...');
