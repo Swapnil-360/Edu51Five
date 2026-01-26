@@ -1430,18 +1430,28 @@ Best of luck with your studies!
         console.warn('Could not restore read notices from localStorage', e);
       }
       
-      // PRIMARY SOURCE: Try to load ALL notices from database
+      // PRIMARY SOURCE: Try to load ALL notices from database with timeout
       try {
         console.log('🔍 Attempting database query for notices...');
         console.log('🔗 Supabase URL:', import.meta.env.VITE_SUPABASE_URL || 'NOT SET');
         console.log('🔑 Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
         
-        const { data: dbNotices, error } = await supabase
+        // Create a timeout promise (10 seconds)
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Database query timeout after 10 seconds')), 10000);
+        });
+        
+        // Race between query and timeout
+        const queryPromise = supabase
           .from('notices')
           .select('*')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(5);
+        
+        console.log('⏱️ Starting query with 10s timeout...');
+        const { data: dbNotices, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+        console.log('✅ Query completed!');
 
         console.log('📊 Database response:', { 
           hasData: !!dbNotices, 
@@ -1469,6 +1479,8 @@ Best of luck with your studies!
         }
       } catch (dbErr) {
         console.error('❌ Database connection error:', dbErr);
+        console.error('❌ Error type:', dbErr instanceof Error ? dbErr.constructor.name : typeof dbErr);
+        console.error('❌ Error message:', dbErr instanceof Error ? dbErr.message : String(dbErr));
         console.error('❌ Error stack:', dbErr instanceof Error ? dbErr.stack : 'No stack trace');
       }
       
