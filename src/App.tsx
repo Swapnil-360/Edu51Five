@@ -3495,8 +3495,8 @@ For any queries, contact your course instructors or the department.`,
             <div
               className={`rounded-2xl shadow-lg overflow-hidden mt-4 border transition-colors duration-300 ${
                 isDarkMode
-                  ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 border-slate-700/50'
-                  : 'bg-gradient-to-br from-white via-slate-50 to-blue-50 border-slate-200 shadow-slate-200/70'
+                  ? 'bg-slate-900 border-slate-700/50'
+                  : 'bg-white border-slate-200 shadow-slate-200/70'
               }`}
             >
               <div className="relative z-10 p-6">
