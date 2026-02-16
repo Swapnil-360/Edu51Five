@@ -47,14 +47,14 @@ export const SEMESTER_CONFIG: SemesterConfig = {
     
     midtermExams: {
       name: "Mid-term Examinations",
-      startDate: "2026-02-13",   // Mid-term exam period (Feb 13-20)
-      endDate: "2026-02-20",     // 8 days for midterms
+      startDate: "2026-02-17",   // Mid-term exam period (Feb 17-24)
+      endDate: "2026-02-24",     // 8 days for midterms
       type: 'midterm'
     },
     
     finalPrep: {
       name: "Final Exam Preparation",
-      startDate: "2026-02-22",   // Classes resume after Midterm (Feb 22)
+      startDate: "2026-02-26",   // Classes resume after Midterm (Feb 26)
       endDate: "2026-04-21",     // Last day of classes before Final (Apr 21)
       type: 'regular'
     },
@@ -195,13 +195,13 @@ export const SPECIAL_EVENTS = {
   },
   midtermStart: {
     name: "Mid-term Examinations Begin",
-    date: "2026-02-13",
+    date: "2026-02-17",
     description: "8-day mid-term examination period",
     icon: "📝"
   },
   classesResumeAfterMidterm: {
     name: "Classes Resume",
-    date: "2026-02-22",
+    date: "2026-02-26",
     description: "Regular classes resume after mid-term break",
     icon: "📚"
   },
@@ -252,7 +252,7 @@ export const getSemesterTimeline = () => {
       },
       {
         name: "Mid-terms",
-        date: "Feb 13-20",
+        date: "Feb 17-24",
         status: progress.isMidtermPeriod ? "current" : progress.daysToMidterm <= 0 ? "completed" : "upcoming",
         icon: "📝"
       },

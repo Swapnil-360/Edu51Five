@@ -108,15 +108,44 @@ export function SignInModal({
             console.warn('Profile load failed, using fallback:', profileError.message);
           }
 
-          const profile = (profileRows && profileRows[0]) || {
-            name: data?.user?.user_metadata?.name || 'Welcome Student',
-            section: '',
-            major: '',
-            bubt_email: normalizedIdentifier,
-            notification_email: '',
-            phone: '',
-            profile_pic: '',
-          };
+          let profile = (profileRows && profileRows[0]) || null;
+
+          if (!profile && data?.user?.id) {
+            const fallbackProfile = {
+              id: data.user.id,
+              name: data?.user?.user_metadata?.name || 'Welcome Student',
+              section: data?.user?.user_metadata?.section || '',
+              major: data?.user?.user_metadata?.major || '',
+              bubt_email: normalizedIdentifier,
+              notification_email: data?.user?.user_metadata?.notificationEmail || '',
+              phone: data?.user?.user_metadata?.phone || '',
+              profile_pic: data?.user?.user_metadata?.profilePic || '',
+              created_at: new Date().toISOString(),
+              last_login_at: new Date().toISOString(),
+            };
+
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([fallbackProfile]);
+
+            if (insertError) {
+              console.warn('Profile insert on first sign-in failed:', insertError.message);
+            } else {
+              profile = fallbackProfile;
+            }
+          }
+
+          if (!profile) {
+            profile = {
+              name: data?.user?.user_metadata?.name || 'Welcome Student',
+              section: '',
+              major: '',
+              bubt_email: normalizedIdentifier,
+              notification_email: '',
+              phone: '',
+              profile_pic: '',
+            };
+          }
 
           // Persist locally for offline usage
           const profileData = {

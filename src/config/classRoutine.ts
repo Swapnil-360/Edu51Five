@@ -248,8 +248,8 @@ export const getCurrentRoutineType = () => {
     return 'final_exam';
   }
   
-  // Mid-term exam period: September 14-24, 2025
-  if (currentMonth === 8 && currentDate >= 14 && currentDate <= 24) {
+  // Mid-term exam period: February 17-24, 2026
+  if (currentMonth === 1 && currentDate >= 17 && currentDate <= 24) {
     return 'midterm_exam';
   }
   

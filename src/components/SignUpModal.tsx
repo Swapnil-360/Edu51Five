@@ -222,34 +222,39 @@ export function SignUpModal({
           }
 
           const userId = data?.user?.id;
+          const hasSession = Boolean(data?.session?.user);
           if (!userId) {
             setError('Failed to create user account. Please try again.');
             return;
           }
 
-          const { error: profileError } = await supabase.from('profiles').insert([{
-            id: userId,
-            name,
-            section,
-            major,
-            bubt_email: bubtEmail,
-            notification_email: notificationEmail,
-            phone,
-            profile_pic: profilePic,
-            created_at: new Date().toISOString(),
-            last_login_at: new Date().toISOString(),
-          }]);
-          if (profileError) {
-            // Check for duplicate email error
-            if (profileError.message.includes('duplicate key value') || 
-                profileError.message.includes('profiles_bubt_email_key') ||
-                profileError.code === '23505') {
-              setError('This email is already registered. Please sign in instead.');
-            } else {
-              setError(profileError.message || 'Could not save profile');
+          // If email confirmation is required, there is no session yet.
+          // Defer profile creation until the first successful sign-in.
+          if (hasSession) {
+            const { error: profileError } = await supabase.from('profiles').insert([{
+              id: userId,
+              name,
+              section,
+              major,
+              bubt_email: bubtEmail,
+              notification_email: notificationEmail,
+              phone,
+              profile_pic: profilePic,
+              created_at: new Date().toISOString(),
+              last_login_at: new Date().toISOString(),
+            }]);
+            if (profileError) {
+              // Check for duplicate email error
+              if (profileError.message.includes('duplicate key value') || 
+                  profileError.message.includes('profiles_bubt_email_key') ||
+                  profileError.code === '23505') {
+                setError('This email is already registered. Please sign in instead.');
+              } else {
+                setError(profileError.message || 'Could not save profile');
+              }
+              console.error('Profile creation error:', profileError);
+              return;
             }
-            console.error('Profile creation error:', profileError);
-            return;
           }
         } else {
           // Update profile details only - use update instead of upsert to avoid duplicate key error

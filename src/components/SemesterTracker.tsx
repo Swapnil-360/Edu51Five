@@ -285,7 +285,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   }`}>Mid-term Exams</div>
                   <div className={`text-sm ${
                     semesterStatus.currentPhase === 'Mid-term Examinations' ? 'text-red-600' : 'text-blue-600'
-                  }`}>Feb 13-20, 2026</div>
+                  }`}>Feb 17-24, 2026</div>
                 </div>
                 <div className={`w-3 h-3 rounded-full ${
                   semesterStatus.currentPhase === 'Mid-term Examinations' 
@@ -410,7 +410,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             <div className={`p-4 rounded-xl border transition-all ${
               semesterStatus.isMidtermPeriod
                 ? isDarkMode ? 'bg-red-900/30 border-red-700/50 ring-2 ring-red-500/50' : 'bg-red-50 border-red-200 ring-2 ring-red-400/50'
-                : new Date() < new Date('2026-02-13')
+                : new Date() < new Date('2026-02-17')
                   ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
                   : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
@@ -418,7 +418,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 <div className={`p-2 rounded-lg ${
                   semesterStatus.isMidtermPeriod
                     ? 'bg-red-600 text-white animate-pulse'
-                    : new Date() < new Date('2026-02-13')
+                    : new Date() < new Date('2026-02-17')
                       ? 'bg-blue-600 text-white'
                       : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -432,10 +432,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     )}
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    February 13-20, 2026 (8 days)
+                    February 17-24, 2026 (8 days)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Preparatory leave: Feb 12
+                    Preparatory leave: Feb 16
                   </div>
                 </div>
               </div>
