@@ -224,6 +224,7 @@ function App() {
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [guestMajor, setGuestMajor] = useState('');
   const [authLoading, setAuthLoading] = useState(true);
   const [authSession, setAuthSession] = useState<any>(null);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
@@ -241,6 +242,8 @@ function App() {
     avatar_url: localStorage.getItem('userProfileAvatarUrl') || ''
   });
 
+  const activeMajor = isLoggedIn ? userProfile.major : guestMajor;
+
   // Major access notification state
   const [majorAccessMessage, setMajorAccessMessage] = useState<{type: 'error' | 'success' | 'info', message: string} | null>(null);
 
@@ -249,6 +252,12 @@ function App() {
     setMajorAccessMessage({ type, message });
     setTimeout(() => setMajorAccessMessage(null), 4000);
   };
+
+  useEffect(() => {
+    if (isLoggedIn && guestMajor) {
+      setGuestMajor('');
+    }
+  }, [isLoggedIn, guestMajor]);
 
   // Extract BUBT ID from email (22235103183 from 22235103183@cse.bubt.edu.bd)
   const extractBubtId = (email?: string) => {
@@ -2607,6 +2616,16 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Right: Theme Toggle & Notification Bell & Admin Logout */}
             <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-end flex-shrink-0">
+              {!isLoggedIn && (
+                <div className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
+                  isDarkMode
+                    ? 'bg-blue-900/40 text-blue-200 border-blue-500/40'
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                }`}>
+                  <span className="text-sm">👋</span>
+                  <span>Guest Mode</span>
+                </div>
+              )}
               {/* Theme Toggle Button */}
               <button
                 onClick={toggleDarkMode}
@@ -3254,17 +3273,17 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                   <div className="min-w-0">
                     <p className={`text-sm sm:text-base font-semibold leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Register for full access and enable email/push notifications
+                      Guest access is available for this semester only
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mt-1 text-2xs sm:text-xs">
                       <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
-                        Verified badge
+                        Materials access
                       </span>
                       <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-blue-500/20 text-blue-200 border border-blue-500/40' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-                        Email + push
+                        No account needed
                       </span>
                       <span className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? 'bg-purple-500/20 text-purple-200 border border-purple-500/40' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
-                        Early materials
+                        Create profile later
                       </span>
                     </div>
                   </div>
@@ -3277,10 +3296,10 @@ For any queries, contact your course instructors or the department.`,
                     }}
                     className="px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 transition-transform duration-150 hover:-translate-y-0.5"
                   >
-                    Register now
+                    Create profile
                   </button>
                   <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-2xs sm:text-xs whitespace-nowrap`}>
-                    Quick setup with your BUBT email
+                    Please create your profile before next semester
                   </span>
                 </div>
               </div>
@@ -3293,7 +3312,7 @@ For any queries, contact your course instructors or the department.`,
                 <p className={`text-sm font-medium transition-colors duration-300 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}>
-                  {isLoggedIn ? 'Select your major section' : '⚠️ Sign in required to access course materials'}
+                  {isLoggedIn ? 'Select your major section' : 'Guest access enabled for this semester. Please create your profile before next semester.'}
                 </p>
               </div>
 
@@ -3302,8 +3321,9 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
-                      showMajorAccessNotification('error', '🔒 Please sign in to access AI major materials');
-                      setShowSignInModal(true);
+                      setGuestMajor('AI');
+                      showMajorAccessNotification('info', '👋 Guest access enabled for this semester. Please create your profile before next semester.');
+                      goToView('ai');
                       return;
                     }
                     if (userProfile.major !== 'AI') {
@@ -3313,10 +3333,9 @@ For any queries, contact your course instructors or the department.`,
                     showMajorAccessNotification('success', '✅ Welcome to AI Major Section!');
                     goToView('ai');
                   }}
-                  disabled={!isLoggedIn}
                   className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
                     isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  }`}
                 >
                   <div
                     className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
@@ -3325,8 +3344,8 @@ For any queries, contact your course instructors or the department.`,
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-fuchsia-900/40 to-pink-900/40"></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                     {!isLoggedIn && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                        🔒 Login Required
+                      <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Guest Access
                       </div>
                     )}
                   </div>
@@ -3367,8 +3386,9 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
-                      showMajorAccessNotification('error', '🔒 Please sign in to access Software Engineering materials');
-                      setShowSignInModal(true);
+                      setGuestMajor('Software Engineering');
+                      showMajorAccessNotification('info', '👋 Guest access enabled for this semester. Please create your profile before next semester.');
+                      goToView('software');
                       return;
                     }
                     if (userProfile.major !== 'Software Engineering') {
@@ -3378,10 +3398,9 @@ For any queries, contact your course instructors or the department.`,
                     showMajorAccessNotification('success', '✅ Welcome to Software Engineering Section!');
                     goToView('software');
                   }}
-                  disabled={!isLoggedIn}
                   className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
                     isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  }`}
                 >
                   <div
                     className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
@@ -3390,8 +3409,8 @@ For any queries, contact your course instructors or the department.`,
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 via-cyan-900/40 to-teal-900/40"></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                     {!isLoggedIn && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                        🔒 Login Required
+                      <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Guest Access
                       </div>
                     )}
                   </div>
@@ -3432,8 +3451,9 @@ For any queries, contact your course instructors or the department.`,
                 <button
                   onClick={() => {
                     if (!isLoggedIn) {
-                      showMajorAccessNotification('error', '🔒 Please sign in to access Networking materials');
-                      setShowSignInModal(true);
+                      setGuestMajor('Networking');
+                      showMajorAccessNotification('info', '👋 Guest access enabled for this semester. Please create your profile before next semester.');
+                      goToView('networking');
                       return;
                     }
                     if (userProfile.major !== 'Networking') {
@@ -3443,10 +3463,9 @@ For any queries, contact your course instructors or the department.`,
                     showMajorAccessNotification('success', '✅ Welcome to Networking Section!');
                     goToView('networking');
                   }}
-                  disabled={!isLoggedIn}
                   className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
                     isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-                  } ${!isLoggedIn ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  }`}
                 >
                   <div
                     className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
@@ -3455,8 +3474,8 @@ For any queries, contact your course instructors or the department.`,
                     <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-emerald-900/40 to-teal-900/40"></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                     {!isLoggedIn && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                        🔒 Login Required
+                      <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Guest Access
                       </div>
                     )}
                   </div>
@@ -3638,23 +3657,32 @@ For any queries, contact your course instructors or the department.`,
         {/* Major Section Courses */}
         {(currentView === 'section5' || currentView === 'ai' || currentView === 'software' || currentView === 'networking') && (
           <div className="space-y-8">
-            {!isLoggedIn ? (
-              <div className="text-center py-20">
-                <div className="text-6xl mb-4">🔒</div>
-                <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                  Authentication Required
-                </h2>
-                <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Please sign in to access course materials
+            {!isLoggedIn && (
+              <div className={`rounded-2xl border p-6 text-center ${isDarkMode ? 'border-blue-500/30 bg-blue-900/20 text-blue-100' : 'border-blue-200 bg-blue-50 text-blue-900'}`}>
+                <div className="text-3xl mb-3">👋</div>
+                <h2 className="text-xl font-semibold mb-2">Guest access enabled for this semester</h2>
+                <p className={`text-sm ${isDarkMode ? 'text-blue-100/80' : 'text-blue-900/80'}`}>
+                  You can access materials without creating an account for this semester, but please create your profile before next semester.
                 </p>
-                <button
-                  onClick={() => setShowSignInModal(true)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Sign In Now
-                </button>
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      setShowSignUpModal(true);
+                    }}
+                    className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Create Profile
+                  </button>
+                  <button
+                    onClick={() => setShowSignInModal(true)}
+                    className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${isDarkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'}`}
+                  >
+                    Sign In
+                  </button>
+                </div>
               </div>
-            ) : (
+            )}
               <>
                 {/* Show individual course view if selected */}
                 {selectedDriveCourse ? (
@@ -3693,21 +3721,21 @@ For any queries, contact your course instructors or the department.`,
                       ? 'text-gray-100' 
                       : 'text-gray-900'
                   }`}>
-                    {userProfile.major === 'AI'
+                    {activeMajor === 'AI'
                       ? '🤖 AI Section'
-                      : userProfile.major === 'Software Engineering'
+                      : activeMajor === 'Software Engineering'
                         ? '💻 Software Engineering Section'
-                        : userProfile.major === 'Networking'
+                        : activeMajor === 'Networking'
                           ? '🌐 Networking Section'
                           : 'Department of CSE'} - Intake 51
                   </h2>
                   <p className={`text-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-                    {userProfile.major ? `${userProfile.major} Major` : 'Select your major'} • Choose your course to access materials
+                    {activeMajor ? `${activeMajor} Major` : 'Select your major'} • Choose your course to access materials
                   </p>
                 </div>
 
                 <GDriveFolderBrowser 
-                  userMajor={userProfile.major} 
+                  userMajor={activeMajor} 
                   isDarkMode={isDarkMode}
                   onCourseSelect={(course) => {
                     // Open course view in website
@@ -3772,7 +3800,6 @@ For any queries, contact your course instructors or the department.`,
                 </>
                 )}
               </>
-            )}
           </div>
         )}
 
