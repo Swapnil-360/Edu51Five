@@ -2328,6 +2328,101 @@ For queries, contact course instructors or the department.
     }, 0);
   };
 
+  // Admin: Insert Midterm Exam Routine notice (prebuilt) with HTML table
+  const handleInsertMidtermExamNotice = async () => {
+    if (!confirm('Insert the Midterm Exam Routine notice with the HTML table format?')) return;
+    
+    // Immediate UI feedback
+    setLoading(true);
+    
+    // Use requestIdleCallback or setTimeout to avoid blocking
+    setTimeout(async () => {
+      try {
+        const notice: Notice = {
+          id: 'exam-routine-midterm-2026',
+          title: '📅 Midterm Exam Routine - Section 2 (Feb 2026)',
+          content: `<h3>Exam Routine</h3>
+<p>
+Department: CSE<br>
+Intake: 51<br>
+Section: 2
+</p>
+
+<table style="width:100%; border-collapse: collapse; text-align:left;">
+  <thead>
+    <tr style="background:#1f4f82; color:white;">
+      <th style="padding:8px; border:1px solid #ccc;">Date</th>
+      <th style="padding:8px; border:1px solid #ccc;">Subject</th>
+      <th style="padding:8px; border:1px solid #ccc;">Time</th>
+      <th style="padding:8px; border:1px solid #ccc;">Room No</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">18-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">Computer Graphics</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">20-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">IoT</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/706</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">23-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">Data Mining</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top: 15px;">
+<strong>Important Notes:</strong><br>
+• Arrive 15 minutes early for each exam<br>
+• Carry your student ID and necessary materials<br>
+For queries, contact course instructors or the department.
+</p>`,
+          type: 'warning',
+          category: 'exam',
+          priority: 'high',
+          exam_type: 'midterm',
+          event_date: '',
+          created_at: new Date().toISOString(),
+          is_active: true
+        } as Notice;
+
+        // Update local state first (instant UI update)
+        const updatedNotices = [notice, ...notices.filter(n => n.id !== notice.id)].slice(0, 5);
+        setNotices(updatedNotices);
+        localStorage.setItem('edu51five_notices', JSON.stringify(updatedNotices));
+        
+        // Database operation in background (non-blocking)
+        supabase.from('notices').upsert([notice], { onConflict: 'id' })
+          .then(({ error }: { error: any }) => {
+            if (error) {
+              console.warn('Supabase upsert error:', error);
+            } else {
+              console.log('Midterm exam notice synced to database');
+            }
+          })
+          .catch((err: any) => console.warn('Database sync failed:', err));
+
+        // Notify other windows/tabs
+        window.dispatchEvent(new CustomEvent('edu51five-data-updated', { detail: { type: 'notices' } }));
+        
+        setLoading(false);
+        alert('✅ Midterm exam routine notice added successfully!');
+      } catch (err) {
+        console.error('Error inserting midterm exam notice:', err);
+        setLoading(false);
+        alert('Error adding midterm exam notice. See console for details.');
+      }
+    }, 0);
+  };
+
   // Admin: Delete notice
   const handleDeleteNotice = async (noticeId: string) => {
     // Confirm deletion of any notice
@@ -5303,6 +5398,17 @@ For any queries, contact your course instructors or the department.`,
                       }`}
                     >
                       ➕ Insert Final Exam Routine
+                    </button>
+                    <button
+                      onClick={handleInsertMidtermExamNotice}
+                      disabled={loading}
+                      className={`px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
+                        isDarkMode 
+                          ? 'border-yellow-400 text-yellow-300 hover:bg-yellow-900/30' 
+                          : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50'
+                      }`}
+                    >
+                      ➕ Insert Midterm Exam Routine
                     </button>
                     <button
                       onClick={handleCreateNotice}
