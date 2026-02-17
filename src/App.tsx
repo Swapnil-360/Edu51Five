@@ -5486,10 +5486,64 @@ For any queries, contact your course instructors or the department.`,
                   {(() => {
                     const content = selectedNotice.content || '';
 
+                    // Check if content is HTML
+                    const isHTML = /<[^>]+>/.test(content);
+
                     // detect embedded image or URL markers
                     const urlMatch = content.match(/\[EXAM_ROUTINE_URL\](.*?)\[\/EXAM_ROUTINE_URL\]/);
                     const imageMatch = content.match(/\[EXAM_ROUTINE_IMAGE\](.*?)\[\/EXAM_ROUTINE_IMAGE\]/);
                     const pdfMatch = content.match(/\[EXAM_ROUTINE_PDF\](.*?)\[\/EXAM_ROUTINE_PDF\]/);
+
+                    // If content is HTML, render it directly
+                    if (isHTML && !pdfMatch && !urlMatch && !imageMatch) {
+                      // Apply theme-aware styling to HTML content
+                      let styledContent = content;
+                      if (isDarkMode) {
+                        styledContent = content.replace(
+                          /<table/g,
+                          '<table style="border-collapse: collapse; width: 100%; background: rgba(31, 41, 55, 0.5); margin: 16px 0;'
+                        ).replace(
+                          /<th/g,
+                          '<th style="padding: 12px 8px; border: 1px solid rgb(107, 114, 128); color: white; font-weight: 600; background: #1f4f82;'
+                        ).replace(
+                          /<td/g,
+                          '<td style="padding: 10px 8px; border: 1px solid rgb(107, 114, 128); color: rgb(229, 231, 235);'
+                        ).replace(
+                          /<h3/g,
+                          '<h3 style="color: rgb(229, 231, 235); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;'
+                        ).replace(
+                          /<p/g,
+                          '<p style="color: rgb(209, 213, 219); margin-bottom: 12px; line-height: 1.6;'
+                        ).replace(
+                          /<br/g,
+                          '<br style="color: rgb(209, 213, 219);'
+                        );
+                      } else {
+                        styledContent = content.replace(
+                          /<table/g,
+                          '<table style="border-collapse: collapse; width: 100%; background: white; margin: 16px 0;'
+                        ).replace(
+                          /<th/g,
+                          '<th style="padding: 12px 8px; border: 1px solid rgb(209, 213, 219); color: white; font-weight: 600; background: #1f4f82;'
+                        ).replace(
+                          /<td/g,
+                          '<td style="padding: 10px 8px; border: 1px solid rgb(209, 213, 219); color: rgb(51, 65, 85);'
+                        ).replace(
+                          /<h3/g,
+                          '<h3 style="color: rgb(15, 23, 42); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;'
+                        ).replace(
+                          /<p/g,
+                          '<p style="color: rgb(55, 65, 81); margin-bottom: 12px; line-height: 1.6;'
+                        );
+                      }
+                      
+                      return (
+                        <div 
+                          className={`prose prose-sm sm:prose max-w-none transition-colors duration-300 overflow-x-auto`}
+                          dangerouslySetInnerHTML={{ __html: styledContent }}
+                        />
+                      );
+                    }
 
                     // parse simple structured routine lines into entries
                     const parseRoutineEntries = (text: string) => {
