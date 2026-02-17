@@ -5275,12 +5275,84 @@ For any queries, contact your course instructors or the department.`,
                       <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Exam Type</label>
                       <div className="grid grid-cols-2 gap-2">
                         {[
-                          { value: 'midterm', label: 'Mid-term', icon: '📝' },
-                          { value: 'final', label: 'Final', icon: '🎯' }
+                          { 
+                            value: 'midterm', 
+                            label: 'Mid-term', 
+                            icon: '📝',
+                            defaultTitle: '📅 Midterm Exam Routine - Section 2 (Feb 2026)',
+                            defaultContent: `<h3>Exam Routine</h3>
+<p>
+Department: CSE<br>
+Intake: 51<br>
+Section: 2
+</p>
+
+<table style="width:100%; border-collapse: collapse; text-align:left;">
+  <thead>
+    <tr style="background:#1f4f82; color:white;">
+      <th style="padding:8px; border:1px solid #ccc;">Date</th>
+      <th style="padding:8px; border:1px solid #ccc;">Subject</th>
+      <th style="padding:8px; border:1px solid #ccc;">Time</th>
+      <th style="padding:8px; border:1px solid #ccc;">Room No</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">18-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">Computer Graphics</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">20-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">IoT</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/706</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc;">23-02-2026</td>
+      <td style="padding:8px; border:1px solid #ccc;">Data Mining</td>
+      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top: 15px;">
+<strong>Important Notes:</strong><br>
+• Arrive 15 minutes early for each exam<br>
+• Carry your student ID and necessary materials<br>
+For queries, contact course instructors or the department.
+</p>`
+                          },
+                          { 
+                            value: 'final', 
+                            label: 'Final', 
+                            icon: '🎯',
+                            defaultTitle: '📅 Final Exam Routine - Section 5 (Dec 2025)',
+                            defaultContent: `Final examination schedule for Section 5 (Computer Science & Engineering).
+
+📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
+• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
+• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
+• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
+• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
+• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
+
+• Arrive 15 minutes early for each exam
+• Carry your student ID and necessary materials
+
+For queries, contact course instructors or the department.`
+                          }
                         ].map((examType) => (
                           <button
                             key={examType.value}
-                            onClick={() => setNewNotice({ ...newNotice, exam_type: examType.value as any })}
+                            onClick={() => setNewNotice({ 
+                              ...newNotice, 
+                              exam_type: examType.value as any,
+                              title: examType.defaultTitle,
+                              content: examType.defaultContent
+                            })}
                             className={`p-2 rounded-lg border text-sm transition-all ${
                               newNotice.exam_type === examType.value
                                 ? isDarkMode ? 'border-orange-400 bg-orange-900/50 text-gray-100' : 'border-orange-500 bg-orange-50'
@@ -5330,6 +5402,11 @@ For any queries, contact your course instructors or the department.`,
                 <div className="flex items-center mb-4">
                   <div className={`h-8 w-1 rounded-full mr-3 ${isDarkMode ? 'bg-green-400' : 'bg-green-600'}`}></div>
                   <h3 className={`text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Notice Content</h3>
+                  {newNotice.category === 'exam' && newNotice.exam_type && (
+                    <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium ${isDarkMode ? 'bg-green-900/50 text-green-300 border border-green-700' : 'bg-green-100 text-green-700 border border-green-300'}`}>
+                      ✅ Template loaded
+                    </span>
+                  )}
                 </div>
                 <div>
                 <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Notice Content</label>
@@ -5337,10 +5414,12 @@ For any queries, contact your course instructors or the department.`,
                   value={newNotice.content}
                   onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
                   className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
-                  rows={4}
+                  rows={6}
                   placeholder={
-                    newNotice.category === 'exam' ? 
-                    'Mid-term examinations will be held from September 14-24, 2025. Please check your individual exam schedules and prepare accordingly. Good luck!' :
+                    newNotice.category === 'exam' && newNotice.exam_type
+                    ? `(Auto-filled - feel free to edit)`
+                    : newNotice.category === 'exam' ? 
+                    'Select exam type above to auto-fill content, or enter custom content here' :
                     newNotice.category === 'event' ?
                     'Join us for an exciting event! More details will be shared soon.' :
                     'Enter the detailed content of your notice here...'
