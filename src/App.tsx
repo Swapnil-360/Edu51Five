@@ -5281,44 +5281,44 @@ For any queries, contact your course instructors or the department.`,
                             icon: '📝',
                             defaultTitle: '📅 Midterm Exam Routine - Section 2 (Feb 2026)',
                             defaultContent: `<h3>Exam Routine</h3>
-<p>
+<p style="margin-bottom: 15px; line-height: 1.8;">
 Department: CSE<br>
 Intake: 51<br>
 Section: 2
 </p>
 
-<table style="width:100%; border-collapse: collapse; text-align:left;">
+<table style="width:100%; border-collapse: collapse; text-align:left; font-size: 13px;">
   <thead>
-    <tr style="background:#1f4f82; color:white;">
-      <th style="padding:8px; border:1px solid #ccc;">Date</th>
-      <th style="padding:8px; border:1px solid #ccc;">Subject</th>
-      <th style="padding:8px; border:1px solid #ccc;">Time</th>
-      <th style="padding:8px; border:1px solid #ccc;">Room No</th>
+    <tr style="background:#1f4f82; color:white; font-weight: 600;">
+      <th style="padding:10px; border:1px solid #999; width:20%;">Date</th>
+      <th style="padding:10px; border:1px solid #999; width:30%;">Subject</th>
+      <th style="padding:10px; border:1px solid #999; width:30%;">Time</th>
+      <th style="padding:10px; border:1px solid #999; width:20%;">Room No</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="padding:8px; border:1px solid #ccc;">18-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">Computer Graphics</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+      <td style="padding:10px; border:1px solid #ccc;">18-02-2026</td>
+      <td style="padding:10px; border:1px solid #ccc;">Computer Graphics</td>
+      <td style="padding:10px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/319</td>
     </tr>
     <tr>
-      <td style="padding:8px; border:1px solid #ccc;">20-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">IoT</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/706</td>
+      <td style="padding:10px; border:1px solid #ccc;">20-02-2026</td>
+      <td style="padding:10px; border:1px solid #ccc;">IoT</td>
+      <td style="padding:10px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
+      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/706</td>
     </tr>
     <tr>
-      <td style="padding:8px; border:1px solid #ccc;">23-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">Data Mining</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
+      <td style="padding:10px; border:1px solid #ccc;">23-02-2026</td>
+      <td style="padding:10px; border:1px solid #ccc;">Data Mining</td>
+      <td style="padding:10px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
+      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/319</td>
     </tr>
   </tbody>
 </table>
 
-<p style="margin-top: 15px;">
+<p style="margin-top: 15px; line-height: 1.8;">
 <strong>Important Notes:</strong><br>
 • Arrive 15 minutes early for each exam<br>
 • Carry your student ID and necessary materials<br>
@@ -5575,45 +5575,26 @@ For queries, contact course instructors or the department.`
 
                     // If content is HTML, render it directly
                     if (isHTML && !pdfMatch && !urlMatch && !imageMatch) {
-                      // Apply theme-aware styling to HTML content
+                      // Apply theme-aware styling to HTML content - preserve existing styles
                       let styledContent = content;
                       if (isDarkMode) {
-                        styledContent = content.replace(
-                          /<table/g,
-                          '<table style="border-collapse: collapse; width: 100%; background: rgba(31, 41, 55, 0.5); margin: 16px 0;'
-                        ).replace(
-                          /<th/g,
-                          '<th style="padding: 12px 8px; border: 1px solid rgb(107, 114, 128); color: white; font-weight: 600; background: #1f4f82;'
-                        ).replace(
-                          /<td/g,
-                          '<td style="padding: 10px 8px; border: 1px solid rgb(107, 114, 128); color: rgb(229, 231, 235);'
-                        ).replace(
-                          /<h3/g,
-                          '<h3 style="color: rgb(229, 231, 235); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;'
-                        ).replace(
-                          /<p/g,
-                          '<p style="color: rgb(209, 213, 219); margin-bottom: 12px; line-height: 1.6;'
-                        ).replace(
-                          /<br/g,
-                          '<br style="color: rgb(209, 213, 219);'
-                        );
+                        // For dark mode, enhance with dark theme colors while preserving existing styles
+                        styledContent = content
+                          .replace(/<table(?!\s+style)/g, '<table style="border-collapse: collapse; width: 100%; background: rgba(31, 41, 55, 0.5); margin: 16px 0; overflow-x: auto;"')
+                          .replace(/<th(?!\s+style)/g, '<th style="padding: 12px 8px; border: 1px solid rgb(107, 114, 128); color: white; font-weight: 600; background: #1f4f82;"')
+                          .replace(/<td(?!\s+style)/g, '<td style="padding: 10px 8px; border: 1px solid rgb(107, 114, 128); color: rgb(229, 231, 235);"')
+                          .replace(/<h3(?!\s+style)/g, '<h3 style="color: rgb(229, 231, 235); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;"')
+                          .replace(/<p(?!\s+style)/g, '<p style="color: rgb(209, 213, 219); margin-bottom: 12px; line-height: 1.6;"')
+                          .replace(/<strong(?!\s+style)/g, '<strong style="color: rgb(229, 231, 235); font-weight: 700;">');
                       } else {
-                        styledContent = content.replace(
-                          /<table/g,
-                          '<table style="border-collapse: collapse; width: 100%; background: white; margin: 16px 0;'
-                        ).replace(
-                          /<th/g,
-                          '<th style="padding: 12px 8px; border: 1px solid rgb(209, 213, 219); color: white; font-weight: 600; background: #1f4f82;'
-                        ).replace(
-                          /<td/g,
-                          '<td style="padding: 10px 8px; border: 1px solid rgb(209, 213, 219); color: rgb(51, 65, 85);'
-                        ).replace(
-                          /<h3/g,
-                          '<h3 style="color: rgb(15, 23, 42); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;'
-                        ).replace(
-                          /<p/g,
-                          '<p style="color: rgb(55, 65, 81); margin-bottom: 12px; line-height: 1.6;'
-                        );
+                        // For light mode, ensure good contrast
+                        styledContent = content
+                          .replace(/<table(?!\s+style)/g, '<table style="border-collapse: collapse; width: 100%; background: white; margin: 16px 0; overflow-x: auto;"')
+                          .replace(/<th(?!\s+style)/g, '<th style="padding: 12px 8px; border: 1px solid rgb(209, 213, 219); color: white; font-weight: 600; background: #1f4f82;"')
+                          .replace(/<td(?!\s+style)/g, '<td style="padding: 10px 8px; border: 1px solid rgb(209, 213, 219); color: rgb(51, 65, 85);"')
+                          .replace(/<h3(?!\s+style)/g, '<h3 style="color: rgb(15, 23, 42); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;"')
+                          .replace(/<p(?!\s+style)/g, '<p style="color: rgb(55, 65, 81); margin-bottom: 12px; line-height: 1.6;"')
+                          .replace(/<strong(?!\s+style)/g, '<strong style="color: rgb(15, 23, 42); font-weight: 700;">');
                       }
                       
                       return (
