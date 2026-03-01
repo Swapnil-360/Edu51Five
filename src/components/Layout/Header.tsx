@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Menu, X } from 'lucide-react';
+import React from "react";
+import { Search, Menu, X } from "lucide-react";
 
 interface HeaderProps {
   isAdmin: boolean;
@@ -11,14 +11,14 @@ interface HeaderProps {
   websiteName?: string;
 }
 
-export function Header({ 
-  isAdmin, 
-  onAdminLogout, 
-  onSearch, 
-  searchQuery, 
-  onToggleMenu, 
+export function Header({
+  isAdmin,
+  onAdminLogout,
+  onSearch,
+  searchQuery,
+  onToggleMenu,
   isMenuOpen,
-  websiteName = "Edu51Five"
+  websiteName = "Edu51Five",
 }: HeaderProps) {
   return (
     <header className="header-professional bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 sticky top-0 z-50">
@@ -42,38 +42,46 @@ export function Header({
           <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
             {/* Professional Logo - Clean Minimal Style */}
             <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16">
-              <img 
-                src="/Edu_51_Logo.png" 
-                alt="Edu51Five Logo" 
-                className="w-full h-full object-contain"
+              <img
+                src="/Edu_51_Logo.png"
+                alt="Edu51Five Logo"
+                className="w-full h-full object-contain block"
+                width="64"
+                height="64"
+                decoding="async"
               />
             </div>
-            
+
             {/* Vertical separator line */}
             <div className="h-12 sm:h-14 md:h-16 w-0.5 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent"></div>
-            
+
             {/* Brand Name - Modern Typography */}
             <div className="flex flex-col justify-center -space-y-1">
               {/* Main Title */}
               <div className="flex items-baseline leading-tight">
-                <h1 className="tracking-tight" style={{ fontFamily: "'Orbitron', 'Rajdhani', 'Poppins', sans-serif" }}>
+                <h1
+                  className="tracking-tight"
+                  style={{
+                    fontFamily: "'Orbitron', 'Rajdhani', 'Poppins', sans-serif",
+                  }}
+                >
                   {/* EDU - White */}
                   <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-white">
                     EDU
                   </span>
-                  
+
                   {/* 51 - Orange */}
                   <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-orange-400 mx-0.5">
                     51
                   </span>
-                  
+
                   {/* FIVE - White */}
                   <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-white">
                     FIVE
                   </span>
                 </h1>
               </div>
-              
+
               {/* Subtitle */}
               <span className="text-xs sm:text-sm font-semibold text-gray-300">
                 Intake 51
@@ -101,10 +109,12 @@ export function Header({
             {isAdmin && (
               <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium text-green-200">Admin</span>
+                <span className="text-xs font-medium text-green-200">
+                  Admin
+                </span>
               </div>
             )}
-            
+
             {/* Admin Logout Button */}
             {isAdmin && onAdminLogout && (
               <button
@@ -116,7 +126,7 @@ export function Header({
             )}
           </div>
         </div>
-        
+
         {/* Mobile Search Bar */}
         <div className="md:hidden pb-4 pt-2">
           <div className="relative">
@@ -130,7 +140,7 @@ export function Header({
             />
           </div>
         </div>
-        
+
         {/* Mobile Menu Overlay */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-blue-900/95 backdrop-blur-lg border-t border-blue-700/30 shadow-2xl">
@@ -139,7 +149,9 @@ export function Header({
                 <>
                   <div className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-400/30 rounded-xl">
                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-200">Admin Mode Active</span>
+                    <span className="text-sm font-medium text-green-200">
+                      Admin Mode Active
+                    </span>
                   </div>
                   {onAdminLogout && (
                     <button
