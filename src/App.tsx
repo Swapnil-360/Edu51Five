@@ -252,7 +252,6 @@ function App() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [semesterStatus, setSemesterStatus] = useState(
     getCurrentSemesterStatus(),
   );
@@ -319,6 +318,40 @@ function App() {
     return match ? match[0] : local;
   };
 
+  // Columns to fetch for profile metadata — deliberately excludes profile_pic
+  // because it's a 400KB+ base64 blob that causes timeouts on free-tier Supabase.
+  // profile_pic is served from localStorage cache and refreshed in the background.
+  const PROFILE_META_COLS =
+    "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at";
+
+  const applyProfileData = (profileData: any, email: string, password: string) => {
+    const cachedPic = localStorage.getItem("userProfilePic") || "";
+    const pic = profileData?.profile_pic || cachedPic;
+    const updatedProfile = {
+      name: profileData?.name || "Welcome Student",
+      section: profileData?.section || "",
+      major: profileData?.major || "",
+      bubtEmail: profileData?.bubt_email || email,
+      notificationEmail: profileData?.notification_email || "",
+      phone: profileData?.phone || "",
+      password,
+      profilePic: pic,
+      avatar_url: pic,
+    };
+    localStorage.setItem("userProfileBubtEmail", updatedProfile.bubtEmail);
+    localStorage.setItem("userProfileName", updatedProfile.name);
+    localStorage.setItem("userProfileSection", updatedProfile.section);
+    localStorage.setItem("userProfileMajor", updatedProfile.major);
+    localStorage.setItem("userProfileNotificationEmail", updatedProfile.notificationEmail);
+    localStorage.setItem("userProfilePhone", updatedProfile.phone);
+    if (pic) {
+      localStorage.setItem("userProfilePic", pic);
+      localStorage.setItem("userProfileAvatarUrl", pic);
+    }
+    if (password) localStorage.setItem("userProfilePassword", password);
+    setUserProfile(updatedProfile);
+  };
+
   // Load profile from Supabase by email and update state/localStorage
   const loadProfileFromSupabase = async (
     email: string,
@@ -328,7 +361,7 @@ function App() {
       if (!email) return false;
       const { data: profileData, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_META_COLS)
         .eq("bubt_email", email.toLowerCase())
         .single();
 
@@ -337,38 +370,20 @@ function App() {
         return false;
       }
 
-      const updatedProfile = {
-        name: profileData?.name || "Welcome Student",
-        section: profileData?.section || "",
-        major: profileData?.major || "",
-        bubtEmail: profileData?.bubt_email || email,
-        notificationEmail: profileData?.notification_email || "",
-        phone: profileData?.phone || "",
-        password,
-        profilePic: profileData?.profile_pic || "",
-        avatar_url: profileData?.profile_pic || "",
-      };
-
-      // Persist for offline usage
-      localStorage.setItem("userProfileBubtEmail", updatedProfile.bubtEmail);
-      localStorage.setItem("userProfileName", updatedProfile.name);
-      localStorage.setItem("userProfileSection", updatedProfile.section);
-      localStorage.setItem("userProfileMajor", updatedProfile.major);
-      localStorage.setItem(
-        "userProfileNotificationEmail",
-        updatedProfile.notificationEmail,
-      );
-      localStorage.setItem("userProfilePhone", updatedProfile.phone);
-      if (updatedProfile.profilePic) {
-        localStorage.setItem("userProfilePic", updatedProfile.profilePic);
-        localStorage.setItem("userProfileAvatarUrl", updatedProfile.profilePic);
-      }
-      if (password) {
-        localStorage.setItem("userProfilePassword", password);
-      }
-
-      setUserProfile(updatedProfile);
+      applyProfileData(profileData, email, password);
       console.log("Profile loaded from Supabase");
+
+      // Refresh profile_pic in background so next session gets latest image
+      if (profileData?.id) {
+        supabase.from("profiles").select("profile_pic").eq("id", profileData.id).single()
+          .then(({ data: picRow }: { data: any }) => {
+            if (picRow?.profile_pic) {
+              localStorage.setItem("userProfilePic", picRow.profile_pic);
+              localStorage.setItem("userProfileAvatarUrl", picRow.profile_pic);
+              setUserProfile((prev: any) => ({ ...prev, profilePic: picRow.profile_pic, avatar_url: picRow.profile_pic }));
+            }
+          });
+      }
       return true;
     } catch (err) {
       console.error("Error loading profile from Supabase:", err);
@@ -385,7 +400,7 @@ function App() {
       if (!userId) return false;
       const { data: profileData, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_META_COLS)
         .eq("id", userId)
         .single();
 
@@ -394,37 +409,18 @@ function App() {
         return false;
       }
 
-      const updatedProfile = {
-        name: profileData?.name || "Welcome Student",
-        section: profileData?.section || "",
-        major: profileData?.major || "",
-        bubtEmail: profileData?.bubt_email || "",
-        notificationEmail: profileData?.notification_email || "",
-        phone: profileData?.phone || "",
-        password,
-        profilePic: profileData?.profile_pic || "",
-        avatar_url: profileData?.profile_pic || "",
-      };
-
-      localStorage.setItem("userProfileBubtEmail", updatedProfile.bubtEmail);
-      localStorage.setItem("userProfileName", updatedProfile.name);
-      localStorage.setItem("userProfileSection", updatedProfile.section);
-      localStorage.setItem("userProfileMajor", updatedProfile.major);
-      localStorage.setItem(
-        "userProfileNotificationEmail",
-        updatedProfile.notificationEmail,
-      );
-      localStorage.setItem("userProfilePhone", updatedProfile.phone);
-      if (updatedProfile.profilePic) {
-        localStorage.setItem("userProfilePic", updatedProfile.profilePic);
-        localStorage.setItem("userProfileAvatarUrl", updatedProfile.profilePic);
-      }
-      if (password) {
-        localStorage.setItem("userProfilePassword", password);
-      }
-
-      setUserProfile(updatedProfile);
+      applyProfileData(profileData, profileData?.bubt_email || "", password);
       console.log("Profile loaded from Supabase by ID");
+
+      // Refresh profile_pic in background
+      supabase.from("profiles").select("profile_pic").eq("id", userId).single()
+        .then(({ data: picRow }: { data: any }) => {
+          if (picRow?.profile_pic) {
+            localStorage.setItem("userProfilePic", picRow.profile_pic);
+            localStorage.setItem("userProfileAvatarUrl", picRow.profile_pic);
+            setUserProfile((prev: any) => ({ ...prev, profilePic: picRow.profile_pic, avatar_url: picRow.profile_pic }));
+          }
+        });
       return true;
     } catch (err) {
       console.error("Error loading profile by ID from Supabase:", err);
@@ -484,32 +480,56 @@ function App() {
           setAuthSession(session);
           setIsLoggedIn(true);
 
-          // Load profile from Supabase
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", session.user.id)
-            .single();
-
-          if (!profileError && profileData) {
-            const updatedProfile = {
-              name: profileData.name || "Welcome Student",
-              section: profileData.section || "",
-              major: profileData.major || "",
-              bubtEmail: profileData.bubt_email || session.user.email || "",
-              notificationEmail: profileData.notification_email || "",
-              phone: profileData.phone || "",
-              password: "", // Never store password in state
-              profilePic: profileData.profile_pic || "",
-              avatar_url: profileData.profile_pic || "",
-            };
-            setUserProfile(updatedProfile);
-
-            // Update last login timestamp
-            await supabase
+          // Try loading profile by auth user id first, then fall back to email.
+          // This handles both: tables where id = auth UUID, and tables where the
+          // profile was created with a different id but bubt_email matches.
+          let profileLoaded = await loadProfileFromSupabaseById(session.user.id);
+          if (!profileLoaded && session.user.email) {
+            profileLoaded = await loadProfileFromSupabase(
+              session.user.email.toLowerCase(),
+            );
+          }
+          if (!profileLoaded) {
+            console.warn(
+              "Profile not found in database for user:",
+              session.user.id,
+              session.user.email,
+            );
+            // Supabase may be slow/paused. Use user_metadata (set at signup) so
+            // the sidebar never shows "Welcome Student" for a real signed-in user.
+            const meta = session.user.user_metadata || {};
+            const cachedName = localStorage.getItem("userProfileName");
+            const fallbackName =
+              meta.name ||
+              cachedName ||
+              session.user.email?.split("@")[0] ||
+              "Student";
+            setUserProfile((prev: any) => ({
+              ...prev,
+              name: fallbackName,
+              bubtEmail: prev.bubtEmail || session.user.email || "",
+              section: prev.section || meta.section || "",
+              major: prev.major || meta.major || "",
+              phone: prev.phone || meta.phone || "",
+              notificationEmail:
+                prev.notificationEmail || meta.notificationEmail || "",
+            }));
+            // Retry profile load after 15s — gives Supabase cold-start time to wake up
+            setTimeout(async () => {
+              const retried = await loadProfileFromSupabaseById(session.user.id);
+              if (!retried && session.user.email) {
+                await loadProfileFromSupabase(session.user.email.toLowerCase());
+              }
+            }, 15000);
+          } else {
+            // Update last login timestamp in background
+            supabase
               .from("profiles")
               .update({ last_login_at: new Date().toISOString() })
-              .eq("id", session.user.id);
+              .eq("id", session.user.id)
+              .then(({ error: e }: { error: any }) => {
+                if (e) console.warn("last_login_at update failed:", e.message);
+              });
           }
         } else {
           // No session, check localStorage fallback
@@ -536,36 +556,51 @@ function App() {
       if (event === "SIGNED_IN" && session) {
         setAuthSession(session);
         setIsLoggedIn(true);
+        setShowSignInModal(false); // Always close sign-in modal on successful auth
 
-        // Load profile
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileData) {
-          const updatedProfile = {
-            name: profileData.name || "Welcome Student",
-            section: profileData.section || "",
-            major: profileData.major || "",
-            bubtEmail: profileData.bubt_email || session.user.email || "",
-            notificationEmail: profileData.notification_email || "",
-            phone: profileData.phone || "",
-            password: "",
-            profilePic: profileData.profile_pic || "",
-            avatar_url: profileData.profile_pic || "",
-          };
-          setUserProfile(updatedProfile);
-
-          // Store in localStorage for offline access
-          localStorage.setItem(
-            "userProfileBubtEmail",
-            updatedProfile.bubtEmail,
-          );
-          localStorage.setItem("userProfileName", updatedProfile.name);
-          localStorage.setItem("userProfileMajor", updatedProfile.major);
+        // IMMEDIATELY apply user_metadata so sidebar never shows "Welcome Student"
+        // while we wait for the DB profile query to complete.
+        const meta = session.user.user_metadata || {};
+        const cachedName = localStorage.getItem("userProfileName");
+        const cachedPic  = localStorage.getItem("userProfilePic") || "";
+        const quickName  =
+          meta.name ||
+          cachedName ||
+          session.user.email?.split("@")[0] ||
+          "Student";
+        if (quickName && quickName !== "Welcome Student") {
+          setUserProfile((prev: any) => ({
+            ...prev,
+            name: quickName,
+            bubtEmail: prev.bubtEmail || session.user.email || "",
+            section: prev.section || meta.section || "",
+            major: prev.major || meta.major || "",
+            phone: prev.phone || meta.phone || "",
+            notificationEmail: prev.notificationEmail || meta.notificationEmail || "",
+            profilePic: prev.profilePic || cachedPic,
+            avatar_url: prev.avatar_url || cachedPic,
+          }));
+          localStorage.setItem("userProfileName", quickName);
         }
+
+        // Load full profile from DB in background (non-blocking).
+        // loadProfileFromSupabase* helpers set state and persist all fields to localStorage.
+        const loadInBackground = async () => {
+          let loaded = await loadProfileFromSupabaseById(session.user.id);
+          if (!loaded && session.user.email) {
+            loaded = await loadProfileFromSupabase(session.user.email.toLowerCase());
+          }
+          if (!loaded) {
+            // Retry after 15s — gives Supabase cold-start time to wake up
+            setTimeout(async () => {
+              const retried = await loadProfileFromSupabaseById(session.user.id);
+              if (!retried && session.user.email) {
+                await loadProfileFromSupabase(session.user.email.toLowerCase());
+              }
+            }, 15000);
+          }
+        };
+        loadInBackground();
       } else if (event === "SIGNED_OUT") {
         setAuthSession(null);
         setIsLoggedIn(false);
@@ -590,6 +625,8 @@ function App() {
         localStorage.removeItem("userProfilePhone");
         localStorage.removeItem("userProfilePic");
         localStorage.removeItem("userProfileAvatarUrl");
+        localStorage.removeItem("userProfilePassword");
+        localStorage.removeItem("userProfile");
       }
     });
 
@@ -988,18 +1025,14 @@ function App() {
     }
   }, [currentView, isAdmin]);
 
-  // Real-time clock and semester status updates
+  // Update semester status only when it changes (check every minute)
   useEffect(() => {
-    const updateTimeAndStatus = () => {
-      setCurrentTime(new Date());
-      setSemesterStatus(getCurrentSemesterStatus());
-    };
-
-    // Update immediately
-    updateTimeAndStatus();
-
-    // Update every second for real-time display
-    const interval = setInterval(updateTimeAndStatus, 1000);
+    const interval = setInterval(() => {
+      const newStatus = getCurrentSemesterStatus();
+      setSemesterStatus((prev) => 
+        JSON.stringify(prev) !== JSON.stringify(newStatus) ? newStatus : prev
+      );
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -1158,15 +1191,7 @@ function App() {
     };
   }, []);
 
-  // Real-time semester tracking - update every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-      setSemesterStatus(getCurrentSemesterStatus());
-    }, 1000); // Update every second for live clock
-
-    return () => clearInterval(interval);
-  }, []);
+  // Duplicate semester tracking effect removed for performance optimization.
 
   // Keyboard shortcuts for material viewer
   useEffect(() => {
@@ -1615,183 +1640,68 @@ Best of luck with your studies!
     }
   };
 
-  // Load notices - Load all active notices (up to 5) from DATABASE first, then localStorage
+  // Load notices — cache-first so the UI is instant, then silently refresh from DB.
   const loadNotices = async () => {
-    // Prevent duplicate loading
-    if (isLoadingNotices) {
-      console.log("⏸️ Notice loading already in progress, skipping...");
-      return;
-    }
-
+    if (isLoadingNotices) return;
     setIsLoadingNotices(true);
-    try {
-      console.log("Loading all active notices (up to 5) from database...");
 
-      let allNotices: Notice[] = [];
-      // Restore persisted read-notice ids (we store reads in 'edu51five_read_notices')
+    try {
+      // Restore read-notice ids
       try {
         const readStr = localStorage.getItem("edu51five_read_notices");
         if (readStr) {
           const readArr = JSON.parse(readStr);
           if (Array.isArray(readArr)) setUnreadNotices(readArr);
         }
-      } catch (e) {
-        console.warn("Could not restore read notices from localStorage", e);
-      }
+      } catch (_) {}
 
-      // PRIMARY SOURCE: Try to load ALL notices from database with timeout
-      try {
-        console.log("🔍 Attempting database query for notices...");
-        console.log(
-          "🔗 Supabase URL:",
-          import.meta.env.VITE_SUPABASE_URL || "NOT SET",
-        );
-        console.log(
-          "🔑 Supabase Key exists:",
-          !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-        );
-
-        // Create a timeout promise (10 seconds)
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(
-            () => reject(new Error("Database query timeout after 10 seconds")),
-            10000,
-          );
-        });
-
-        // Race between query and timeout
-        const queryPromise = supabase
-          .from("notices")
-          .select("*")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        console.log("⏱️ Starting query with 10s timeout...");
-        const { data: dbNotices, error } = (await Promise.race([
-          queryPromise,
-          timeoutPromise,
-        ])) as any;
-        console.log("✅ Query completed!");
-
-        console.log("📊 Database response:", {
-          hasData: !!dbNotices,
-          dataLength: dbNotices?.length || 0,
-          hasError: !!error,
-          errorMsg: error?.message,
-          errorCode: error?.code,
-          errorDetails: error?.details,
-          errorHint: error?.hint,
-        });
-
-        if (!error && dbNotices && dbNotices.length > 0) {
-          allNotices = dbNotices as Notice[];
-          console.log("✅ Database notices loaded:", allNotices.length);
-          // Save to localStorage for offline access
-          localStorage.setItem("edu51five_notices", JSON.stringify(allNotices));
-          setNotices(allNotices);
-          setIsLoadingNotices(false);
-          return; // Success! Exit early with database data
-        } else if (error) {
-          console.error("⚠️ Database error:", error);
-          console.error("⚠️ Error details:", {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint,
-          });
-        } else {
-          console.log("ℹ️ No notices in database (query returned empty array)");
-        }
-      } catch (dbErr) {
-        console.error("❌ Database connection error:", dbErr);
-        console.error(
-          "❌ Error type:",
-          dbErr instanceof Error ? dbErr.constructor.name : typeof dbErr,
-        );
-        console.error(
-          "❌ Error message:",
-          dbErr instanceof Error ? dbErr.message : String(dbErr),
-        );
-        console.error(
-          "❌ Error stack:",
-          dbErr instanceof Error ? dbErr.stack : "No stack trace",
-        );
-      }
-
-      console.log("💾 Checking localStorage for cached notices...");
-
-      // FALLBACK: If database is empty or unavailable, try localStorage
+      // STEP 1 — Show cached notices immediately (zero wait)
+      let cachedNotices: Notice[] = [];
       const localNoticesStr = localStorage.getItem("edu51five_notices");
       if (localNoticesStr) {
         try {
-          const localNotices = JSON.parse(localNoticesStr);
-          allNotices = Array.isArray(localNotices)
-            ? localNotices.filter((n: any) => n && n.is_active).slice(0, 5)
+          const parsed = JSON.parse(localNoticesStr);
+          cachedNotices = Array.isArray(parsed)
+            ? parsed.filter((n: any) => n && n.is_active).slice(0, 5)
             : [];
-          console.log(
-            "💾 localStorage fallback successful:",
-            allNotices.length,
-            "notices",
-          );
-        } catch (e) {
-          console.error("❌ Error parsing localStorage notices:", e);
-        }
-      } else {
-        console.log("📭 localStorage is empty - will initialize defaults");
+        } catch (_) {}
       }
 
-      // If there are no notices from DB/localStorage, initialize defaults (welcome + routine)
-      if (!allNotices || allNotices.length === 0) {
-        console.log("🆕 Initializing default notices...");
+      if (cachedNotices.length > 0) {
+        setNotices(cachedNotices);
+        setIsLoadingNotices(false);
+      }
+
+      // STEP 2 — Refresh from DB in background (non-blocking)
+      // Even if Supabase is cold and takes 15-20s, the user already sees notices.
+      supabase
+        .from("notices")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(5)
+        .then(({ data: dbNotices, error }: { data: any; error: any }) => {
+          if (!error && dbNotices && dbNotices.length > 0) {
+            localStorage.setItem("edu51five_notices", JSON.stringify(dbNotices));
+            setNotices(dbNotices as Notice[]);
+            setIsLoadingNotices(false);
+          }
+        })
+        .catch(() => {/* silent — cached version already shown */});
+
+      // STEP 3 — If no cache existed, initialize defaults and wait for DB
+      if (cachedNotices.length === 0) {
         try {
           const defaults = await initializeDefaultNotices();
           if (defaults && defaults.length > 0) {
-            allNotices = defaults;
-            console.log(
-              "✅ Using initialized default notices:",
-              allNotices.length,
-            );
-          } else {
-            // as a last resort try to read what was written
-            const stored = localStorage.getItem("edu51five_notices");
-            if (stored) {
-              allNotices = JSON.parse(stored) as Notice[];
-              console.log(
-                "⚠️ Using notices from localStorage after initialization failed:",
-                allNotices.length,
-              );
-            }
+            setNotices(defaults);
           }
-        } catch (e) {
-          console.error("❌ Error creating default notices:", e);
-          // Final fallback: check localStorage one more time
-          const finalFallback = localStorage.getItem("edu51five_notices");
-          if (finalFallback) {
-            allNotices = JSON.parse(finalFallback) as Notice[];
-            console.log(
-              "⚠️ Final fallback: Using localStorage notices:",
-              allNotices.length,
-            );
-          } else {
-            console.error("❌ No notices available from any source!");
-            allNotices = [];
-          }
-        }
-      }
-
-      // Only set state if we have notices, otherwise state stays empty with a message
-      if (allNotices && allNotices.length > 0) {
-        setNotices(allNotices);
-        console.log("✅ All notices loaded:", allNotices.length, "notices");
-      } else {
-        console.warn("⚠️ No notices found after all fallback attempts");
-        setNotices([]);
+        } catch (_) {}
+        setIsLoadingNotices(false);
       }
     } catch (err) {
       console.error("Error loading notices:", err);
       setNotices([]);
-    } finally {
       setIsLoadingNotices(false);
     }
   };
@@ -3282,6 +3192,55 @@ For any queries, contact your course instructors or the department.`,
                 </button>
               </div>
 
+              {/* User Logout Button - visible for logged-in regular users */}
+              {isLoggedIn && !isAdmin && (
+                <button
+                  onClick={() => {
+                    setIsLoggedIn(false);
+                    setAuthSession(null);
+                    setUserProfile({
+                      name: "Welcome Student",
+                      section: "",
+                      major: "",
+                      bubtEmail: "",
+                      notificationEmail: "",
+                      phone: "",
+                      password: "",
+                      profilePic: "",
+                      avatar_url: "",
+                    });
+                    [
+                      "userProfileBubtEmail",
+                      "userProfileName",
+                      "userProfileMajor",
+                      "userProfileSection",
+                      "userProfileNotificationEmail",
+                      "userProfilePhone",
+                      "userProfilePic",
+                      "userProfilePassword",
+                      "userProfileAvatarUrl",
+                      "userProfile",
+                    ].forEach((k) => localStorage.removeItem(k));
+                    goToView("home");
+                    showMajorAccessNotification(
+                      "success",
+                      "Signed out successfully. See you soon!",
+                    );
+                    supabase.auth.signOut().catch((err) =>
+                      console.error("[SIGN OUT] Supabase error:", err),
+                    );
+                  }}
+                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
+                    isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
+                  }`}
+                  title="Sign Out"
+                >
+                  <LogOut
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-red-400" : "text-red-600"}`}
+                  />
+                </button>
+              )}
+
               {/* Admin Logout Button - Only visible when admin is logged in */}
               {isAdmin && (
                 <button
@@ -3534,70 +3493,44 @@ For any queries, contact your course instructors or the department.`,
               {isLoggedIn ? (
                 <button
                   onClick={async () => {
-                    try {
-                      console.log("[SIGN OUT] Button clicked");
-                      setShowMobileMenu(false);
+                    // Clear state immediately (optimistic) so UI reflects logout right away
+                    setShowMobileMenu(false);
+                    setIsLoggedIn(false);
+                    setAuthSession(null);
+                    setUserProfile({
+                      name: "Welcome Student",
+                      section: "",
+                      major: "",
+                      bubtEmail: "",
+                      notificationEmail: "",
+                      phone: "",
+                      password: "",
+                      profilePic: "",
+                      avatar_url: "",
+                    });
+                    const keysToRemove = [
+                      "userProfileBubtEmail",
+                      "userProfileName",
+                      "userProfileMajor",
+                      "userProfileSection",
+                      "userProfileNotificationEmail",
+                      "userProfilePhone",
+                      "userProfilePic",
+                      "userProfilePassword",
+                      "userProfileAvatarUrl",
+                      "userProfile",
+                    ];
+                    keysToRemove.forEach((key) => localStorage.removeItem(key));
+                    goToView("home");
+                    showMajorAccessNotification(
+                      "success",
+                      "Signed out successfully. See you soon!",
+                    );
 
-                      // Call Supabase sign out with proper error handling
-                      try {
-                        await supabase.auth.signOut();
-                        console.log("[SIGN OUT] Supabase signOut completed");
-                      } catch (supabaseError: any) {
-                        console.error(
-                          "[SIGN OUT] Supabase error:",
-                          supabaseError,
-                        );
-                        // Continue with local sign out even if Supabase fails
-                      }
-
-                      // Clear state
-                      setIsLoggedIn(false);
-                      setAuthSession(null);
-                      setUserProfile({
-                        name: "Welcome Student",
-                        section: "",
-                        major: "",
-                        bubtEmail: "",
-                        notificationEmail: "",
-                        phone: "",
-                        password: "",
-                        profilePic: "",
-                        avatar_url: "",
-                      });
-
-                      // Clear all localStorage
-                      const keysToRemove = [
-                        "userProfileBubtEmail",
-                        "userProfileName",
-                        "userProfileMajor",
-                        "userProfileSection",
-                        "userProfileNotificationEmail",
-                        "userProfilePhone",
-                        "userProfilePic",
-                        "userProfilePassword",
-                        "userProfileAvatarUrl",
-                        "userProfile",
-                      ];
-                      keysToRemove.forEach((key) =>
-                        localStorage.removeItem(key),
-                      );
-
-                      // Navigate to home
-                      goToView("home");
-                      showMajorAccessNotification(
-                        "success",
-                        "Signed out successfully. See you soon!",
-                      );
-                      console.log("[SIGN OUT] Complete - guest mode enabled");
-                    } catch (error) {
-                      console.error("[SIGN OUT] Unexpected error:", error);
-                      showMajorAccessNotification(
-                        "error",
-                        "Sign out encountered an issue, but you are now logged out.",
-                      );
-                      // Force logout anyway
-                      goToView("home");
-                    }
+                    // Revoke Supabase session in background
+                    supabase.auth.signOut().catch((err) =>
+                      console.error("[SIGN OUT] Supabase error:", err),
+                    );
                   }}
                   className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                     isDarkMode
@@ -8472,54 +8405,31 @@ For queries, contact course instructors or the department.`,
         onClose={() => setShowSignInModal(false)}
         isDarkMode={isDarkMode}
         onSignIn={(identifier, password, profile) => {
-          // Use profile data passed from SignInModal (already loaded from Supabase)
-          if (profile) {
-            setUserProfile({
-              name: profile.name || "Welcome Student",
-              section: profile.section || "",
-              major: profile.major || "",
-              bubtEmail: profile.bubt_email || profile.bubtEmail || "",
-              notificationEmail:
-                profile.notification_email || profile.notificationEmail || "",
-              phone: profile.phone || "",
-              password,
-              profilePic: profile.profile_pic || profile.profilePic || "",
-              avatar_url: profile.profile_pic || profile.profilePic || "",
-            });
-            console.log("✅ Profile loaded from SignInModal:", profile.name);
-          } else {
-            // Fallback to localStorage if no profile passed
-            const name =
-              localStorage.getItem("userProfileName") || "Welcome Student";
-            const section = localStorage.getItem("userProfileSection") || "";
-            const major = localStorage.getItem("userProfileMajor") || "";
-            const bubtEmail =
-              localStorage.getItem("userProfileBubtEmail") || "";
-            const notificationEmail =
-              localStorage.getItem("userProfileNotificationEmail") || "";
-            const phone = localStorage.getItem("userProfilePhone") || "";
-            const profilePic = localStorage.getItem("userProfilePic") || "";
-            const avatarUrl =
-              localStorage.getItem("userProfileAvatarUrl") || "";
-
-            setUserProfile({
-              name,
-              section,
-              major,
-              bubtEmail,
-              notificationEmail,
-              phone,
-              password,
-              profilePic,
-              avatar_url: avatarUrl || profilePic,
-            });
-            console.warn("Loaded profile from localStorage fallback");
-          }
-
-          // Set logged in state immediately
+          // onSignIn is called from SignInModal right after auth succeeds.
+          // The SIGNED_IN handler in onAuthStateChange has already applied
+          // user_metadata to state — this callback just ensures password is set
+          // and fills any gaps from the quick-profile built in SignInModal.
+          const picFromProfile = profile?.profile_pic || profile?.profilePic || "";
+          const cachedPic = localStorage.getItem("userProfilePic") || "";
+          setUserProfile((prev: any) => ({
+            ...prev,
+            // Keep name from SIGNED_IN handler (meta.name) unless it's still blank
+            name: (prev.name && prev.name !== "Welcome Student")
+              ? prev.name
+              : (profile?.name && profile.name !== "Welcome Student"
+                  ? profile.name
+                  : prev.name || identifier.split("@")[0] || "Student"),
+            section: prev.section || profile?.section || "",
+            major: prev.major || profile?.major || "",
+            bubtEmail: prev.bubtEmail || profile?.bubt_email || profile?.bubtEmail || identifier,
+            notificationEmail: prev.notificationEmail || profile?.notification_email || profile?.notificationEmail || "",
+            phone: prev.phone || profile?.phone || "",
+            password,
+            profilePic: prev.profilePic || picFromProfile || cachedPic,
+            avatar_url: prev.avatar_url || picFromProfile || cachedPic,
+          }));
           setIsLoggedIn(true);
           setShowSignInModal(false);
-          console.log("✅ User signed in successfully");
         }}
         onOpenSignUp={() => {
           setShowSignInModal(false);

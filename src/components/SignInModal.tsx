@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, LogIn, Mail, Lock, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, LogIn, Mail, Lock } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface SignInModalProps {
@@ -24,6 +24,10 @@ export function SignInModal({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Tracks the current submission attempt; incremented on every new submit and on
+  // every isOpen change so that stale async callbacks from a previous attempt are
+  // silently ignored instead of updating state or calling onSignIn.
+  const submissionIdRef = useRef(0);
   const isSupabaseAuthAvailable = supabaseConfigured && Boolean((supabase as any).auth?.signInWithOAuth);
 
   useEffect(() => {
@@ -44,13 +48,14 @@ export function SignInModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setIdentifier('');
-      setPassword('');
-      setError('');
-      setIsSubmitting(false);
-      setIsGoogleLoading(false);
-    }
+    // Invalidate any in-flight submission so its callbacks don't fire after
+    // this open/close transition, then reset all form state.
+    submissionIdRef.current += 1;
+    setIdentifier('');
+    setPassword('');
+    setError('');
+    setIsSubmitting(false);
+    setIsGoogleLoading(false);
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +78,11 @@ export function SignInModal({
     }
 
     setIsSubmitting(true);
+    // Snapshot the submission ID so we can detect if the modal was closed/reopened
+    // while this async call was in flight and silently discard the stale result.
+    submissionIdRef.current += 1;
+    const thisSubmissionId = submissionIdRef.current;
+    const isStale = () => submissionIdRef.current !== thisSubmissionId;
 
     try {
       const trimmedIdentifier = identifier.trim();
@@ -84,6 +94,8 @@ export function SignInModal({
             email: normalizedIdentifier,
             password,
           });
+
+          if (isStale()) return;
 
           if (error) {
             console.error('Supabase auth error:', error);
@@ -97,88 +109,82 @@ export function SignInModal({
             return;
           }
 
-          // Load profile from database
-          const { data: profileRows, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('bubt_email', normalizedIdentifier)
-            .limit(1);
-
-          if (profileError) {
-            console.warn('Profile load failed, using fallback:', profileError.message);
-          }
-
-          let profile = (profileRows && profileRows[0]) || null;
-
-          if (!profile && data?.user?.id) {
-            const fallbackProfile = {
-              id: data.user.id,
-              name: data?.user?.user_metadata?.name || 'Welcome Student',
-              section: data?.user?.user_metadata?.section || '',
-              major: data?.user?.user_metadata?.major || '',
-              bubt_email: normalizedIdentifier,
-              notification_email: data?.user?.user_metadata?.notificationEmail || '',
-              phone: data?.user?.user_metadata?.phone || '',
-              profile_pic: data?.user?.user_metadata?.profilePic || '',
-              created_at: new Date().toISOString(),
-              last_login_at: new Date().toISOString(),
-            };
-
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert([fallbackProfile]);
-
-            if (insertError) {
-              console.warn('Profile insert on first sign-in failed:', insertError.message);
-            } else {
-              profile = fallbackProfile;
-            }
-          }
-
-          if (!profile) {
-            profile = {
-              name: data?.user?.user_metadata?.name || 'Welcome Student',
-              section: '',
-              major: '',
-              bubt_email: normalizedIdentifier,
-              notification_email: '',
-              phone: '',
-              profile_pic: '',
-            };
-          }
-
-          // Persist locally for offline usage
-          const profileData = {
-            name: profile.name,
-            section: profile.section,
-            major: profile.major,
-            bubtEmail: profile.bubt_email,
-            notificationEmail: profile.notification_email,
-            phone: profile.phone,
-            password,
-            profilePic: profile.profile_pic,
+          // ── Close modal immediately using user_metadata + localStorage cache ──
+          // App.tsx's onAuthStateChange SIGNED_IN handler will load the full DB
+          // profile in the background — no need to block the modal on DB queries.
+          const meta = data.user.user_metadata || {};
+          const cachedPic = localStorage.getItem('userProfilePic') || '';
+          const profile: any = {
+            id: data.user.id || '',
+            name: meta.name || localStorage.getItem('userProfileName') || normalizedIdentifier.split('@')[0] || 'Student',
+            section: meta.section || localStorage.getItem('userProfileSection') || '',
+            major: meta.major || localStorage.getItem('userProfileMajor') || '',
+            bubt_email: normalizedIdentifier,
+            notification_email: meta.notificationEmail || localStorage.getItem('userProfileNotificationEmail') || '',
+            phone: meta.phone || localStorage.getItem('userProfilePhone') || '',
+            profile_pic: cachedPic,
           };
-          
-          localStorage.setItem('userProfile', JSON.stringify(profileData));
-          localStorage.setItem('userProfileName', profile.name || 'Welcome Student');
-          localStorage.setItem('userProfileSection', profile.section || '');
-          localStorage.setItem('userProfileMajor', profile.major || '');
-          localStorage.setItem('userProfileBubtEmail', profile.bubt_email || '');
-          localStorage.setItem('userProfileNotificationEmail', profile.notification_email || '');
-          localStorage.setItem('userProfilePhone', profile.phone || '');
-          if (profile.profile_pic) {
-            localStorage.setItem('userProfilePic', profile.profile_pic);
+
+          localStorage.setItem('userProfileName', profile.name);
+          localStorage.setItem('userProfileSection', profile.section);
+          localStorage.setItem('userProfileMajor', profile.major);
+          localStorage.setItem('userProfileBubtEmail', profile.bubt_email);
+          localStorage.setItem('userProfileNotificationEmail', profile.notification_email);
+          localStorage.setItem('userProfilePhone', profile.phone);
+          if (cachedPic) {
+            localStorage.setItem('userProfilePic', cachedPic);
+            localStorage.setItem('userProfileAvatarUrl', cachedPic);
           }
-          localStorage.setItem('userProfilePassword', password);
 
           setIsSubmitting(false);
-          console.log('✅ Sign in successful, closing modal');
           onClose();
           onSignIn(identifier, password, profile);
+
+          // Background: fetch full profile from DB and update localStorage so
+          // the next page load / App.tsx retry gets fresh data.
+          const META_COLS = 'id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at';
+          supabase
+            .from('profiles')
+            .select(META_COLS)
+            .eq('id', data.user.id)
+            .single()
+            .then(({ data: p }: { data: any }) => {
+              if (p) {
+                localStorage.setItem('userProfileName', p.name || profile.name);
+                localStorage.setItem('userProfileSection', p.section || '');
+                localStorage.setItem('userProfileMajor', p.major || '');
+                localStorage.setItem('userProfileBubtEmail', p.bubt_email || normalizedIdentifier);
+                localStorage.setItem('userProfileNotificationEmail', p.notification_email || '');
+                localStorage.setItem('userProfilePhone', p.phone || '');
+              }
+            })
+            .catch(() => {/* silent — user is already logged in */});
+
+          // Also refresh profile_pic separately (it's large, keep it non-blocking)
+          if (data.user.id) {
+            supabase
+              .from('profiles')
+              .select('profile_pic')
+              .eq('id', data.user.id)
+              .single()
+              .then(({ data: picRow }: { data: any }) => {
+                if (picRow?.profile_pic) {
+                  localStorage.setItem('userProfilePic', picRow.profile_pic);
+                  localStorage.setItem('userProfileAvatarUrl', picRow.profile_pic);
+                }
+              })
+              .catch(() => {});
+          }
           return;
         } catch (authError: any) {
+          if (isStale()) return;
           console.error('Supabase authentication exception:', authError);
-          setError('Unable to sign in. Please check your connection and try again.');
+          const msg: string = authError?.message || '';
+          if (msg.includes('timed out') || msg.includes('paused')) {
+            setError('Connection timed out. Your Supabase project may be paused — visit supabase.com/dashboard to resume it, then try again.');
+          } else {
+            setError('Unable to sign in. Please check your connection and try again.');
+          }
           return;
         }
       }
@@ -197,6 +203,7 @@ export function SignInModal({
       const passwordMatch = profile.password === password;
 
       if (identifierMatch && passwordMatch) {
+        if (isStale()) return;
         setIsSubmitting(false);
         console.log('✅ Sign in successful (local fallback)');
         onClose();
@@ -205,10 +212,11 @@ export function SignInModal({
         setError('Invalid credentials. Please check your email/phone and password.');
       }
     } catch (err) {
+      if (isStale()) return;
       console.error('Sign in error:', err);
       setError('Failed to sign in. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      if (!isStale()) setIsSubmitting(false);
     }
   };
 

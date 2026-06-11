@@ -300,17 +300,27 @@ export function SignUpModal({
         } else {
           // Update profile details only - use update instead of upsert to avoid duplicate key error
           try {
-            const { error: profileError } = await supabase
-              .from("profiles")
-              .update({
-                name,
-                section,
-                major,
-                notification_email: notificationEmail,
-                phone,
-                profile_pic: profilePic,
-              })
-              .eq("bubt_email", bubtEmail);
+            // Prefer updating by auth user ID (satisfies RLS auth.uid() = id policy)
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+
+            // Only include profile_pic if it actually changed — it's a 400KB+ base64
+            // blob and sending it every time causes request timeouts on free-tier Supabase.
+            const picChanged = profilePic !== (initialProfile?.profilePic ?? "");
+            const updatePayload: Record<string, any> = {
+              name,
+              section,
+              major,
+              notification_email: notificationEmail,
+              phone,
+            };
+            if (picChanged) updatePayload.profile_pic = profilePic;
+
+            const { error: profileError } = await (
+              userId
+                ? supabase.from("profiles").update(updatePayload).eq("id", userId)
+                : supabase.from("profiles").update(updatePayload).eq("bubt_email", bubtEmail)
+            );
 
             if (profileError) {
               console.error("Profile update error:", profileError);
@@ -319,7 +329,14 @@ export function SignUpModal({
             }
           } catch (updateError: any) {
             console.error("Profile update exception:", updateError);
-            setError("An error occurred while updating profile.");
+            const msg: string = updateError?.message ?? "";
+            if (msg.includes("timed out") || msg.includes("paused")) {
+              setError(
+                "Connection timed out. Your Supabase project may be paused — visit supabase.com/dashboard to resume it, then try again.",
+              );
+            } else {
+              setError("An error occurred while updating profile. Please try again.");
+            }
             return;
           }
         }

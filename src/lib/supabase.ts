@@ -63,8 +63,16 @@ function createSupabaseMock() {
     })
   } as any;
 
+  const authListeners: Array<(event: string, session: null) => void> = [];
   const auth = {
     signInWithOAuth: async () => ({ data: null, error: { message: 'Supabase not configured', code: 'MOCK_AUTH' } }),
+    signInWithPassword: async () => ({ data: null, error: { message: 'Supabase not configured', code: 'MOCK_AUTH' } }),
+    signOut: async () => ({ error: null }),
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: (callback: (event: string, session: null) => void) => {
+      authListeners.push(callback);
+      return { data: { subscription: { unsubscribe: () => { const i = authListeners.indexOf(callback); if (i > -1) authListeners.splice(i, 1); } } } };
+    },
   } as any;
 
   // Count queries: .select('*', { count: 'exact', head: true })
@@ -97,29 +105,38 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// How long (ms) before a Supabase HTTP request is aborted.
+// Free-tier projects cold-start in 10-15s — keep above that so the first
+// query after a sleep succeeds rather than hitting the user_metadata fallback.
+const SUPABASE_FETCH_TIMEOUT_MS = 20000;
+
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
       global: {
-        fetch: async (...args: any[]) => {
+        fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            SUPABASE_FETCH_TIMEOUT_MS,
+          );
+
           try {
-            const res: Response = await fetch(...args);
+            const res: Response = await fetch(input, {
+              ...init,
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+
             if (!res.ok) {
-              // Try to read response text/json for debugging
               let bodyText = '';
               try {
                 const ct = res.headers.get('content-type') || '';
-                if (ct.includes('application/json')) {
-                  const json = await res.clone().json();
-                  bodyText = JSON.stringify(json);
-                } else {
-                  bodyText = await res.clone().text();
-                }
-              } catch (e) {
-                bodyText = `Failed to read body: ${e?.message || e}`;
-              }
+                bodyText = ct.includes('application/json')
+                  ? JSON.stringify(await res.clone().json())
+                  : await res.clone().text();
+              } catch (_) { /* ignore body-read errors */ }
               console.error('Supabase fetch error', {
-                url: args[0],
-                options: args[1],
+                url: String(input),
                 status: res.status,
                 statusText: res.statusText,
                 body: bodyText,
@@ -127,7 +144,13 @@ export const supabase = isSupabaseConfigured
             }
             return res;
           } catch (error: any) {
-            // Suppress connection errors silently but log others for debugging
+            clearTimeout(timeoutId);
+            if (error?.name === 'AbortError') {
+              // Surface a clear error so sign-in/queries fail fast instead of hanging
+              throw new Error(
+                'Supabase request timed out. Your project may be paused — visit the Supabase dashboard to resume it, then try again.',
+              );
+            }
             if (error?.message?.includes('Could not establish connection')) {
               return new Response(JSON.stringify({ error: 'offline' }), { status: 0 });
             }

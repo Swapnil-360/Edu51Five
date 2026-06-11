@@ -2,9 +2,9 @@
 // File: public/sw.js
 
 // Bump cache name on deploy to invalidate older cached index.html/assets
-const CACHE_NAME = 'edu51five-v2';
+const CACHE_NAME = 'edu51five-v3';
+// Only cache true static images — never JS/CSS (Vite handles those via HMR)
 const urlsToCache = [
-  // Keep only static assets that are safe to cache across deploys
   '/Edu_51_Logo.png',
   '/image.png',
 ];
@@ -58,12 +58,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
+  // Never intercept cross-origin requests (Supabase API, CDN, etc.)
+  // Letting the browser handle them directly avoids breaking auth flows
+  // when extensions also have fetch interceptors in the chain.
+  if (!request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
   // Use network-first strategy for navigation requests to always get latest index.html
   if (request.mode === 'navigate' || (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'))) {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          // Update the cache with the latest navigation response
           caches.open(CACHE_NAME).then((cache) => {
             try { cache.put(request, networkResponse.clone()); } catch (e) { /* ignore */ }
           });
@@ -74,13 +80,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For other requests use cache-first then network fallback
+  // Cache-first for same-origin static assets only
+  if (request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(request).then((response) => {
       if (response) return response;
       return fetch(request).then((networkResponse) => {
-        // Optionally cache certain responses (non-opaque successful GETs)
-        if (networkResponse && networkResponse.status === 200 && request.method === 'GET' && networkResponse.type !== 'opaque') {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
           caches.open(CACHE_NAME).then((cache) => {
             try { cache.put(request, networkResponse.clone()); } catch (e) { /* ignore */ }
           });
