@@ -264,6 +264,11 @@ function App() {
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
+  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState<boolean>(
+    () => localStorage.getItem("edu51five_banner_v2_dismissed") !== "true"
+  );
+  const [isEditingNotice, setIsEditingNotice] = useState(false);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -3226,7 +3231,7 @@ For any queries, contact your course instructors or the department.`,
                       "success",
                       "Signed out successfully. See you soon!",
                     );
-                    supabase.auth.signOut().catch((err) =>
+                    supabase.auth.signOut().catch((err: any) =>
                       console.error("[SIGN OUT] Supabase error:", err),
                     );
                   }}
@@ -3528,7 +3533,7 @@ For any queries, contact your course instructors or the department.`,
                     );
 
                     // Revoke Supabase session in background
-                    supabase.auth.signOut().catch((err) =>
+                    supabase.auth.signOut().catch((err: any) =>
                       console.error("[SIGN OUT] Supabase error:", err),
                     );
                   }}
@@ -3583,17 +3588,6 @@ For any queries, contact your course instructors or the department.`,
               )}
             </div>
 
-            {/* Footer */}
-            <div
-              className={`mt-auto p-4 text-center text-xs border-t transition-colors duration-300 ${
-                isDarkMode
-                  ? "border-gray-700/30 text-gray-500"
-                  : "border-gray-200/50 text-gray-600"
-              }`}
-            >
-              <p className="font-semibold">Edu51Five</p>
-              <p className="mt-1">BUBT Intake 51 Excellence Platform</p>
-            </div>
           </div>
         </>
       )}
@@ -3950,6 +3944,42 @@ For any queries, contact your course instructors or the department.`,
       {/* Main Content - Enhanced Mobile Responsive Design */}
       {currentView !== "semester" && (
         <main className="pt-16 sm:pt-20 md:pt-20 lg:pt-24 xl:pt-24 min-h-screen overflow-x-hidden">
+
+          {/* ── Announcement Banner ── */}
+          {showAnnouncementBanner && (
+            <div className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Pulse dot */}
+                  <span className="relative flex-shrink-0 h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+                  </span>
+                  <p className="text-sm font-medium truncate">
+                    <span className="font-bold mr-1.5">Coming Soon —</span>
+                    <span className="opacity-90">Edu51Five v2 is on the way with major new features, built by team </span>
+                    <span className="font-semibold">Core We 5</span>
+                    <span className="opacity-90">. Launching within </span>
+                    <span className="font-semibold underline underline-offset-2 decoration-white/50">2 weeks</span>
+                    <span className="opacity-90">. Stay tuned!</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAnnouncementBanner(false);
+                    localStorage.setItem("edu51five_banner_v2_dismissed", "true");
+                  }}
+                  aria-label="Dismiss announcement"
+                  className="flex-shrink-0 p-1 rounded-md hover:bg-white/20 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
             {/* Home Page */}
             {currentView === "home" && (
@@ -4384,203 +4414,118 @@ For any queries, contact your course instructors or the department.`,
 
                 {/* Compact Connect & Support Section removed - moved into main footer below */}
 
-                {/* Developer & Copyright Footer */}
-                <div
-                  className={`rounded-2xl shadow-lg overflow-hidden mt-4 border transition-colors duration-300 ${
-                    isDarkMode
-                      ? "bg-slate-900 border-slate-700/50"
-                      : "bg-white border-slate-200 shadow-slate-200/70"
+                {/* ── Footer ── */}
+                <footer
+                  className={`rounded-2xl mt-4 border overflow-hidden transition-colors duration-300 ${
+                    isDarkMode ? "bg-slate-900 border-slate-700/50" : "bg-white border-slate-200"
                   }`}
                 >
-                  <div className="relative z-10 p-6">
-                    <div
-                      className={`pt-6 border-t transition-colors duration-300 ${isDarkMode ? "border-slate-700/50" : "border-slate-200"}`}
-                    >
-                      <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                        {/* Developer Info */}
-                        <div className="text-center md:text-left">
-                          <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
-                            <div className="w-8 h-8 rounded-full overflow-hidden shadow-md border-2 border-blue-400/50">
-                              <img
-                                src="/Swapnil.png"
-                                alt="Swapnil"
-                                className="w-full h-full object-cover block"
-                                width="32"
-                                height="32"
-                                decoding="async"
-                              />
-                            </div>
-                            <div>
-                              <p
-                                className={`text-sm transition-colors duration-300 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
-                              >
-                                Developed by{" "}
-                                <a
-                                  href="https://www.facebook.com/mr.swapnil360"
-                                  onClick={handleFacebookClick}
-                                  className={`transition-colors duration-200 font-semibold hover:underline inline-flex items-center space-x-1 ${isDarkMode ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-700"}`}
-                                  title="Connect with Swapnil on Facebook"
-                                >
-                                  <span>Swapnil</span>
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                  </svg>
-                                </a>
-                              </p>
-                              <p
-                                className={`text-xs transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
-                              >
-                                Intake 51, Sec 2(Ai)
-                              </p>
-                              <p
-                                className={`text-xs transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
-                              >
-                                Dept. of CSE, BUBT
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                  <div className="px-6 pt-8 pb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
 
-                        {/* Copyright & Legal */}
-                        <div className="text-center md:text-right">
-                          <p
-                            className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? "text-slate-300" : "text-slate-800"}`}
+                      {/* Col 1 — Brand */}
+                      <div className="sm:col-span-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <img src="/Edu_51_Logo.png" alt="Edu51Five" className="w-8 h-8 rounded-lg object-contain" />
+                          <span className={`text-base font-bold tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                            Edu<span className="text-blue-500">51</span>Five
+                          </span>
+                        </div>
+                        <p className={`text-xs leading-relaxed mb-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                          BUBT Intake 51 Excellence Platform — your all-in-one academic hub for courses, routines, and campus resources.
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href="https://www.facebook.com/mr.swapnil360"
+                            onClick={handleFacebookClick}
+                            target="_blank" rel="noopener noreferrer"
+                            title="Facebook" aria-label="Facebook"
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? "bg-slate-800 hover:bg-blue-600 text-slate-400 hover:text-white" : "bg-slate-100 hover:bg-blue-600 text-slate-500 hover:text-white"}`}
                           >
-                            © {new Date().getFullYear()} Edu51Five
-                          </p>
-                          <p
-                            className={`text-xs transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                          </a>
+                          <a
+                            href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I need help with Edu51Five.")}`}
+                            onClick={handleWhatsAppClick}
+                            target="_blank" rel="noopener noreferrer"
+                            title="WhatsApp" aria-label="WhatsApp"
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? "bg-slate-800 hover:bg-green-600 text-slate-400 hover:text-white" : "bg-slate-100 hover:bg-green-600 text-slate-500 hover:text-white"}`}
                           >
-                            BUBT Intake 51 • All rights reserved
-                          </p>
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                          </a>
+                          <button
+                            onClick={handleEmailClick}
+                            title="Email Support" aria-label="Email Support"
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? "bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white" : "bg-slate-100 hover:bg-red-600 text-slate-500 hover:text-white"}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
 
-                      {/* Connect & Support (merged) with improved icons */}
-                      <div
-                        className={`mt-4 pt-4 border-t transition-colors duration-300 ${isDarkMode ? "border-slate-700/30" : "border-slate-200"}`}
-                      >
-                        <div className="max-w-4xl mx-auto text-center">
-                          <h3
-                            className={`text-sm font-semibold mb-2 transition-colors duration-300 ${isDarkMode ? "text-slate-200" : "text-slate-900"}`}
-                          >
-                            Connect & Support
-                          </h3>
-                          <p
-                            className={`text-xs mb-3 transition-colors duration-300 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
-                          >
-                            Found a bug? Have suggestions? Reach out — we
-                            appreciate your feedback.
-                          </p>
-
-                          <div className="flex items-center justify-center gap-3">
-                            <button
-                              onClick={handleEmailClick}
-                              title="Email Support"
-                              aria-label="Email Support"
-                              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
-                                isDarkMode
-                                  ? "bg-slate-700 hover:bg-slate-600 border-slate-600"
-                                  : "bg-white hover:bg-slate-100 border-slate-200"
-                              }`}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                              >
-                                <path
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                  stroke="#ef4444"
-                                  strokeWidth={2}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-
-                            <a
-                              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I need help with Edu51Five.")}`}
-                              onClick={handleWhatsAppClick}
-                              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
-                                isDarkMode
-                                  ? "bg-slate-700 hover:bg-slate-600 border-slate-600"
-                                  : "bg-white hover:bg-slate-100 border-slate-200"
-                              }`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="WhatsApp Support"
-                              aria-label="WhatsApp Support"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                              >
-                                <path
-                                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                                  stroke="#10b981"
-                                  strokeWidth={2}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M8 10h.01M12 10h.01M16 10h.01"
-                                  stroke="#10b981"
-                                  strokeWidth={2}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </a>
-
-                            <a
-                              href="https://www.facebook.com/mr.swapnil360"
-                              onClick={handleFacebookClick}
-                              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition border ${
-                                isDarkMode
-                                  ? "bg-slate-700 hover:bg-slate-600 border-slate-600"
-                                  : "bg-white hover:bg-slate-100 border-slate-200"
-                              }`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Facebook"
-                              aria-label="Facebook"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                              >
-                                <circle
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="#1877f2"
-                                  strokeWidth={2}
-                                />
-                                <path
-                                  d="M16 8h-2a2 2 0 0 0-2 2v8M11 13h6"
-                                  stroke="#1877f2"
-                                  strokeWidth={2}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </a>
-                          </div>
-                        </div>
+                      {/* Col 2 — About */}
+                      <div>
+                        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>About</h4>
+                        <ul className={`space-y-2 text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                          <li>BUBT · Dept. of CSE</li>
+                          <li>Intake 51 · All Sections</li>
+                          <li>Academic Resource Hub</li>
+                          <li>Exam Routines & Notices</li>
+                          <li>Course Materials & Tracker</li>
+                        </ul>
                       </div>
+
+                      {/* Col 3 — Support */}
+                      <div>
+                        <h4 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Support</h4>
+                        <ul className="space-y-2">
+                          {[
+                            { label: "Report a Bug", action: () => handleEmailClick() },
+                            { label: "Contact Support", action: () => handleEmailClick() },
+                          ].map(({ label, action }) => (
+                            <li key={label}>
+                              <button onClick={action} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                                {label}
+                              </button>
+                            </li>
+                          ))}
+                          <li>
+                            <a
+                              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I have a suggestion for Edu51Five.")}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}
+                            >
+                              Send Feedback
+                            </a>
+                          </li>
+                          <li>
+                            <a
+                              href="https://www.mrswapnil.me"
+                              target="_blank" rel="noopener noreferrer"
+                              className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}
+                            >
+                              Developer Portfolio ↗
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+
                     </div>
                   </div>
-                </div>
+
+                  {/* Bottom bar */}
+                  <div className={`px-6 py-4 border-t flex items-center justify-center transition-colors duration-300 ${isDarkMode ? "border-slate-700/50 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
+                    <p className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                      © {new Date().getFullYear()} Edu51Five · BUBT Intake 51 · All rights reserved.
+                    </p>
+                  </div>
+                </footer>
               </div>
             )}
 

@@ -35,36 +35,6 @@
       body{display:flex;flex-direction:column;min-height:100vh;margin:0;background:var(--page-bg,#fff);}
       #root{flex:1;display:block}
 
-      /* Footer styles with improved contrast and responsive layout */
-      .site-footer{width:100%;box-sizing:border-box;padding:20px 14px;border-top:1px solid rgba(14,42,69,0.06);font-family:Poppins, sans-serif;color:inherit;background:#ffffff;transition:background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease}
-      .site-footer .inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;align-items:center}
-      .site-footer .meta{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
-      .site-footer .brand{display:flex;align-items:center;gap:12px}
-      .site-footer .brand .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px;transition:color 0.3s ease}
-      .site-footer .title{font-weight:700;color:#0f172a;font-size:15px;letter-spacing:0.2px;transition:color 0.3s ease}
-      .site-footer .brand .subtitle{font-size:13px;color:#0f172a;transition:color 0.3s ease}
-      .site-footer .contact{font-size:14px;transition:color 0.3s ease}
-      .site-footer a{color:#1e40af;text-decoration:underline;transition:color 0.3s ease}
-
-      /* Mobile-first: stack content and center align */
-      @media (max-width:479px){
-        .site-footer{padding:18px 12px}
-        .site-footer .inner{padding:4px 6px}
-        .site-footer .meta{gap:6px}
-        .site-footer .brand{justify-content:center}
-        .site-footer .contact{width:100%;text-align:center}
-        .site-footer .contact div{margin:2px 0}
-      }
-
-      /* Desktop: align brand left and contact right */
-      @media(min-width:480px){
-        .site-footer .inner{flex-direction:row;align-items:center;justify-content:space-between}
-        .site-footer .meta{flex-direction:row;align-items:center;justify-content:space-between;text-align:left}
-        .site-footer .brand{margin-bottom:0}
-        .site-footer .contact{text-align:right}
-        .site-footer .contact{display:flex;flex-direction:column;align-items:flex-end}
-      }
-
       /* Skeleton (pre-mount placeholder) */
       /* Make skeleton a full-viewport overlay so footer cannot show through */
       .skeleton{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px 12px;box-sizing:border-box;background:#fff !important;z-index:9999}
@@ -94,42 +64,10 @@
         @keyframes spin{to{transform:rotate(360deg)}}
 
       /* Dark theme adjustments - using .dark class for manual toggle */
-      .dark .site-footer{background:#1f2937;border-top:1px solid rgba(255,255,255,0.06);color:#cbd5e1}
-      .dark .site-footer .title{color:#e6eef8}
-      .dark .site-footer .brand .title{color:#e6eef8}
-      .dark .site-footer .brand .subtitle{color:#94a3b8}
-      .dark .site-footer .subtitle{color:#94a3b8}
-      .dark .site-footer .contact{color:#cbd5e1}
-      .dark .site-footer a{color:#60a5fa}
-      
-      /* Fallback: Also support system preference */
       @media (prefers-color-scheme: dark){
-        .site-footer{background:#1f2937;border-top:1px solid rgba(255,255,255,0.06);color:#cbd5e1}
-        .site-footer .title{color:#e6eef8}
-        .site-footer .brand .title{color:#e6eef8}
-        .site-footer .brand .subtitle{color:#94a3b8}
-        .site-footer .subtitle{color:#94a3b8}
-        .site-footer .contact{color:#cbd5e1}
-
-        /* Ensure the brand subtitle specifically is readable in dark mode */
-        .dark .site-footer .brand .subtitle{color:#94a3b8 !important}
-        .dark .site-footer .subtitle{color:#94a3b8 !important}
-
-        /* Ensure mail and privacy links meet 24px touch target and have sufficient contrast */
-        a[href^="mailto:"], a[href$="/privacy"], .site-footer a {
-          display: inline-block;
-          padding: 6px 8px;
-          min-height: 24px;
-          min-width: 24px;
-          line-height: 1;
-          border-radius: 6px;
-        }
-        .site-footer a{color:#60a5fa}
         .skeleton-title{color:#e6eef8}
-        .skeleton-sub,.skeleton-contact{color:#94a3b8}
+        .skeleton-sub{color:#94a3b8}
       }
-      /* JS-driven fallback: when the page has class `skeleton-active` hide footer */
-      .skeleton-active .site-footer{display:none !important}
     </style>
     <script>
       // Ensure footer is hidden while the initial loading skeleton is active.
@@ -166,24 +104,6 @@
         </div>
       </div>
     </div>
-
-    <footer class="site-footer">
-      <div class="meta">
-        <div class="brand">
-          <img alt="Edu51Five logo" src="/Edu_51_Logo.png" style="height:40px;width:40px;object-fit:cover;border-radius:8px" />
-          <div>
-            <div class="title">Edu51Five</div>
-            <div class="subtitle">Student portal for BUBT Intake 51 — course materials & tracking</div>
-          </div>
-        </div>
-        <div class="contact" style="text-align:right;font-size:14px;">
-          <div>Contact: <a href="mailto:edu51five@gmail.com">edu51five@gmail.com</a></div>
-          <div><a href="/privacy">Privacy Policy</a></div>
-        </div>
-      </div>
-
-      
-    </footer>
 
     <script type="module" src="/src/main.tsx"></script>
   </body>
