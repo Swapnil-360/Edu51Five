@@ -69,7 +69,13 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  Users,
+  GraduationCap,
 } from "lucide-react";
+import ProfilePage from "./components/Profile/ProfilePage";
+import NetworkPage from "./components/Network/NetworkPage";
+import TeamsPage from "./components/Teams/TeamsPage";
+import TeamPage from "./components/Teams/TeamPage";
 
 interface Course {
   id: string;
@@ -132,6 +138,11 @@ function App() {
     | "semester"
     | "privacy"
     | "custom"
+    | "profile"
+    | "network"
+    | "teams"
+    | "team"
+    | "alumni"
   >(() => {
     const path = window.location.pathname;
     if (path === "/admin") return "admin";
@@ -142,10 +153,25 @@ function App() {
     if (path === "/custom-routine") return "custom";
     if (path === "/privacy") return "privacy";
     if (path.startsWith("/course/")) return "course";
+    if (path === "/profile" || path.startsWith("/u/")) return "profile";
+    if (path === "/network") return "network";
+    if (path.startsWith("/teams/")) return "team";
+    if (path === "/teams") return "teams";
+    if (path === "/alumni") return "alumni";
     // Always treat root, /home, or empty as home
     if (path === "/" || path === "/home" || path === "" || !path) return "home";
     // Fallback: if path is not recognized, force home view
     return "home";
+  });
+
+  // V2 social routing params (parsed from path, mirrors /course/:id pattern)
+  const [viewedUsername, setViewedUsername] = useState<string | null>(() => {
+    const path = window.location.pathname;
+    return path.startsWith("/u/") ? decodeURIComponent(path.slice(3)) : null;
+  });
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(() => {
+    const path = window.location.pathname;
+    return path.startsWith("/teams/") ? path.slice(7) : null;
   });
 
   // Helper to change view and update browser history (memoized)
@@ -161,7 +187,12 @@ function App() {
         | "home"
         | "semester"
         | "privacy"
-        | "custom",
+        | "custom"
+        | "profile"
+        | "network"
+        | "teams"
+        | "team"
+        | "alumni",
       extra?: string | null,
     ) => {
       let path = "/";
@@ -173,6 +204,15 @@ function App() {
       else if (view === "privacy") path = "/privacy";
       else if (view === "custom") path = "/custom-routine";
       else if (view === "course" && extra) path = `/course/${extra}`;
+      else if (view === "profile") {
+        path = extra ? `/u/${encodeURIComponent(extra)}` : "/profile";
+        setViewedUsername(extra ?? null);
+      } else if (view === "network") path = "/network";
+      else if (view === "team" && extra) {
+        path = `/teams/${extra}`;
+        setSelectedTeamId(extra);
+      } else if (view === "teams") path = "/teams";
+      else if (view === "alumni") path = "/alumni";
       else if (view === "home") path = "/home";
       window.history.pushState({}, "", path);
       setCurrentView(view);
@@ -216,6 +256,18 @@ function App() {
       else if (path === "/custom-routine") setCurrentView("custom");
       else if (path === "/privacy") setCurrentView("privacy");
       else if (path.startsWith("/course/")) setCurrentView("course");
+      else if (path === "/profile") {
+        setViewedUsername(null);
+        setCurrentView("profile");
+      } else if (path.startsWith("/u/")) {
+        setViewedUsername(decodeURIComponent(path.slice(3)));
+        setCurrentView("profile");
+      } else if (path === "/network") setCurrentView("network");
+      else if (path.startsWith("/teams/")) {
+        setSelectedTeamId(path.slice(7));
+        setCurrentView("team");
+      } else if (path === "/teams") setCurrentView("teams");
+      else if (path === "/alumni") setCurrentView("alumni");
       // Always treat root, /home, or empty as home
       else if (path === "/" || path === "/home" || path === "" || !path)
         setCurrentView("home");
@@ -3351,20 +3403,30 @@ For any queries, contact your course instructors or the department.`,
                     </p>
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      goToView("profile");
+                      setShowMobileMenu(false);
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg font-medium transition-all bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    My Profile
+                  </button>
                   <button
                     onClick={() => {
                       setIsEditingProfile(true);
                       setShowSignUpModal(true);
                       setShowMobileMenu(false);
                     }}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       isDarkMode
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
+                        ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
+                        : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                     }`}
+                    title="Edit account details"
                   >
-                    Edit Profile
+                    Edit
                   </button>
                 </div>
               </div>
@@ -3410,47 +3472,127 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </button>
 
-              {/* Track All Routine */}
-              <a
-                href="https://routine.bubt.edu.bd/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setShowMobileMenu(false)}
+              {/* Team Building */}
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification(
+                      "error",
+                      "Please sign in to access Team Building",
+                    );
+                    setShowSignInModal(true);
+                    setShowMobileMenu(false);
+                    return;
+                  }
+                  goToView("teams");
+                  setShowMobileMenu(false);
+                }}
                 className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
                   isDarkMode
-                    ? "hover:bg-indigo-900/30 border-gray-700/50 hover:border-indigo-500/50 text-gray-100"
-                    : "hover:bg-indigo-50 border-gray-200/50 hover:border-indigo-300 text-gray-900"
-                }`}
+                    ? "hover:bg-emerald-900/30 border-gray-700/50 hover:border-emerald-500/50 text-gray-100"
+                    : "hover:bg-emerald-50 border-gray-200/50 hover:border-emerald-300 text-gray-900"
+                } ${!isLoggedIn ? "opacity-60" : ""}`}
               >
                 <div
-                  className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-indigo-900/40" : "bg-indigo-100"}`}
+                  className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-emerald-900/40" : "bg-emerald-100"}`}
                 >
-                  <ExternalLink
-                    className={`w-5 h-5 ${isDarkMode ? "text-indigo-400" : "text-indigo-600"}`}
+                  <Users
+                    className={`w-5 h-5 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}
                   />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-semibold text-sm">Track All Routine</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">Team Building</p>
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
+                      NEW
+                    </span>
+                  </div>
                   <p
                     className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
                   >
-                    All intakes & sections
+                    Create teams & find members
                   </p>
                 </div>
-                <svg
-                  className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              </button>
+
+              {/* My Network */}
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification(
+                      "error",
+                      "Please sign in to access My Network",
+                    );
+                    setShowSignInModal(true);
+                    setShowMobileMenu(false);
+                    return;
+                  }
+                  goToView("network");
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? "hover:bg-sky-900/30 border-gray-700/50 hover:border-sky-500/50 text-gray-100"
+                    : "hover:bg-sky-50 border-gray-200/50 hover:border-sky-300 text-gray-900"
+                } ${!isLoggedIn ? "opacity-60" : ""}`}
+              >
+                <div
+                  className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-sky-900/40" : "bg-sky-100"}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  <UserPlus
+                    className={`w-5 h-5 ${isDarkMode ? "text-sky-400" : "text-sky-600"}`}
                   />
-                </svg>
-              </a>
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">My Network</p>
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-sky-500 text-white">
+                      NEW
+                    </span>
+                  </div>
+                  <p
+                    className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    Connect with classmates
+                  </p>
+                </div>
+              </button>
+
+              {/* Alumni Hub */}
+              <button
+                onClick={() => {
+                  goToView("alumni");
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? "hover:bg-amber-900/30 border-gray-700/50 hover:border-amber-500/50 text-gray-100"
+                    : "hover:bg-amber-50 border-gray-200/50 hover:border-amber-300 text-gray-900"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-amber-900/40" : "bg-amber-100"}`}
+                >
+                  <GraduationCap
+                    className={`w-5 h-5 ${isDarkMode ? "text-amber-400" : "text-amber-600"}`}
+                  />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">Alumni Hub</p>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"}`}
+                    >
+                      SOON
+                    </span>
+                  </div>
+                  <p
+                    className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    Alumni from our varsity
+                  </p>
+                </div>
+              </button>
 
               {/* Custom Routine */}
               <button
@@ -8341,6 +8483,74 @@ For queries, contact course instructors or the department.`,
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
           />
+        </main>
+      )}
+
+      {/* ── V2: Profile Page ── */}
+      {currentView === "profile" && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <ProfilePage
+            username={viewedUsername}
+            currentUserId={authSession?.user?.id ?? null}
+            onClose={() => goToView("home")}
+            isDarkMode={isDarkMode}
+          />
+        </main>
+      )}
+
+      {/* ── V2: My Network ── */}
+      {currentView === "network" && authSession?.user?.id && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <NetworkPage
+            currentUserId={authSession.user.id}
+            onClose={() => goToView("home")}
+            onViewProfile={(username) => goToView("profile", username)}
+            isDarkMode={isDarkMode}
+          />
+        </main>
+      )}
+
+      {/* ── V2: Team Building ── */}
+      {currentView === "teams" && authSession?.user?.id && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <TeamsPage
+            currentUserId={authSession.user.id}
+            onClose={() => goToView("home")}
+            onOpenTeam={(teamId) => goToView("team", teamId)}
+            isDarkMode={isDarkMode}
+          />
+        </main>
+      )}
+
+      {/* ── V2: Team Detail ── */}
+      {currentView === "team" && selectedTeamId && authSession?.user?.id && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <TeamPage
+            teamId={selectedTeamId}
+            currentUserId={authSession.user.id}
+            onClose={() => goToView("teams")}
+            onViewProfile={(username) => goToView("profile", username)}
+            isDarkMode={isDarkMode}
+          />
+        </main>
+      )}
+
+      {/* ── V2: Alumni Hub (Phase 3 — coming soon) ── */}
+      {currentView === "alumni" && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <div className={`min-h-screen flex flex-col items-center justify-center gap-4 px-4 ${isDarkMode ? "bg-slate-950" : "bg-slate-100"}`}>
+            <GraduationCap className={`w-14 h-14 ${isDarkMode ? "text-amber-400" : "text-amber-500"}`} />
+            <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Alumni Hub</h1>
+            <p className={`text-sm text-center max-w-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              The BUBT alumni directory is coming soon — connect with graduates from our varsity, see where they work, and get guidance.
+            </p>
+            <button
+              onClick={() => goToView("home")}
+              className="mt-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
+              Back to Home
+            </button>
+          </div>
         </main>
       )}
 

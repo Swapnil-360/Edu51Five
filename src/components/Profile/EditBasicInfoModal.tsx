@@ -1,0 +1,191 @@
+import { useState } from "react";
+import { X, Loader2 } from "lucide-react";
+import { SocialProfile, ProfileVisibility } from "../../types/social";
+import { updateProfile } from "../../lib/api/profileApi";
+
+interface Props {
+  profile: SocialProfile;
+  onClose: () => void;
+  onSaved: () => void;
+  isDarkMode: boolean;
+}
+
+export default function EditBasicInfoModal({ profile, onClose, onSaved, isDarkMode }: Props) {
+  const [name, setName] = useState(profile.name ?? "");
+  const [username, setUsername] = useState(profile.username ?? "");
+  const [headline, setHeadline] = useState(profile.headline ?? "");
+  const [about, setAbout] = useState(profile.about ?? "");
+  const [location, setLocation] = useState(profile.location ?? "");
+  const [website, setWebsite] = useState(profile.website ?? "");
+  const [linkedin, setLinkedin] = useState(profile.social_links?.linkedin ?? "");
+  const [github, setGithub] = useState(profile.social_links?.github ?? "");
+  const [facebook, setFacebook] = useState(profile.social_links?.facebook ?? "");
+  const [visibility, setVisibility] = useState<ProfileVisibility>(profile.visibility);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const save = async () => {
+    if (!name.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    const uname = username.trim().toLowerCase();
+    if (uname && !/^[a-z0-9_.]{3,30}$/.test(uname)) {
+      setError("Username must be 3-30 characters: letters, numbers, dot, underscore.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    const social_links: Record<string, string> = {};
+    if (linkedin.trim()) social_links.linkedin = linkedin.trim();
+    if (github.trim()) social_links.github = github.trim();
+    if (facebook.trim()) social_links.facebook = facebook.trim();
+
+    const { error: err } = await updateProfile(profile.id, {
+      name: name.trim(),
+      username: uname || undefined,
+      headline: headline.trim() || null,
+      about: about.trim() || null,
+      location: location.trim() || null,
+      website: website.trim() || null,
+      social_links,
+      visibility,
+    });
+    setSaving(false);
+    if (err) {
+      setError(err);
+      return;
+    }
+    onSaved();
+    onClose();
+  };
+
+  const inputCls = `w-full px-3 py-2 rounded-lg text-sm border outline-none transition-colors ${
+    isDarkMode
+      ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500"
+      : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-500"
+  }`;
+  const labelCls = `block text-xs font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`;
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div
+        className={`w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${
+          isDarkMode ? "bg-slate-900 border border-slate-700" : "bg-white"
+        }`}
+      >
+        <div
+          className={`sticky top-0 px-5 py-4 border-b flex items-center justify-between ${
+            isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+          }`}
+        >
+          <h2 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+            Edit Profile
+          </h2>
+          <button onClick={onClose} className={isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {error && (
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Full Name *</label>
+              <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Username</label>
+              <input className={inputCls} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="your.username" />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Headline</label>
+            <input
+              className={inputCls}
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder="e.g. CSE Student @ BUBT · Aspiring Web Developer"
+              maxLength={120}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>About</label>
+            <textarea
+              className={`${inputCls} min-h-[100px] resize-y`}
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              placeholder="Tell people about yourself…"
+              maxLength={2000}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Location</label>
+              <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Dhaka, Bangladesh" />
+            </div>
+            <div>
+              <label className={labelCls}>Website</label>
+              <input className={inputCls} value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelCls}>LinkedIn</label>
+              <input className={inputCls} value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="URL" />
+            </div>
+            <div>
+              <label className={labelCls}>GitHub</label>
+              <input className={inputCls} value={github} onChange={(e) => setGithub(e.target.value)} placeholder="URL" />
+            </div>
+            <div>
+              <label className={labelCls}>Facebook</label>
+              <input className={inputCls} value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="URL" />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Profile Visibility</label>
+            <select
+              className={inputCls}
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value as ProfileVisibility)}
+            >
+              <option value="public">Public — anyone can view</option>
+              <option value="users">Edu51Five users only</option>
+              <option value="private">Private — only you</option>
+            </select>
+          </div>
+        </div>
+
+        <div className={`px-5 py-4 border-t flex justify-end gap-2 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ When BUBT students sign in with `@cse.bubt.edu.bd` Gmail, they get a **BUBT Port
 ## 🚀 What BUBT Students Get (4 Features)
 
 ### 1. Google Classroom Access 📚
+
 ```
 Icon: Classroom icon
 Click: Opens Google Classroom
@@ -18,18 +19,21 @@ No login needed (already signed in with their BUBT Gmail)
 ```
 
 ### 2. BUBT Annex 🏢
+
 ```
 Icon: BUBT icon
 Click: Opens BUBT Annex website in new tab
 ```
 
 ### 3. Updated Routine Website 📅
+
 ```
 Icon: Calendar icon
 Click: Opens Routine website in new tab
 ```
 
 ### 4. Personal Gmail Drive 📁 (INSIDE APP!)
+
 ```
 Icon: Drive icon
 Click: Opens their personal Google Drive inside the app
@@ -44,11 +48,13 @@ No new tab needed - stays in app
 ## 📱 UI Design
 
 ### Header (When BUBT Student Logged In)
+
 ```
 [Logo] [Dark Mode] [👤 Raj (BUBT)] [⚙️ Settings] [Logout]
 ```
 
 ### Main Navigation
+
 ```
 Sidebar:
 - Courses
@@ -58,6 +64,7 @@ Sidebar:
 ```
 
 ### BUBT Portal Page (NEW) 🎨
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎓 BUBT PORTAL
@@ -88,6 +95,7 @@ Signed in as: raj@cse.bubt.edu.bd | [Sign Out]
 ## 🔐 How It Works
 
 ### Step 1: BUBT Student Signs In
+
 ```
 1. Visits app
 2. Clicks "👤 Sign In (BUBT)"
@@ -97,6 +105,7 @@ Signed in as: raj@cse.bubt.edu.bd | [Sign Out]
 ```
 
 ### Step 2: Navigate to BUBT Portal
+
 ```
 1. Sidebar shows "BUBT Portal" link (new)
 2. Clicks "BUBT Portal"
@@ -107,6 +116,7 @@ Signed in as: raj@cse.bubt.edu.bd | [Sign Out]
 ### Step 3: Click Each Icon
 
 **BookOpen - Google Classroom:**
+
 ```
 Icon: BookOpen (Lucide React)
 URL: https://classroom.google.com
@@ -121,6 +131,7 @@ If PC:
 ```
 
 **BUBT Annex Logo - BUBT Annex:**
+
 ```
 Icon: https://annex.bubt.edu.bd/global_file/gazo/rf_sis.png (BUBT official logo)
 URL: https://annex.bubt.edu.bd/
@@ -130,6 +141,7 @@ Shows BUBT Annex website with announcements and information
 ```
 
 **Calendar - Updated Routine:**
+
 ```
 Icon: Calendar (Lucide React)
 URL: https://routine.bubt.edu.bd/
@@ -139,6 +151,7 @@ Shows class routine and exam schedule for all sections
 ```
 
 **HardDrive - My Personal Drive:**
+
 ```
 Icon: HardDrive (Lucide React)
 Click → Opens their personal Google Drive inside app
@@ -164,24 +177,28 @@ Same interface as Google Drive website but inside our app
 ## 💻 Technical Implementation
 
 ### Context/State
+
 ```typescript
 // In App.tsx or new BubtContext.tsx
 const [bubtUser, setBubtUser] = useState({
   email: "raj@cse.bubt.edu.bd",
   accessToken: "google_oauth_token_here",
-  isBubtStudent: true
-})
+  isBubtStudent: true,
+});
 ```
 
 ### Components to Create
+
 1. **BubtPortal.tsx** - Main page with 4 cards
 2. **BubtDriveAccess.tsx** - Personal Drive browser (similar to CourseDriveView)
 
 ### Components to Modify
+
 1. **App.tsx** - Add "BUBT Portal" to sidebar
 2. **App.tsx** - Add BUBT sign-in logic
 
 ### Google Drive API Usage
+
 ```typescript
 // For Personal Drive Access
 // Same as current CourseDriveView but:
@@ -195,12 +212,14 @@ const [bubtUser, setBubtUser] = useState({
 ## 🎯 User Flow
 
 ### Anonymous Student (No Sign-in)
+
 ```
 Visit app → Browse Courses → See Materials → Leave
 (No BUBT Portal available)
 ```
 
 ### BUBT Student (Signed In)
+
 ```
 Visit app
   ↓
@@ -230,34 +249,40 @@ Sign Out when done
 ## 📋 Implementation Checklist
 
 ### Phase 1: Infrastructure (SAME AS BEFORE)
+
 - [ ] Create BubtUser context
 - [ ] Create useBubtUser hook
 - [ ] Setup localStorage logic
 - [ ] Email validation (@cse.bubt.edu.bd)
 
 ### Phase 2: Sign-In UI (SAME AS BEFORE)
+
 - [ ] Create "Sign In (BUBT)" button in header
 - [ ] Create BubtAuthModal component
 - [ ] Google OAuth integration
 - [ ] Show "Sign Out" when logged in
 
 ### Phase 3: BUBT Portal Page (NEW!)
+
 - [ ] Create BubtPortal.tsx component
 - [ ] Create 4 cards layout (Classroom, Annex, Routine, Drive)
 - [ ] Add responsive styling (mobile-first)
 - [ ] Add to App.tsx routing
 
 ### Phase 4: Classroom Icon
+
 - [ ] Detect platform (mobile vs PC)
 - [ ] Mobile: Try to open app, fallback to web
 - [ ] PC: Open classroom.google.com in new tab
 
 ### Phase 5: BUBT Annex & Routine
+
 - [ ] Add links/buttons for Annex
 - [ ] Add links/buttons for Routine
 - [ ] Both open in new tab
 
 ### Phase 6: Personal Drive Access (MOST COMPLEX)
+
 - [ ] Create BubtDriveAccess.tsx component
 - [ ] Use Google Drive API to access user's root Drive
 - [ ] Show file/folder browser inside app
@@ -265,6 +290,7 @@ Sign Out when done
 - [ ] Add back button to return to portal
 
 ### Phase 7: Testing & Polish
+
 - [ ] Test on mobile
 - [ ] Test on PC
 - [ ] Test Classroom app detection
@@ -295,6 +321,7 @@ Sign Out when done
 ## ✅ Ready to Build!
 
 All details confirmed:
+
 - ✅ URLs confirmed
 - ✅ Icons chosen (BUBT logo for Annex, Lucide icons for others)
 - ✅ Personal Drive: Full access (browse, upload, download, delete, etc)
@@ -306,6 +333,7 @@ All details confirmed:
 ## 🚀 BUILD PHASES
 
 ### Phase 1: Infrastructure (1-2 hours)
+
 - [ ] Create BubtContext.tsx (context for user auth state)
 - [ ] Create useBubtUser hook (use BUBT user from context)
 - [ ] Setup localStorage logic (save/load BUBT email)
@@ -313,6 +341,7 @@ All details confirmed:
 - [ ] Create types for BubtUser
 
 ### Phase 2: Sign-In Modal (2-3 hours)
+
 - [ ] Create BubtAuthModal.tsx component
 - [ ] Add "Sign In (BUBT)" button in App.tsx header
 - [ ] Google OAuth integration (@react-oauth/google)
@@ -321,6 +350,7 @@ All details confirmed:
 - [ ] Update header conditionally
 
 ### Phase 3: BUBT Portal Page (1-2 hours)
+
 - [ ] Create BubtPortal.tsx component
 - [ ] Add "BUBT Portal" link to sidebar (only when logged in)
 - [ ] Create 4 card layout
@@ -328,18 +358,21 @@ All details confirmed:
 - [ ] Add styling (match existing design, dark mode support)
 
 ### Phase 4: Classroom Icon (30 minutes)
+
 - [ ] Detect device type (mobile vs PC)
 - [ ] Mobile: Try to open app, fallback to web
 - [ ] PC: Open in new tab
 - [ ] Add BookOpen icon (Lucide)
 
 ### Phase 5: Annex & Routine Icons (30 minutes)
+
 - [ ] Add BUBT Annex card with official logo
 - [ ] Add Routine card with Calendar icon
 - [ ] Both open URL in new tab
 - [ ] Add link icons
 
 ### Phase 6: Personal Drive Browser (3-4 hours) - MOST COMPLEX
+
 - [ ] Create BubtDriveAccess.tsx component
 - [ ] Use Google Drive API to access user's root drive
 - [ ] Show file/folder tree structure
@@ -353,6 +386,7 @@ All details confirmed:
 - [ ] Add responsive design
 
 ### Phase 7: Polish & Testing (1-2 hours)
+
 - [ ] Test on mobile
 - [ ] Test on desktop
 - [ ] Test dark/light mode
@@ -366,19 +400,19 @@ All details confirmed:
 
 ## 📊 Estimated Timeline
 
-| Phase | Hours | Difficulty |
-|-------|-------|-----------|
-| 1. Infrastructure | 1.5 | Easy |
-| 2. Sign-In Modal | 2.5 | Medium |
-| 3. Portal Page | 1.5 | Easy |
-| 4. Classroom | 0.5 | Easy |
-| 5. Annex/Routine | 0.5 | Easy |
-| 6. Drive Browser | 3.5 | Hard |
-| 7. Polish/Test | 1.5 | Easy |
-| **TOTAL** | **~11.5 hours** | **Medium** |
+| Phase             | Hours           | Difficulty |
+| ----------------- | --------------- | ---------- |
+| 1. Infrastructure | 1.5             | Easy       |
+| 2. Sign-In Modal  | 2.5             | Medium     |
+| 3. Portal Page    | 1.5             | Easy       |
+| 4. Classroom      | 0.5             | Easy       |
+| 5. Annex/Routine  | 0.5             | Easy       |
+| 6. Drive Browser  | 3.5             | Hard       |
+| 7. Polish/Test    | 1.5             | Easy       |
+| **TOTAL**         | **~11.5 hours** | **Medium** |
 
 ---
 
-## 🎯 Start Building Now? 
+## 🎯 Start Building Now?
 
 Ready to begin **Phase 1 (Infrastructure)**? 🚀
