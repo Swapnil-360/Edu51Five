@@ -242,7 +242,7 @@ export async function testPushNotification(): Promise<void> {
   // Send a local test notification
   await sendLocalNotification(
     '🧪 Test Notification',
-    'This is a test notification from Edu51Five. If you see this, notifications are working!',
+    'This is a test notification from Edu51 Portal. If you see this, notifications are working!',
     '/'
   );
   

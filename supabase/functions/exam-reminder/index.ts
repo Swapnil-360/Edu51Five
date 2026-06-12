@@ -38,7 +38,7 @@ const EXAM_EVENTS: ExamEvent[] = [
 const buildMessage = (event: ExamEvent) => {
   const when = new Date(event.examDateTime).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit' })
   return {
-    title: `Edu51Five • ${event.examType === 'midterm' ? 'Mid-term' : 'Final'} Reminder`,
+    title: `Edu51 Portal • ${event.examType === 'midterm' ? 'Mid-term' : 'Final'} Reminder`,
     body: `${event.title} at ${when}. Take your essentials, revise key topics, and best of luck!`,
     url: '/exam-materials'
   }

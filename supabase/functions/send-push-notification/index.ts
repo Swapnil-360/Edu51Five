@@ -111,7 +111,7 @@ serve(async (req) => {
     // Prepare notification payload - MUST be valid JSON that service worker can parse
     // The Web Push encryption will handle the encryption, this is just the content
     const notificationPayload = JSON.stringify({
-      title: payload.title || 'Edu51Five',
+      title: payload.title || 'Edu51 Portal',
       body: payload.body || 'New notification',
       icon: '/Edu_51_Logo.png',
       badge: '/Edu_51_Logo.png',

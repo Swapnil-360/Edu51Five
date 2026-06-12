@@ -824,7 +824,9 @@ export default function CustomRoutine({ onClose, isDarkMode }: CustomRoutineProp
           {/* Header */}
           <div className={`hidden sm:flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${isDarkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 text-gray-900'}`}>
             <div>
-              <div className="text-xl font-extrabold">Edu51Five</div>
+              <div className="text-xl font-extrabold">
+                Edu<span className="text-[#ef4444]">51</span> Portal
+              </div>
               <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Custom Routine · Intake 51</div>
             </div>
             <div className={`text-xs text-right ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

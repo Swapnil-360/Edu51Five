@@ -18,7 +18,7 @@ export function Header({
   searchQuery,
   onToggleMenu,
   isMenuOpen,
-  websiteName = "Edu51Five",
+  websiteName = "Edu51 Portal",
 }: HeaderProps) {
   return (
     <header className="header-professional bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white shadow-2xl border-b border-gray-700/40 sticky top-0 z-50">
@@ -44,7 +44,7 @@ export function Header({
             <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16">
               <img
                 src="/Edu_51_Logo.png"
-                alt="Edu51Five Logo"
+                alt="Edu51 Portal Logo"
                 className="w-full h-full object-contain block"
                 width="64"
                 height="64"
@@ -70,17 +70,18 @@ export function Header({
                     EDU
                   </span>
 
-                  {/* 51 - Orange */}
-                  <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-orange-400 mx-0.5">
+                  {/* 51 - Red */}
+                  <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-[#ef4444] mx-0.5">
                     51
                   </span>
 
-                  {/* FIVE - White */}
-                  <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-white">
-                    FIVE
+                  {/* PORTAL - White */}
+                  <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-white ml-1">
+                    PORTAL
                   </span>
                 </h1>
               </div>
+
 
               {/* Subtitle */}
               <span className="text-xs sm:text-sm font-semibold text-gray-300">
