@@ -1,5 +1,5 @@
 // Academic Calendar Configuration for BUBT Intake 51
-// Spring 2026 Semester - Tri-semester system - Real-time tracking
+// Summer 2026 Semester - Tri-semester system - Real-time tracking
 
 export interface SemesterPeriod {
   name: string;
@@ -29,66 +29,66 @@ export interface SemesterConfig {
   };
 }
 
-// SPRING 2026 ACADEMIC CALENDAR - BUBT Official Dates
+// SUMMER 2026 ACADEMIC CALENDAR - BUBT Official Dates
 export const SEMESTER_CONFIG: SemesterConfig = {
-  name: "Spring 2026",
-  code: "SPRING_2026", 
-  startDate: "2026-01-01",      // Orientation and commencement (Jan 1)
-  endDate: "2026-05-04",        // Final Results publication (May 4)
-  totalDays: 124,               // January 1 to May 4
+  name: "Summer 2026",
+  code: "SUMMER_2026", 
+  startDate: "2026-05-06",      // Orientation and commencement (May 6)
+  endDate: "2026-09-03",        // Final Results publication (Sept 3)
+  totalDays: 121,               // May 6 to Sept 3 (inclusive)
 
   periods: {
     regularClasses: {
       name: "Regular Classes",
-      startDate: "2026-01-01",
-      endDate: "2026-02-11",     // Last day of classes before Midterm (Feb 11)
+      startDate: "2026-05-06",
+      endDate: "2026-06-23",     // Last day of classes before Midterm (June 23)
       type: 'regular'
     },
     
     midtermExams: {
       name: "Mid-term Examinations",
-      startDate: "2026-02-17",   // Mid-term exam period (Feb 17-24)
-      endDate: "2026-02-24",     // 8 days for midterms
+      startDate: "2026-06-25",   // Mid-term exam period (June 25-July 03)
+      endDate: "2026-07-03",     // 9 days for midterms
       type: 'midterm'
     },
     
     finalPrep: {
       name: "Final Exam Preparation",
-      startDate: "2026-02-26",   // Classes resume after Midterm (Feb 26)
-      endDate: "2026-04-21",     // Last day of classes before Final (Apr 21)
+      startDate: "2026-07-04",   // Classes resume after Midterm (July 04)
+      endDate: "2026-08-20",     // Last day of classes before Final (Aug 20)
       type: 'regular'
     },
     
     finalExams: {
       name: "Final Examinations",
-      startDate: "2026-04-23",   // Final exams begin (Apr 23)
-      endDate: "2026-04-30",     // Final exams end (Apr 30) - 8 days
+      startDate: "2026-08-22",   // Final exams begin (Aug 22)
+      endDate: "2026-08-30",     // Final exams end (Aug 30) - 9 days
       type: 'final'
     }
   },
 
   breaks: {
     summerBreak: {
-      name: "Summer Break",
-      startDate: "2026-05-05",   // Semester break (May 5)
-      endDate: "2026-06-05",     // Before Summer 2026 starts
+      name: "Semester Break",
+      startDate: "2026-09-04",   // Semester break (Sept 4)
+      endDate: "2026-09-04",     // 1 day before Fall 2026 starts
       type: 'break'
     }
   },
 
   nextSemester: {
-    name: "Summer 2026",
-    startDate: "2026-06-06"      // Summer semester commencement
+    name: "Fall 2026",
+    startDate: "2026-09-05"      // Fall semester commencement
   }
 };
 
-// Previous semester for reference (Fall 2025)
+// Previous semester for reference (Spring 2026)
 export const PREVIOUS_SEMESTER = {
-  name: "Fall 2025",
-  startDate: "2025-09-01",
-  endDate: "2025-12-31",
-  breakStart: "2026-01-01",
-  breakEnd: "2026-01-14"         // 14-day winter break
+  name: "Spring 2026",
+  startDate: "2026-01-01",
+  endDate: "2026-05-04",
+  breakStart: "2026-05-05",
+  breakEnd: "2026-05-05"
 };
 
 // Real-time semester progress calculator
@@ -98,13 +98,13 @@ export const calculateSemesterProgress = (currentDate: Date = new Date()) => {
   const midtermStart = new Date(SEMESTER_CONFIG.periods.midtermExams.startDate);
   const finalStart = new Date(SEMESTER_CONFIG.periods.finalExams.startDate);
   
-  const totalDays = Math.ceil((semesterEnd.getTime() - semesterStart.getTime()) / (1000 * 60 * 60 * 24));
+  const totalDays = Math.ceil((semesterEnd.getTime() - semesterStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const daysPassed = Math.ceil((currentDate.getTime() - semesterStart.getTime()) / (1000 * 60 * 60 * 24));
   const daysRemaining = Math.ceil((semesterEnd.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   const daysToMidterm = Math.ceil((midtermStart.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   const daysToFinal = Math.ceil((finalStart.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  const progressPercentage = Math.round((daysPassed / totalDays) * 100);
+  const progressPercentage = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
   const semesterWeek = Math.ceil(daysPassed / 7);
   
   // Determine current phase
@@ -128,11 +128,11 @@ export const calculateSemesterProgress = (currentDate: Date = new Date()) => {
     daysToMilestone = daysToFinal;
   } else if (currentDate <= semesterEnd) {
     currentPhase = "Final Examinations";
-    nextMilestone = "Summer Break";
+    nextMilestone = "Semester Break";
     daysToMilestone = daysRemaining;
   } else {
-    currentPhase = "Summer Break";
-    nextMilestone = "Summer 2026";
+    currentPhase = "Semester Break";
+    nextMilestone = "Fall 2026";
     daysToMilestone = Math.ceil((new Date(SEMESTER_CONFIG.nextSemester.startDate).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
   }
   
@@ -185,48 +185,48 @@ export const getBangladeshTime = () => {
   });
 };
 
-// Special academic events - BUBT Spring 2026 Key Dates
+// Special academic events - BUBT Summer 2026 Key Dates
 export const SPECIAL_EVENTS = {
   orientation: {
-    name: "Spring 2026 Orientation & Classes Start",
-    date: "2026-01-01",
+    name: "Summer 2026 Orientation & Classes Start",
+    date: "2026-05-06",
     description: "Orientation and commencement of classes",
     icon: "🚀"
   },
   midtermStart: {
     name: "Mid-term Examinations Begin",
-    date: "2026-02-17",
-    description: "8-day mid-term examination period",
+    date: "2026-06-25",
+    description: "Mid-term examination period (June 25 - July 03)",
     icon: "📝"
   },
   classesResumeAfterMidterm: {
     name: "Classes Resume",
-    date: "2026-02-26",
-    description: "Regular classes resume after mid-term break",
+    date: "2026-07-04",
+    description: "Regular classes resume after midterm exams",
     icon: "📚"
   },
   finalStart: {
     name: "Final Examinations Begin",
-    date: "2026-04-23",
-    description: "8-day final examination period",
+    date: "2026-08-22",
+    description: "Final examination period (Aug 22 - Aug 30)",
     icon: "🎯"
   },
   resultsPublication: {
     name: "Final Results Publication",
-    date: "2026-05-04",
+    date: "2026-09-03",
     description: "Publication of final examination results",
     icon: "📊"
   },
   semesterBreak: {
     name: "Semester Break",
-    date: "2026-05-05",
-    description: "Summer break before next semester",
+    date: "2026-09-04",
+    description: "Janmashtami Holiday & Semester break",
     icon: "🏖️"
   },
-  summerSemesterStart: {
-    name: "Summer 2026 Begins",
-    date: "2026-06-06",
-    description: "Orientation and commencement of Summer Semester 2026",
+  fallSemesterStart: {
+    name: "Fall 2026 Begins",
+    date: "2026-09-05",
+    description: "Orientation and commencement of Fall Semester 2026",
     icon: "☀️"
   }
 };
@@ -240,43 +240,43 @@ export const getSemesterTimeline = () => {
     phases: [
       {
         name: "Classes Start",
-        date: "Jan 1",
+        date: "May 6",
         status: "completed",
         icon: "🚀"
       },
       {
         name: "Regular Classes",
-        date: "Jan-Feb",
-        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 42 ? "completed" : "upcoming",
+        date: "May-Jun",
+        status: progress.currentPhase === "Regular Classes" ? "current" : progress.daysPassed > 48 ? "completed" : "upcoming",
         icon: "📚"
       },
       {
         name: "Mid-terms",
-        date: "Feb 17-24",
+        date: "Jun 25 - Jul 3",
         status: progress.isMidtermPeriod ? "current" : progress.daysToMidterm <= 0 ? "completed" : "upcoming",
         icon: "📝"
       },
       {
         name: "Class Prep",
-        date: "Feb-Apr",
+        date: "Jul-Aug",
         status: progress.currentPhase === "Final Exam Preparation" ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
         icon: "📖"
       },
       {
         name: "Finals",
-        date: "Apr 23-30",
+        date: "Aug 22-30",
         status: progress.isFinalPeriod ? "current" : progress.daysToFinal <= 0 ? "completed" : "upcoming",
         icon: "🎯"
       },
       {
         name: "Results",
-        date: "May 4",
-        status: now >= new Date("2026-05-04") ? "completed" : "upcoming",
+        date: "Sep 3",
+        status: now >= new Date("2026-09-03") ? "completed" : "upcoming",
         icon: "📊"
       },
       {
         name: "Break",
-        date: "May 5+",
+        date: "Sep 4",
         status: progress.isBreak ? "current" : "upcoming",
         icon: "🏖️"
       }

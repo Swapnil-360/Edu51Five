@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from "./lib/supabase";
 import { Notice } from "./types";
@@ -2044,7 +2044,7 @@ Best of luck with your studies!
           code: newCourse.code,
           description: newCourse.description,
           major: "Common", // Default to Common so all majors can access
-          semester: "SPRING_2026",
+          semester: "SUMMER_2026",
           is_active: true,
         },
       ]);

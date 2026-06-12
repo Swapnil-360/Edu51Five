@@ -265,7 +265,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   }`}>Semester Started</div>
                   <div className={`text-sm transition-colors duration-300 ${
                     isDarkMode ? 'text-green-500' : 'text-green-600'
-                  }`}>{new Date(semesterStatus.currentPhase === 'Regular Classes' ? '2026-01-01' : '2026-01-01').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                  }`}>{new Date('2026-05-06').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               </div>
@@ -285,7 +285,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                   }`}>Mid-term Exams</div>
                   <div className={`text-sm ${
                     semesterStatus.currentPhase === 'Mid-term Examinations' ? 'text-red-600' : 'text-blue-600'
-                  }`}>Feb 17-24, 2026</div>
+                  }`}>Jun 25 - Jul 3, 2026</div>
                 </div>
                 <div className={`w-3 h-3 rounded-full ${
                   semesterStatus.currentPhase === 'Mid-term Examinations' 
@@ -301,7 +301,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               }`}>
                 <div>
                   <div className={`font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Final Exams</div>
-                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Apr 23-30, 2026</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Aug 22-30, 2026</div>
                 </div>
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               </div>
@@ -325,7 +325,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               }`}>Academic Calendar</h2>
               <p className={`text-sm transition-colors duration-300 ${
                 isDarkMode ? 'text-purple-400' : 'text-purple-700'
-              }`}>Spring 2026 - Key Dates & Events</p>
+              }`}>{semesterStatus.semesterName} - Key Dates & Events</p>
             </div>
           </div>
 
@@ -352,13 +352,13 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
           <div className="space-y-3">
             {/* Orientation & Classes Start */}
             <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-01-01')
+              new Date() < new Date('2026-05-06')
                 ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
                 : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-01-01')
+                  new Date() < new Date('2026-05-06')
                     ? 'bg-blue-600 text-white'
                     : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -369,10 +369,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     Classes Commence
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    January 1, 2026 (Wednesday)
+                    May 6, 2026 (Wednesday)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Orientation and start of Spring Semester
+                    Orientation and start of Summer Semester
                   </div>
                 </div>
               </div>
@@ -380,13 +380,13 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
 
             {/* Registration Deadline */}
             <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-01-14')
+              new Date() < new Date('2026-05-21')
                 ? isDarkMode ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200'
                 : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-01-14')
+                  new Date() < new Date('2026-05-21')
                     ? 'bg-orange-600 text-white'
                     : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -397,10 +397,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     Add/Drop & Withdrawal Deadline
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    January 14, 2026 (Wednesday)
+                    May 21, 2026 (Thursday)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Last day for course changes
+                    Last day for course add/drop and withdrawal changes
                   </div>
                 </div>
               </div>
@@ -410,7 +410,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             <div className={`p-4 rounded-xl border transition-all ${
               semesterStatus.isMidtermPeriod
                 ? isDarkMode ? 'bg-red-900/30 border-red-700/50 ring-2 ring-red-500/50' : 'bg-red-50 border-red-200 ring-2 ring-red-400/50'
-                : new Date() < new Date('2026-02-17')
+                : new Date() < new Date('2026-06-25')
                   ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
                   : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
@@ -418,7 +418,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 <div className={`p-2 rounded-lg ${
                   semesterStatus.isMidtermPeriod
                     ? 'bg-red-600 text-white animate-pulse'
-                    : new Date() < new Date('2026-02-17')
+                    : new Date() < new Date('2026-06-25')
                       ? 'bg-blue-600 text-white'
                       : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -432,10 +432,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     )}
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    February 17-24, 2026 (8 days)
+                    June 25 - July 3, 2026 (9 days)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Preparatory leave: Feb 16
+                    Preparatory leave: June 24
                   </div>
                 </div>
               </div>
@@ -443,13 +443,13 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
 
             {/* Mid-term Results */}
             <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-03-11')
+              new Date() < new Date('2026-07-26')
                 ? isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-200'
                 : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-03-11')
+                  new Date() < new Date('2026-07-26')
                     ? 'bg-indigo-600 text-white'
                     : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -460,10 +460,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     Mid-term Results Submission
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    March 11, 2026 (Wednesday)
+                    July 26, 2026 (Sunday)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Deadline for faculty to submit grades
+                    Deadline of submission of Midterm Examination Results
                   </div>
                 </div>
               </div>
@@ -473,7 +473,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             <div className={`p-4 rounded-xl border transition-all ${
               semesterStatus.isFinalPeriod
                 ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50 ring-2 ring-purple-500/50' : 'bg-purple-50 border-purple-200 ring-2 ring-purple-400/50'
-                : new Date() < new Date('2026-04-23')
+                : new Date() < new Date('2026-08-22')
                   ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50' : 'bg-purple-50 border-purple-200'
                   : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
@@ -481,7 +481,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 <div className={`p-2 rounded-lg ${
                   semesterStatus.isFinalPeriod
                     ? 'bg-purple-600 text-white animate-pulse'
-                    : new Date() < new Date('2026-04-23')
+                    : new Date() < new Date('2026-08-22')
                       ? 'bg-purple-600 text-white'
                       : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -495,10 +495,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     )}
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    April 23-30, 2026 (8 days)
+                    August 22-30, 2026 (9 days)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Preparatory leave: Apr 22
+                    Preparatory leave: Aug 21
                   </div>
                 </div>
               </div>
@@ -506,13 +506,13 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
 
             {/* Final Results */}
             <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-05-04')
+              new Date() < new Date('2026-09-03')
                 ? isDarkMode ? 'bg-green-900/30 border-green-700/50' : 'bg-green-50 border-green-200'
                 : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-05-04')
+                  new Date() < new Date('2026-09-03')
                     ? 'bg-green-600 text-white'
                     : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                 }`}>
@@ -523,10 +523,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     Final Results Publication
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    May 4, 2026 (Monday)
+                    September 3, 2026 (Thursday)
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Spring 2026 semester results
+                    Summer 2026 semester results
                   </div>
                 </div>
               </div>
@@ -554,10 +554,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                     )}
                   </div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    May 5, 2026 onwards
+                    September 4, 2026
                   </div>
                   <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Summer 2026 starts: June 6
+                    Fall 2026 starts: September 5
                   </div>
                 </div>
               </div>
@@ -576,13 +576,14 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             <ul className={`text-xs space-y-1 ${
               isDarkMode ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              <li>• Payment deadlines: 1st installment (Jan 1-14), 2nd installment (Feb 1-12), Final (Apr 1-16)</li>
-              <li>• Sports Week: April 1-7 | Research Showcase: April 15-21</li>
-              <li>• Teachers Evaluation: April 12-18</li>
+              <li>• Payment deadlines: 1st installment (May 6-22), 2nd installment (June 10-24), Final (Aug 6-19)</li>
+              <li>• Club Member Collection Week: June 7-10 | Research Showcase Week: August 16-20</li>
+              <li>• Teachers Evaluation: August 17-22</li>
               <li>• Some holiday dates marked with * are subject to moon appearance</li>
             </ul>
           </div>
         </div>
+
 
         {/* Today's/Upcoming Exam Alert with Countdown */}
         {(todaysExam || upcomingExam || nextExam) && (

@@ -168,7 +168,7 @@ export const REGULAR_CLASS_SCHEDULE: DaySchedule[] = [
 export const FINAL_EXAM_SCHEDULE: DaySchedule[] = [
   {
     day: 'Sunday',
-    date: '01-12-2025',
+    date: '23-08-2026',
     slots: [
       {
         time: '09:30 AM - 12:30 PM',
@@ -182,7 +182,7 @@ export const FINAL_EXAM_SCHEDULE: DaySchedule[] = [
   },
   {
     day: 'Tuesday',
-    date: '03-12-2025',
+    date: '25-08-2026',
     slots: [
       {
         time: '09:30 AM - 12:30 PM',
@@ -196,7 +196,7 @@ export const FINAL_EXAM_SCHEDULE: DaySchedule[] = [
   },
   {
     day: 'Thursday',
-    date: '05-12-2025',
+    date: '27-08-2026',
     slots: [
       {
         time: '09:30 AM - 12:30 PM',
@@ -210,7 +210,7 @@ export const FINAL_EXAM_SCHEDULE: DaySchedule[] = [
   },
   {
     day: 'Sunday',
-    date: '08-12-2025',
+    date: '30-08-2026',
     slots: [
       {
         time: '09:30 AM - 12:30 PM',
@@ -223,8 +223,8 @@ export const FINAL_EXAM_SCHEDULE: DaySchedule[] = [
     ]
   },
   {
-    day: 'Tuesday',
-    date: '10-12-2025',
+    day: 'Monday',
+    date: '24-08-2026',
     slots: [
       {
         time: '09:30 AM - 12:30 PM',
@@ -242,14 +242,18 @@ export const getCurrentRoutineType = () => {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentDate = now.getDate();
+  const currentYear = now.getFullYear();
   
-  // Final exam period: December 4-14, 2025
-  if (currentMonth === 11 && currentDate >= 4 && currentDate <= 14) {
+  // Final exam period: August 22-30, 2026
+  if (currentYear === 2026 && currentMonth === 7 && currentDate >= 22 && currentDate <= 30) {
     return 'final_exam';
   }
   
-  // Mid-term exam period: February 17-24, 2026
-  if (currentMonth === 1 && currentDate >= 17 && currentDate <= 24) {
+  // Mid-term exam period: June 25 - July 03, 2026
+  if (currentYear === 2026 && (
+    (currentMonth === 5 && currentDate >= 25) || 
+    (currentMonth === 6 && currentDate <= 3)
+  )) {
     return 'midterm_exam';
   }
   
@@ -270,7 +274,7 @@ export const getRoutineTitle = (): string => {
     case 'midterm_exam':
       return '📝 Mid-term Examination Schedule - Section 5';
     default:
-      return '📚 Section 5 Class Schedule - Fall 2025';
+      return '📚 Section 5 Class Schedule - Summer 2026';
   }
 };
 
@@ -279,13 +283,14 @@ export const getRoutineDescription = (): string => {
   
   switch (routineType) {
     case 'final_exam':
-      return 'Final examinations for Fall 2025 semester. Good luck with your exams!';
+      return 'Final examinations for Summer 2026 semester. Good luck with your exams!';
     case 'midterm_exam':
       return 'Mid-term examinations are currently ongoing. Stay focused!';
     default:
       return 'Section 51-5 | Mid-terms completed - Regular classes resumed | More sections coming soon';
   }
 };
+
 
 export const getTodaysSchedule = (): ClassSlot[] => {
   const today = new Date();
