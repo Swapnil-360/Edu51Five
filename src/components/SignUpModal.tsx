@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, UserPlus, Image as ImageIcon, Mail } from "lucide-react";
+import { X, UserPlus, Image as ImageIcon, Mail, Eye, EyeOff } from "lucide-react";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 interface SignUpModalProps {
@@ -60,6 +60,8 @@ export function SignUpModal({
     initialProfile ? initialProfile.password : "",
   );
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profilePic, setProfilePic] = useState(
     initialProfile ? initialProfile.profilePic : "",
   );
@@ -94,6 +96,8 @@ export function SignUpModal({
       setError("");
       setSuccess(false);
     }
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   }, [initialProfile, isOpen]);
 
   // Resend verification email
@@ -756,18 +760,36 @@ export function SignUpModal({
                       >
                         Password *
                       </label>
-                      <input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="At least 6 characters"
-                        className={`w-full px-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
-                          isDarkMode
-                            ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="At least 6 characters"
+                          className={`w-full pl-4 pr-12 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                            isDarkMode
+                              ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+                              : "bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors focus:outline-none ${
+                            isDarkMode
+                              ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
+                              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          }`}
+                          title={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -777,18 +799,36 @@ export function SignUpModal({
                       >
                         Confirm Password *
                       </label>
-                      <input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter password"
-                        className={`w-full px-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
-                          isDarkMode
-                            ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Re-enter password"
+                          className={`w-full pl-4 pr-12 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                            isDarkMode
+                              ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+                              : "bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors focus:outline-none ${
+                            isDarkMode
+                              ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
+                              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          }`}
+                          title={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}

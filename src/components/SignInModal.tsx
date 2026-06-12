@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, LogIn, Mail, Lock, ArrowLeft, CheckCircle } from 'lucide-react';
+import { X, LogIn, Mail, Lock, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface SignInModalProps {
@@ -28,6 +28,7 @@ export function SignInModal({
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotSending, setForgotSending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   // Tracks the current submission attempt; incremented on every new submit and on
   // every isOpen change so that stale async callbacks from a previous attempt are
   // silently ignored instead of updating state or calling onSignIn.
@@ -62,6 +63,7 @@ export function SignInModal({
     setForgotEmail('');
     setForgotSent(false);
     setForgotSending(false);
+    setShowPassword(false);
   }, [isOpen]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -440,10 +442,10 @@ export function SignInModal({
                 <Lock className="h-5 w-5" />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full pl-11 pr-4 py-3 rounded-xl border transition-all duration-300 ${
+                className={`w-full pl-11 pr-12 py-3 rounded-xl border transition-all duration-300 ${
                   isDarkMode
                     ? 'bg-gray-700/50 border-gray-600/50 text-gray-100 placeholder-gray-400 focus:border-blue-500'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-500'
@@ -452,6 +454,22 @@ export function SignInModal({
                 disabled={isSubmitting}
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors focus:outline-none ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200 hover:bg-slate-700/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-slate-100'
+                }`}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
           </div>
 
