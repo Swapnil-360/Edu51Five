@@ -239,34 +239,47 @@ export function SignUpModal({
             email: bubtEmail,
             password,
             options: {
-              data: {
-                name,
-                section,
-                major,
-                phone,
-                notificationEmail,
-                profilePic,
-              },
+              data: { name, section, major, phone, notificationEmail, profilePic },
             },
           });
+
+          // "Error sending confirmation email" means Supabase couldn't deliver to
+          // @cse.bubt.edu.bd, but our DB trigger already confirmed the user.
+          // Recover by signing in immediately.
+          let userId: string | null = data?.user?.id ?? null;
+          let hasSession = Boolean(data?.session?.user);
+
           if (error) {
-            setError(error.message || "Unable to create account");
-            return;
+            const isEmailDeliveryError =
+              error.message?.toLowerCase().includes("sending confirmation") ||
+              error.message?.toLowerCase().includes("error sending");
+            if (!isEmailDeliveryError) {
+              setError(error.message || "Unable to create account");
+              return;
+            }
+            // Email delivery failed but user was created + auto-confirmed by trigger.
+            // Sign them in now to get the session.
+            const { data: siData, error: siError } = await supabase.auth.signInWithPassword({
+              email: bubtEmail,
+              password,
+            });
+            if (siError || !siData?.user) {
+              setError("Account created but could not sign in automatically. Please use the Sign In button.");
+              return;
+            }
+            userId = siData.user.id;
+            hasSession = true;
           }
 
-          const userId = data?.user?.id;
-          const hasSession = Boolean(data?.session?.user);
           if (!userId) {
             setError("Failed to create user account. Please try again.");
             return;
           }
 
-          // If email confirmation is required, there is no session yet.
-          // Defer profile creation until the first successful sign-in.
           if (hasSession) {
             const { error: profileError } = await supabase
               .from("profiles")
-              .insert([
+              .upsert(
                 {
                   id: userId,
                   name,
@@ -279,17 +292,15 @@ export function SignUpModal({
                   created_at: new Date().toISOString(),
                   last_login_at: new Date().toISOString(),
                 },
-              ]);
+                { onConflict: "id" },
+              );
             if (profileError) {
-              // Check for duplicate email error
               if (
                 profileError.message.includes("duplicate key value") ||
                 profileError.message.includes("profiles_bubt_email_key") ||
                 profileError.code === "23505"
               ) {
-                setError(
-                  "This email is already registered. Please sign in instead.",
-                );
+                setError("This email is already registered. Please sign in instead.");
               } else {
                 setError(profileError.message || "Could not save profile");
               }
@@ -468,53 +479,21 @@ export function SignUpModal({
                   </p>
                 ) : (
                   <div className="space-y-3 mt-2">
-                    <div>
-                      <p
-                        className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} text-sm`}
-                      >
-                        We just sent a confirmation email to{" "}
-                        <span className="font-semibold">{bubtEmail}</span>.
-                      </p>
-                      <p
-                        className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs mt-1`}
-                      >
-                        Please check your inbox (or spam). After confirming, you
-                        can log in to Edu51Five.
-                      </p>
-                    </div>
-                    {error && (
-                      <div className="p-2 rounded-lg bg-amber-100/20 border border-amber-400/50">
-                        <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                          {error}
-                        </p>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={onClose}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium shadow ${
-                          isDarkMode
-                            ? "bg-white text-gray-900 hover:bg-gray-100"
-                            : "bg-gray-900 text-white hover:bg-gray-800"
-                        }`}
-                      >
-                        Got it
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleResendVerification}
-                        disabled={isResending}
-                        className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1 ${
-                          isDarkMode
-                            ? "text-blue-400 hover:text-blue-300"
-                            : "text-blue-600 hover:text-blue-700"
-                        } ${isResending ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        {isResending ? "Sending..." : "Resend"}
-                      </button>
-                    </div>
+                    <p className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                      Your account is ready. You can now sign in using{" "}
+                      <span className="font-semibold">{bubtEmail}</span>.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium shadow ${
+                        isDarkMode
+                          ? "bg-white text-gray-900 hover:bg-gray-100"
+                          : "bg-gray-900 text-white hover:bg-gray-800"
+                      }`}
+                    >
+                      Sign In Now
+                    </button>
                   </div>
                 )}
               </div>
