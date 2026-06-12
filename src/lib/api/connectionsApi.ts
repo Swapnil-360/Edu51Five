@@ -64,7 +64,7 @@ export async function listMyConnections(myId: string): Promise<Connection[]> {
 
   const { data: profiles } = await supabase
     .from("profiles")
-    .select(PROFILE_CARD_COLS)
+    .select(`${PROFILE_CARD_COLS},profile_pic`)
     .in("id", otherIds);
   const byId = new Map(
     ((profiles as any[]) ?? []).map((p) => [p.id, normalizeProfile(p)]),

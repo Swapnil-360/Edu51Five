@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Camera,
   Crown,
   Loader2,
   LogOut,
@@ -35,6 +36,7 @@ import {
   deleteTeam,
 } from "../../lib/api/teamsApi";
 import InviteMembersModal from "./InviteMembersModal";
+import { uploadImage } from "../../lib/storage";
 
 type Tab = "overview" | "members";
 
@@ -59,6 +61,11 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
   const [annTitle, setAnnTitle] = useState("");
   const [annBody, setAnnBody] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const myMembership = members.find((m) => m.user_id === currentUserId);
   const myRole = myMembership?.role ?? null;
@@ -133,6 +140,25 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
     setBusy(null);
   };
 
+  const handleTeamImageUpload = async (file: File, kind: "banner" | "logo") => {
+    const maxMB = kind === "banner" ? 5 : 2;
+    if (file.size > maxMB * 1024 * 1024) {
+      setUploadError(`${kind === "banner" ? "Cover photo" : "Logo"} must be under ${maxMB}MB.`);
+      return;
+    }
+    setUploadError(null);
+    kind === "banner" ? setUploadingBanner(true) : setUploadingLogo(true);
+    try {
+      const url = await uploadImage("team-assets", team!.id, kind, file);
+      await updateTeam(team!.id, kind === "banner" ? { banner_url: url } : { logo_url: url });
+      await load();
+    } catch (e: any) {
+      setUploadError(e?.message ?? "Upload failed. Try again.");
+    } finally {
+      kind === "banner" ? setUploadingBanner(false) : setUploadingLogo(false);
+    }
+  };
+
   const roleBadge = (role: string) =>
     role === "owner" ? (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500">
@@ -179,13 +205,36 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
         <div className={`rounded-2xl border overflow-hidden ${card}`}>
           {/* Banner with logo straddling its bottom edge */}
           <div className="relative">
-            <div className="h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+            <div className="h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 relative">
               {team.banner_url && (
                 <img src={team.banner_url} alt="" className="w-full h-full object-cover" />
               )}
+              {canManage && (
+                <button
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors"
+                  title="Upload cover photo (max 5MB)"
+                >
+                  {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                </button>
+              )}
             </div>
-            <div className={`absolute bottom-0 left-5 translate-y-1/2 w-20 h-20 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
-              {team.logo_url ? <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" /> : team.name.charAt(0).toUpperCase()}
+            {/* Logo with camera overlay */}
+            <div className={`absolute bottom-0 left-5 translate-y-1/2 w-20 h-20 relative`}>
+              <div className={`w-20 h-20 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
+                {team.logo_url ? <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" /> : team.name.charAt(0).toUpperCase()}
+              </div>
+              {canManage && (
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
+                  title="Upload logo (max 2MB)"
+                >
+                  {uploadingLogo ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
+                </button>
+              )}
             </div>
           </div>
           <div className="px-5 pb-5 pt-14">
@@ -211,6 +260,14 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             )}
           </div>
         </div>
+
+        {/* Upload error */}
+        {uploadError && (
+          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+            {uploadError}
+            <button onClick={() => setUploadError(null)} className="ml-3 text-red-400 hover:text-red-300">×</button>
+          </div>
+        )}
 
         {/* Join requests (owner/admin) */}
         {canManage && joinRequests.length > 0 && (
@@ -338,8 +395,8 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                     onClick={() => m.profile?.username && onViewProfile(m.profile.username)}
                     className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold"
                   >
-                    {m.profile?.avatar_url ? (
-                      <img src={m.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                    {m.profile?.avatar_url || m.profile?.profile_pic ? (
+                      <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" />
                     ) : (
                       m.profile?.name?.charAt(0)?.toUpperCase() ?? "?"
                     )}
@@ -410,6 +467,30 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           </section>
         )}
       </div>
+
+      {/* Hidden file inputs for banner/logo upload */}
+      <input
+        ref={bannerInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleTeamImageUpload(file, "banner");
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleTeamImageUpload(file, "logo");
+          e.target.value = "";
+        }}
+      />
 
       {showInvite && (
         <InviteMembersModal team={team} currentUserId={currentUserId} isDarkMode={isDarkMode} onClose={() => setShowInvite(false)} />

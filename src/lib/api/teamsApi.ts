@@ -123,7 +123,7 @@ export async function listTeamMembers(teamId: string): Promise<TeamMember[]> {
   const members = data as TeamMember[];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select(PROFILE_CARD_COLS)
+    .select(`${PROFILE_CARD_COLS},profile_pic`)
     .in("id", members.map((m) => m.user_id));
   const byId = new Map(((profiles as any[]) ?? []).map((p) => [p.id, normalizeProfile(p)]));
   return members.map((m) => ({ ...m, profile: byId.get(m.user_id) }));
