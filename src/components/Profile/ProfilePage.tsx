@@ -32,7 +32,7 @@ import { uploadImage } from "../../lib/storage";
 import EditBasicInfoModal from "./EditBasicInfoModal";
 import EducationSection from "./EducationSection";
 import ExperienceSection from "./ExperienceSection";
-import SkillsEditor, { BadgeList } from "./SkillsEditor";
+import SkillsEditor, { BadgeList, CSE_SKILL_SUGGESTIONS, INTEREST_SUGGESTIONS } from "./SkillsEditor";
 
 interface Props {
   /** username when viewing someone else via /u/:username; null = own profile */
@@ -344,7 +344,12 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
             )}
           </div>
           {editingSkills ? (
-            <SkillsEditor items={profile.skills} onChange={(items) => saveTags("skills", items)} isDarkMode={isDarkMode} />
+            <SkillsEditor
+              items={profile.skills}
+              onChange={(items) => saveTags("skills", items)}
+              isDarkMode={isDarkMode}
+              suggestions={CSE_SKILL_SUGGESTIONS}
+            />
           ) : (
             <BadgeList items={profile.skills} isDarkMode={isDarkMode} emptyText={isOwn ? "Add skills so teams can find you." : "No skills listed."} />
           )}
@@ -370,6 +375,7 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
               isDarkMode={isDarkMode}
               badgeColor="purple"
               placeholder="Add an interest…"
+              suggestions={INTEREST_SUGGESTIONS}
             />
           ) : (
             <BadgeList items={profile.interests} isDarkMode={isDarkMode} badgeColor="purple" emptyText={isOwn ? "Add interests like AI, Research, Web Development…" : "No interests listed."} />

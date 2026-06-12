@@ -161,7 +161,7 @@ export default function EditBasicInfoModal({ profile, onClose, onSaved, isDarkMo
               onChange={(e) => setVisibility(e.target.value as ProfileVisibility)}
             >
               <option value="public">Public — anyone can view</option>
-              <option value="users">Edu51 Portal users only</option>
+              <option value="users">Edu51Portal users only</option>
               <option value="private">Private — only you</option>
             </select>
           </div>

@@ -1029,7 +1029,7 @@ function App() {
       // 2. Send email notifications (primary method - more reliable)
       console.log("📧 Sending email notifications to all students...");
       const { sent, failed } = await sendEmailToAllStudents(
-        `${notice.title} - Edu51 Portal`,
+        `${notice.title} - Edu51Portal`,
         notice.title,
         notice.content,
         "/",
@@ -1545,10 +1545,10 @@ FOR ALL USING (true) WITH CHECK (true);
         console.log("🏗️ [initializeDefaultNotices] Creating welcome notice...");
         welcomeNotice = {
           id: "welcome-notice",
-          title: "🎉 Welcome to Edu51 Portal - BUBT Intake 51 Section 5",
+          title: "🎉 Welcome to Edu51Portal - BUBT Intake 51 Section 5",
           content: `Dear BUBT Intake 51 Students,
 
-Welcome to Edu51 Portal, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
+Welcome to Edu51Portal, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
 
 🎯 **Your Exam Success Platform:**
 📚 Complete Study Materials • 📝 Past Exam Questions • 🔔 Real-time Updates
@@ -1556,7 +1556,7 @@ Welcome to Edu51 Portal, your comprehensive learning platform designed specifica
 This platform is your centralized hub for all Section 5 (Computer Science & Engineering) resources. Use it regularly to stay ahead in your studies and achieve academic excellence!
 
 Best of luck with your studies!
-- Edu51 Portal Team`,
+- Edu51Portal Team`,
           type: "info",
           category: "announcement",
           priority: "normal",
@@ -1663,8 +1663,8 @@ Best of luck with your studies!
       const bareMinimumNotices: Notice[] = [
         {
           id: "welcome-notice",
-          title: "🎉 Welcome to Edu51 Portal",
-          content: "Welcome to Edu51 Portal, your academic platform!",
+          title: "🎉 Welcome to Edu51Portal",
+          content: "Welcome to Edu51Portal, your academic platform!",
           type: "info",
           category: "announcement",
           priority: "normal",
@@ -1994,9 +1994,9 @@ Best of luck with your studies!
   // Handle email contact - Open Gmail compose directly
   const handleEmailClick = () => {
     const email = "miftahurr503@gmail.com";
-    const subject = encodeURIComponent("Edu51 Portal Platform Contact");
+    const subject = encodeURIComponent("Edu51Portal Platform Contact");
     const body = encodeURIComponent(
-      "Hi Swapnil,\n\nI found your Edu51 Portal platform and want to connect!\n\nBest regards",
+      "Hi Swapnil,\n\nI found your Edu51Portal platform and want to connect!\n\nBest regards",
     );
 
     // Open Gmail compose in new tab
@@ -2008,7 +2008,7 @@ Best of luck with your studies!
   const SUPPORT_WHATSAPP_NUMBER = "8801318090383"; // updated to 01318090383 -> 8801318090383
   const handleWhatsAppClick = () => {
     const text = encodeURIComponent(
-      "Hi Swapnil, I want to talk about Edu51 Portal.",
+      "Hi Swapnil, I want to talk about Edu51Portal.",
     );
     const waUrl = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${text}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
@@ -2400,11 +2400,11 @@ Best of luck with your studies!
       const rawTitle = broadcastPush.title.trim();
       const rawBody = broadcastPush.body.trim();
       const formattedTitle = rawTitle
-        ? `Edu51 Portal • ${rawTitle}`
-        : "Edu51 Portal Update";
+        ? `Edu51Portal • ${rawTitle}`
+        : "Edu51Portal Update";
       const formattedBody = rawBody
-        ? `${rawBody} — Stay ahead with Edu51 Portal.`
-        : "New update from Edu51 Portal.";
+        ? `${rawBody} — Stay ahead with Edu51Portal.`
+        : "New update from Edu51Portal.";
 
       // 1. Send Push Notifications (backup method)
       let pushSent = 0;
@@ -3032,10 +3032,10 @@ For any queries, contact your course instructors or the department.`,
           <div className="text-center mb-6">
             <img
               src="/image.png"
-              alt="Edu51 Portal Logo"
+              alt="Edu51Portal Logo"
               className="h-16 w-16 mx-auto mb-4 object-contain"
             />
-            <h1 className="text-2xl font-bold text-gray-900">Edu<span className="text-[#ef4444]">51</span> Portal</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Edu<span className="text-[#ef4444]">51</span>Portal</h1>
             <p className="text-gray-600 mt-2">Admin Access</p>
           </div>
           <form onSubmit={handleAdminLogin}>
@@ -3180,7 +3180,7 @@ For any queries, contact your course instructors or the department.`,
                 <div className="flex-shrink-0 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 lg:h-20 lg:w-20">
                   <img
                     src="/Edu_51_Logo.png"
-                    alt="Edu51 Portal Logo"
+                    alt="Edu51Portal Logo"
                     className="h-full w-full object-contain block"
                     width="80"
                     height="80"
@@ -3193,7 +3193,7 @@ For any queries, contact your course instructors or the department.`,
                       isDarkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
-                    Edu<span className="text-[#ef4444]">51</span> Portal
+                    Edu<span className="text-[#ef4444]">51</span>Portal
                   </h1>
                 </div>
               </button>
@@ -4103,7 +4103,7 @@ For any queries, contact your course instructors or the department.`,
                   </span>
                   <p className="text-sm font-medium truncate">
                     <span className="font-bold mr-1.5">Coming Soon —</span>
-                    <span className="opacity-90">Edu<span className="text-[#ef4444]">51</span> Portal v2 is on the way with major new features, built by team </span>
+                    <span className="opacity-90">Edu<span className="text-[#ef4444]">51</span>Portal v2 is on the way with major new features, built by team </span>
                     <span className="font-semibold">Core We 5</span>
                     <span className="opacity-90">. Launching within </span>
                     <span className="font-semibold underline underline-offset-2 decoration-white/50">2 weeks</span>
@@ -4152,7 +4152,7 @@ For any queries, contact your course instructors or the department.`,
                       Welcome to{" "}
                     </span>
                     <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      Edu<span className="text-[#ef4444]">51</span> Portal
+                      Edu<span className="text-[#ef4444]">51</span>Portal
                     </span>
                   </h1>
 
@@ -4572,9 +4572,9 @@ For any queries, contact your course instructors or the department.`,
                       {/* Col 1 — Brand */}
                       <div className="sm:col-span-1">
                         <div className="flex items-center gap-2 mb-3">
-                          <img src="/Edu_51_Logo.png" alt="Edu51 Portal Logo" className="w-8 h-8 rounded-lg object-contain" />
+                          <img src="/Edu_51_Logo.png" alt="Edu51Portal Logo" className="w-8 h-8 rounded-lg object-contain" />
                           <span className={`text-base font-bold tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-                            Edu<span className="text-[#ef4444]">51</span> Portal
+                            Edu<span className="text-[#ef4444]">51</span>Portal
                           </span>
                         </div>
                         <p className={`text-xs leading-relaxed mb-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -4593,7 +4593,7 @@ For any queries, contact your course instructors or the department.`,
                             </svg>
                           </a>
                           <a
-                            href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I need help with Edu51 Portal.")}`}
+                            href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I need help with Edu51Portal.")}`}
                             onClick={handleWhatsAppClick}
                             target="_blank" rel="noopener noreferrer"
                             title="WhatsApp" aria-label="WhatsApp"
@@ -4643,7 +4643,7 @@ For any queries, contact your course instructors or the department.`,
                           ))}
                           <li>
                             <a
-                              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I have a suggestion for Edu51 Portal.")}`}
+                              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I have a suggestion for Edu51Portal.")}`}
                               target="_blank" rel="noopener noreferrer"
                               className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}
                             >
@@ -4668,7 +4668,7 @@ For any queries, contact your course instructors or the department.`,
                   {/* Bottom bar */}
                   <div className={`px-6 py-4 border-t flex items-center justify-center transition-colors duration-300 ${isDarkMode ? "border-slate-700/50 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
                     <p className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                      © {new Date().getFullYear()} Edu<span className="text-[#ef4444]">51</span> Portal · BUBT Intake 51 · All rights reserved.
+                      © {new Date().getFullYear()} Edu<span className="text-[#ef4444]">51</span>Portal · BUBT Intake 51 · All rights reserved.
                     </p>
                   </div>
                 </footer>
@@ -4748,7 +4748,7 @@ For any queries, contact your course instructors or the department.`,
                         <div className="relative inline-block mb-6">
                           <img
                             src="/image.png"
-                            alt="Edu51 Portal Logo"
+                            alt="Edu51Portal Logo"
                             className="h-20 w-20 mx-auto object-contain"
                           />
                           <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
@@ -5297,7 +5297,7 @@ For any queries, contact your course instructors or the department.`,
                         }`}
                       >
                         Welcome to Edu
-                        <span className="text-[#ef4444] font-bold">51</span> Portal.
+                        <span className="text-[#ef4444] font-bold">51</span>Portal.
                         This Privacy Policy explains how we collect, use,
                         disclose, and safeguard your information when you use
                         our academic portal designed for BUBT (Bangladesh
@@ -7805,7 +7805,7 @@ For queries, contact course instructors or the department.`,
                                   <p
                                     className={`mt-3 font-medium ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
                                   >
-                                    Best of luck to all students — Edu<span className="text-[#ef4444]">51</span> Portal Team 🎓
+                                    Best of luck to all students — Edu<span className="text-[#ef4444]">51</span>Portal Team 🎓
                                   </p>
                                 </div>
                               </div>
@@ -7890,7 +7890,7 @@ For queries, contact course instructors or the department.`,
                                   <p
                                     className={`mt-3 font-medium ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
                                   >
-                                    Best of luck to all students — Edu<span className="text-[#ef4444]">51</span> Portal Team 🎓
+                                    Best of luck to all students — Edu<span className="text-[#ef4444]">51</span>Portal Team 🎓
                                   </p>
                                 </div>
                               </div>
@@ -8027,7 +8027,7 @@ For queries, contact course instructors or the department.`,
                                     <p
                                       className={`mt-3 font-medium ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
                                     >
-                                      Best of luck to all students — Edu<span className="text-[#ef4444]">51</span> Portal Team 🎓
+                                      Best of luck to all students — Edu<span className="text-[#ef4444]">51</span>Portal Team 🎓
                                     </p>
                                   </div>
                                 </div>
@@ -8111,42 +8111,7 @@ For queries, contact course instructors or the department.`,
 
                     {/* Control Buttons */}
                     <div className="flex items-center gap-0.5 sm:gap-1 ml-1 sm:ml-2 flex-shrink-0">
-                      {/* Zoom Controls - Only for PDFs and Images */}
-                      {(selectedMaterial.type === "pdf" ||
-                        selectedMaterial.type === "image" ||
-                        selectedMaterial.type === "notes" ||
-                        selectedMaterial.type === "slides" ||
-                        selectedMaterial.type === "document") && (
-                        <>
-                          <button
-                            onClick={zoomOut}
-                            className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                            title="Zoom Out (-)"
-                          >
-                            <ZoomOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                          </button>
-                          <span className="text-[10px] sm:text-xs text-gray-400 px-0.5 sm:px-1 hidden md:inline">
-                            {zoomLevel}%
-                          </span>
-                          <button
-                            onClick={zoomIn}
-                            className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                            title="Zoom In (+)"
-                          >
-                            <ZoomIn className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                          </button>
-                          <button
-                            onClick={resetZoom}
-                            className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors hidden lg:block"
-                            title="Reset Zoom (0)"
-                          >
-                            <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                          </button>
-                        </>
-                      )}
-
                       {/* Fullscreen Toggle */}
-                      <div className="w-px h-4 sm:h-5 md:h-6 bg-gray-700 mx-0.5 sm:mx-1"></div>
                       <button
                         onClick={toggleFullscreen}
                         className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"

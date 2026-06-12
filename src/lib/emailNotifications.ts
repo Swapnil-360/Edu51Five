@@ -240,9 +240,9 @@ export function generateEmailHTML(notification: EmailNotification): string {
         <!-- Header -->
         <div class="header">
             <div class="logo">
-                <img src="${logoUrl}" alt="Edu51 Portal Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="${logoUrl}" alt="Edu51Portal Logo" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
-            <h1>Edu<span style="color: #ef4444; font-weight: 900;">51</span> Portal</h1>
+            <h1>Edu<span style="color: #ef4444; font-weight: 900;">51</span>Portal</h1>
             <p class="subtitle">BUBT Intake 51 - Academic Portal</p>
         </div>
         
@@ -258,18 +258,18 @@ export function generateEmailHTML(notification: EmailNotification): string {
             
             ${notification.actionUrl ? `
             <a href="${baseUrl}${escapeHtml(notification.actionUrl)}" class="cta-button" style="display: block; text-decoration: none; color: white;">
-                 ${escapeHtml(notification.actionText || 'View on Edu51 Portal')}
+                 ${escapeHtml(notification.actionText || 'View on Edu51Portal')}
             </a>
             ` : `
             <a href="${baseUrl}" class="cta-button" style="display: block; text-decoration: none; color: white;">
-                View on Edu51 Portal
+                View on Edu51Portal
             </a>
             `}
             
             <div class="divider"></div>
             
             <p style="font-size: 14px; color: #6b7280; margin: 20px 0;">
-                You're receiving this email because you're a member of <strong>Edu<span style="color: #ef4444;">51</span> Portal</strong> and have opted in to notifications.
+                You're receiving this email because you're a member of <strong>Edu<span style="color: #ef4444;">51</span>Portal</strong> and have opted in to notifications.
             </p>
         </div>
         
@@ -285,7 +285,7 @@ export function generateEmailHTML(notification: EmailNotification): string {
             </div>
             
             <div class="copyright">
-                © ${currentYear} Edu<span style="color: #ef4444;">51</span> Portal - BUBT Intake 51 Section 5. All rights reserved.<br>
+                © ${currentYear} Edu<span style="color: #ef4444;">51</span>Portal - BUBT Intake 51 Section 5. All rights reserved.<br>
                 <a href="${baseUrl}" style="color: ${primaryColor}; text-decoration: none;">edu51five.vercel.app</a>
             </div>
         </div>
@@ -379,7 +379,7 @@ export async function sendEmailToAllStudents(
           title,
           body,
           actionUrl,
-          actionText: 'View on Edu51 Portal'
+          actionText: 'View on Edu51Portal'
         });
 
         if (success) {

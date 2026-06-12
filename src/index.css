@@ -830,3 +830,13 @@ html {
     animation-iteration-count: infinite !important;
   }
 }
+
+/* Hide browser native show/hide password buttons (e.g. Edge, Chrome, IE) to avoid duplicate toggle icons */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

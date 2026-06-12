@@ -3,7 +3,7 @@ import { X, Loader2, Upload } from "lucide-react";
 import { Team, TeamCategory, TEAM_CATEGORY_LABELS } from "../../types/social";
 import { createTeam, updateTeam } from "../../lib/api/teamsApi";
 import { uploadImage } from "../../lib/storage";
-import SkillsEditor from "../Profile/SkillsEditor";
+import SkillsEditor, { CSE_SKILL_SUGGESTIONS } from "../Profile/SkillsEditor";
 
 interface Props {
   currentUserId: string;
@@ -124,7 +124,14 @@ export default function CreateTeamModal({ currentUserId, onClose, onCreated, isD
 
           <div>
             <label className={labelCls}>Required Skills</label>
-            <SkillsEditor items={skills} onChange={setSkills} isDarkMode={isDarkMode} badgeColor="emerald" placeholder="e.g. react, python…" />
+            <SkillsEditor
+              items={skills}
+              onChange={setSkills}
+              isDarkMode={isDarkMode}
+              badgeColor="emerald"
+              placeholder="e.g. react, python…"
+              suggestions={CSE_SKILL_SUGGESTIONS}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
