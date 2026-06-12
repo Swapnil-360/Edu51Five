@@ -37,7 +37,7 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
     try {
       if (supabaseConfigured) {
         const { error } = await (supabase as any).auth?.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-complete`
+          redirectTo: window.location.href.split('?')[0],
         });
         if (error) {
           setError(error.message || 'Unable to send reset instructions');

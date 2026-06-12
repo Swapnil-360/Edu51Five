@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, LogIn, Mail, Lock } from 'lucide-react';
+import { X, LogIn, Mail, Lock, ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface SignInModalProps {
@@ -24,6 +24,10 @@ export function SignInModal({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotSending, setForgotSending] = useState(false);
   // Tracks the current submission attempt; incremented on every new submit and on
   // every isOpen change so that stale async callbacks from a previous attempt are
   // silently ignored instead of updating state or calling onSignIn.
@@ -48,15 +52,50 @@ export function SignInModal({
   }, [isOpen]);
 
   useEffect(() => {
-    // Invalidate any in-flight submission so its callbacks don't fire after
-    // this open/close transition, then reset all form state.
     submissionIdRef.current += 1;
     setIdentifier('');
     setPassword('');
     setError('');
     setIsSubmitting(false);
     setIsGoogleLoading(false);
+    setForgotMode(false);
+    setForgotEmail('');
+    setForgotSent(false);
+    setForgotSending(false);
   }, [isOpen]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) { setError('Please enter your BUBT email.'); return; }
+    if (!forgotEmail.endsWith('@cse.bubt.edu.bd')) {
+      setError('Enter the @cse.bubt.edu.bd email you registered with.');
+      return;
+    }
+    setError('');
+    setForgotSending(true);
+    // Look up notification_email so we can hint the user where to check
+    let hintEmail = forgotEmail;
+    try {
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('notification_email')
+        .eq('bubt_email', forgotEmail.trim().toLowerCase())
+        .maybeSingle();
+      if (profileRow?.notification_email) hintEmail = profileRow.notification_email;
+    } catch { /* ignore */ }
+
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+      forgotEmail.trim().toLowerCase(),
+      { redirectTo: `${window.location.origin}${window.location.pathname}?reset=1` },
+    );
+    setForgotSending(false);
+    if (resetErr) {
+      setError('Could not send reset email. Please contact admin via WhatsApp.');
+    } else {
+      setForgotSent(true);
+      setForgotEmail(hintEmail); // show where to look
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,6 +326,66 @@ export function SignInModal({
 
         {/* Content */}
         <div className="px-6 py-6">
+
+          {/* ── Forgot password panel ── */}
+          {forgotMode ? (
+            <div className="space-y-5">
+              <button
+                type="button"
+                onClick={() => { setForgotMode(false); setError(''); setForgotSent(false); }}
+                className={`flex items-center gap-1 text-sm ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to sign in
+              </button>
+
+              {forgotSent ? (
+                <div className="text-center py-4 space-y-3">
+                  <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
+                  <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Reset link sent!</p>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Check <span className="font-medium">{forgotEmail}</span> for the reset link.
+                    After clicking it you'll be brought back here to set a new password.
+                  </p>
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Didn't receive it? Contact admin on WhatsApp for a manual reset.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <p className={`text-sm mb-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Enter your BUBT email. We'll send a reset link to your registered email or notification email.
+                    </p>
+                    {error && (
+                      <div className={`p-3 rounded-xl border text-sm mb-3 ${isDarkMode ? 'bg-red-900/30 border-red-700/50 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                        {error}
+                      </div>
+                    )}
+                    <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>BUBT Email</label>
+                    <div className="relative">
+                      <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="your.id@cse.bubt.edu.bd"
+                        className={`w-full pl-11 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-gray-100 placeholder-gray-400 focus:border-blue-500' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-500'}`}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotSending}
+                    className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60`}
+                  >
+                    {forgotSending && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                    Send Reset Link
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
+
           <form
             onSubmit={handleSubmit}
             className="space-y-5"
@@ -355,6 +454,16 @@ export function SignInModal({
               />
             </div>
           </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => { setForgotMode(true); setError(''); }}
+                className={`text-xs hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+              >
+                Forgot password?
+              </button>
+            </div>
 
             <button
               type="submit"
@@ -432,6 +541,7 @@ export function SignInModal({
               </button>
             </p>
           </form>
+          )} {/* end forgotMode conditional */}
         </div>
         </div>
       </div>

@@ -28,6 +28,7 @@ import {
 } from "./lib/emailNotifications";
 import { SignUpModal } from "./components/SignUpModal";
 import { ResetPasswordModal } from "./components/ResetPasswordModal";
+import { SetNewPasswordModal } from "./components/SetNewPasswordModal";
 import { ChangeEmailModal } from "./components/ChangeEmailModal";
 import { SignInModal } from "./components/SignInModal";
 import MarqueeTicker from "./components/MarqueeTicker";
@@ -315,6 +316,7 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showSetNewPasswordModal, setShowSetNewPasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showAnnouncementBanner, setShowAnnouncementBanner] = useState<boolean>(
     () => localStorage.getItem("edu51five_banner_v2_dismissed") !== "true"
@@ -658,6 +660,8 @@ function App() {
           }
         };
         loadInBackground();
+      } else if (event === "PASSWORD_RECOVERY") {
+        setShowSetNewPasswordModal(true);
       } else if (event === "SIGNED_OUT") {
         setAuthSession(null);
         setIsLoggedIn(false);
@@ -8596,6 +8600,12 @@ For queries, contact course instructors or the department.`,
       <ResetPasswordModal
         isOpen={showResetPasswordModal}
         onClose={() => setShowResetPasswordModal(false)}
+        isDarkMode={isDarkMode}
+      />
+
+      <SetNewPasswordModal
+        isOpen={showSetNewPasswordModal}
+        onClose={() => setShowSetNewPasswordModal(false)}
         isDarkMode={isDarkMode}
       />
 

@@ -54,6 +54,7 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
   const [editingSkills, setEditingSkills] = useState(false);
   const [editingInterests, setEditingInterests] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
 
@@ -104,6 +105,12 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
 
   const handleImageUpload = async (kind: "avatar" | "cover", file: File) => {
     if (!profile || !isOwn) return;
+    const MAX = kind === "cover" ? 5 : 2;
+    if (file.size > MAX * 1024 * 1024) {
+      setUploadError(`Image must be under ${MAX} MB.`);
+      return;
+    }
+    setUploadError(null);
     setBusy(true);
     try {
       const url = await uploadImage("avatars", profile.id, kind, file);
@@ -114,6 +121,7 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
       }
       await refreshProfile();
     } catch (e: any) {
+      setUploadError(e?.message ?? "Upload failed. Please try again.");
       console.error("Image upload failed:", e?.message ?? e);
     } finally {
       setBusy(false);
@@ -199,6 +207,12 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
       </div>
 
       <div className="max-w-3xl mx-auto px-4 mt-6 space-y-4">
+        {uploadError && (
+          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+            {uploadError}
+            <button onClick={() => setUploadError(null)} className="ml-3 text-red-400 hover:text-red-300">×</button>
+          </div>
+        )}
         {/* Header card */}
         <div className={`rounded-2xl border overflow-hidden ${card}`}>
           {/* Cover */}

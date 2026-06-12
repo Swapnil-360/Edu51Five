@@ -24,6 +24,7 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // discover state
   const [query, setQuery] = useState("");
@@ -66,9 +67,11 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
   const connStateFor = (userId: string): Connection | undefined =>
     connections.find((c) => c.requester_id === userId || c.addressee_id === userId);
 
-  const handleAction = async (fn: () => Promise<any>, key: string) => {
+  const handleAction = async (fn: () => Promise<{ error: string | null }>, key: string) => {
     setBusy(key);
-    await fn();
+    setActionError(null);
+    const result = await fn();
+    if (result?.error) setActionError(result.error);
     await load();
     setBusy(null);
   };
@@ -121,6 +124,13 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
           {tabBtn("requests", "Requests", incoming.length)}
           {tabBtn("discover", "Discover")}
         </div>
+
+        {actionError && (
+          <div className="mb-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+            {actionError}
+            <button onClick={() => setActionError(null)} className="ml-3 text-red-400 hover:text-red-300">×</button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-16">
