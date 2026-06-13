@@ -227,8 +227,28 @@ export function SignUpModal({
       return;
     }
 
-    if (!initialProfile && password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!initialProfile && password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (!initialProfile && !/[A-Z]/.test(password)) {
+      setError("Password must contain at least one uppercase letter");
+      return;
+    }
+
+    if (!initialProfile && !/[a-z]/.test(password)) {
+      setError("Password must contain at least one lowercase letter");
+      return;
+    }
+
+    if (!initialProfile && !/[0-9]/.test(password)) {
+      setError("Password must contain at least one digit");
+      return;
+    }
+
+    if (!initialProfile && !/[^A-Za-z0-9]/.test(password)) {
+      setError("Password must contain at least one special character");
       return;
     }
 
