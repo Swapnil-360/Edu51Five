@@ -77,7 +77,7 @@ export function SetNewPasswordModal({ isOpen, onClose, isDarkMode }: Props) {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 z-10 transition-colors ${
                       isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
                     }`}
                   >
@@ -99,7 +99,7 @@ export function SetNewPasswordModal({ isOpen, onClose, isDarkMode }: Props) {
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 z-10 transition-colors ${
                       isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
                     }`}
                   >
