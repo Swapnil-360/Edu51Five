@@ -45,12 +45,27 @@ Deno.serve(async (req) => {
       return json({ error: "No account found for that email." }, 404);
     }
 
-    const recipientEmail = profile.notification_email as string | null;
+    const rawNotificationEmail = (profile.notification_email as string | null)?.trim() ?? null;
+    const bubtNorm = bubtEmail.trim().toLowerCase();
+
+    // Treat blank or same-as-BUBT notification_email as unset
+    const recipientEmail =
+      rawNotificationEmail &&
+      rawNotificationEmail.length > 0 &&
+      rawNotificationEmail.toLowerCase() !== bubtNorm &&
+      !rawNotificationEmail.toLowerCase().endsWith("@cse.bubt.edu.bd")
+        ? rawNotificationEmail
+        : null;
+
     if (!recipientEmail) {
       return json({
-        error: "No recovery email on file. Please contact an admin to reset your password.",
+        error:
+          "No personal email found in your profile. Please sign in, go to Profile → Edit, " +
+          "add your Gmail or personal email under 'Notification Email', then try again.",
       }, 400);
     }
+
+    console.log(`Sending password reset for ${bubtNorm} → ${recipientEmail}`);
 
     // Generate the recovery link without sending any email
     const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({

@@ -76,18 +76,23 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
                 <div className={`${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'} w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center`}>
                   <KeyRound className="w-8 h-8 text-blue-600" />
                 </div>
-                <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Check your email</p>
+                <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Reset link sent!</p>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mt-2`}>
-                  We sent password reset instructions to <span className="font-semibold">{email}</span>.
+                  We sent a reset link to the personal email saved in your profile for <span className="font-semibold">{email}</span>.
                 </p>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-xs mt-1`}>Use the link within 24 hours.</p>
+                <p className={`text-xs mt-2 font-medium ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                  Not in your inbox? Check your Spam / Junk folder.
+                </p>
+                <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-500'} text-xs mt-1`}>
+                  Still nothing? Sign in and go to Profile → Edit to confirm your personal email is saved.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label htmlFor="email" className={`block text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>BUBT Email</label>
                   <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="yourname@cse.bubt.edu.bd" className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400'}`} />
-                  <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-500'} text-xs mt-1`}>We'll send a reset link to this email.</p>
+                  <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-500'} text-xs mt-1`}>The reset link will be sent to your personal email (Gmail etc.) saved in your profile.</p>
                 </div>
                 {error && (
                   <div className="p-3 rounded-lg bg-red-100/20 border border-red-400/50">

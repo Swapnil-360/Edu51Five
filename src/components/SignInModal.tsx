@@ -338,11 +338,14 @@ export function SignInModal({
                   <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
                   <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Reset link sent!</p>
                   <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Check <span className="font-medium">{forgotEmail}</span> for the reset link.
-                    After clicking it you'll be brought back here to set a new password.
+                    Reset link sent to <span className="font-medium">{forgotEmail}</span>.
+                    Click it to set a new password — you'll be brought back here automatically.
                   </p>
-                  <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Didn't receive it? Contact admin on WhatsApp for a manual reset.
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                    Not in your inbox? Check your <strong>Spam / Junk</strong> folder.
+                  </p>
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Still nothing? Go to Profile → Edit and make sure your personal email is saved, then try again.
                   </p>
                 </div>
               ) : (
