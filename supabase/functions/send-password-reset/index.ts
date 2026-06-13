@@ -82,44 +82,70 @@ Deno.serve(async (req) => {
     const resetLink = linkData.properties.action_link;
     const firstName = (profile.name as string | null)?.split(" ")[0] ?? "Student";
 
-    // Send via Resend (already configured in the project)
-    const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendKey) {
-      return json({ error: "Email service not configured (RESEND_API_KEY missing)." }, 500);
+    const brevoKey = Deno.env.get("BREVO_API_KEY");
+
+    if (!brevoKey) {
+      return json(
+        { error: "Email service not configured (BREVO_API_KEY missing)." },
+        500,
+      );
     }
 
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
+    const emailRes = await fetch(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "api-key": brevoKey,
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "Edu51Portal",
+            email: "asifaliai2026@gmail.com"
+          },
+          to: [
+            {
+              email: recipientEmail,
+              name: firstName
+            }
+          ],
+          subject: "Reset your Edu51Portal password",
+          htmlContent: `
+            <div style="font-family:system-ui, -apple-system, sans-serif;max-width:480px;margin:auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05)">
+              <h2 style="color:#0f172a;margin-bottom:16px;font-size:20px;font-weight:700">Edu<span style="color:#ef4444">51</span>Portal Password Reset</h2>
+              <p style="color:#334155;font-size:15px;line-height:1.5">Hi ${firstName},</p>
+              <p style="color:#334155;font-size:15px;line-height:1.5">We received a request to reset your <strong>Edu51Portal</strong> password for the account <code>${bubtEmail}</code>.</p>
+              <p style="margin:28px 0;text-align:center">
+                <a href="${resetLink}"
+                   style="background:#2563eb;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,0.2)">
+                  Reset Password
+                </a>
+              </p>
+              <hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0" />
+              <p style="color:#64748b;font-size:12px;line-height:1.5">This link expires in 1 hour. If you didn't request a reset, you can safely ignore this email.</p>
+            </div>
+          `,
+        }),
       },
-      body: JSON.stringify({
-        from: "Edu51Five <onboarding@resend.dev>",
-        to: [recipientEmail],
-        subject: "Reset your Edu51Five password",
-        html: `
-          <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
-            <h2 style="color:#3b82f6;margin-bottom:8px">Password Reset</h2>
-            <p>Hi ${firstName},</p>
-            <p>We received a request to reset your <strong>Edu51Five</strong> password for the account <code>${bubtEmail}</code>.</p>
-            <p style="margin:24px 0">
-              <a href="${resetLink}"
-                 style="background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
-                Reset Password
-              </a>
-            </p>
-            <p style="color:#6b7280;font-size:13px">This link expires in 1 hour. If you didn't request a reset, you can safely ignore this email.</p>
-          </div>
-        `,
-      }),
-    });
+    );
 
     if (!emailRes.ok) {
       const errBody = await emailRes.text();
-      console.error("Resend error:", errBody);
-      return json({ error: "Failed to send reset email. Try again later." }, 500);
+      console.error("Brevo error:", errBody);
+
+      return json(
+        {
+          error: "Failed to send reset email. Try again later.",
+          details: errBody,
+        },
+        500,
+      );
     }
+
+    const brevoResponse = await emailRes.text();
+    console.log("Brevo success:", brevoResponse);
 
     // Return masked recipient so the client can show a helpful hint
     const atIdx = recipientEmail.indexOf("@");
