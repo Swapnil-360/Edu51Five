@@ -693,14 +693,14 @@ export function SignUpModal({
                     htmlFor="notificationEmail"
                     className={`block text-sm font-semibold mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
                   >
-                    Notification Email
+                    Notification Email <span className={`font-normal text-xs ${isDarkMode ? "text-amber-400" : "text-amber-600"}`}>(required for password reset)</span>
                   </label>
                   <input
                     id="notificationEmail"
                     type="email"
                     value={notificationEmail}
                     onChange={(e) => setNotificationEmail(e.target.value)}
-                    placeholder="alternative@gmail.com (optional)"
+                    placeholder="your.name@gmail.com"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                       isDarkMode
                         ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
@@ -711,14 +711,13 @@ export function SignUpModal({
                     <p
                       className={`text-xs mt-1 ${isDarkMode ? "text-amber-300" : "text-amber-600"}`}
                     >
-                      Warning: Without a Notification Email, you won’t receive
-                      any updates.
+                      ⚠ Required for password reset and admin notifications. Add your Gmail or personal email.
                     </p>
                   ) : (
                     <p
                       className={`text-xs mt-1 ${isDarkMode ? "text-gray-500" : "text-gray-500"}`}
                     >
-                      For updates and notifications
+                      Reset password emails and admin notifications will be sent here.
                     </p>
                   )}
                 </div>
