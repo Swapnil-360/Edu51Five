@@ -54,9 +54,9 @@ Deno.serve(async (req) => {
     // Treat blank or same-as-BUBT notification_email as unset
     const recipientEmail =
       rawNotificationEmail &&
-      rawNotificationEmail.length > 0 &&
-      rawNotificationEmail.toLowerCase() !== bubtNorm &&
-      !rawNotificationEmail.toLowerCase().endsWith("@cse.bubt.edu.bd")
+        rawNotificationEmail.length > 0 &&
+        rawNotificationEmail.toLowerCase() !== bubtNorm &&
+        !rawNotificationEmail.toLowerCase().endsWith("@cse.bubt.edu.bd")
         ? rawNotificationEmail
         : null;
 
@@ -88,10 +88,10 @@ Deno.serve(async (req) => {
     const nameParts = ((profile.name as string | null) ?? "").trim().split(/\s+/);
     const firstName = nameParts.find((p) => !HONORIFICS.has(p.toLowerCase())) ?? nameParts[0] ?? "Student";
 
-    // Send via Brevo. Requires a BREVO_API_KEY secret configured in Supabase.
-    const brevoKey = Deno.env.get("BREVO_API_KEY");
-    if (!brevoKey) {
-      return json({ error: "Email service not configured (BREVO_API_KEY missing)." });
+    // Send via Resend (already configured in the project)
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) {
+      return json({ error: "Email service not configured (RESEND_API_KEY missing)." }, 500);
     }
 
     const emailRes = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -102,93 +102,31 @@ Deno.serve(async (req) => {
         "api-key": brevoKey,
       },
       body: JSON.stringify({
-        sender: {
-          name: "Edu51Portal",
-          email: "asifaliai2026@gmail.com",
-        },
-        to: [
-          {
-            email: recipientEmail,
-            name: firstName,
-          },
-        ],
-        subject: "Reset your Edu51Portal password",
-        htmlContent: `<!DOCTYPE html>
-<html>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 0">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-
-        <!-- Header with logo -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);padding:28px 32px;text-align:center">
-            <img src="https://edu51five.vercel.app/Edu_51_Logo.png"
-                 alt="Edu51Portal"
-                 width="56" height="56"
-                 style="border-radius:12px;display:block;margin:0 auto 12px" />
-            <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.3px">Edu<span style="color:#ef4444">51</span>Portal</span>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:32px 32px 24px">
-            <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a">Password Reset</h2>
-            <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.6">Hi <strong>${firstName}</strong>,</p>
-            <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6">
-              We received a request to reset your <strong>Edu<span style="color:#ef4444">51</span>Portal</strong> password for the account
-              <span style="color:#2563eb;font-weight:600">${bubtEmail}</span>.
+        from: "Edu51Five <onboarding@resend.dev>",
+        to: [recipientEmail],
+        subject: "Reset your Edu51Five password",
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
+            <h2 style="color:#3b82f6;margin-bottom:8px">Password Reset</h2>
+            <p>Hi ${firstName},</p>
+            <p>We received a request to reset your <strong>Edu51Five</strong> password for the account <code>${bubtEmail}</code>.</p>
+            <p style="margin:24px 0">
+              <a href="${resetLink}"
+                 style="background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
+                Reset Password
+              </a>
             </p>
-
-            <!-- CTA button -->
-            <table cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-              <tr>
-                <td style="background:#2563eb;border-radius:10px">
-                  <a href="${resetLink}"
-                     style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.2px">
-                    Reset Password
-                  </a>
-                </td>
-              </tr>
-            </table>
-
-            <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.5">
-              This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email — your account is secure.
-            </p>
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;text-align:center">
-            <p style="margin:0;color:#94a3b8;font-size:12px">
-              &copy; 2025 Edu<span style="color:#ef4444">51</span>Portal &bull; BUBT CSE Student Portal
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`,
+            <p style="color:#6b7280;font-size:13px">This link expires in 1 hour. If you didn't request a reset, you can safely ignore this email.</p>
+          </div>
+        `,
       }),
     });
 
     if (!emailRes.ok) {
       const errBody = await emailRes.text();
-      console.error("Brevo error:", errBody);
-      let parsedErr = errBody;
-      try {
-        const parsed = JSON.parse(errBody);
-        parsedErr = parsed.message || parsed.error || errBody;
-      } catch (_) { /* ignore */ }
-      return json({ error: `Failed to send reset email: ${parsedErr}` });
+      console.error("Resend error:", errBody);
+      return json({ error: "Failed to send reset email. Try again later." }, 500);
     }
-
-    const brevoResponse = await emailRes.text();
-    console.log("Brevo success:", brevoResponse);
 
     // Return masked recipient so the client can show a helpful hint
     const atIdx = recipientEmail.indexOf("@");

@@ -13,9 +13,15 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [sentTo, setSentTo] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setSuccess(false);
+      setError('');
+      setSentTo('');
+      return;
+    }
     const stored = localStorage.getItem('userProfileBubtEmail');
     if (stored) setEmail(stored);
   }, [isOpen]);
@@ -45,6 +51,7 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
         setError(data?.error ?? fnErr?.message ?? 'Unable to send reset instructions');
         return;
       }
+      setSentTo(data?.maskedEmail ?? '');
       setSuccess(true);
     } catch (err) {
       console.error('Reset password error:', err);
@@ -78,13 +85,12 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
                 </div>
                 <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Reset link sent!</p>
                 <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm mt-2`}>
-                  We sent a reset link to the personal email saved in your profile for <span className="font-semibold">{email}</span>.
+                  We sent a reset link to{' '}
+                  <span className="font-semibold text-blue-400">{sentTo || 'your notification email'}</span>.
+                  Click it to set a new password.
                 </p>
                 <p className={`text-xs mt-2 font-medium ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                  Not in your inbox? Check your Spam / Junk folder.
-                </p>
-                <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-500'} text-xs mt-1`}>
-                  Still nothing? Sign in and go to Profile → Edit to confirm your personal email is saved.
+                  Not in inbox? Check your Spam / Junk folder.
                 </p>
               </div>
             ) : (

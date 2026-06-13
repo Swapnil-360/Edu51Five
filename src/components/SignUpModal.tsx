@@ -272,23 +272,34 @@ export function SignUpModal({
           // Recover by signing in immediately.
           let userId: string | null = data?.user?.id ?? null;
           let hasSession = Boolean(data?.session?.user);
+          let alreadyInAuth = false;
 
           if (error) {
             const isEmailDeliveryError =
               error.message?.toLowerCase().includes("sending confirmation") ||
               error.message?.toLowerCase().includes("error sending");
-            if (!isEmailDeliveryError) {
+            const isAlreadyRegistered =
+              error.message?.toLowerCase().includes("already registered") ||
+              error.message?.toLowerCase().includes("already exists");
+
+            if (!isEmailDeliveryError && !isAlreadyRegistered) {
               setError(error.message || "Unable to create account");
               return;
             }
-            // Email delivery failed but user was created + auto-confirmed by trigger.
-            // Sign them in now to get the session.
+            if (isAlreadyRegistered) alreadyInAuth = true;
+
+            // Sign in to recover userId — handles both email delivery failure
+            // and the case where auth user exists but profile was deleted.
             const { data: siData, error: siError } = await supabase.auth.signInWithPassword({
               email: bubtEmail,
               password,
             });
             if (siError || !siData?.user) {
-              setError("Account created but could not sign in automatically. Please use the Sign In button.");
+              setError(
+                isAlreadyRegistered
+                  ? "This BUBT email is already registered. Please sign in instead."
+                  : "Account created but could not sign in automatically. Please use the Sign In button."
+              );
               return;
             }
             userId = siData.user.id;
@@ -301,6 +312,22 @@ export function SignUpModal({
           }
 
           if (hasSession) {
+            // If auth user already existed, check whether the profile row also exists.
+            // If it does → genuine duplicate signup, block it.
+            // If it doesn't → profile was deleted by admin, allow re-creation.
+            if (alreadyInAuth) {
+              const { data: existingProfile } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("id", userId!)
+                .maybeSingle();
+              if (existingProfile) {
+                await supabase.auth.signOut();
+                setError("This BUBT email is already registered. Please sign in instead.");
+                return;
+              }
+            }
+
             const { error: profileError } = await supabase
               .from("profiles")
               .upsert(
