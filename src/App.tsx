@@ -529,6 +529,16 @@ function App() {
           error,
         } = await supabase.auth.getSession();
 
+        // Direct parse of URL hash/search for recovery parameter to bypass auth listener race conditions
+        const isRecoveryInit = 
+          window.location.hash.includes('type=recovery') || 
+          window.location.hash.includes('recovery') || 
+          window.location.search.includes('type=recovery');
+        if (isRecoveryInit) {
+          console.log("Found password recovery parameter in URL on initialization");
+          setShowSetNewPasswordModal(true);
+        }
+
         if (error) {
           console.error("Auth session error:", error);
           setAuthLoading(false);
@@ -616,6 +626,16 @@ function App() {
         setAuthSession(session);
         setIsLoggedIn(true);
         setShowSignInModal(false); // Always close sign-in modal on successful auth
+
+        // Secondary fallback for recovery redirect when SIGNED_IN is fired instead of PASSWORD_RECOVERY
+        const isRecoveryRedirect = 
+          window.location.hash.includes('type=recovery') || 
+          window.location.hash.includes('recovery') || 
+          window.location.search.includes('type=recovery');
+        if (isRecoveryRedirect) {
+          console.log("SIGNED_IN event with recovery hash parameters. Showing reset modal.");
+          setShowSetNewPasswordModal(true);
+        }
 
         // IMMEDIATELY apply user_metadata so sidebar never shows "Welcome Student"
         // while we wait for the DB profile query to complete.
