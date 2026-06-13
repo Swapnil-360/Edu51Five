@@ -88,7 +88,9 @@ Deno.serve(async (req) => {
     const nameParts = ((profile.name as string | null) ?? "").trim().split(/\s+/);
     const firstName = nameParts.find((p) => !HONORIFICS.has(p.toLowerCase())) ?? nameParts[0] ?? "Student";
 
-    // Send via Resend (already configured in the project)
+    // Send via Resend. Requires a verified sending domain — onboarding@resend.dev
+    // only delivers to the Resend account owner's email. Once a domain is verified,
+    // update the `from` field below to `noreply@yourdomain.com`.
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {
       return json({ error: "Email service not configured (RESEND_API_KEY missing)." });
@@ -101,9 +103,9 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Edu51Five <onboarding@resend.dev>",
+        from: "Edu51Portal <onboarding@resend.dev>",
         to: [recipientEmail],
-        subject: "Reset your Edu51Five password",
+        subject: "Reset your Edu51Portal password",
         html: `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
@@ -115,10 +117,10 @@ Deno.serve(async (req) => {
         <tr>
           <td style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);padding:28px 32px;text-align:center">
             <img src="https://edu51five.vercel.app/Edu_51_Logo.png"
-                 alt="Edu51Five"
+                 alt="Edu51Portal"
                  width="56" height="56"
                  style="border-radius:12px;display:block;margin:0 auto 12px" />
-            <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.3px">Edu51Five</span>
+            <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.3px">Edu<span style="color:#ef4444">51</span>Portal</span>
           </td>
         </tr>
 
@@ -128,7 +130,7 @@ Deno.serve(async (req) => {
             <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a">Password Reset</h2>
             <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.6">Hi <strong>${firstName}</strong>,</p>
             <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6">
-              We received a request to reset your <strong>Edu51Five</strong> password for the account
+              We received a request to reset your <strong>Edu<span style="color:#ef4444">51</span>Portal</strong> password for the account
               <span style="color:#2563eb;font-weight:600">${bubtEmail}</span>.
             </p>
 
@@ -154,7 +156,7 @@ Deno.serve(async (req) => {
         <tr>
           <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;text-align:center">
             <p style="margin:0;color:#94a3b8;font-size:12px">
-              &copy; 2025 Edu51Five &bull; BUBT CSE Student Portal
+              &copy; 2025 Edu<span style="color:#ef4444">51</span>Portal &bull; BUBT CSE Student Portal
             </p>
           </td>
         </tr>
