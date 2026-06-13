@@ -35,14 +35,15 @@ export function ResetPasswordModal({ isOpen, onClose, isDarkMode }: ResetPasswor
 
     setIsSubmitting(true);
     try {
-      if (supabaseConfigured) {
-        const { error } = await (supabase as any).auth?.resetPasswordForEmail(email, {
+      const { data, error: fnErr } = await (supabase as any).functions?.invoke('send-password-reset', {
+        body: {
+          bubtEmail: email.trim().toLowerCase(),
           redirectTo: window.location.href.split('?')[0],
-        });
-        if (error) {
-          setError(error.message || 'Unable to send reset instructions');
-          return;
-        }
+        },
+      });
+      if (fnErr || data?.error) {
+        setError(data?.error ?? fnErr?.message ?? 'Unable to send reset instructions');
+        return;
       }
       setSuccess(true);
     } catch (err) {

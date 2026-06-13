@@ -75,27 +75,20 @@ export function SignInModal({
     }
     setError('');
     setForgotSending(true);
-    // Look up notification_email so we can hint the user where to check
-    let hintEmail = forgotEmail;
-    try {
-      const { data: profileRow } = await supabase
-        .from('profiles')
-        .select('notification_email')
-        .eq('bubt_email', forgotEmail.trim().toLowerCase())
-        .maybeSingle();
-      if (profileRow?.notification_email) hintEmail = profileRow.notification_email;
-    } catch { /* ignore */ }
 
-    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
-      forgotEmail.trim().toLowerCase(),
-      { redirectTo: `${window.location.origin}${window.location.pathname}?reset=1` },
-    );
+    const { data, error: fnErr } = await supabase.functions.invoke('send-password-reset', {
+      body: {
+        bubtEmail: forgotEmail.trim().toLowerCase(),
+        redirectTo: `${window.location.origin}${window.location.pathname}?reset=1`,
+      },
+    });
+
     setForgotSending(false);
-    if (resetErr) {
-      setError('Could not send reset email. Please contact admin via WhatsApp.');
+    if (fnErr || data?.error) {
+      setError(data?.error ?? fnErr?.message ?? 'Could not send reset email. Please contact admin via WhatsApp.');
     } else {
       setForgotSent(true);
-      setForgotEmail(hintEmail); // show where to look
+      if (data?.maskedEmail) setForgotEmail(data.maskedEmail);
     }
   };
 
