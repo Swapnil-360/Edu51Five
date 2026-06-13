@@ -12,9 +12,12 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-const json = (body: unknown, status = 200) =>
+// Always return HTTP 200 — supabase.functions.invoke() puts non-2xx responses
+// into error.context (not data), making body inaccessible without extra async parsing.
+// We signal failures via { error: "..." } in the JSON body instead.
+const json = (body: unknown) =>
   new Response(JSON.stringify(body), {
-    status,
+    status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
@@ -25,7 +28,7 @@ Deno.serve(async (req) => {
     const { bubtEmail, redirectTo } = await req.json() as { bubtEmail: string; redirectTo: string };
 
     if (!bubtEmail?.endsWith("@cse.bubt.edu.bd")) {
-      return json({ error: "Must be a @cse.bubt.edu.bd email." }, 400);
+      return json({ error: "Must be a @cse.bubt.edu.bd email." });
     }
 
     const supabaseAdmin = createClient(
@@ -42,7 +45,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (profileErr || !profile) {
-      return json({ error: "No account found for that email." }, 404);
+      return json({ error: "No account found for that email." });
     }
 
     const rawNotificationEmail = (profile.notification_email as string | null)?.trim() ?? null;
@@ -62,7 +65,7 @@ Deno.serve(async (req) => {
         error:
           "No personal email found in your profile. Please sign in, go to Profile → Edit, " +
           "add your Gmail or personal email under 'Notification Email', then try again.",
-      }, 400);
+      });
     }
 
     console.log(`Sending password reset for ${bubtNorm} → ${recipientEmail}`);
@@ -76,7 +79,7 @@ Deno.serve(async (req) => {
 
     if (linkErr || !linkData?.properties?.action_link) {
       console.error("generateLink error:", linkErr);
-      return json({ error: linkErr?.message ?? "Could not generate reset link." }, 500);
+      return json({ error: linkErr?.message ?? "Could not generate reset link." });
     }
 
     const resetLink = linkData.properties.action_link;
@@ -85,7 +88,7 @@ Deno.serve(async (req) => {
     // Send via Resend (already configured in the project)
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {
-      return json({ error: "Email service not configured (RESEND_API_KEY missing)." }, 500);
+      return json({ error: "Email service not configured (RESEND_API_KEY missing)." });
     }
 
     const emailRes = await fetch("https://api.resend.com/emails", {
@@ -118,7 +121,7 @@ Deno.serve(async (req) => {
     if (!emailRes.ok) {
       const errBody = await emailRes.text();
       console.error("Resend error:", errBody);
-      return json({ error: "Failed to send reset email. Try again later." }, 500);
+      return json({ error: "Failed to send reset email. Try again later." });
     }
 
     // Return masked recipient so the client can show a helpful hint
@@ -128,6 +131,6 @@ Deno.serve(async (req) => {
     return json({ success: true, maskedEmail: masked });
   } catch (e) {
     console.error("send-password-reset error:", e);
-    return json({ error: e instanceof Error ? e.message : "Unexpected error." }, 500);
+    return json({ error: e instanceof Error ? e.message : "Unexpected error." });
   }
 });
