@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyRound, CheckCircle } from 'lucide-react';
+import { KeyRound, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
 export function SetNewPasswordModal({ isOpen, onClose, isDarkMode }: Props) {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -27,11 +29,11 @@ export function SetNewPasswordModal({ isOpen, onClose, isDarkMode }: Props) {
     setSaving(false);
     if (err) { setError(err.message || 'Failed to update password.'); return; }
     setDone(true);
-    setTimeout(() => { onClose(); setDone(false); setPassword(''); setConfirm(''); }, 2000);
+    setTimeout(() => { onClose(); setDone(false); setPassword(''); setConfirm(''); setShowPassword(false); setShowConfirm(false); }, 2000);
   };
 
   const card = isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
-  const input = `w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+  const input = `w-full pl-4 pr-10 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
     isDarkMode
       ? 'bg-gray-700/50 border-gray-600/50 text-gray-100 placeholder-gray-400 focus:border-blue-500'
       : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-500'
@@ -63,11 +65,47 @@ export function SetNewPasswordModal({ isOpen, onClose, isDarkMode }: Props) {
               )}
               <div className="space-y-1">
                 <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" className={input} minLength={6} />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className={input}
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+                      isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-1">
                 <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm Password</label>
-                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" className={input} minLength={6} />
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    placeholder="Re-enter password"
+                    className={input}
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
+                      isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               <button
                 type="submit"
