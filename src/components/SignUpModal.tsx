@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, UserPlus, Image as ImageIcon, Mail, Eye, EyeOff } from "lucide-react";
+import { X, UserPlus, Image as ImageIcon, Mail, Eye, EyeOff, Check } from "lucide-react";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 interface SignUpModalProps {
@@ -70,6 +70,18 @@ export function SignUpModal({
   const [success, setSuccess] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Real-time password requirement evaluations
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasDigit && hasSpecial;
+  const isFormValid = initialProfile
+    ? (name.trim() !== "")
+    : (name.trim() !== "" && isPasswordValid && passwordsMatch);
 
   // Update form fields when initialProfile changes (only in edit mode)
   useEffect(() => {
@@ -217,39 +229,19 @@ export function SignUpModal({
       return;
     }
 
-    if (!password && !initialProfile) {
-      setError("Please enter a password");
-      return;
-    }
-
-    if (!initialProfile && password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (!initialProfile && password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return;
-    }
-
-    if (!initialProfile && !/[A-Z]/.test(password)) {
-      setError("Password must contain at least one uppercase letter");
-      return;
-    }
-
-    if (!initialProfile && !/[a-z]/.test(password)) {
-      setError("Password must contain at least one lowercase letter");
-      return;
-    }
-
-    if (!initialProfile && !/[0-9]/.test(password)) {
-      setError("Password must contain at least one digit");
-      return;
-    }
-
-    if (!initialProfile && !/[^A-Za-z0-9]/.test(password)) {
-      setError("Password must contain at least one special character");
-      return;
+    if (!initialProfile) {
+      if (!password) {
+        setError("Please enter a password");
+        return;
+      }
+      if (!isPasswordValid) {
+        setError("Please satisfy all password requirements first.");
+        return;
+      }
+      if (!passwordsMatch) {
+        setError("Passwords do not match");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -876,6 +868,82 @@ export function SignUpModal({
                         </button>
                       </div>
                     </div>
+
+                    {/* Password checklist */}
+                    <div className={`p-3.5 rounded-lg border space-y-2 text-xs ${
+                      isDarkMode ? 'bg-gray-800/40 border-gray-700/60' : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <p className={`font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Password Requirements:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                        <div className="flex items-center gap-2">
+                          {hasMinLength ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={hasMinLength ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            Min. 8 characters
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {hasUppercase ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={hasUppercase ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One uppercase letter
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {hasLowercase ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={hasLowercase ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One lowercase letter
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {hasDigit ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={hasDigit ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One digit (0-9)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {hasSpecial ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={hasSpecial ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One special char (e.g. @)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {passwordsMatch ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                          )}
+                          <span className={passwordsMatch ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            Passwords match
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -891,9 +959,9 @@ export function SignUpModal({
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || !name.trim()}
+                  disabled={isSubmitting || !isFormValid}
                   className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                    isSubmitting || !name.trim()
+                    isSubmitting || !isFormValid
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                   } ${
