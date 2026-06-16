@@ -72,11 +72,13 @@ import {
   UserPlus,
   Users,
   GraduationCap,
+  Trophy,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
 import TeamsPage from "./components/Teams/TeamsPage";
 import TeamPage from "./components/Teams/TeamPage";
+import { WorldCupPage } from "./components/WorldCup/WorldCupPage";
 
 interface Course {
   id: string;
@@ -144,6 +146,7 @@ function App() {
     | "teams"
     | "team"
     | "alumni"
+    | "wc26"
   >(() => {
     const path = window.location.pathname;
     if (path === "/admin") return "admin";
@@ -159,6 +162,7 @@ function App() {
     if (path.startsWith("/teams/")) return "team";
     if (path === "/teams") return "teams";
     if (path === "/alumni") return "alumni";
+    if (path === "/wc26") return "wc26";
     // Always treat root, /home, or empty as home
     if (path === "/" || path === "/home" || path === "" || !path) return "home";
     // Fallback: if path is not recognized, force home view
@@ -193,7 +197,8 @@ function App() {
         | "network"
         | "teams"
         | "team"
-        | "alumni",
+        | "alumni"
+        | "wc26",
       extra?: string | null,
     ) => {
       let path = "/";
@@ -214,6 +219,7 @@ function App() {
         setSelectedTeamId(extra);
       } else if (view === "teams") path = "/teams";
       else if (view === "alumni") path = "/alumni";
+      else if (view === "wc26") path = "/wc26";
       else if (view === "home") path = "/home";
       window.history.pushState({}, "", path);
       setCurrentView(view);
@@ -269,6 +275,7 @@ function App() {
         setCurrentView("team");
       } else if (path === "/teams") setCurrentView("teams");
       else if (path === "/alumni") setCurrentView("alumni");
+      else if (path === "/wc26") setCurrentView("wc26");
       // Always treat root, /home, or empty as home
       else if (path === "/" || path === "/home" || path === "" || !path)
         setCurrentView("home");
@@ -3458,6 +3465,43 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
+              {/* World Cup 2026 */}
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification(
+                      "error",
+                      "Please sign in to join the World Cup 2026 event",
+                    );
+                    setShowSignInModal(true);
+                    setShowMobileMenu(false);
+                    return;
+                  }
+                  goToView("wc26");
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? "hover:bg-green-900/30 border-gray-700/50 hover:border-green-500/50 text-gray-100"
+                    : "hover:bg-green-50 border-gray-200/50 hover:border-green-300 text-gray-900"
+                }`}
+              >
+                <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-green-900/40" : "bg-green-100"}`}>
+                  <Trophy className={`w-5 h-5 ${isDarkMode ? "text-green-400" : "text-green-600"}`} />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">World Cup '26</p>
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-500 text-white animate-pulse">
+                      LIVE
+                    </span>
+                  </div>
+                  <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    Pick a team · earn points · leaderboard
+                  </p>
+                </div>
+              </button>
+
               {/* Semester Tracker */}
               <button
                 onClick={() => {
@@ -8537,6 +8581,17 @@ For queries, contact course instructors or the department.`,
               Back to Home
             </button>
           </div>
+        </main>
+      )}
+
+      {/* ── World Cup 2026 ── */}
+      {currentView === "wc26" && authSession?.user?.id && (
+        <main className="fixed inset-0 z-50 overflow-y-auto">
+          <WorldCupPage
+            currentUserId={authSession.user.id}
+            onClose={() => goToView("home")}
+            isDarkMode={isDarkMode}
+          />
         </main>
       )}
 

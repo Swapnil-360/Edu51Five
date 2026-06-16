@@ -29,6 +29,7 @@ import {
   listMyConnections,
 } from "../../lib/api/connectionsApi";
 import { uploadImage } from "../../lib/storage";
+import { getTeamByCode, teamLogoUrl } from "../../lib/wc26Teams";
 import EditBasicInfoModal from "./EditBasicInfoModal";
 import EducationSection from "./EducationSection";
 import ExperienceSection from "./ExperienceSection";
@@ -68,16 +69,17 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
     } else if (currentUserId) {
       p = await getProfileById(currentUserId);
     }
+    // Pre-fetch legacy pic in parallel before setting profile so avatar renders immediately
+    const legacyFetch = p && !p.avatar_url ? getLegacyProfilePic(p.id) : Promise.resolve(null);
     setProfile(p);
     setLoading(false);
     if (!p) return;
 
+    legacyFetch.then((pic) => { if (pic) setLegacyPic(pic); });
+
     // sections + connection state in parallel (non-blocking for first paint)
     listEducations(p.id).then(setEducations);
     listExperiences(p.id).then(setExperiences);
-    if (!p.avatar_url) {
-      getLegacyProfilePic(p.id).then(setLegacyPic);
-    }
     if (currentUserId) {
       listMyConnections(currentUserId).then((conns) => {
         setConnectionCount(conns.filter((c) => c.status === "accepted").length);
@@ -198,6 +200,12 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
+      <style>{`
+        @keyframes flagWave { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.15)} }
+        @keyframes wcPop    { 0%{transform:scale(1) rotate(0deg)} 30%{transform:scale(1.35) rotate(-10deg)} 60%{transform:scale(1.3) rotate(8deg)} 80%{transform:scale(1.2) rotate(-4deg)} 100%{transform:scale(1.25) rotate(0deg)} }
+        .wc-logo { animation: flagWave 2s ease-in-out infinite; transition: filter 0.2s; }
+        .wc-logo:hover { animation: wcPop 0.5s ease forwards; filter: drop-shadow(0 0 6px rgba(34,197,94,0.8)) drop-shadow(0 0 12px rgba(250,204,21,0.5)); cursor: pointer; }
+      `}</style>
       {/* Top bar */}
       <div className={`sticky top-0 z-20 px-4 py-3 flex items-center gap-3 border-b backdrop-blur ${isDarkMode ? "bg-slate-950/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
         <button onClick={onClose} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}>
@@ -218,7 +226,7 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
           {/* Cover */}
           <div className="relative h-36 sm:h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
             {profile.cover_photo_url && (
-              <img src={profile.cover_photo_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={profile.cover_photo_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
             )}
             {isOwn && (
               <button
@@ -236,7 +244,14 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
             <div className="relative -mt-12 mb-3 w-24 h-24">
               <div className={`w-24 h-24 rounded-full overflow-hidden border-4 ${isDarkMode ? "border-slate-900 bg-slate-800" : "border-white bg-slate-200"}`}>
                 {avatarSrc ? (
-                  <img src={avatarSrc} alt={profile.name} className="w-full h-full object-cover" />
+                  <img
+                    src={avatarSrc}
+                    alt={profile.name}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600">
                     {profile.name?.charAt(0)?.toUpperCase() ?? "?"}
@@ -256,7 +271,20 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
 
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="min-w-0">
-                <h2 className={`text-xl font-bold ${titleCls}`}>{profile.name}</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className={`text-xl font-bold ${titleCls}`}>{profile.name}</h2>
+                  {profile.wc26_team && (() => {
+                    const wct = getTeamByCode(profile.wc26_team);
+                    return wct ? (
+                      <img
+                        src={teamLogoUrl(wct.logo)}
+                        alt={wct.name}
+                        title={`⚽ Supporting ${wct.name} · FIFA World Cup 2026`}
+                        className="wc-logo w-10 h-8 object-contain drop-shadow-md flex-shrink-0"
+                      />
+                    ) : null;
+                  })()}
+                </div>
                 {profile.username && <p className={`text-sm ${sub}`}>@{profile.username}</p>}
                 {profile.headline && (
                   <p className={`text-sm mt-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{profile.headline}</p>

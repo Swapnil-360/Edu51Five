@@ -1,0 +1,435 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, Trophy, Loader2, RefreshCw } from "lucide-react";
+import { WC26_TEAMS, WC26Team, getTeamByCode, teamLogoUrl } from "../../lib/wc26Teams";
+import {
+  WC26Match,
+  LeaderboardEntry,
+  getWC26Matches,
+  syncWC26Matches,
+  getWC26Leaderboard,
+  computePoints,
+  isLiveMatch,
+} from "../../lib/api/worldCupApi";
+import { updateProfile } from "../../lib/api/profileApi";
+import { getProfileById } from "../../lib/api/profileApi";
+
+interface Props {
+  currentUserId: string;
+  onClose: () => void;
+  isDarkMode: boolean;
+}
+
+type Tab = "pick" | "leaderboard" | "matches";
+
+const STAGE_ORDER = [
+  "GROUP_STAGE",
+  "ROUND_OF_16",
+  "QUARTER_FINALS",
+  "SEMI_FINALS",
+  "THIRD_PLACE",
+  "FINAL",
+];
+
+const STAGE_LABEL: Record<string, string> = {
+  GROUP_STAGE: "Group Stage",
+  ROUND_OF_16: "Round of 16",
+  QUARTER_FINALS: "Quarter Finals",
+  SEMI_FINALS: "Semi Finals",
+  THIRD_PLACE: "Third Place",
+  FINAL: "Final",
+};
+
+const GROUP_ORDER = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+
+function TeamLogo({ team, className = "" }: { team: WC26Team; className?: string }) {
+  return (
+    <img
+      src={teamLogoUrl(team.logo)}
+      alt={team.name}
+      className={`object-contain ${className}`}
+      loading="lazy"
+    />
+  );
+}
+
+function TeamLogoByCode({ code, className = "" }: { code: string; className?: string }) {
+  const team = getTeamByCode(code);
+  if (!team) return <span className="text-lg opacity-40">🏳</span>;
+  return <TeamLogo team={team} className={className} />;
+}
+
+export function WorldCupPage({ currentUserId, onClose, isDarkMode }: Props) {
+  const [tab, setTab] = useState<Tab>("pick");
+  const [myTeam, setMyTeam] = useState<string | null>(null);
+  const [matches, setMatches] = useState<WC26Match[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const liveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const bg   = isDarkMode ? "bg-slate-950" : "bg-gray-50";
+  const card = isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200";
+  const text = isDarkMode ? "text-white" : "text-slate-900";
+  const sub  = isDarkMode ? "text-slate-400" : "text-slate-500";
+
+  const load = useCallback(async (force = false) => {
+    setSyncing(true);
+    await syncWC26Matches(force);
+    setSyncing(false);
+    const [m, profile] = await Promise.all([
+      getWC26Matches(),
+      getProfileById(currentUserId),
+    ]);
+    setMatches(m);
+    setMyTeam(profile?.wc26_team ?? null);
+    setLeaderboard(await getWC26Leaderboard(m));
+  }, [currentUserId]);
+
+  useEffect(() => {
+    (async () => { setLoading(true); await load(); setLoading(false); })();
+  }, [load]);
+
+  useEffect(() => {
+    if (liveIntervalRef.current) clearInterval(liveIntervalRef.current);
+    if (!matches.some(isLiveMatch)) return;
+    liveIntervalRef.current = setInterval(() => load(true), 60_000);
+    return () => { if (liveIntervalRef.current) clearInterval(liveIntervalRef.current); };
+  }, [matches, load]);
+
+  const liveMatches  = matches.filter(isLiveMatch);
+  const liveCount    = liveMatches.length;
+  const pickedTeam   = myTeam ? getTeamByCode(myTeam) : null;
+  const myPoints     = myTeam ? computePoints(myTeam, matches) : 0;
+  const myRank       = myTeam ? leaderboard.findIndex((e) => e.id === currentUserId) + 1 : null;
+  const myLiveMatch  = myTeam ? liveMatches.find(m => m.home_code === myTeam || m.away_code === myTeam) : null;
+
+  const byStage = matches.reduce<Record<string, WC26Match[]>>((acc, m) => {
+    const key = m.stage ?? "OTHER";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(m);
+    return acc;
+  }, {});
+
+  // Group teams by group letter for pick tab
+  const byGroup = GROUP_ORDER.reduce<Record<string, WC26Team[]>>((acc, g) => {
+    acc[g] = WC26_TEAMS.filter(t => t.group === g);
+    return acc;
+  }, {});
+
+  const pickTeam = async (code: string) => {
+    if (picking) return;
+    setPicking(true);
+    const newPick = myTeam === code ? null : code;
+    await updateProfile(currentUserId, { wc26_team: newPick });
+    setMyTeam(newPick);
+    setLeaderboard(await getWC26Leaderboard(matches));
+    setPicking(false);
+  };
+
+  const tabCls = (t: Tab) =>
+    `relative px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+      tab === t
+        ? "bg-green-600 text-white"
+        : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+    }`;
+
+  return (
+    <div className={`min-h-screen ${bg}`}>
+      {/* ── Header ── */}
+      <div className={`sticky top-0 z-10 border-b ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200"}`}>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* FIFA WC2026 logo */}
+            <img
+              src="/FIFA-World-Cup-Logo-2026.png"
+              alt="FIFA World Cup 2026"
+              className="w-10 h-10 object-contain"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className={`font-bold text-lg leading-tight ${text}`}>World Cup 2026</h1>
+                {liveCount > 0 && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold animate-pulse">
+                    ● LIVE {liveCount > 1 ? liveCount : ""}
+                  </span>
+                )}
+              </div>
+              {pickedTeam && (
+                <p className={`text-xs ${sub} flex items-center gap-1.5`}>
+                  <TeamLogo team={pickedTeam} className="w-5 h-4 inline" />
+                  {pickedTeam.name} · {myPoints} pts
+                  {myRank ? ` · #${myRank}` : ""}
+                  {myLiveMatch && (
+                    <span className="text-red-400 font-bold animate-pulse">
+                      · {myLiveMatch.home_code === myTeam
+                          ? `${myLiveMatch.home_score ?? 0}–${myLiveMatch.away_score ?? 0}`
+                          : `${myLiveMatch.away_score ?? 0}–${myLiveMatch.home_score ?? 0}`} LIVE
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {syncing
+              ? <Loader2 className="w-4 h-4 animate-spin text-green-500 mr-1" />
+              : (
+                <button onClick={() => load(true)} title="Refresh scores"
+                  className={`p-1.5 rounded-full ${isDarkMode ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400"}`}>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              )
+            }
+            <button onClick={onClose}
+              className={`p-2 rounded-full ${isDarkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}>
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="max-w-4xl mx-auto px-4 pb-3 flex gap-1">
+          <button className={tabCls("pick")} onClick={() => setTab("pick")}>Pick Team</button>
+          <button className={tabCls("leaderboard")} onClick={() => setTab("leaderboard")}>Leaderboard</button>
+          <button className={tabCls("matches")} onClick={() => setTab("matches")}>
+            Matches
+            {liveCount > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold">
+                {liveCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Live score banner ── */}
+      {liveCount > 0 && (
+        <div className={`border-b py-2 px-4 overflow-x-auto ${isDarkMode ? "bg-red-950/30 border-red-900/40" : "bg-red-50 border-red-200"}`}>
+          <div className="max-w-4xl mx-auto flex items-center gap-4 min-w-max">
+            <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex-shrink-0">● Live</span>
+            {liveMatches.map((m) => {
+              const home = getTeamByCode(m.home_code);
+              const away = getTeamByCode(m.away_code);
+              const mine = myTeam && (m.home_code === myTeam || m.away_code === myTeam);
+              return (
+                <div key={m.id} onClick={() => setTab("matches")}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-lg cursor-pointer flex-shrink-0 ${
+                    mine
+                      ? isDarkMode ? "bg-green-900/40 border border-green-700/50" : "bg-green-50 border border-green-300"
+                      : isDarkMode ? "bg-slate-800" : "bg-white border border-slate-200"
+                  }`}
+                >
+                  {home && <TeamLogo team={home} className="w-6 h-5" />}
+                  <span className={`text-xs font-bold tabular-nums ${text}`}>{m.home_score ?? 0}</span>
+                  <span className="text-[10px] text-red-500 font-bold animate-pulse">–</span>
+                  <span className={`text-xs font-bold tabular-nums ${text}`}>{m.away_score ?? 0}</span>
+                  {away && <TeamLogo team={away} className="w-6 h-5" />}
+                </div>
+              );
+            })}
+            <span className={`text-[10px] ${sub} flex-shrink-0`}>Auto-refreshes every 60s</span>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+          </div>
+        ) : (
+          <>
+            {/* ── PICK TEAM ── */}
+            {tab === "pick" && (
+              <div className="space-y-5">
+                <p className={`text-sm ${sub}`}>
+                  Pick the team you support. Earn points —{" "}
+                  <strong className={text}>3 pts</strong> win ·{" "}
+                  <strong className={text}>1 pt</strong> draw ·{" "}
+                  <strong className={text}>+1 pt</strong> per goal. Change anytime.
+                </p>
+                {GROUP_ORDER.map((g) => (
+                  <div key={g}>
+                    <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 ${sub}`}>Group {g}</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {byGroup[g].map((team) => {
+                        const isPicked = myTeam === team.code;
+                        const isPlaying = liveMatches.some(m => m.home_code === team.code || m.away_code === team.code);
+                        return (
+                          <button
+                            key={team.code}
+                            onClick={() => pickTeam(team.code)}
+                            disabled={picking}
+                            title={team.name}
+                            className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
+                              isPicked
+                                ? "border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20"
+                                : isPlaying
+                                ? isDarkMode ? "border-red-600/60 bg-red-900/20" : "border-red-400/60 bg-red-50"
+                                : isDarkMode ? "border-slate-700 hover:border-green-500/50 bg-slate-800/60" : "border-slate-200 hover:border-green-400 bg-white"
+                            } ${picking ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                          >
+                            <TeamLogo team={team} className="w-14 h-10 drop-shadow-sm" />
+                            <span className={`text-[10px] font-semibold text-center leading-tight w-full truncate ${isPicked ? "text-yellow-500" : sub}`}>
+                              {team.name}
+                            </span>
+                            {isPicked && (
+                              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-yellow-400 text-black rounded-full flex items-center justify-center text-[10px] font-bold">★</span>
+                            )}
+                            {isPlaying && !isPicked && (
+                              <span className="absolute -top-1.5 -left-1.5 text-[9px] bg-red-500 text-white rounded-full px-1 font-bold animate-pulse">●</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── LEADERBOARD ── */}
+            {tab === "leaderboard" && (
+              <div>
+                {leaderboard.length === 0 ? (
+                  <div className={`text-center py-16 ${sub}`}>
+                    <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No picks yet</p>
+                    <p className="text-sm">Be the first to pick a team!</p>
+                  </div>
+                ) : (
+                  <div className={`rounded-2xl border divide-y ${card} ${isDarkMode ? "divide-slate-700" : "divide-slate-100"}`}>
+                    {leaderboard.map((entry, i) => {
+                      const isMe = entry.id === currentUserId;
+                      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                      const avatarSrc = entry.avatar_url || entry.profile_pic;
+                      const team = getTeamByCode(entry.wc26_team);
+                      const entryLive = liveMatches.find(m => m.home_code === entry.wc26_team || m.away_code === entry.wc26_team);
+                      return (
+                        <div key={entry.id}
+                          className={`flex items-center gap-3 px-4 py-3 ${isMe ? (isDarkMode ? "bg-green-900/20" : "bg-green-50") : ""}`}>
+                          <span className="w-7 text-center text-sm font-bold">
+                            {medal ?? <span className={sub}>#{i + 1}</span>}
+                          </span>
+                          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                            {avatarSrc
+                              ? <img src={avatarSrc} alt={entry.name} className="w-full h-full object-cover" />
+                              : entry.name?.charAt(0)?.toUpperCase() ?? "?"
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold truncate ${isMe ? "text-green-500" : text}`}>
+                              {entry.name} {isMe && <span className="text-xs font-normal opacity-70">(you)</span>}
+                            </p>
+                            <div className={`text-xs ${sub} flex items-center gap-1.5`}>
+                              {team && <TeamLogo team={team} className="w-6 h-4 inline" />}
+                              <span>{team?.name ?? entry.wc26_team}</span>
+                              {entryLive && (
+                                <span className="text-red-500 font-bold animate-pulse text-[10px]">
+                                  ● {entryLive.home_code === entry.wc26_team
+                                      ? `${entryLive.home_score ?? 0}–${entryLive.away_score ?? 0}`
+                                      : `${entryLive.away_score ?? 0}–${entryLive.home_score ?? 0}`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-bold text-base ${i < 3 ? "text-yellow-500" : text}`}>{entry.points}</p>
+                            <p className={`text-[10px] ${sub}`}>pts</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className={`text-xs text-center mt-4 ${sub}`}>Win +3 · Draw +1 · Goal +1</p>
+              </div>
+            )}
+
+            {/* ── MATCHES ── */}
+            {tab === "matches" && (
+              <div className="space-y-6">
+                {matches.length === 0 ? (
+                  <div className={`text-center py-16 ${sub}`}>
+                    <img src="/FIFA-World-Cup-Logo-2026.png" alt="WC2026" className="w-16 h-16 object-contain mx-auto mb-3 opacity-40" />
+                    <p className="font-medium">No match data</p>
+                    <p className="text-sm">Check that FOOTBALL_API_KEY is set in Supabase secrets.</p>
+                  </div>
+                ) : (
+                  STAGE_ORDER.filter((s) => byStage[s]).map((stage) => (
+                    <div key={stage}>
+                      <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 ${sub}`}>
+                        {STAGE_LABEL[stage] ?? stage}
+                      </h3>
+                      <div className={`rounded-2xl border divide-y ${card} ${isDarkMode ? "divide-slate-700" : "divide-slate-100"}`}>
+                        {byStage[stage].map((m) => {
+                          const live = isLiveMatch(m);
+                          const isDone = m.status === "FINISHED";
+                          const home = getTeamByCode(m.home_code);
+                          const away = getTeamByCode(m.away_code);
+                          const myTeamPlaying = myTeam && (m.home_code === myTeam || m.away_code === myTeam);
+                          return (
+                            <div key={m.id}
+                              className={`flex items-center gap-2 px-4 py-3 ${
+                                live ? isDarkMode ? "bg-red-950/30" : "bg-red-50"
+                                : myTeamPlaying ? isDarkMode ? "bg-slate-800/40" : "bg-slate-50"
+                                : ""
+                              }`}
+                            >
+                              {/* Home */}
+                              <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
+                                <span className={`text-sm font-semibold truncate ${m.home_code === myTeam ? "text-green-500" : text}`}>
+                                  {home?.name ?? m.home_team ?? "TBD"}
+                                </span>
+                                {home
+                                  ? <TeamLogo team={home} className="w-9 h-6 flex-shrink-0" />
+                                  : <span className="text-xl opacity-30">🏳</span>
+                                }
+                              </div>
+                              {/* Score / date */}
+                              <div className="w-24 text-center flex-shrink-0">
+                                {isDone || live ? (
+                                  <span className={`font-bold text-base tabular-nums ${live ? "text-red-500" : text}`}>
+                                    {m.home_score ?? 0} – {m.away_score ?? 0}
+                                  </span>
+                                ) : (
+                                  <span className={`text-xs ${sub}`}>
+                                    {new Date(m.utc_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                                    <br />
+                                    <span className="tabular-nums">
+                                      {new Date(m.utc_date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                  </span>
+                                )}
+                                {live && (
+                                  <div className="text-[10px] text-red-500 font-bold animate-pulse mt-0.5">
+                                    {m.status === "HALFTIME" ? "HT" : "LIVE"}
+                                  </div>
+                                )}
+                              </div>
+                              {/* Away */}
+                              <div className="flex-1 flex items-center gap-2 min-w-0">
+                                {away
+                                  ? <TeamLogo team={away} className="w-9 h-6 flex-shrink-0" />
+                                  : <span className="text-xl opacity-30">🏳</span>
+                                }
+                                <span className={`text-sm font-semibold truncate ${m.away_code === myTeam ? "text-green-500" : text}`}>
+                                  {away?.name ?? m.away_team ?? "TBD"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
