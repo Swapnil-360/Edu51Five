@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, UserPlus, Image as ImageIcon, Mail, Eye, EyeOff, Check } from "lucide-react";
+import { X, UserPlus, Image as ImageIcon, Mail, Eye, EyeOff, CheckCircle, Circle } from "lucide-react";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 
 interface SignUpModalProps {
@@ -876,34 +876,23 @@ export function SignUpModal({
                       <p className={`font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         Password Requirements:
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           {hasMinLength ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                            <Circle className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                           )}
                           <span className={hasMinLength ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
-                            Min. 8 characters
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {hasUppercase ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                          ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
-                          )}
-                          <span className={hasUppercase ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
-                            One uppercase letter
+                            Minimum of 8 characters
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           {hasLowercase ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                            <Circle className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                           )}
                           <span className={hasLowercase ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
                             One lowercase letter
@@ -911,35 +900,35 @@ export function SignUpModal({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {hasDigit ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          {hasUppercase ? (
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                            <Circle className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                           )}
-                          <span className={hasDigit ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
-                            One digit (0-9)
+                          <span className={hasUppercase ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One uppercase letter
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           {hasSpecial ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                            <Circle className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                           )}
                           <span className={hasSpecial ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
-                            One special char (e.g. @)
+                            One special character
                           </span>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {passwordsMatch ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          {hasDigit ? (
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mx-1 flex-shrink-0" />
+                            <Circle className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                           )}
-                          <span className={passwordsMatch ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
-                            Passwords match
+                          <span className={hasDigit ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}>
+                            One number
                           </span>
                         </div>
                       </div>
