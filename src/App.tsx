@@ -79,6 +79,7 @@ import NetworkPage from "./components/Network/NetworkPage";
 import TeamsPage from "./components/Teams/TeamsPage";
 import TeamPage from "./components/Teams/TeamPage";
 import { WorldCupPage } from "./components/WorldCup/WorldCupPage";
+import { WC26IntroModal } from "./components/WorldCup/WC26IntroModal";
 
 interface Course {
   id: string;
@@ -337,6 +338,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [authSession, setAuthSession] = useState<any>(null);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
+  const [showWC26Intro, setShowWC26Intro] = useState(false);
 
   // User profile state
   const [userProfile, setUserProfile] = useState({
@@ -556,6 +558,11 @@ function App() {
           setAuthSession(session);
           setIsLoggedIn(true);
 
+          // Show WC26 intro once per device if not dismissed before
+          if (!localStorage.getItem("wc26_intro_dismissed")) {
+            setTimeout(() => setShowWC26Intro(true), 2000);
+          }
+
           // Try loading profile by auth user id first, then fall back to email.
           // This handles both: tables where id = auth UUID, and tables where the
           // profile was created with a different id but bubt_email matches.
@@ -633,6 +640,11 @@ function App() {
         setAuthSession(session);
         setIsLoggedIn(true);
         setShowSignInModal(false); // Always close sign-in modal on successful auth
+
+        // Show WC26 intro once per device if not dismissed before
+        if (!localStorage.getItem("wc26_intro_dismissed")) {
+          setTimeout(() => setShowWC26Intro(true), 1500);
+        }
 
         // Secondary fallback for recovery redirect when SIGNED_IN is fired instead of PASSWORD_RECOVERY
         const isRecoveryRedirect = 
@@ -8594,6 +8606,21 @@ For queries, contact course instructors or the department.`,
           />
         </main>
       )}
+
+      {/* ── WC26 Intro Modal ── */}
+      <WC26IntroModal
+        isOpen={showWC26Intro}
+        isDarkMode={isDarkMode}
+        onPickTeam={() => {
+          setShowWC26Intro(false);
+          localStorage.setItem("wc26_intro_dismissed", "1");
+          if (authSession?.user?.id) goToView("wc26");
+        }}
+        onDismiss={() => {
+          setShowWC26Intro(false);
+          localStorage.setItem("wc26_intro_dismissed", "1");
+        }}
+      />
 
       {/* Sign In Modal */}
       <SignInModal
