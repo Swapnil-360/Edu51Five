@@ -205,30 +205,72 @@ export function WorldCupPage({ currentUserId, onClose, isDarkMode }: Props) {
 
       {/* ── Live score banner ── */}
       {liveCount > 0 && (
-        <div className={`border-b py-2 px-4 overflow-x-auto ${isDarkMode ? "bg-red-950/30 border-red-900/40" : "bg-red-50 border-red-200"}`}>
-          <div className="max-w-4xl mx-auto flex items-center gap-4 min-w-max">
-            <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex-shrink-0">● Live</span>
-            {liveMatches.map((m) => {
-              const home = getTeamByCode(m.home_code);
-              const away = getTeamByCode(m.away_code);
-              const mine = myTeam && (m.home_code === myTeam || m.away_code === myTeam);
-              return (
-                <div key={m.id} onClick={() => setTab("matches")}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-lg cursor-pointer flex-shrink-0 ${
-                    mine
-                      ? isDarkMode ? "bg-green-900/40 border border-green-700/50" : "bg-green-50 border border-green-300"
-                      : isDarkMode ? "bg-slate-800" : "bg-white border border-slate-200"
-                  }`}
-                >
-                  {home && <TeamLogo team={home} className="w-6 h-5" />}
-                  <span className={`text-xs font-bold tabular-nums ${text}`}>{m.home_score ?? 0}</span>
-                  <span className="text-[10px] text-red-500 font-bold animate-pulse">–</span>
-                  <span className={`text-xs font-bold tabular-nums ${text}`}>{m.away_score ?? 0}</span>
-                  {away && <TeamLogo team={away} className="w-6 h-5" />}
-                </div>
-              );
-            })}
-            <span className={`text-[10px] ${sub} flex-shrink-0`}>Auto-refreshes every 60s</span>
+        <div className={`border-b ${isDarkMode ? "bg-gradient-to-r from-red-950/40 via-red-950/15 to-red-950/40 border-red-900/40" : "bg-gradient-to-r from-red-50 via-rose-50/60 to-red-50 border-red-200"}`}>
+          <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-red-500 uppercase tracking-widest">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+                Live Now{liveCount > 1 ? ` · ${liveCount} matches` : ""}
+              </span>
+              <span className={`inline-flex items-center gap-1 text-[10px] ${sub}`}>
+                <RefreshCw className="w-3 h-3" /> Auto · 60s
+              </span>
+            </div>
+
+            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {liveMatches.map((m) => {
+                const home = getTeamByCode(m.home_code);
+                const away = getTeamByCode(m.away_code);
+                const mine = myTeam && (m.home_code === myTeam || m.away_code === myTeam);
+                const statusLabel = m.status === "HALFTIME" ? "HALF TIME" : m.status === "PAUSED" ? "PAUSED" : "LIVE";
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setTab("matches")}
+                    className={`flex-shrink-0 rounded-2xl px-3.5 py-3 transition-all hover:scale-[1.02] active:scale-95 shadow-sm ${
+                      mine
+                        ? isDarkMode
+                          ? "bg-green-900/40 border border-green-600/50 ring-1 ring-green-500/30"
+                          : "bg-green-50 border border-green-300 ring-1 ring-green-300/50"
+                        : isDarkMode
+                          ? "bg-slate-800/90 border border-slate-700"
+                          : "bg-white border border-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Home */}
+                      <div className="flex flex-col items-center gap-1.5 w-12">
+                        {home ? <TeamLogo team={home} className="w-10 h-7" /> : <span className="text-xl opacity-40">🏳</span>}
+                        <span className={`text-[10px] font-bold ${text}`}>{home?.code ?? "TBD"}</span>
+                      </div>
+                      {/* Score */}
+                      <div className="flex flex-col items-center px-1">
+                        <div className="flex items-center gap-2 leading-none">
+                          <span className={`text-2xl font-black tabular-nums ${text}`}>{m.home_score ?? 0}</span>
+                          <span className="text-sm font-bold text-red-500">–</span>
+                          <span className={`text-2xl font-black tabular-nums ${text}`}>{m.away_score ?? 0}</span>
+                        </div>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[8px] font-extrabold text-red-500 uppercase tracking-wide">
+                          <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
+                          {statusLabel}
+                        </span>
+                      </div>
+                      {/* Away */}
+                      <div className="flex flex-col items-center gap-1.5 w-12">
+                        {away ? <TeamLogo team={away} className="w-10 h-7" /> : <span className="text-xl opacity-40">🏳</span>}
+                        <span className={`text-[10px] font-bold ${text}`}>{away?.code ?? "TBD"}</span>
+                      </div>
+                    </div>
+                    {mine && (
+                      <p className="text-[9px] font-bold text-green-500 text-center mt-1.5 uppercase tracking-wide">★ Your team</p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
