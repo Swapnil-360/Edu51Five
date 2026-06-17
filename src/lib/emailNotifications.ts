@@ -281,7 +281,6 @@ export function generateEmailHTML(notification: EmailNotification): string {
             
             <div class="footer-links">
                 <a href="${baseUrl}">Visit Platform</a>
-                <a href="${baseUrl}/admin">Admin Panel</a>
             </div>
             
             <div class="copyright">

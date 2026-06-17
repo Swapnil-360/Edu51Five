@@ -142,6 +142,7 @@ export function normalizeProfile(row: any): SocialProfile {
     interests: row.interests ?? [],
     visibility: row.visibility ?? "users",
     is_alumni: row.is_alumni ?? false,
+    is_admin: row.is_admin ?? false,
     profile_pic: row.profile_pic ?? null,
   } as SocialProfile;
 }

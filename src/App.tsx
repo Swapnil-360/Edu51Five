@@ -74,6 +74,7 @@ import {
   Users,
   GraduationCap,
   Trophy,
+  ShieldCheck,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
@@ -229,36 +230,24 @@ function App() {
     [],
   );
 
-  // Check if admin route is accessed directly
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (path === "/admin") {
-      setShowAdminLogin(true);
-    }
-  }, []);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  // Admin status is DB-driven (profiles.is_admin), applied after the profile loads.
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminError, setAdminError] = useState("");
 
-  // Force admin to stay on admin view until logout (no back/swipe escape)
+  // Route guard: non-admins can never sit on the admin view. Covers direct
+  // /admin deep-links and live demotion — there is no public admin page anymore.
   useEffect(() => {
-    if (isAdmin && currentView !== "admin") {
-      setCurrentView("admin");
-      window.history.pushState({}, "", "/admin");
+    if (currentView === "admin" && !isAdmin) {
+      setCurrentView("home");
+      window.history.replaceState({}, "", "/home");
     }
-  }, [isAdmin, currentView]);
+  }, [currentView, isAdmin]);
 
   // Listen for browser back/forward events
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
       if (path === "/admin") setCurrentView("admin");
-      else if (isAdmin) {
-        // Prevent navigating away from admin while logged in
-        window.history.pushState({}, "", "/admin");
-        setCurrentView("admin");
-      } else if (path === "/section5" || path === "/ai") setCurrentView("ai");
+      else if (path === "/section5" || path === "/ai") setCurrentView("ai");
       else if (path === "/software") setCurrentView("software");
       else if (path === "/networking") setCurrentView("networking");
       else if (path === "/semester") setCurrentView("semester");
@@ -290,6 +279,14 @@ function App() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(0);
+  // Real-time admin platform stats (from get_admin_stats RPC)
+  const [adminStats, setAdminStats] = useState<{
+    storage_bytes: number;
+    storage_by_bucket: { bucket: string; bytes: number; files: number }[];
+    users: number;
+    teams: number;
+    materials: number;
+  } | null>(null);
   const [isLoadingNotices, setIsLoadingNotices] = useState(false);
   const hasLoadedInitialNotices = useRef(false);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -392,9 +389,11 @@ function App() {
   // profile_pic is served from localStorage cache and refreshed in the background.
   // avatar_url (Storage URL) is short and included so it's cached immediately on login.
   const PROFILE_META_COLS =
-    "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at,avatar_url";
+    "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at,avatar_url,is_admin";
 
   const applyProfileData = (profileData: any, email: string, password: string) => {
+    // Admin status comes straight from the DB profile (no client-side password).
+    setIsAdmin(profileData?.is_admin === true);
     const cachedPic = localStorage.getItem("userProfilePic") || "";
     const cachedAvatarUrl = localStorage.getItem("userProfileAvatarUrl") || "";
     // Prefer Supabase Storage URL (avatar_url) over legacy base64 (profile_pic)
@@ -717,6 +716,7 @@ function App() {
       } else if (event === "SIGNED_OUT") {
         setAuthSession(null);
         setIsLoggedIn(false);
+        setIsAdmin(false);
         setUserProfile({
           name: "Welcome Student",
           section: "",
@@ -857,8 +857,6 @@ function App() {
     event_date: "",
     is_active: true,
   });
-
-  const ADMIN_PASSWORD = "edu51five2025";
 
   // Generate or get session ID
   const getSessionId = () => {
@@ -1131,10 +1129,11 @@ function App() {
     }
   }, [selectedCourse]);
 
-  // Load total materials count when accessing admin panel
+  // Load total materials count + platform stats when accessing admin panel
   useEffect(() => {
     if (currentView === "admin" && isAdmin) {
       loadTotalMaterialsCount();
+      loadAdminStats();
     }
   }, [currentView, isAdmin]);
 
@@ -1557,6 +1556,17 @@ FOR ALL USING (true) WITH CHECK (true);
     } catch (error) {
       console.error("Error loading total materials count:", error);
       setTotalMaterialsCount(0);
+    }
+  };
+
+  // Load real-time platform stats (storage usage, user/team counts) for the dashboard
+  const loadAdminStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_admin_stats");
+      if (error) throw error;
+      setAdminStats(data as any);
+    } catch (error) {
+      console.error("Error loading admin stats:", error);
     }
   };
 
@@ -2386,25 +2396,9 @@ Best of luck with your studies!
     return materialSchemes[index % materialSchemes.length];
   }, []);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPassword === ADMIN_PASSWORD) {
-      setIsAdmin(true);
-      setShowAdminLogin(false);
-      setAdminError("");
-      loadTotalMaterialsCount(); // Load total materials count for dashboard
-      goToView("admin");
-    } else {
-      setAdminError("Incorrect password");
-      setAdminPassword("");
-    }
-  };
-
-  const handleAdminLogout = () => {
-    setIsAdmin(false);
-    setShowAdminLogin(false);
-    setAdminPassword("");
-    setAdminError("");
+  // Exit the admin view back to home. The admin role itself is DB-driven and
+  // persists — this just leaves the dashboard, it does not revoke admin.
+  const handleExitAdmin = () => {
     goToView("home");
   };
 
@@ -3076,66 +3070,6 @@ For any queries, contact your course instructors or the department.`,
     }
   };
 
-  // Show admin login screen if needed (single block)
-  if (showAdminLogin && !isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="admin-auth bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <div className="text-center mb-6">
-            <img
-              src="/image.png"
-              alt="Edu51Portal Logo"
-              className="h-16 w-16 mx-auto mb-4 object-contain"
-            />
-            <h1 className="text-2xl font-bold text-gray-900">Edu<span className="text-[#ef4444]">51</span>Portal</h1>
-            <p className="text-gray-600 mt-2">Admin Access</p>
-          </div>
-          <form onSubmit={handleAdminLogin}>
-            <div className="mb-4">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Admin Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter admin password"
-                required
-              />
-            </div>
-            {adminError && (
-              <div className="mb-4 text-red-600 text-sm text-center">
-                {adminError}
-              </div>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors no-select"
-            >
-              Login
-            </button>
-          </form>
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => {
-                setShowAdminLogin(false);
-                goToView("home");
-              }}
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Main return for all other views
   return (
     <div
@@ -3306,6 +3240,7 @@ For any queries, contact your course instructors or the department.`,
                   onClick={() => {
                     setIsLoggedIn(false);
                     setAuthSession(null);
+                    setIsAdmin(false);
                     setUserProfile({
                       name: "Welcome Student",
                       section: "",
@@ -3349,14 +3284,14 @@ For any queries, contact your course instructors or the department.`,
                 </button>
               )}
 
-              {/* Admin Logout Button - Only visible when admin is logged in */}
-              {isAdmin && (
+              {/* Exit Admin Button - only while viewing the admin dashboard */}
+              {isAdmin && currentView === "admin" && (
                 <button
-                  onClick={handleAdminLogout}
+                  onClick={handleExitAdmin}
                   className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
                     isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
                   }`}
-                  title="Logout"
+                  title="Exit Admin"
                 >
                   <LogOut
                     className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-red-400" : "text-red-600"}`}
@@ -3485,6 +3420,36 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
+              {/* Admin Dashboard — only for DB admins */}
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    goToView("admin");
+                    setShowMobileMenu(false);
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                    isDarkMode
+                      ? "hover:bg-amber-900/30 border-amber-700/40 hover:border-amber-500/50 text-gray-100"
+                      : "hover:bg-amber-50 border-amber-200/60 hover:border-amber-300 text-gray-900"
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-amber-900/40" : "bg-amber-100"}`}>
+                    <ShieldCheck className={`w-5 h-5 ${isDarkMode ? "text-amber-400" : "text-amber-600"}`} />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm">Admin Dashboard</p>
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white">
+                        ADMIN
+                      </span>
+                    </div>
+                    <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                      Stats · notices · feedback
+                    </p>
+                  </div>
+                </button>
+              )}
+
               {/* World Cup 2026 */}
               <button
                 onClick={() => {
@@ -3733,6 +3698,7 @@ For any queries, contact your course instructors or the department.`,
                     setShowMobileMenu(false);
                     setIsLoggedIn(false);
                     setAuthSession(null);
+                    setIsAdmin(false);
                     setUserProfile({
                       name: "Welcome Student",
                       section: "",
@@ -5688,6 +5654,10 @@ For any queries, contact your course instructors or the department.`,
                 onlineUsers={activeUsersCount}
                 currentWeek={semesterStatus.semesterWeek}
                 totalWeeks={20}
+                storageBytes={adminStats?.storage_bytes ?? 0}
+                storageByBucket={adminStats?.storage_by_bucket ?? []}
+                usersCount={adminStats?.users ?? 0}
+                teamsCount={adminStats?.teams ?? 0}
                 notices={notices}
                 onEditNotice={() => {
                   if (notices.length > 0) {
@@ -8544,6 +8514,7 @@ For queries, contact course instructors or the department.`,
             username={viewedUsername}
             currentUserId={authSession?.user?.id ?? null}
             initialAvatarUrl={viewedUsername ? undefined : (userProfile.avatar_url || undefined)}
+            onOpenAdmin={isAdmin ? () => goToView("admin") : undefined}
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
           />

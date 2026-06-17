@@ -18,6 +18,7 @@ export interface SocialProfile {
   interests: string[];
   visibility: ProfileVisibility;
   is_alumni: boolean;
+  is_admin: boolean;
   // legacy Edu51Five fields (kept working)
   section: string | null;
   major: string | null;
@@ -172,7 +173,7 @@ export interface TeamAnnouncement {
 
 // Columns selected for profile lists/cards (never select legacy base64 profile_pic in lists)
 export const SOCIAL_PROFILE_COLS =
-  "id,username,name,headline,about,location,website,social_links,avatar_url,cover_photo_url,skills,interests,visibility,is_alumni,section,major,bubt_email,phone,wc26_team,created_at";
+  "id,username,name,headline,about,location,website,social_links,avatar_url,cover_photo_url,skills,interests,visibility,is_alumni,is_admin,section,major,bubt_email,phone,wc26_team,created_at";
 
 // Lighter selection for cards/search results
 export const PROFILE_CARD_COLS =

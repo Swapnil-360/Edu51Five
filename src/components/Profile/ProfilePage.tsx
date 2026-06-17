@@ -8,6 +8,7 @@ import {
   Lock,
   MapPin,
   Pencil,
+  ShieldCheck,
   UserCheck,
   UserPlus,
   UserX,
@@ -41,11 +42,13 @@ interface Props {
   currentUserId: string | null;
   /** Cached avatar URL from App.tsx — shown immediately before the DB fetch completes */
   initialAvatarUrl?: string;
+  /** Opens the admin dashboard — only rendered on the admin's own profile */
+  onOpenAdmin?: () => void;
   onClose: () => void;
   isDarkMode: boolean;
 }
 
-export default function ProfilePage({ username, currentUserId, initialAvatarUrl, onClose, isDarkMode }: Props) {
+export default function ProfilePage({ username, currentUserId, initialAvatarUrl, onOpenAdmin, onClose, isDarkMode }: Props) {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [educations, setEducations] = useState<Education[]>([]);
@@ -334,7 +337,16 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
                 </div>
               </div>
 
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+                {isOwn && profile.is_admin && onOpenAdmin && (
+                  <button
+                    onClick={onOpenAdmin}
+                    className="px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 flex items-center gap-2 shadow-sm"
+                    title="Open the admin dashboard"
+                  >
+                    <ShieldCheck className="w-4 h-4" /> Admin Dashboard
+                  </button>
+                )}
                 {isOwn ? (
                   <button
                     onClick={() => setShowEditModal(true)}

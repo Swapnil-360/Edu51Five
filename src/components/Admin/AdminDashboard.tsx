@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp } from 'lucide-react';
+import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp, HardDrive, UsersRound, ShieldCheck } from 'lucide-react';
 import { DriveManager } from './DriveManager';
 
 interface Notice {
@@ -27,6 +27,8 @@ interface EmergencyLink {
   created_at: string;
 }
 
+interface BucketUsage { bucket: string; bytes: number; files: number; }
+
 interface AdminDashboardProps {
   isDarkMode: boolean;
   coursesCount: number;
@@ -34,6 +36,11 @@ interface AdminDashboardProps {
   onlineUsers?: number;
   currentWeek?: number;
   totalWeeks?: number;
+  // Real-time platform stats (from get_admin_stats RPC)
+  storageBytes?: number;
+  storageByBucket?: BucketUsage[];
+  usersCount?: number;
+  teamsCount?: number;
   notices?: Notice[];
   onEditNotice: () => void;
   onCreateNotice: () => void;
@@ -44,13 +51,23 @@ interface AdminDashboardProps {
   isSendingBroadcast?: boolean;
 }
 
+// Supabase free tier storage limit (1 GB)
+const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes < 1024) return `${bytes || 0} B`;
+  const mb = bytes / 1024 / 1024;
+  if (mb < 1024) return `${mb.toFixed(mb < 10 ? 2 : 1)} MB`;
+  return `${(mb / 1024).toFixed(2)} GB`;
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isDarkMode,
-  coursesCount,
-  materialsCount,
   onlineUsers = 0,
-  currentWeek = 16,
-  totalWeeks = 20,
+  storageBytes = 0,
+  storageByBucket = [],
+  usersCount = 0,
+  teamsCount = 0,
   notices = [],
   onEditNotice,
   onCreateNotice,
@@ -64,6 +81,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     courseManagement: false,
     materialUpload: false,
   });
+
+  // Live email preview toggle for the broadcast composer
+  const [showEmailPreview, setShowEmailPreview] = useState(true);
 
   // Load emergency alerts and links from localStorage
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([]);
@@ -180,7 +200,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }));
   };
 
-  const semesterProgress = ((currentWeek / totalWeeks) * 100).toFixed(1);
+  const storagePct = Math.min(100, (storageBytes / STORAGE_LIMIT_BYTES) * 100);
+  const storageBarColor = storagePct > 85 ? 'bg-red-500' : storagePct > 60 ? 'bg-amber-500' : 'bg-green-500';
+  const storageTooltip = storageByBucket.length
+    ? storageByBucket.map((b) => `${b.bucket}: ${formatBytes(b.bytes)} (${b.files})`).join('\n')
+    : 'No files uploaded yet';
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
@@ -211,43 +235,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-            {/* Courses Card */}
-            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-blue-500/20 hover:border-blue-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-blue-500/20' : 'bg-gradient-to-br from-blue-50/80 to-blue-100/80 backdrop-blur-xl border border-blue-200/50 hover:border-blue-300/80 hover:shadow-lg hover:shadow-blue-200/50'}`}>
-              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-blue-500/5 to-transparent' : 'bg-gradient-to-br from-blue-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+            {/* Storage Used Card (spans 2 cols on mobile for the gauge) */}
+            <div title={storageTooltip} className={`col-span-2 group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-cyan-500/20 hover:border-cyan-400/40' : 'bg-gradient-to-br from-cyan-50/80 to-cyan-100/80 backdrop-blur-xl border border-cyan-200/50 hover:border-cyan-300/80'}`}>
               <div className="relative z-10 p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Courses</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Storage Used</p>
                   </div>
-                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30' : 'bg-blue-200 text-blue-600 group-hover:bg-blue-300'} transition-all group-hover:scale-110`}>
-                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500/30' : 'bg-cyan-200 text-cyan-600 group-hover:bg-cyan-300'} transition-all group-hover:scale-110`}>
+                    <HardDrive className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
-                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-blue-300 group-hover:text-blue-200' : 'text-blue-600 group-hover:text-blue-700'} transition-colors`}>{coursesCount}</p>
+                <p className={`text-xl sm:text-2xl font-black ${isDarkMode ? 'text-cyan-300' : 'text-cyan-700'} transition-colors`}>
+                  {formatBytes(storageBytes)}
+                  <span className={`text-sm font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}> / 1 GB</span>
+                </p>
+                {/* Gauge */}
+                <div className={`mt-2.5 h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                  <div className={`h-full rounded-full transition-all duration-500 ${storageBarColor}`} style={{ width: `${Math.max(2, storagePct)}%` }} />
+                </div>
+                <p className={`mt-1.5 text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                  {storagePct.toFixed(1)}% used · hover for per-bucket breakdown
+                </p>
+              </div>
+            </div>
+
+            {/* Registered Users Card */}
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-blue-500/20 hover:border-blue-400/40' : 'bg-gradient-to-br from-blue-50/80 to-blue-100/80 backdrop-blur-xl border border-blue-200/50 hover:border-blue-300/80'}`}>
+              <div className="relative z-10 p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Users</p>
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30' : 'bg-blue-200 text-blue-600 group-hover:bg-blue-300'} transition-all group-hover:scale-110`}>
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>{usersCount}</p>
                 <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-blue-500 to-blue-400' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}></div>
               </div>
             </div>
 
-            {/* Files Card */}
-            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-emerald-500/20' : 'bg-gradient-to-br from-emerald-50/80 to-emerald-100/80 backdrop-blur-xl border border-emerald-200/50 hover:border-emerald-300/80 hover:shadow-lg hover:shadow-emerald-200/50'}`}>
-              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-emerald-500/5 to-transparent' : 'bg-gradient-to-br from-emerald-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+            {/* Teams Card */}
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-400/40' : 'bg-gradient-to-br from-emerald-50/80 to-emerald-100/80 backdrop-blur-xl border border-emerald-200/50 hover:border-emerald-300/80'}`}>
               <div className="relative z-10 p-3 sm:p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Files</p>
-                  </div>
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Teams</p>
                   <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30' : 'bg-emerald-200 text-emerald-600 group-hover:bg-emerald-300'} transition-all group-hover:scale-110`}>
-                    <Files className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <UsersRound className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
-                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-emerald-300 group-hover:text-emerald-200' : 'text-emerald-600 group-hover:text-emerald-700'} transition-colors`}>{materialsCount}</p>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>{teamsCount}</p>
                 <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-600'}`}></div>
               </div>
             </div>
 
-            {/* Online Users Card */}
-            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-purple-500/20 hover:border-purple-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-purple-500/20' : 'bg-gradient-to-br from-purple-50/80 to-purple-100/80 backdrop-blur-xl border border-purple-200/50 hover:border-purple-300/80 hover:shadow-lg hover:shadow-purple-200/50'}`}>
-              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-purple-500/5 to-transparent' : 'bg-gradient-to-br from-purple-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+            {/* Active Now Card (realtime) */}
+            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-purple-500/20 hover:border-purple-400/40' : 'bg-gradient-to-br from-purple-50/80 to-purple-100/80 backdrop-blur-xl border border-purple-200/50 hover:border-purple-300/80'}`}>
               <div className="relative z-10 p-3 sm:p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -261,25 +303,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
-                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-purple-300 group-hover:text-purple-200' : 'text-purple-600 group-hover:text-purple-700'} transition-colors`}>{onlineUsers}</p>
+                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>{onlineUsers}</p>
                 <div className={`mt-2 h-1 w-8 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-purple-500 to-purple-400' : 'bg-gradient-to-r from-purple-500 to-purple-600'}`}></div>
-              </div>
-            </div>
-
-            {/* Semester Progress Card */}
-            <div className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-orange-500/20 hover:border-orange-400/40 hover:from-slate-700/60 hover:to-slate-800/60 hover:shadow-lg hover:shadow-orange-500/20' : 'bg-gradient-to-br from-orange-50/80 to-orange-100/80 backdrop-blur-xl border border-orange-200/50 hover:border-orange-300/80 hover:shadow-lg hover:shadow-orange-200/50'}`}>
-              <div className={`absolute inset-0 ${isDarkMode ? 'bg-gradient-to-br from-orange-500/5 to-transparent' : 'bg-gradient-to-br from-orange-400/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-              <div className="relative z-10 p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Progress</p>
-                  </div>
-                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-orange-500/20 text-orange-400 group-hover:bg-orange-500/30' : 'bg-orange-200 text-orange-600 group-hover:bg-orange-300'} transition-all group-hover:scale-110`}>
-                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                </div>
-                <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-orange-300 group-hover:text-orange-200' : 'text-orange-600 group-hover:text-orange-700'} transition-colors`}>Week {currentWeek}</p>
-                <p className={`mt-1 text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{semesterProgress}%</p>
               </div>
             </div>
           </div>
@@ -376,6 +401,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 >
                   {isSendingBroadcast ? '⏳ Sending...' : '🚀 Send to All Subscribers'}
                 </button>
+              </div>
+
+              {/* Live Email Preview */}
+              <div className="pt-3 border-t border-indigo-300/20">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPreview((v) => !v)}
+                  className={`flex items-center gap-2 text-xs font-semibold mb-3 transition-colors ${isDarkMode ? 'text-indigo-300 hover:text-indigo-200' : 'text-indigo-600 hover:text-indigo-800'}`}
+                >
+                  {showEmailPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  📧 Live Email Preview {showEmailPreview ? '(how recipients will see it)' : ''}
+                </button>
+
+                {showEmailPreview && (
+                  <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm max-w-md mx-auto bg-white">
+                    {/* Email header */}
+                    <div style={{ background: 'linear-gradient(135deg, #1e3a8a, #2563eb)' }} className="px-5 py-6 text-center">
+                      <div className="text-white text-xl font-extrabold tracking-tight">
+                        Edu<span style={{ color: '#ef4444' }}>51</span>Portal
+                      </div>
+                      <div className="text-blue-100 text-[11px] mt-1">BUBT Intake 51 - Academic Portal</div>
+                    </div>
+                    {/* Email body */}
+                    <div className="px-5 py-5 bg-white">
+                      <span className="inline-block bg-red-500 text-white text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full mb-3">
+                        📢 New Update
+                      </span>
+                      <h3 className="text-blue-900 text-lg font-bold mb-3 break-words">
+                        {broadcastPush.title?.trim() || <span className="text-gray-300 italic font-normal">Your title will appear here…</span>}
+                      </h3>
+                      <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-lg px-4 py-3 mb-4 text-sm text-gray-700 whitespace-pre-wrap break-words min-h-[2.5rem]">
+                        {broadcastPush.body?.trim() || <span className="text-gray-300 italic">Your message body will appear here…</span>}
+                      </div>
+                      <div
+                        style={{ background: 'linear-gradient(135deg, #2563eb, #1e3a8a)' }}
+                        className="text-white text-center text-sm font-bold py-3 rounded-lg"
+                      >
+                        View on Edu51Portal
+                      </div>
+                      <div className="border-t border-gray-100 mt-4 pt-3 text-[11px] text-gray-400 text-center">
+                        You're receiving this email because you're a member of Edu51Portal.
+                      </div>
+                    </div>
+                    {/* Email footer */}
+                    <div className="bg-gray-50 px-5 py-3 text-center">
+                      <span className="text-blue-700 text-[11px] font-semibold">Visit Platform</span>
+                      <div className="text-gray-400 text-[10px] mt-2">
+                        © {new Date().getFullYear()} Edu51Portal - BUBT Intake 51 Section 5.
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

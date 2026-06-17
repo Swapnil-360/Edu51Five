@@ -109,16 +109,21 @@ Feature → file → approximate line numbers.
 | What | File | Lines |
 |------|------|-------|
 | Admin dashboard | `src/components/Admin/AdminDashboard.tsx` | — |
+| Broadcast composer + live email preview | `src/components/Admin/AdminDashboard.tsx` | ~288–435 |
+| Broadcast send handler (push + email) | `src/App.tsx` | ~2442 |
 | Course manager | `src/components/Admin/CourseManager.tsx` | — |
 | File upload | `src/components/Admin/FileUpload.tsx` | — |
 | Drive manager | `src/components/Admin/DriveManager.tsx` | — |
 
 ---
 
-## Push Notifications
+## Email & Push Notifications
 
 | What | File | Lines |
 |------|------|-------|
+| Broadcast email HTML template (recipient-facing, no admin link) | `src/lib/emailNotifications.ts` | ~18 (`generateEmailHTML`) |
+| Send email to all students | `src/lib/emailNotifications.ts` | ~349 (`sendEmailToAllStudents`) |
+| Email content templates | `src/lib/emailTemplates.ts` | — |
 | Push API helpers | `src/lib/pushNotifications.ts` | — |
 | VAPID / subscription logic | `supabase/functions/send-push-notification/` | — |
 | Service worker | `public/sw.js` | — |
