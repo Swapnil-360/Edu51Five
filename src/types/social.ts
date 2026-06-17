@@ -171,6 +171,18 @@ export interface TeamAnnouncement {
   author_profile?: SocialProfile;
 }
 
+export interface TeamMessage {
+  id: string;
+  team_id: string;
+  user_id: string;
+  content: string;
+  reply_to_id: string | null;
+  created_at: string;
+  sender?: SocialProfile;
+  reply_to?: { id: string; content: string; sender_name: string } | null;
+  reactions?: { emoji: string; user_ids: string[] }[];
+}
+
 // Columns selected for profile lists/cards (never select legacy base64 profile_pic in lists)
 export const SOCIAL_PROFILE_COLS =
   "id,username,name,headline,about,location,website,social_links,avatar_url,cover_photo_url,skills,interests,visibility,is_alumni,is_admin,section,major,bubt_email,phone,wc26_team,created_at";

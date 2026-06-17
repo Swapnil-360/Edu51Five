@@ -1090,46 +1090,27 @@ function App() {
     }
   };
 
-  // Send notifications (push + email) when notice is created (admin only)
+  // Send web push notification when a notice is created (admin only).
+  // Emails are NOT sent here — use the Broadcast composer for that.
   const sendNoticeNotification = async (notice: Notice) => {
     try {
-      // 1. Send push notifications (backup notification method)
-      try {
-        const { data, error } = await supabase.functions.invoke(
-          "send-push-notification",
-          {
-            body: {
-              noticeId: notice.id,
-              noticeType: notice.id, // 'welcome-notice' or 'exam-routine-notice'
-              title: notice.title,
-              body: notice.content.substring(0, 100), // Truncate to 100 chars
-              url: "/",
-            },
+      const { data, error } = await supabase.functions.invoke(
+        "send-push-notification",
+        {
+          body: {
+            noticeId: notice.id,
+            noticeType: notice.id,
+            title: notice.title,
+            body: notice.content.substring(0, 100),
+            url: "/",
           },
-        );
-
-        if (!error) {
-          console.log("✅ Push notification sent:", data);
-        }
-      } catch (pushError) {
-        console.warn(
-          "⚠️ Push notification sending attempted (non-blocking):",
-          pushError,
-        );
-      }
-
-      // 2. Send email notifications (primary method - more reliable)
-      console.log("📧 Sending email notifications to all students...");
-      const { sent, failed } = await sendEmailToAllStudents(
-        `${notice.title} - Edu51Portal`,
-        notice.title,
-        notice.content,
-        "/",
+        },
       );
-
-      console.log(`✅ Email notifications: ${sent} sent, ${failed} failed`);
-    } catch (error) {
-      console.error("Error sending notifications:", error);
+      if (!error) {
+        console.log("✅ Push notification sent:", data);
+      }
+    } catch (pushError) {
+      console.warn("⚠️ Push notification (non-blocking):", pushError);
     }
   };
 
@@ -8459,6 +8440,7 @@ For any queries, contact your course instructors or the department.`,
             onClose={() => goToView("teams")}
             onViewProfile={(username) => goToView("profile", username)}
             isDarkMode={isDarkMode}
+            isAdmin={isAdmin}
           />
         </main>
       )}

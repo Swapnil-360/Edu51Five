@@ -5,6 +5,7 @@ import {
   Crown,
   Loader2,
   LogOut,
+  MessageSquare,
   Megaphone,
   Plus,
   Settings,
@@ -36,9 +37,10 @@ import {
   deleteTeam,
 } from "../../lib/api/teamsApi";
 import InviteMembersModal from "./InviteMembersModal";
+import TeamChat from "./TeamChat";
 import { uploadImage } from "../../lib/storage";
 
-type Tab = "overview" | "members";
+type Tab = "overview" | "members" | "chat";
 
 interface Props {
   teamId: string;
@@ -46,9 +48,10 @@ interface Props {
   onClose: () => void;
   onViewProfile: (username: string) => void;
   isDarkMode: boolean;
+  isAdmin?: boolean;
 }
 
-export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode }: Props) {
+export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode, isAdmin = false }: Props) {
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [announcements, setAnnouncements] = useState<TeamAnnouncement[]>([]);
@@ -302,26 +305,39 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           </div>
         )}
 
-        {/* Tabs: Overview | Members */}
+        {/* Tabs: Overview | Members | Chat */}
         <div className="flex gap-2">
-          {(["overview", "members"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                tab === t
-                  ? "bg-blue-600 text-white"
-                  : isDarkMode
-                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              {t === "overview" ? "Overview" : `Members (${members.length})`}
-            </button>
-          ))}
+          <button
+            onClick={() => setTab("overview")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "overview" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setTab("members")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "members" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
+          >
+            Members ({members.length})
+          </button>
+          <button
+            onClick={() => setTab("chat")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "chat" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> Chat
+          </button>
         </div>
 
-        {tab === "overview" ? (
+        {tab === "chat" ? (
+          <TeamChat
+            teamId={teamId}
+            currentUserId={currentUserId}
+            isMember={isMember}
+            canManage={canManage}
+            isAdmin={isAdmin}
+            isDarkMode={isDarkMode}
+            members={members}
+          />
+        ) : tab === "overview" ? (
           /* Announcements */
           <section className={`rounded-2xl border p-5 ${card}`}>
             <div className="flex items-center justify-between mb-4">

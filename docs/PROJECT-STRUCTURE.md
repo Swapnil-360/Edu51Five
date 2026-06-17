@@ -103,11 +103,28 @@ Admin is gated by `profiles.is_admin` (no public password page). `isAdmin` is de
 | What | File | Lines |
 |------|------|-------|
 | Teams list page (Discover / My Teams) | `src/components/Teams/TeamsPage.tsx` | — |
-| Team detail page (Overview / Members) | `src/components/Teams/TeamPage.tsx` | — |
+| Team detail page (Overview / Members / Chat tabs) | `src/components/Teams/TeamPage.tsx` | — |
 | Team card | `src/components/Teams/TeamCard.tsx` | — |
 | Create team modal | `src/components/Teams/CreateTeamModal.tsx` | — |
 | Invite members modal | `src/components/Teams/InviteMembersModal.tsx` | — |
 | Teams API | `src/lib/api/teamsApi.ts` | — |
+
+---
+
+## Team Chat (Phase 2)
+
+Real-time chat inside each team. Members-only. Non-members see a join prompt.
+
+| What | File |
+|------|------|
+| Chat UI (message list, reply, reactions, realtime) | `src/components/Teams/TeamChat.tsx` |
+| Chat API (listMessages, sendMessage, deleteMessage, toggleReaction) | `src/lib/api/chatApi.ts` |
+| `TeamMessage` type | `src/types/social.ts` |
+| **DB:** `team_messages` + `team_message_reactions` tables, RLS gated by `team_members` | migration `team_chat` |
+
+**Realtime:** Supabase channel `team-chat-{teamId}` — subscribes to INSERT/DELETE on `team_messages` and `*` on `team_message_reactions`.  
+**Reactions:** 5 fixed emoji (👍 ❤️ 😂 😮 🔥), Messenger-style — one reaction per user per message (PK `(message_id, user_id)`), clicking a different emoji swaps it, same emoji toggles off (`setReaction` in `chatApi.ts`). Optimistic UI update on click; reaction badge overlaps the bubble's bottom corner.  
+**Reply threading:** `reply_to_id` FK on `team_messages`; reply snippet (sender name + truncated content) shown above the bubble.
 
 ---
 
@@ -204,6 +221,10 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `notice_attachment` | `notices.attachment_url`/`attachment_type` + admin-only `exam-routines` writes |
 | `admin_functions_least_privilege` | Revoke anon/public execute on admin RPCs |
 | `notices_admin_write` | Notices: public read, admin-only insert/update/delete (`is_app_admin()`) |
+| `team_chat` | `team_messages` + `team_message_reactions` tables with member-only RLS |
+| `team_chat_realtime` | Add chat tables to `supabase_realtime` publication |
+| `reactions_one_per_user` | Reaction PK → `(message_id, user_id)` — Messenger-style single reaction |
+| `owner_protection` | `profiles.is_owner`; `set_user_admin` refuses to demote owner |
 
 ---
 

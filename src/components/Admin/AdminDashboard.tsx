@@ -28,7 +28,7 @@ interface EmergencyLink {
 }
 
 interface BucketUsage { bucket: string; bytes: number; files: number; }
-interface AdminUser { id: string; name: string | null; bubt_email: string | null; is_admin: boolean; }
+interface AdminUser { id: string; name: string | null; bubt_email: string | null; is_admin: boolean; is_owner: boolean; }
 interface FeedbackItem {
   id: string;
   name: string | null;
@@ -385,6 +385,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {adminUsers.map((u) => {
                   const isSelf = u.id === currentUserId;
+                  const isProtected = u.is_owner || isSelf;
                   return (
                     <div
                       key={u.id}
@@ -395,7 +396,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <p className={`text-sm font-semibold truncate ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                             {u.name || 'Unnamed'}
                           </p>
-                          {u.is_admin && (
+                          {u.is_owner && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-500 text-white">OWNER</span>
+                          )}
+                          {u.is_admin && !u.is_owner && (
                             <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white">ADMIN</span>
                           )}
                           {isSelf && (
@@ -404,18 +408,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <p className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{u.bubt_email || '—'}</p>
                       </div>
-                      <button
-                        onClick={() => onToggleUserAdmin?.(u.id, !u.is_admin)}
-                        disabled={isSelf}
-                        title={isSelf ? "You can't change your own admin status" : u.is_admin ? 'Remove admin access' : 'Promote to admin'}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                          u.is_admin
-                            ? isDarkMode ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : isDarkMode ? 'bg-green-500/20 text-green-300 hover:bg-green-500/30' : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {u.is_admin ? 'Revoke' : 'Make Admin'}
-                      </button>
+                      {isProtected ? (
+                        <span className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold opacity-40 cursor-not-allowed ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                          {u.is_owner ? 'Protected' : 'You'}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => onToggleUserAdmin?.(u.id, !u.is_admin)}
+                          title={u.is_admin ? 'Remove admin access' : 'Promote to admin'}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            u.is_admin
+                              ? isDarkMode ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : isDarkMode ? 'bg-green-500/20 text-green-300 hover:bg-green-500/30' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {u.is_admin ? 'Revoke' : 'Make Admin'}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
