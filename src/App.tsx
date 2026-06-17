@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from "./lib/supabase";
 import { Notice } from "./types";
@@ -3145,12 +3146,10 @@ For any queries, contact your course instructors or the department.`,
       }`}
     >
       {/* Major Access Notification Toast */}
-      {majorAccessMessage && (
-        <div
-          className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] animate-fade-in-down max-w-md w-full mx-4`}
-        >
+      {majorAccessMessage && createPortal(
+        <div className="fixed top-20 inset-x-0 z-[200] flex justify-center px-3 pointer-events-none animate-fade-in-down">
           <div
-            className={`rounded-lg shadow-2xl p-4 border-2 ${
+            className={`pointer-events-auto w-full max-w-md rounded-lg shadow-2xl p-3 sm:p-4 border-2 ${
               majorAccessMessage.type === "error"
                 ? "bg-red-50 border-red-500 text-red-900"
                 : majorAccessMessage.type === "success"
@@ -3158,9 +3157,9 @@ For any queries, contact your course instructors or the department.`,
                   : "bg-blue-50 border-blue-500 text-blue-900"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm ${
                   majorAccessMessage.type === "error"
                     ? "bg-red-100"
                     : majorAccessMessage.type === "success"
@@ -3168,24 +3167,21 @@ For any queries, contact your course instructors or the department.`,
                       : "bg-blue-100"
                 }`}
               >
-                {majorAccessMessage.type === "error"
-                  ? "❌"
-                  : majorAccessMessage.type === "success"
-                    ? "✅"
-                    : "ℹ️"}
+                {majorAccessMessage.type === "error" ? "✕" : majorAccessMessage.type === "success" ? "✓" : "i"}
               </div>
-              <p className="flex-1 font-semibold text-sm">
+              <p className="flex-1 font-semibold text-xs sm:text-sm leading-snug break-words min-w-0">
                 {majorAccessMessage.message}
               </p>
               <button
                 onClick={() => setMajorAccessMessage(null)}
-                className="flex-shrink-0 text-gray-500 hover:text-gray-700"
+                className="flex-shrink-0 text-gray-500 hover:text-gray-700 mt-0.5"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Enhanced Mobile-First Responsive Header */}
@@ -3383,7 +3379,7 @@ For any queries, contact your course instructors or the department.`,
 
           {/* Sidebar */}
           <div
-            className={`fixed top-0 left-0 h-screen w-64 sm:w-72 md:w-80 shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
+            className={`fixed top-0 left-0 h-[100dvh] w-[80vw] max-w-xs sm:max-w-sm shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
               isDarkMode
                 ? "bg-gradient-to-b from-gray-900 via-slate-900 to-gray-800"
                 : "bg-gradient-to-b from-slate-50 via-white to-gray-50"
@@ -3727,7 +3723,8 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Authentication Section - At Bottom */}
             <div
-              className={`px-4 py-3 space-y-2 border-t ${isDarkMode ? "border-gray-700/30" : "border-gray-200/50"}`}
+              className={`px-4 pt-3 pb-[env(safe-area-inset-bottom,12px)] space-y-2 border-t mt-auto ${isDarkMode ? "border-gray-700/30" : "border-gray-200/50"}`}
+              style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
             >
               {isLoggedIn ? (
                 <button
@@ -3837,7 +3834,7 @@ For any queries, contact your course instructors or the department.`,
 
           {/* Notification Sidebar */}
           <div
-            className={`fixed top-0 right-0 h-screen w-64 sm:w-72 md:w-80 lg:w-96 shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
+            className={`fixed top-0 right-0 h-[100dvh] w-[80vw] max-w-xs sm:max-w-sm md:max-w-md shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
               isDarkMode
                 ? "bg-gradient-to-b from-gray-900 via-slate-900 to-gray-800"
                 : "bg-gradient-to-b from-slate-50 via-white to-gray-50"
