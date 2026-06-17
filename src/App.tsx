@@ -389,12 +389,16 @@ function App() {
   // Columns to fetch for profile metadata — deliberately excludes profile_pic
   // because it's a 400KB+ base64 blob that causes timeouts on free-tier Supabase.
   // profile_pic is served from localStorage cache and refreshed in the background.
+  // avatar_url (Storage URL) is short and included so it's cached immediately on login.
   const PROFILE_META_COLS =
-    "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at";
+    "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at,avatar_url";
 
   const applyProfileData = (profileData: any, email: string, password: string) => {
     const cachedPic = localStorage.getItem("userProfilePic") || "";
-    const pic = profileData?.profile_pic || cachedPic;
+    const cachedAvatarUrl = localStorage.getItem("userProfileAvatarUrl") || "";
+    // Prefer Supabase Storage URL (avatar_url) over legacy base64 (profile_pic)
+    const avatarUrl = profileData?.avatar_url || cachedAvatarUrl;
+    const pic = avatarUrl || profileData?.profile_pic || cachedPic;
     const updatedProfile = {
       name: profileData?.name || "Welcome Student",
       section: profileData?.section || "",
@@ -412,9 +416,16 @@ function App() {
     localStorage.setItem("userProfileMajor", updatedProfile.major);
     localStorage.setItem("userProfileNotificationEmail", updatedProfile.notificationEmail);
     localStorage.setItem("userProfilePhone", updatedProfile.phone);
-    if (pic) {
+    if (avatarUrl) {
+      localStorage.setItem("userProfileAvatarUrl", avatarUrl);
+      // Preload the image so it's in browser cache when the profile page opens
+      if (avatarUrl.startsWith("http")) {
+        const img = new Image();
+        img.src = avatarUrl;
+      }
+    }
+    if (pic && !avatarUrl) {
       localStorage.setItem("userProfilePic", pic);
-      localStorage.setItem("userProfileAvatarUrl", pic);
     }
     if (password) localStorage.setItem("userProfilePassword", password);
     setUserProfile(updatedProfile);
@@ -661,6 +672,7 @@ function App() {
         const meta = session.user.user_metadata || {};
         const cachedName = localStorage.getItem("userProfileName");
         const cachedPic  = localStorage.getItem("userProfilePic") || "";
+        const cachedAvatarUrl = localStorage.getItem("userProfileAvatarUrl") || "";
         const quickName  =
           meta.name ||
           cachedName ||
@@ -675,8 +687,8 @@ function App() {
             major: prev.major || meta.major || "",
             phone: prev.phone || meta.phone || "",
             notificationEmail: prev.notificationEmail || meta.notificationEmail || "",
-            profilePic: prev.profilePic || cachedPic,
-            avatar_url: prev.avatar_url || cachedPic,
+            profilePic: prev.profilePic || cachedAvatarUrl || cachedPic,
+            avatar_url: prev.avatar_url || cachedAvatarUrl || cachedPic,
           }));
           localStorage.setItem("userProfileName", quickName);
         }
@@ -8534,6 +8546,7 @@ For queries, contact course instructors or the department.`,
           <ProfilePage
             username={viewedUsername}
             currentUserId={authSession?.user?.id ?? null}
+            initialAvatarUrl={viewedUsername ? undefined : (userProfile.avatar_url || undefined)}
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
           />

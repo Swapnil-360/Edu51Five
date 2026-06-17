@@ -39,11 +39,13 @@ interface Props {
   /** username when viewing someone else via /u/:username; null = own profile */
   username: string | null;
   currentUserId: string | null;
+  /** Cached avatar URL from App.tsx — shown immediately before the DB fetch completes */
+  initialAvatarUrl?: string;
   onClose: () => void;
   isDarkMode: boolean;
 }
 
-export default function ProfilePage({ username, currentUserId, onClose, isDarkMode }: Props) {
+export default function ProfilePage({ username, currentUserId, initialAvatarUrl, onClose, isDarkMode }: Props) {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [educations, setEducations] = useState<Education[]>([]);
@@ -158,8 +160,26 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${pageBg}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className={`min-h-screen ${pageBg}`}>
+        {/* Cover skeleton */}
+        <div className="relative h-48 bg-slate-700/30 animate-pulse" />
+        {/* Avatar + name row skeleton */}
+        <div className="max-w-3xl mx-auto px-4 -mt-12 pb-8">
+          <div className="flex items-end gap-4 mb-4">
+            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-900 overflow-hidden flex-shrink-0 bg-slate-600/30">
+              {initialAvatarUrl && (
+                <img src={initialAvatarUrl} alt="" className="w-full h-full object-cover" fetchPriority="high" decoding="async" />
+              )}
+            </div>
+            <div className="mb-2 flex-1 space-y-2">
+              <div className="h-5 w-48 rounded bg-slate-600/30 animate-pulse" />
+              <div className="h-3 w-32 rounded bg-slate-600/20 animate-pulse" />
+            </div>
+          </div>
+          <div className="flex justify-center pt-8">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500/60" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -188,7 +208,7 @@ export default function ProfilePage({ username, currentUserId, onClose, isDarkMo
     );
   }
 
-  const avatarSrc = profile.avatar_url || legacyPic || "";
+  const avatarSrc = profile.avatar_url || legacyPic || initialAvatarUrl || "";
   const connectLabel = !connection
     ? "Connect"
     : connection.status === "accepted"
