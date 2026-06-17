@@ -78,6 +78,45 @@ export async function uploadImage(
   return `${data.publicUrl}?v=${Date.now()}`;
 }
 
+/**
+ * Upload an exam-routine attachment (image OR PDF) to the `exam-routines` bucket.
+ * Admin-only at the DB level (storage RLS gated by is_app_admin()).
+ * Returns the public URL and the detected type for rendering.
+ *
+ * Path: {noticeId}/routine-{timestamp}.{ext}
+ */
+export async function uploadRoutineAttachment(
+  noticeId: string,
+  file: File,
+): Promise<{ url: string; type: "image" | "pdf" }> {
+  const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+  const isImage = file.type.startsWith("image/");
+  if (!isPdf && !isImage) {
+    throw new Error("Routine attachment must be an image or a PDF.");
+  }
+
+  const type: "image" | "pdf" = isPdf ? "pdf" : "image";
+  // Images get compressed to webp; PDFs upload as-is.
+  let body: Blob = file;
+  let contentType = file.type || "application/octet-stream";
+  let ext = (file.name.split(".").pop() || (isPdf ? "pdf" : "bin")).toLowerCase();
+  if (isImage) {
+    body = await compressImage(file, { maxWidth: 1600, maxHeight: 2200, quality: 0.85 });
+    contentType = "image/webp";
+    ext = "webp";
+  }
+
+  const path = `${noticeId}/routine-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("exam-routines").upload(path, body, {
+    contentType,
+    upsert: true,
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("exam-routines").getPublicUrl(path);
+  return { url: data.publicUrl, type };
+}
+
 /** Remove a stored object (best-effort; ignores missing files). */
 export async function removeStorageFile(
   bucket: string,

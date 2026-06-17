@@ -32,6 +32,13 @@ import { ResetPasswordModal } from "./components/ResetPasswordModal";
 import { SetNewPasswordModal } from "./components/SetNewPasswordModal";
 import { ChangeEmailModal } from "./components/ChangeEmailModal";
 import { SignInModal } from "./components/SignInModal";
+import { FeedbackModal } from "./components/FeedbackModal";
+import {
+  listFeedback,
+  updateFeedbackStatus,
+} from "./lib/api/feedbackApi";
+import { uploadRoutineAttachment } from "./lib/storage";
+import type { Feedback, FeedbackStatus } from "./types";
 import MarqueeTicker from "./components/MarqueeTicker";
 import PDFViewer from "./components/PDFViewer";
 import { DirectDriveUpload } from "./components/Admin/DirectDriveUpload";
@@ -74,7 +81,6 @@ import {
   Users,
   GraduationCap,
   Trophy,
-  ShieldCheck,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
@@ -287,6 +293,15 @@ function App() {
     teams: number;
     materials: number;
   } | null>(null);
+  // Admin Users management (promote/demote)
+  const [adminUsers, setAdminUsers] = useState<
+    { id: string; name: string | null; bubt_email: string | null; is_admin: boolean }[]
+  >([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  // User feedback
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackItems, setFeedbackItems] = useState<Feedback[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [isLoadingNotices, setIsLoadingNotices] = useState(false);
   const hasLoadedInitialNotices = useRef(false);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -337,6 +352,26 @@ function App() {
   const [authSession, setAuthSession] = useState<any>(null);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   const [showWC26Intro, setShowWC26Intro] = useState(false);
+
+  // Authoritative admin check: only an authenticated Supabase session whose
+  // profile has is_admin=true grants admin. This mirrors exactly what the DB
+  // enforces on admin RPCs/RLS, so the admin UI is never shown without real
+  // access (a profile loaded by email without a session must NOT grant admin).
+  useEffect(() => {
+    let cancelled = false;
+    const resolveAdmin = async () => {
+      if (!authSession?.user?.id) {
+        if (!cancelled) setIsAdmin(false);
+        return;
+      }
+      const { data, error } = await supabase.rpc("is_app_admin");
+      if (!cancelled) setIsAdmin(!error && data === true);
+    };
+    resolveAdmin();
+    return () => {
+      cancelled = true;
+    };
+  }, [authSession]);
 
   // User profile state
   const [userProfile, setUserProfile] = useState({
@@ -392,8 +427,10 @@ function App() {
     "id,name,section,major,bubt_email,notification_email,phone,created_at,last_login_at,avatar_url,is_admin";
 
   const applyProfileData = (profileData: any, email: string, password: string) => {
-    // Admin status comes straight from the DB profile (no client-side password).
-    setIsAdmin(profileData?.is_admin === true);
+    // NOTE: admin status is NOT set from this profile fetch — it's resolved
+    // authoritatively against the live Supabase session (see the isAdmin effect),
+    // because a profile can be loaded by email without an authenticated session,
+    // and admin RPCs require a real session to work.
     const cachedPic = localStorage.getItem("userProfilePic") || "";
     const cachedAvatarUrl = localStorage.getItem("userProfileAvatarUrl") || "";
     // Prefer Supabase Storage URL (avatar_url) over legacy base64 (profile_pic)
@@ -856,7 +893,12 @@ function App() {
     exam_type: null as "midterm" | "final" | null,
     event_date: "",
     is_active: true,
+    attachment_url: null as string | null,
+    attachment_type: null as "image" | "pdf" | null,
   });
+  // Pending routine attachment file (uploaded on save)
+  const [routineFile, setRoutineFile] = useState<File | null>(null);
+  const [routineUploading, setRoutineUploading] = useState(false);
 
   // Generate or get session ID
   const getSessionId = () => {
@@ -1129,11 +1171,13 @@ function App() {
     }
   }, [selectedCourse]);
 
-  // Load total materials count + platform stats when accessing admin panel
+  // Load total materials count + platform stats + user list when accessing admin panel
   useEffect(() => {
     if (currentView === "admin" && isAdmin) {
       loadTotalMaterialsCount();
       loadAdminStats();
+      loadAdminUsers();
+      loadFeedback();
     }
   }, [currentView, isAdmin]);
 
@@ -1570,6 +1614,64 @@ FOR ALL USING (true) WITH CHECK (true);
     }
   };
 
+  // Load the user list for the Admin Users management section (admin-only RPC)
+  const loadAdminUsers = async () => {
+    try {
+      setAdminUsersLoading(true);
+      const { data, error } = await supabase.rpc("admin_list_users");
+      if (error) throw error;
+      setAdminUsers((data as any) || []);
+    } catch (error) {
+      console.error("Error loading admin users:", error);
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  };
+
+  // Promote/demote a user (admin-only RPC, atomic + guarded server-side)
+  const handleToggleUserAdmin = async (userId: string, makeAdmin: boolean) => {
+    try {
+      const { error } = await supabase.rpc("set_user_admin", {
+        target: userId,
+        make_admin: makeAdmin,
+      });
+      if (error) throw error;
+      // Optimistic update + refresh
+      setAdminUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_admin: makeAdmin } : u)),
+      );
+      showMajorAccessNotification(
+        "success",
+        makeAdmin ? "User promoted to admin." : "Admin access removed.",
+      );
+    } catch (error) {
+      console.error("Error updating admin status:", error);
+      showMajorAccessNotification("error", "Could not update admin status.");
+    }
+  };
+
+  // Load feedback inbox (admin-only via RLS)
+  const loadFeedback = async () => {
+    try {
+      setFeedbackLoading(true);
+      const items = await listFeedback();
+      setFeedbackItems(items);
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
+  // Update a feedback item's status (admin-only)
+  const handleUpdateFeedbackStatus = async (id: string, status: FeedbackStatus) => {
+    // Optimistic
+    setFeedbackItems((prev) => prev.map((f) => (f.id === id ? { ...f, status } : f)));
+    const { error } = await updateFeedbackStatus(id, status);
+    if (error) {
+      showMajorAccessNotification("error", "Could not update feedback status.");
+      loadFeedback();
+    }
+  };
+
   // Create welcome notice if it doesn't exist
   // Initialize default notices (Welcome + Exam Routine slots)
   const initializeDefaultNotices = async (): Promise<Notice[]> => {
@@ -1623,7 +1725,7 @@ Best of luck with your studies!
           category: "announcement",
           priority: "normal",
           exam_type: null,
-          event_date: "",
+          event_date: null,
           is_active: true,
           created_at: new Date().toISOString(),
         } as Notice;
@@ -1645,56 +1747,13 @@ Best of luck with your studies!
         );
       }
 
-      // Create placeholder for exam routine if it doesn't exist
-      if (!routineNotice) {
-        console.log(
-          "🏗️ [initializeDefaultNotices] Creating exam routine notice...",
-        );
-        routineNotice = {
-          id: "exam-routine-notice",
-          title: "📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)",
-          content: `Final examination schedule for Section 5 (Computer Science & Engineering).
+      // NOTE: Exam routine notices are no longer auto-seeded with hardcoded data.
+      // Admins create them on demand via "Create Smart Notice" and attach the
+      // routine as an image or PDF. A real one from the DB (if present) still shows.
 
-📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
-• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
-• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
-• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
-• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
-• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
-
-• Arrive 15 minutes early for each exam
-• Carry your student ID and necessary materials
-
-[EXAM_ROUTINE_PDF]https://aljnyhxthmwgesnkqwzu.supabase.co/storage/v1/object/public/materials/materials/Final_Exam_Routine_Dec_2025.pdf[/EXAM_ROUTINE_PDF]
-`,
-          type: "warning",
-          category: "exam",
-          priority: "high",
-          exam_type: "final",
-          event_date: "",
-          is_active: true,
-          created_at: new Date().toISOString(),
-        } as Notice;
-
-        // Try to save to database
-        try {
-          await supabase.from("notices").insert([routineNotice]);
-          console.log(
-            "🏗️ [initializeDefaultNotices] Routine notice saved to database",
-          );
-        } catch (dbError) {
-          console.log(
-            "🏗️ [initializeDefaultNotices] Routine notice: database save failed, will save to localStorage only",
-          );
-        }
-      } else {
-        console.log(
-          "🏗️ [initializeDefaultNotices] Routine notice already exists in database",
-        );
-      }
-
-      // Always show these 2 notices (welcome + routine)
-      defaultNotices.push(welcomeNotice, routineNotice);
+      // Show the welcome notice, plus any existing routine notice from the DB
+      defaultNotices.push(welcomeNotice);
+      if (routineNotice) defaultNotices.push(routineNotice);
 
       // Filter only active notices and allow up to 5
       const activeNotices = defaultNotices
@@ -2524,6 +2583,26 @@ Best of luck with your studies!
       // Create new notice with unique ID (allow multiple notices, not just 2 slots)
       const noticeId = `notice-${Date.now()}`;
 
+      // Upload routine attachment if a new file was chosen
+      let attachmentUrl = newNotice.attachment_url;
+      let attachmentType = newNotice.attachment_type;
+      if (routineFile) {
+        try {
+          setRoutineUploading(true);
+          const res = await uploadRoutineAttachment(noticeId, routineFile);
+          attachmentUrl = res.url;
+          attachmentType = res.type;
+        } catch (upErr) {
+          console.error("Routine upload failed:", upErr);
+          alert("Routine attachment upload failed. Please try a smaller image or PDF.");
+          setRoutineUploading(false);
+          setLoading(false);
+          return;
+        } finally {
+          setRoutineUploading(false);
+        }
+      }
+
       const notice: Notice = {
         id: noticeId,
         title: newNotice.title,
@@ -2531,10 +2610,13 @@ Best of luck with your studies!
         type: newNotice.type,
         category: newNotice.category,
         priority: newNotice.priority,
-        exam_type: newNotice.exam_type,
-        event_date: newNotice.event_date,
+        exam_type: newNotice.exam_type || null,
+        // Empty string is NOT a valid date — coerce to null so the DB insert succeeds
+        event_date: newNotice.event_date || null,
         created_at: new Date().toISOString(),
         is_active: newNotice.is_active,
+        attachment_url: attachmentUrl || null,
+        attachment_type: attachmentType || null,
       };
 
       console.log("Creating new notice:", noticeId);
@@ -2549,19 +2631,24 @@ Best of luck with your studies!
       localStorage.setItem("edu51five_notices", JSON.stringify(updatedNotices));
       console.log("New notice added to localStorage");
 
-      // Try to save to database
-      try {
-        const { error } = await supabase.from("notices").insert([notice]);
-
-        if (error) {
-          console.error("Database save failed:", error);
-          console.log("Notice saved locally only.");
-        } else {
-          console.log("Notice saved to database successfully");
-        }
-      } catch (dbError) {
-        console.warn("Database not available, using local storage:", dbError);
+      // Save to database — this is what makes the notice visible to ALL users.
+      // If it fails, tell the admin (don't pretend success: a local-only notice
+      // would never reach anyone else).
+      const { error: insertError } = await supabase.from("notices").insert([notice]);
+      if (insertError) {
+        console.error("Database save failed:", insertError);
+        // Roll back the optimistic local copy so it doesn't look published
+        const reverted = notices.filter((n) => n.id !== noticeId);
+        setNotices(reverted);
+        localStorage.setItem("edu51five_notices", JSON.stringify(reverted));
+        alert(
+          "❌ Notice could NOT be published to all users.\n\n" +
+            (insertError.message || "Database error") +
+            "\n\nMake sure you are signed in as an admin and try again.",
+        );
+        return;
       }
+      console.log("Notice saved to database successfully");
 
       // Dispatch event for instant UI update
       window.dispatchEvent(
@@ -2586,10 +2673,13 @@ Best of luck with your studies!
         exam_type: null,
         event_date: "",
         is_active: true,
+        attachment_url: null,
+        attachment_type: null,
       });
+      setRoutineFile(null);
       setShowCreateNotice(false);
 
-      alert("Notice published successfully! Push notifications sent.");
+      alert("✅ Notice published to all users! Push notifications sent.");
     } catch (error) {
       console.error("Error creating notice:", error);
       alert("Error creating notice. Please try again.");
@@ -2598,197 +2688,6 @@ Best of luck with your studies!
     }
   };
 
-  // Admin: Insert Final Exam Routine notice (prebuilt) - Optimized for INP
-  const handleInsertFinalExamNotice = async () => {
-    if (!confirm("Insert the Final Exam Routine notice for Dec 04–14, 2025?"))
-      return;
-
-    // Immediate UI feedback
-    setLoading(true);
-
-    // Use requestIdleCallback or setTimeout to avoid blocking
-    setTimeout(async () => {
-      try {
-        const notice: Notice = {
-          id: "exam-routine-final-2025",
-          title: "📅 Final Exam Routine - Section 5 (Dec 04–14, 2025)",
-          content: `Final examination schedule for Section 5 (Computer Science & Engineering).
-
-📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
-• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
-• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
-• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
-• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
-• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
-
-• Arrive 15 minutes early for each exam
-• Carry your student ID and necessary materials
-
-[EXAM_ROUTINE_PDF]https://aljnyhxthmwgesnkqwzu.supabase.co/storage/v1/object/public/materials/materials/Final_Exam_Routine_Dec_2025.pdf[/EXAM_ROUTINE_PDF]
-
-For queries, contact course instructors or the department.
-`,
-          type: "warning",
-          category: "exam",
-          priority: "high",
-          exam_type: "final",
-          event_date: "",
-          created_at: new Date().toISOString(),
-          is_active: true,
-        } as Notice;
-
-        // Update local state first (instant UI update)
-        const updatedNotices = [
-          notice,
-          ...notices.filter((n) => n.id !== notice.id),
-        ].slice(0, 5);
-        setNotices(updatedNotices);
-        localStorage.setItem(
-          "edu51five_notices",
-          JSON.stringify(updatedNotices),
-        );
-
-        // Database operation in background (non-blocking)
-        supabase
-          .from("notices")
-          .upsert([notice], { onConflict: "id" })
-          .then(({ error }: { error: any }) => {
-            if (error) {
-              console.warn("Supabase upsert error:", error);
-            } else {
-              console.log("Final exam notice synced to database");
-            }
-          })
-          .catch((err: any) => console.warn("Database sync failed:", err));
-
-        // Notify other windows/tabs
-        window.dispatchEvent(
-          new CustomEvent("edu51five-data-updated", {
-            detail: { type: "notices" },
-          }),
-        );
-
-        setLoading(false);
-        alert("✅ Final exam notice added successfully!");
-      } catch (err) {
-        console.error("Error inserting final exam notice:", err);
-        setLoading(false);
-        alert("Error adding final exam notice. See console for details.");
-      }
-    }, 0);
-  };
-
-  // Admin: Insert Midterm Exam Routine notice (prebuilt) with HTML table
-  const handleInsertMidtermExamNotice = async () => {
-    if (
-      !confirm(
-        "Insert the Midterm Exam Routine notice with the HTML table format?",
-      )
-    )
-      return;
-
-    // Immediate UI feedback
-    setLoading(true);
-
-    // Use requestIdleCallback or setTimeout to avoid blocking
-    setTimeout(async () => {
-      try {
-        const notice: Notice = {
-          id: "exam-routine-midterm-2026",
-          title: "📅 Midterm Exam Routine - Section 2 (Feb 2026)",
-          content: `<h3>Exam Routine</h3>
-<p>
-Department: CSE<br>
-Intake: 51<br>
-Section: 2
-</p>
-
-<table style="width:100%; border-collapse: collapse; text-align:left;">
-  <thead>
-    <tr style="background:#1f4f82; color:white;">
-      <th style="padding:8px; border:1px solid #ccc;">Date</th>
-      <th style="padding:8px; border:1px solid #ccc;">Subject</th>
-      <th style="padding:8px; border:1px solid #ccc;">Time</th>
-      <th style="padding:8px; border:1px solid #ccc;">Room No</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding:8px; border:1px solid #ccc;">18-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">Computer Graphics</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
-    </tr>
-    <tr>
-      <td style="padding:8px; border:1px solid #ccc;">20-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">IoT</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/706</td>
-    </tr>
-    <tr>
-      <td style="padding:8px; border:1px solid #ccc;">23-02-2026</td>
-      <td style="padding:8px; border:1px solid #ccc;">Data Mining</td>
-      <td style="padding:8px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:8px; border:1px solid #ccc;">2/319</td>
-    </tr>
-  </tbody>
-</table>
-
-<p style="margin-top: 15px;">
-<strong>Important Notes:</strong><br>
-• Arrive 15 minutes early for each exam<br>
-• Carry your student ID and necessary materials<br>
-For queries, contact course instructors or the department.
-</p>`,
-          type: "warning",
-          category: "exam",
-          priority: "high",
-          exam_type: "midterm",
-          event_date: "",
-          created_at: new Date().toISOString(),
-          is_active: true,
-        } as Notice;
-
-        // Update local state first (instant UI update)
-        const updatedNotices = [
-          notice,
-          ...notices.filter((n) => n.id !== notice.id),
-        ].slice(0, 5);
-        setNotices(updatedNotices);
-        localStorage.setItem(
-          "edu51five_notices",
-          JSON.stringify(updatedNotices),
-        );
-
-        // Database operation in background (non-blocking)
-        supabase
-          .from("notices")
-          .upsert([notice], { onConflict: "id" })
-          .then(({ error }: { error: any }) => {
-            if (error) {
-              console.warn("Supabase upsert error:", error);
-            } else {
-              console.log("Midterm exam notice synced to database");
-            }
-          })
-          .catch((err: any) => console.warn("Database sync failed:", err));
-
-        // Notify other windows/tabs
-        window.dispatchEvent(
-          new CustomEvent("edu51five-data-updated", {
-            detail: { type: "notices" },
-          }),
-        );
-
-        setLoading(false);
-        alert("✅ Midterm exam routine notice added successfully!");
-      } catch (err) {
-        console.error("Error inserting midterm exam notice:", err);
-        setLoading(false);
-        alert("Error adding midterm exam notice. See console for details.");
-      }
-    }, 0);
-  };
 
   useEffect(() => {
     // Listen for notice updates from admin panel
@@ -2886,6 +2785,26 @@ For queries, contact course instructors or the department.
         return;
       }
 
+      // Upload a newly chosen routine attachment (replaces any existing one)
+      let attachmentUrl = newNotice.attachment_url;
+      let attachmentType = newNotice.attachment_type;
+      if (routineFile) {
+        try {
+          setRoutineUploading(true);
+          const res = await uploadRoutineAttachment(editingNoticeId, routineFile);
+          attachmentUrl = res.url;
+          attachmentType = res.type;
+        } catch (upErr) {
+          console.error("Routine upload failed:", upErr);
+          alert("Routine attachment upload failed. Please try a smaller image or PDF.");
+          setRoutineUploading(false);
+          setLoading(false);
+          return;
+        } finally {
+          setRoutineUploading(false);
+        }
+      }
+
       // Create updated notice with same ID
       const updatedNotice: Notice = {
         id: editingNoticeId,
@@ -2894,41 +2813,38 @@ For queries, contact course instructors or the department.
         type: newNotice.type,
         category: newNotice.category,
         priority: newNotice.priority,
-        exam_type: newNotice.exam_type,
-        event_date: newNotice.event_date,
+        exam_type: newNotice.exam_type || null,
+        // Empty string is NOT a valid date — coerce to null so the DB update succeeds
+        event_date: newNotice.event_date || null,
         created_at: notices[noticeIndex].created_at, // Keep original creation date
         is_active: newNotice.is_active,
+        attachment_url: attachmentUrl || null,
+        attachment_type: attachmentType || null,
       };
 
       console.log("Updating notice:", editingNoticeId);
 
-      // Update in local state
+      // Update in database first — this is what makes the change visible to all users
+      const { error: updateError } = await supabase
+        .from("notices")
+        .update(updatedNotice)
+        .eq("id", editingNoticeId);
+      if (updateError) {
+        console.error("Database update failed:", updateError);
+        alert(
+          "❌ Notice update did NOT reach all users.\n\n" +
+            (updateError.message || "Database error") +
+            "\n\nMake sure you are signed in as an admin and try again.",
+        );
+        return;
+      }
+      console.log("✅ Notice updated in database successfully");
+
+      // Update local state + cache
       const updatedNotices = [...notices];
       updatedNotices[noticeIndex] = updatedNotice;
       setNotices(updatedNotices);
-
-      // Update localStorage immediately
       localStorage.setItem("edu51five_notices", JSON.stringify(updatedNotices));
-      console.log("Notice updated in localStorage");
-
-      // Update in database
-      try {
-        const { error } = await supabase
-          .from("notices")
-          .update(updatedNotice)
-          .eq("id", editingNoticeId);
-
-        if (error) {
-          console.error("Database update failed:", error);
-          alert(
-            "⚠️ Notice updated locally, but database may not be synced. Refresh to verify.",
-          );
-        } else {
-          console.log("✅ Notice updated in database successfully");
-        }
-      } catch (dbError) {
-        console.warn("Database update failed, using local storage:", dbError);
-      }
 
       // Dispatch event for instant UI update across entire app
       window.dispatchEvent(
@@ -2950,7 +2866,10 @@ For queries, contact course instructors or the department.
         exam_type: null,
         event_date: "",
         is_active: true,
+        attachment_url: null,
+        attachment_type: null,
       });
+      setRoutineFile(null);
       setIsEditingNotice(false);
       setEditingNoticeId(null);
       setShowCreateNotice(false);
@@ -3420,36 +3339,6 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
-              {/* Admin Dashboard — only for DB admins */}
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    goToView("admin");
-                    setShowMobileMenu(false);
-                  }}
-                  className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
-                    isDarkMode
-                      ? "hover:bg-amber-900/30 border-amber-700/40 hover:border-amber-500/50 text-gray-100"
-                      : "hover:bg-amber-50 border-amber-200/60 hover:border-amber-300 text-gray-900"
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-amber-900/40" : "bg-amber-100"}`}>
-                    <ShieldCheck className={`w-5 h-5 ${isDarkMode ? "text-amber-400" : "text-amber-600"}`} />
-                  </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm">Admin Dashboard</p>
-                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white">
-                        ADMIN
-                      </span>
-                    </div>
-                    <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                      Stats · notices · feedback
-                    </p>
-                  </div>
-                </button>
-              )}
-
               {/* World Cup 2026 */}
               <button
                 onClick={() => {
@@ -4100,6 +3989,19 @@ For any queries, contact your course instructors or the department.`,
                               </span>
                             )}
 
+                            {/* Routine attachment indicator */}
+                            {notice.attachment_url && (
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  isDarkMode
+                                    ? "bg-blue-900/50 text-blue-300"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                📎 {notice.attachment_type === "pdf" ? "PDF" : "Routine"}
+                              </span>
+                            )}
+
                             {/* Event date */}
                             {notice.category === "event" &&
                               notice.event_date && (
@@ -4682,24 +4584,20 @@ For any queries, contact your course instructors or the department.`,
                       <div>
                         <h4 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Support</h4>
                         <ul className="space-y-2">
-                          {[
-                            { label: "Report a Bug", action: () => handleEmailClick() },
-                            { label: "Contact Support", action: () => handleEmailClick() },
-                          ].map(({ label, action }) => (
-                            <li key={label}>
-                              <button onClick={action} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
-                                {label}
-                              </button>
-                            </li>
-                          ))}
                           <li>
-                            <a
-                              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Swapnil, I have a suggestion for Edu51Portal.")}`}
-                              target="_blank" rel="noopener noreferrer"
-                              className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}
-                            >
+                            <button onClick={() => setShowFeedbackModal(true)} className={`text-xs font-semibold hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-700"}`}>
                               Send Feedback
-                            </a>
+                            </button>
+                          </li>
+                          <li>
+                            <button onClick={() => setShowFeedbackModal(true)} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                              Report a Bug
+                            </button>
+                          </li>
+                          <li>
+                            <button onClick={() => handleEmailClick()} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                              Contact Support
+                            </button>
                           </li>
                           <li>
                             <a
@@ -5658,6 +5556,14 @@ For any queries, contact your course instructors or the department.`,
                 storageByBucket={adminStats?.storage_by_bucket ?? []}
                 usersCount={adminStats?.users ?? 0}
                 teamsCount={adminStats?.teams ?? 0}
+                adminUsers={adminUsers}
+                adminUsersLoading={adminUsersLoading}
+                currentUserId={authSession?.user?.id ?? null}
+                onToggleUserAdmin={handleToggleUserAdmin}
+                feedbackItems={feedbackItems}
+                feedbackLoading={feedbackLoading}
+                onUpdateFeedbackStatus={handleUpdateFeedbackStatus}
+                onRefreshFeedback={loadFeedback}
                 notices={notices}
                 onEditNotice={() => {
                   if (notices.length > 0) {
@@ -5673,7 +5579,10 @@ For any queries, contact your course instructors or the department.`,
                       exam_type: firstNotice.exam_type || null,
                       event_date: firstNotice.event_date || "",
                       is_active: firstNotice.is_active,
+                      attachment_url: firstNotice.attachment_url || null,
+                      attachment_type: firstNotice.attachment_type || null,
                     });
+                    setRoutineFile(null);
                     setIsEditingNotice(true);
                     setEditingNoticeId(firstNotice.id);
                     setShowCreateNotice(true);
@@ -6825,6 +6734,7 @@ For any queries, contact your course instructors or the department.`,
                         <button
                           onClick={() => {
                             setShowCreateNotice(false);
+                            setRoutineFile(null);
                             setNewNotice({
                               title: "",
                               content: "",
@@ -6834,6 +6744,8 @@ For any queries, contact your course instructors or the department.`,
                               exam_type: null,
                               event_date: "",
                               is_active: true,
+                              attachment_url: null,
+                              attachment_type: null,
                             });
                           }}
                           className={`flex-shrink-0 p-2 rounded-xl transition-all duration-300 ${
@@ -7082,113 +6994,95 @@ For any queries, contact your course instructors or the department.`,
                           <div className="space-y-4">
                             {/* Exam-specific fields */}
                             {newNotice.category === "exam" && (
-                              <div>
-                                <label
-                                  className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
-                                >
-                                  Exam Type
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                  {[
-                                    {
-                                      value: "midterm",
-                                      label: "Mid-term",
-                                      icon: "📝",
-                                      defaultTitle:
-                                        "📅 Midterm Exam Routine - Section 2 (Feb 2026)",
-                                      defaultContent: `<h3>Exam Routine</h3>
-<p style="margin-bottom: 15px; line-height: 1.8;">
-Department: CSE<br>
-Intake: 51<br>
-Section: 2
-</p>
-
-<table style="width:100%; border-collapse: collapse; text-align:left; font-size: 13px;">
-  <thead>
-    <tr style="background:#1f4f82; color:white; font-weight: 600;">
-      <th style="padding:10px; border:1px solid #999; width:20%;">Date</th>
-      <th style="padding:10px; border:1px solid #999; width:30%;">Subject</th>
-      <th style="padding:10px; border:1px solid #999; width:30%;">Time</th>
-      <th style="padding:10px; border:1px solid #999; width:20%;">Room No</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding:10px; border:1px solid #ccc;">18-02-2026</td>
-      <td style="padding:10px; border:1px solid #ccc;">Computer Graphics</td>
-      <td style="padding:10px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/319</td>
-    </tr>
-    <tr>
-      <td style="padding:10px; border:1px solid #ccc;">20-02-2026</td>
-      <td style="padding:10px; border:1px solid #ccc;">IoT</td>
-      <td style="padding:10px; border:1px solid #ccc;">9:15 – 10:45 AM</td>
-      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/706</td>
-    </tr>
-    <tr>
-      <td style="padding:10px; border:1px solid #ccc;">23-02-2026</td>
-      <td style="padding:10px; border:1px solid #ccc;">Data Mining</td>
-      <td style="padding:10px; border:1px solid #ccc;">9:30 – 11:00 AM</td>
-      <td style="padding:10px; border:1px solid #ccc; font-weight: 600;">2/319</td>
-    </tr>
-  </tbody>
-</table>
-
-<p style="margin-top: 15px; line-height: 1.8;">
-<strong>Important Notes:</strong><br>
-• Arrive 15 minutes early for each exam<br>
-• Carry your student ID and necessary materials<br>
-For queries, contact course instructors or the department.
-</p>`,
-                                    },
-                                    {
-                                      value: "final",
-                                      label: "Final",
-                                      icon: "🎯",
-                                      defaultTitle:
-                                        "📅 Final Exam Routine - Section 5 (Dec 2025)",
-                                      defaultContent: `Final examination schedule for Section 5 (Computer Science & Engineering).
-
-📋 **Exam Information (Finals - Dec 04 to Dec 14, 2025):**
-• 04/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 319 • SHB • Room 2710
-• 07/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 327 • DMAa • Room 2710
-• 09/12/2025 (Tuesday)  — 09:45 AM to 11:45 AM • CSE 407 • NB   • Room 2710
-• 11/12/2025 (Thursday) — 09:45 AM to 11:45 AM • CSE 351 • SHD  • Room 2710
-• 14/12/2025 (Sunday)   — 09:45 AM to 11:45 AM • CSE 417 • TAB  • Room 2710
-
-• Arrive 15 minutes early for each exam
-• Carry your student ID and necessary materials
-
-For queries, contact course instructors or the department.`,
-                                    },
-                                  ].map((examType) => (
-                                    <button
-                                      key={examType.value}
-                                      onClick={() =>
-                                        setNewNotice({
-                                          ...newNotice,
-                                          exam_type: examType.value as any,
-                                          title: examType.defaultTitle,
-                                          content: examType.defaultContent,
-                                        })
-                                      }
-                                      className={`p-2 rounded-lg border text-sm transition-all ${
-                                        newNotice.exam_type === examType.value
-                                          ? isDarkMode
-                                            ? "border-orange-400 bg-orange-900/50 text-gray-100"
-                                            : "border-orange-500 bg-orange-50"
-                                          : isDarkMode
-                                            ? "border-gray-600 hover:border-gray-500 hover:bg-gray-700/50 text-gray-200"
-                                            : "border-gray-200 hover:border-gray-300"
-                                      }`}
-                                    >
-                                      <span className="mr-1">
-                                        {examType.icon}
-                                      </span>
-                                      {examType.label}
-                                    </button>
-                                  ))}
+                              <div className="space-y-3">
+                                <div>
+                                  <label
+                                    className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
+                                  >
+                                    Exam Type
+                                  </label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                      { value: "midterm", label: "Mid-term", icon: "📝" },
+                                      { value: "final", label: "Final", icon: "🎯" },
+                                    ].map((examType) => (
+                                      <button
+                                        key={examType.value}
+                                        onClick={() =>
+                                          setNewNotice({
+                                            ...newNotice,
+                                            exam_type: examType.value as any,
+                                          })
+                                        }
+                                        className={`p-2 rounded-lg border text-sm transition-all ${
+                                          newNotice.exam_type === examType.value
+                                            ? isDarkMode
+                                              ? "border-orange-400 bg-orange-900/50 text-gray-100"
+                                              : "border-orange-500 bg-orange-50"
+                                            : isDarkMode
+                                              ? "border-gray-600 hover:border-gray-500 hover:bg-gray-700/50 text-gray-200"
+                                              : "border-gray-200 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        <span className="mr-1">{examType.icon}</span>
+                                        {examType.label}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
+
+                                {/* Routine attachment (image or PDF) */}
+                                {newNotice.exam_type && (
+                                  <div>
+                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>
+                                      Routine Attachment <span className="opacity-60 font-normal">(image or PDF)</span>
+                                    </label>
+                                    {newNotice.attachment_url && !routineFile ? (
+                                      <div className={`flex items-center justify-between gap-2 p-2.5 rounded-lg border ${isDarkMode ? "border-gray-600 bg-gray-700/40" : "border-gray-200 bg-gray-50"}`}>
+                                        <a href={newNotice.attachment_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline truncate">
+                                          {newNotice.attachment_type === "pdf" ? "📄 Current routine (PDF)" : "🖼️ Current routine (image)"}
+                                        </a>
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewNotice({ ...newNotice, attachment_url: null, attachment_type: null })}
+                                          className="text-xs text-red-500 hover:text-red-600 font-medium flex-shrink-0"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    ) : routineFile ? (
+                                      <div className={`flex items-center justify-between gap-2 p-2.5 rounded-lg border ${isDarkMode ? "border-orange-500/50 bg-orange-900/20" : "border-orange-300 bg-orange-50"}`}>
+                                        <span className={`text-sm truncate ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>
+                                          {routineFile.type === "application/pdf" ? "📄" : "🖼️"} {routineFile.name}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setRoutineFile(null)}
+                                          className="text-xs text-red-500 hover:text-red-600 font-medium flex-shrink-0"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed cursor-pointer transition-all ${isDarkMode ? "border-gray-600 hover:border-orange-500 text-gray-300" : "border-gray-300 hover:border-orange-400 text-gray-600"}`}>
+                                        <Upload className="w-4 h-4" />
+                                        <span className="text-sm">Upload routine image or PDF</span>
+                                        <input
+                                          type="file"
+                                          accept="image/*,application/pdf"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            const f = e.target.files?.[0];
+                                            if (f) setRoutineFile(f);
+                                          }}
+                                        />
+                                      </label>
+                                    )}
+                                    <p className={`mt-1 text-[11px] ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
+                                      Students will see this attachment in the notice. You can also add details in the message below.
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             )}
 
@@ -7323,6 +7217,7 @@ For queries, contact course instructors or the department.`,
                         <button
                           onClick={() => {
                             setShowCreateNotice(false);
+                            setRoutineFile(null);
                             setNewNotice({
                               title: "",
                               content: "",
@@ -7332,6 +7227,8 @@ For queries, contact course instructors or the department.`,
                               exam_type: null,
                               event_date: "",
                               is_active: true,
+                              attachment_url: null,
+                              attachment_type: null,
                             });
                             setIsEditingNotice(false);
                             setEditingNoticeId(null);
@@ -7344,39 +7241,13 @@ For queries, contact course instructors or the department.`,
                         >
                           Cancel
                         </button>
-                        {!isEditingNotice && (
-                          <>
-                            <button
-                              onClick={handleInsertFinalExamNotice}
-                              disabled={loading}
-                              className={`px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
-                                isDarkMode
-                                  ? "border-orange-400 text-orange-300 hover:bg-orange-900/30"
-                                  : "border-orange-400 text-orange-700 hover:bg-orange-50"
-                              }`}
-                            >
-                              ➕ Insert Final Exam Routine
-                            </button>
-                            <button
-                              onClick={handleInsertMidtermExamNotice}
-                              disabled={loading}
-                              className={`px-4 py-2.5 border rounded-lg font-medium text-sm transition-colors ${
-                                isDarkMode
-                                  ? "border-yellow-400 text-yellow-300 hover:bg-yellow-900/30"
-                                  : "border-yellow-400 text-yellow-700 hover:bg-yellow-50"
-                              }`}
-                            >
-                              ➕ Insert Midterm Exam Routine
-                            </button>
-                          </>
-                        )}
                         <button
                           onClick={
                             isEditingNotice
                               ? handleUpdateNotice
                               : handleCreateNotice
                           }
-                          disabled={!newNotice.title || !newNotice.content}
+                          disabled={!newNotice.title || !newNotice.content || routineUploading}
                           className="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
                         >
                           {isEditingNotice ? (
@@ -7488,6 +7359,40 @@ For queries, contact course instructors or the department.`,
                     </div>
 
                     <div className="p-3 sm:p-4 overflow-y-auto flex-1 min-h-0">
+                      {/* Routine attachment (image or PDF) */}
+                      {selectedNotice.attachment_url && (
+                        <div className="mb-4">
+                          {selectedNotice.attachment_type === "pdf" ? (
+                            <a
+                              href={selectedNotice.attachment_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
+                                isDarkMode
+                                  ? "border-orange-500/40 bg-orange-900/20 hover:bg-orange-900/30 text-orange-200"
+                                  : "border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2 font-semibold text-sm">
+                                <FileText className="w-5 h-5" /> View Exam Routine (PDF)
+                              </span>
+                              <Download className="w-4 h-4 flex-shrink-0" />
+                            </a>
+                          ) : (
+                            <a href={selectedNotice.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img
+                                src={selectedNotice.attachment_url}
+                                alt="Exam routine"
+                                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:opacity-95 transition-opacity"
+                                loading="lazy"
+                              />
+                              <p className={`mt-1 text-[11px] text-center ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Tap the image to open full size
+                              </p>
+                            </a>
+                          )}
+                        </div>
+                      )}
                       <div className="prose prose-sm sm:prose prose-gray max-w-none">
                         {(() => {
                           const content = selectedNotice.content || "";
@@ -8601,6 +8506,17 @@ For queries, contact course instructors or the department.`,
           setShowWC26Intro(false);
           localStorage.setItem("wc26_intro_dismissed", "1");
         }}
+      />
+
+      {/* Feedback Modal — open to anyone (guests + logged-in users) */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        isDarkMode={isDarkMode}
+        currentUserId={authSession?.user?.id ?? null}
+        currentUserName={isLoggedIn ? userProfile.name : ""}
+        currentUserEmail={isLoggedIn ? (userProfile.notificationEmail || userProfile.bubtEmail) : ""}
+        onResult={(type, message) => showMajorAccessNotification(type, message)}
       />
 
       {/* Sign In Modal */}

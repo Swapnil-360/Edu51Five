@@ -45,9 +45,29 @@ export interface Notice {
   category: 'random' | 'exam' | 'event' | 'information' | 'academic' | 'announcement';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   exam_type?: 'midterm' | 'final' | null;
-  event_date?: string;
+  event_date?: string | null;
   is_active: boolean;
   created_at: string;
+  // Routine attachment (image or PDF) — used for exam notices
+  attachment_url?: string | null;
+  attachment_type?: 'image' | 'pdf' | null;
+}
+
+export type FeedbackCategory = 'bug' | 'improvement' | 'feature' | 'custom';
+export type FeedbackStatus = 'new' | 'reviewed' | 'closed';
+
+export interface Feedback {
+  id: string;
+  user_id: string | null;
+  name: string | null;
+  email: string | null;
+  category: FeedbackCategory;
+  subject: string | null;
+  message: string;
+  status: FeedbackStatus;
+  page_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SearchResult {

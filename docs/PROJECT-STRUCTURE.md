@@ -32,6 +32,46 @@ Feature → file → approximate line numbers.
 
 ---
 
+## Admin Access (DB-based)
+
+Admin is gated by `profiles.is_admin` (no public password page). `isAdmin` is derived from the signed-in user's profile; the admin view is route-guarded.
+
+| What | File | Lines |
+|------|------|-------|
+| `isAdmin` route guard (redirects non-admins off `/admin`) | `src/App.tsx` | ~233 |
+| Authoritative `isAdmin` resolver (session-bound `is_app_admin()` RPC) | `src/App.tsx` | ~356 |
+| Admin entry: profile-page button only (`onOpenAdmin`) | `src/components/Profile/ProfilePage.tsx` | — |
+| Exit-admin button (header) | `src/App.tsx` (`handleExitAdmin`) | — |
+| Admin Users promote/demote section | `src/components/Admin/AdminDashboard.tsx` | — |
+| Admin users load + toggle handlers | `src/App.tsx` (`loadAdminUsers`, `handleToggleUserAdmin`) | — |
+| **SQL:** `is_app_admin()`, `set_user_admin()`, `admin_list_users()` | migration `admin_auth` | — |
+
+---
+
+## Admin Stats (real-time)
+
+| What | File | Lines |
+|------|------|-------|
+| Stat cards (Storage gauge, Users, Teams, Active) | `src/components/Admin/AdminDashboard.tsx` | ~250 |
+| Stats fetch (`get_admin_stats` RPC) | `src/App.tsx` (`loadAdminStats`, admin-open effect) | — |
+| **SQL:** `get_admin_stats()` (storage usage + counts) | migration `admin_stats` | — |
+
+---
+
+## User Feedback
+
+| What | File | Lines |
+|------|------|-------|
+| Feedback modal (categories, subject, message) | `src/components/FeedbackModal.tsx` | — |
+| Footer "Send Feedback" / "Report a Bug" links | `src/App.tsx` | ~4760 |
+| Feedback API (submit / list / update status) | `src/lib/api/feedbackApi.ts` | — |
+| Feedback types | `src/types/index.ts` | — |
+| Admin Feedback Inbox (filters, status control) | `src/components/Admin/AdminDashboard.tsx` | — |
+| Feedback load + status handlers | `src/App.tsx` (`loadFeedback`, `handleUpdateFeedbackStatus`) | — |
+| **DB:** `feedback` table — public insert, admin-only read/update (RLS via `is_app_admin()`) | migration `feedback` | — |
+
+---
+
 ## Profiles (Social)
 
 | What | File | Lines |
@@ -117,6 +157,22 @@ Feature → file → approximate line numbers.
 
 ---
 
+## Notices (Smart Notice)
+
+| What | File | Lines |
+|------|------|-------|
+| Create/Edit notice form (category, priority, exam type, routine upload) | `src/App.tsx` | ~7040 |
+| Notice create/update handlers (upload + persist attachment) | `src/App.tsx` (`handleCreateNotice`, `handleUpdateNotice`) | ~2600 |
+| Routine attachment upload helper (image or PDF → `exam-routines`) | `src/lib/storage.ts` (`uploadRoutineAttachment`) | — |
+| User notice panel — list row + attachment badge | `src/App.tsx` | ~3915 |
+| Notice detail modal — image inline / PDF "View Routine" | `src/App.tsx` | ~7399 |
+| Notice type (incl. `attachment_url`, `attachment_type`) | `src/types/index.ts` | — |
+| **DB:** `notices.attachment_url` / `attachment_type`; admin-only `exam-routines` bucket writes | migration `notice_attachment` | — |
+
+Note: hardcoded midterm/final routine templates and prebuilt insert functions were removed — admins now upload the routine as an image/PDF.
+
+---
+
 ## Email & Push Notifications
 
 | What | File | Lines |
@@ -142,6 +198,12 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `20260210_storage_buckets.sql` | avatars + team-assets buckets |
 | `20260616_wc26.sql` | wc26_matches table + wc26_team on profiles |
 | `wc26_matches_nullable_teams` | Allow NULL home/away for knockout TBD rounds |
+| `admin_auth` | `is_app_admin()`, `set_user_admin()`, `admin_list_users()`; promote owner |
+| `admin_stats` | `get_admin_stats()` — storage usage + user/team counts (admin-only) |
+| `feedback` | `feedback` table — public insert, admin-only read/update via RLS |
+| `notice_attachment` | `notices.attachment_url`/`attachment_type` + admin-only `exam-routines` writes |
+| `admin_functions_least_privilege` | Revoke anon/public execute on admin RPCs |
+| `notices_admin_write` | Notices: public read, admin-only insert/update/delete (`is_app_admin()`) |
 
 ---
 

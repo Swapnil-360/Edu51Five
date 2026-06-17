@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp, HardDrive, UsersRound, ShieldCheck } from 'lucide-react';
+import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp, HardDrive, UsersRound, ShieldCheck, MessageSquare, RefreshCw, Bug, Lightbulb, Sparkles } from 'lucide-react';
 import { DriveManager } from './DriveManager';
 
 interface Notice {
@@ -28,6 +28,18 @@ interface EmergencyLink {
 }
 
 interface BucketUsage { bucket: string; bytes: number; files: number; }
+interface AdminUser { id: string; name: string | null; bubt_email: string | null; is_admin: boolean; }
+interface FeedbackItem {
+  id: string;
+  name: string | null;
+  email: string | null;
+  category: 'bug' | 'improvement' | 'feature' | 'custom';
+  subject: string | null;
+  message: string;
+  status: 'new' | 'reviewed' | 'closed';
+  page_url: string | null;
+  created_at: string;
+}
 
 interface AdminDashboardProps {
   isDarkMode: boolean;
@@ -41,6 +53,16 @@ interface AdminDashboardProps {
   storageByBucket?: BucketUsage[];
   usersCount?: number;
   teamsCount?: number;
+  // Admin Users management
+  adminUsers?: AdminUser[];
+  adminUsersLoading?: boolean;
+  currentUserId?: string | null;
+  onToggleUserAdmin?: (userId: string, makeAdmin: boolean) => void;
+  // Feedback inbox
+  feedbackItems?: FeedbackItem[];
+  feedbackLoading?: boolean;
+  onUpdateFeedbackStatus?: (id: string, status: 'new' | 'reviewed' | 'closed') => void;
+  onRefreshFeedback?: () => void;
   notices?: Notice[];
   onEditNotice: () => void;
   onCreateNotice: () => void;
@@ -61,6 +83,24 @@ function formatBytes(bytes: number): string {
   return `${(mb / 1024).toFixed(2)} GB`;
 }
 
+const FEEDBACK_META: Record<string, { label: string; icon: typeof Bug; cls: string }> = {
+  bug: { label: 'Bug', icon: Bug, cls: 'bg-red-500/15 text-red-500' },
+  improvement: { label: 'Improve', icon: Lightbulb, cls: 'bg-amber-500/15 text-amber-500' },
+  feature: { label: 'Feature', icon: Sparkles, cls: 'bg-violet-500/15 text-violet-500' },
+  custom: { label: 'Other', icon: MessageSquare, cls: 'bg-blue-500/15 text-blue-500' },
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isDarkMode,
   onlineUsers = 0,
@@ -68,6 +108,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   storageByBucket = [],
   usersCount = 0,
   teamsCount = 0,
+  adminUsers = [],
+  adminUsersLoading = false,
+  currentUserId = null,
+  onToggleUserAdmin,
+  feedbackItems = [],
+  feedbackLoading = false,
+  onUpdateFeedbackStatus,
+  onRefreshFeedback,
   notices = [],
   onEditNotice,
   onCreateNotice,
@@ -84,6 +132,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Live email preview toggle for the broadcast composer
   const [showEmailPreview, setShowEmailPreview] = useState(true);
+  // Feedback inbox filter
+  const [feedbackFilter, setFeedbackFilter] = useState<'all' | 'new' | 'reviewed' | 'closed'>('all');
 
   // Load emergency alerts and links from localStorage
   const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([]);
@@ -309,6 +359,172 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Admin Users Management Section */}
+        <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-amber-900/30 to-slate-800/40 backdrop-blur-xl border border-amber-500/25' : 'bg-gradient-to-br from-amber-50/80 to-white/60 backdrop-blur-xl border border-amber-200/60'}`}>
+          <div className="relative z-10 p-4 sm:p-5 lg:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-200 text-amber-600'}`}>
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className={`text-base sm:text-lg font-bold ${isDarkMode ? 'text-amber-200' : 'text-amber-900'}`}>
+                  Admin Users
+                </h2>
+                <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-amber-300/70' : 'text-amber-700/70'}`}>
+                  Grant or revoke admin access. Admins can manage notices, stats and feedback.
+                </p>
+              </div>
+            </div>
+
+            {adminUsersLoading ? (
+              <p className={`text-sm py-4 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Loading users…</p>
+            ) : adminUsers.length === 0 ? (
+              <p className={`text-sm py-4 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No users found.</p>
+            ) : (
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {adminUsers.map((u) => {
+                  const isSelf = u.id === currentUserId;
+                  return (
+                    <div
+                      key={u.id}
+                      className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white/70 border-slate-200'}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-sm font-semibold truncate ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {u.name || 'Unnamed'}
+                          </p>
+                          {u.is_admin && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white">ADMIN</span>
+                          )}
+                          {isSelf && (
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>YOU</span>
+                          )}
+                        </div>
+                        <p className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{u.bubt_email || '—'}</p>
+                      </div>
+                      <button
+                        onClick={() => onToggleUserAdmin?.(u.id, !u.is_admin)}
+                        disabled={isSelf}
+                        title={isSelf ? "You can't change your own admin status" : u.is_admin ? 'Remove admin access' : 'Promote to admin'}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                          u.is_admin
+                            ? isDarkMode ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : isDarkMode ? 'bg-green-500/20 text-green-300 hover:bg-green-500/30' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        }`}
+                      >
+                        {u.is_admin ? 'Revoke' : 'Make Admin'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Feedback Inbox Section */}
+        {(() => {
+          const newCount = feedbackItems.filter((f) => f.status === 'new').length;
+          const visible = feedbackFilter === 'all' ? feedbackItems : feedbackItems.filter((f) => f.status === feedbackFilter);
+          return (
+            <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-slate-700/40 to-slate-800/40 backdrop-blur-xl border border-blue-500/20' : 'bg-gradient-to-br from-blue-50/60 to-white/60 backdrop-blur-xl border border-blue-200/50'}`}>
+              <div className="relative z-10 p-4 sm:p-5 lg:p-6">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-200 text-blue-600'}`}>
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className={`text-base sm:text-lg font-bold flex items-center gap-2 ${isDarkMode ? 'text-blue-200' : 'text-blue-900'}`}>
+                        Feedback Inbox
+                        {newCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">{newCount} new</span>
+                        )}
+                      </h2>
+                      <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-blue-300/70' : 'text-blue-700/70'}`}>
+                        Bug reports, ideas and requests from users
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onRefreshFeedback?.()}
+                    title="Refresh"
+                    className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-500'}`}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${feedbackLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Filter tabs */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {(['all', 'new', 'reviewed', 'closed'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFeedbackFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                        feedbackFilter === f
+                          ? 'bg-blue-600 text-white'
+                          : isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {f}{f === 'all' ? ` (${feedbackItems.length})` : ` (${feedbackItems.filter((x) => x.status === f).length})`}
+                    </button>
+                  ))}
+                </div>
+
+                {feedbackLoading ? (
+                  <p className={`text-sm py-6 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Loading feedback…</p>
+                ) : visible.length === 0 ? (
+                  <p className={`text-sm py-6 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>No feedback in this view.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+                    {visible.map((f) => {
+                      const meta = FEEDBACK_META[f.category] || FEEDBACK_META.custom;
+                      const Icon = meta.icon;
+                      return (
+                        <div key={f.id} className={`p-3 rounded-lg border ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white/80 border-slate-200'} ${f.status === 'new' ? 'ring-1 ring-blue-400/40' : ''}`}>
+                          <div className="flex items-start justify-between gap-3 mb-1.5">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${meta.cls}`}>
+                                <Icon className="w-3 h-3" /> {meta.label}
+                              </span>
+                              {f.subject && (
+                                <span className={`text-sm font-semibold truncate ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{f.subject}</span>
+                              )}
+                              {f.status !== 'new' && (
+                                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold capitalize ${f.status === 'closed' ? (isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500') : (isDarkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700')}`}>{f.status}</span>
+                              )}
+                            </div>
+                            <span className={`text-[10px] flex-shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{timeAgo(f.created_at)}</span>
+                          </div>
+                          <p className={`text-sm whitespace-pre-wrap break-words ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{f.message}</p>
+                          <div className="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                            <p className={`text-[11px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {f.name || 'Anonymous'}{f.email ? ` · ${f.email}` : ''}{f.page_url ? ` · ${f.page_url}` : ''}
+                            </p>
+                            <div className="flex gap-1.5">
+                              {f.status !== 'reviewed' && (
+                                <button onClick={() => onUpdateFeedbackStatus?.(f.id, 'reviewed')} className={`px-2 py-1 rounded text-[11px] font-semibold ${isDarkMode ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>Mark Reviewed</button>
+                              )}
+                              {f.status !== 'closed' && (
+                                <button onClick={() => onUpdateFeedbackStatus?.(f.id, 'closed')} className={`px-2 py-1 rounded text-[11px] font-semibold ${isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}>Close</button>
+                              )}
+                              {f.status !== 'new' && (
+                                <button onClick={() => onUpdateFeedbackStatus?.(f.id, 'new')} className={`px-2 py-1 rounded text-[11px] font-semibold ${isDarkMode ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Reopen</button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Broadcast Push Notification Section */}
         <div className={`group relative overflow-hidden rounded-xl lg:rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-indigo-900/50 to-purple-900/50 backdrop-blur-xl border border-indigo-500/30 hover:border-indigo-400/50 hover:from-indigo-900/60 hover:to-purple-900/60 hover:shadow-lg hover:shadow-indigo-500/20' : 'bg-gradient-to-br from-indigo-50/80 to-purple-50/80 backdrop-blur-xl border border-indigo-200/50 hover:border-indigo-300/80 hover:shadow-lg hover:shadow-indigo-200/50'}`}>
