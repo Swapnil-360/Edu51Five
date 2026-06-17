@@ -1,46 +1,91 @@
-# 🎓 Edu51Five
+# Edu51Portal
 
-![Next.js](https://img.shields.io/badge/Next.js-13-black?style=flat&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)
-![Supabase](https://img.shields.io/badge/Supabase-DB-green?style=flat&logo=supabase)
-![Vercel](https://img.shields.io/badge/Hosted%20on-Vercel-black?style=flat&logo=vercel)
+Academic portal for **BUBT Intake 51 – Section 5** students. Built as a fast, fullstack SPA with realtime features, social profiles, team collaboration, and a live FIFA World Cup 2026 tracking event.
 
-**Edu51Five** is a modern academic portal built for  
-**BUBT Intake-51 – Section-5** students.  
-It centralizes courses, files, semester tracking, and admin tools in one responsive web app.
+**Live:** [edu51portal.live](https://edu51portal.live) · [edu51five.vercel.app](https://edu51five.vercel.app)
 
 ---
 
-## ✨ Key Features
-- **Student Dashboard** – View courses, intakes, and section details.
-- **Admin Dashboard** – Manage courses, upload and manage study materials.
-- **Semester Tracker** – Real-time progress bar, timeline, and countdown to the next exam.
-- **Smart File Delivery**  
-  - Upload directly via the admin panel (immediate availability).  
-  - Or embed external drive links (for large storage & quick preview).
-- **PDF Viewer** – Modal preview with fullscreen & mobile support.
-- **Search & Filter** – Quickly find any course or file.
-- **Responsive UI** – Smooth on desktop, tablet, and mobile.
-- **Animated UI Elements** – Progress bars, milestone indicators, custom scrollbars.
+## Tech Stack
+
+| Layer | Choice |
+|-------|--------|
+| Frontend | React 18 + TypeScript + Vite |
+| Styling | Tailwind CSS 3.4 + daisyUI 5.5 |
+| Backend / DB | Supabase (PostgreSQL + RLS + Edge Functions) |
+| Auth | Supabase Auth (email/password + magic link) |
+| Storage | Supabase Storage (avatars, team assets) |
+| Hosting | Vercel |
+| Push Notifications | Web Push API + VAPID + service worker |
 
 ---
 
-## 🖼️ Screenshots
+## Features
+
+### Core Academic
+- **Student Dashboard** — intake and section view, course browser, file delivery (upload or Drive links)
+- **PDF Viewer** — modal preview with fullscreen and mobile support
+- **Semester Tracker** — real-time progress bar, milestone timeline, countdown to next exam
+- **Custom Routine** — personal schedule builder with export
+- **Admin Dashboard** — course manager, file upload, Drive integration, user management
+
+### Social & Collaboration
+- **LinkedIn-style Profiles** — avatar, cover photo, headline, education, experience, skills
+- **Connections** — send / accept connection requests, discovery feed
+- **Team Building** — create and discover teams (2–7 members), roles, invitations, join requests, announcements
+- **Alumni Hub** — BUBT alumni directory (admin-verified)
+
+### World Cup 2026 (Live Event)
+- **Team Picker** — choose one of 48 WC2026 teams to support
+- **Live Leaderboard** — earn points (win = 3, draw = 1, +1 per goal) ranked against classmates
+- **Match Center** — all 104 matches with live scores, auto-refresh every 60 s during live play
+- **Intro Modal** — shown once on first login to guide new users into the event
+
+### Platform
+- **Push Notifications** — service worker + VAPID, opt-in per user
+- **Dark / Light Mode** — system-aware toggle persisted per user
+- **Responsive** — mobile-first, tested on Chrome / Safari / Firefox
+
+---
+
+## Project Structure
+
+See [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) for a full feature → file → line-number map.
+
+---
+
+## Local Setup
+
+```bash
+git clone https://github.com/Swapnil-360/Edu51Five
+cd Edu51Five
+npm install
+cp .env.example .env          # fill in Supabase keys
+npm run dev
+```
+
+Environment variables required (see `.env.example`):
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_VAPID_PUBLIC_KEY=
+```
+
+---
+
+## Database Migrations
+
+All schema changes live in `supabase/migrations/`. Apply them in order via the Supabase CLI or MCP.
+
+```bash
+supabase db push   # applies pending migrations to remote
+```
+
+---
+
+## Screenshots
 
 | Dashboard | Semester Tracker |
 |-----------|------------------|
 | ![Dashboard](docs/dashboard.png) | ![Tracker](docs/tracker.png) |
-
----
-
-## 🛠️ Tech Stack
-- **Framework**: Next.js 13 + React
-- **Language**: TypeScript
-- **Database & Auth**: Supabase
-- **UI**: Tailwind CSS
-- **Hosting**: Vercel
-
----
-
-## 🚀 Getting Started
-- **Link**: https://edu51five.vercel.app/
