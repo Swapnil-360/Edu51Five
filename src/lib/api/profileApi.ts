@@ -91,9 +91,10 @@ export async function listEducations(userId: string): Promise<Education[]> {
 export async function upsertEducation(
   edu: Partial<Education> & { user_id: string; institution: string },
 ): Promise<{ error: string | null }> {
-  const { error } = edu.id
-    ? await supabase.from("educations").update(edu).eq("id", edu.id)
-    : await supabase.from("educations").insert([edu]);
+  const { id, ...rest } = edu;
+  const { error } = id
+    ? await supabase.from("educations").update(edu).eq("id", id)
+    : await supabase.from("educations").insert([rest]);
   return { error: error?.message ?? null };
 }
 
@@ -117,9 +118,10 @@ export async function listExperiences(userId: string): Promise<Experience[]> {
 export async function upsertExperience(
   exp: Partial<Experience> & { user_id: string; title: string; company: string; start_date: string },
 ): Promise<{ error: string | null }> {
-  const { error } = exp.id
-    ? await supabase.from("experiences").update(exp).eq("id", exp.id)
-    : await supabase.from("experiences").insert([exp]);
+  const { id, ...rest } = exp;
+  const { error } = id
+    ? await supabase.from("experiences").update(exp).eq("id", id)
+    : await supabase.from("experiences").insert([rest]);
   return { error: error?.message ?? null };
 }
 
