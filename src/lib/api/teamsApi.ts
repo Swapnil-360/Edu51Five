@@ -9,6 +9,7 @@ import {
   TeamCategory,
   PROFILE_CARD_COLS,
   TeamTask,
+  TaskPriority,
 } from "../../types/social";
 import { normalizeProfile } from "./profileApi";
 
@@ -364,11 +365,32 @@ export async function listTeamTasks(teamId: string): Promise<TeamTask[]> {
   })) as unknown as TeamTask[];
 }
 
+export async function notifyTaskAssignment(
+  assigneeUserId: string,
+  taskTitle: string,
+  teamId: string,
+  assignerName: string,
+): Promise<void> {
+  try {
+    await supabase.functions.invoke("send-push-notification", {
+      body: {
+        title: "You've been assigned a task",
+        body: `${assignerName} assigned "${taskTitle}" to you`,
+        url: `/teams/${teamId}`,
+        targetUserId: assigneeUserId,
+      },
+    });
+  } catch {
+    // Non-fatal — notification failure should never block task creation/update
+  }
+}
+
 export async function createTeamTask(payload: {
   team_id: string;
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
+  priority?: TaskPriority;
   assigned_to?: string | null;
   created_by: string;
   due_date?: string | null;

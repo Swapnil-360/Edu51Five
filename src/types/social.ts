@@ -183,12 +183,21 @@ export interface TeamMessage {
   reactions?: { emoji: string; user_ids: string[] }[];
 }
 
+export type TaskPriority = "low" | "medium" | "high";
+
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+
 export interface TeamTask {
   id: string;
   team_id: string;
   title: string;
   description: string | null;
   status: "todo" | "in_progress" | "done";
+  priority: TaskPriority;
   assigned_to: string | null;
   created_by: string;
   due_date: string | null;

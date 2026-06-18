@@ -131,6 +131,27 @@ Real-time chat inside each team. Members-only. Non-members see a join prompt.
 
 ---
 
+## Team Tasks Board (Kanban, Phase 2)
+
+Collaborative Kanban board per team — third-party member contribution, with realtime sync added.
+
+| What | File |
+|------|------|
+| Board UI (3 columns, drag-and-drop, filters, add/edit modals) | `src/components/Teams/TeamTasksBoard.tsx` |
+| Tasks API (`listTeamTasks`, `createTeamTask`, `updateTeamTask`, `deleteTeamTask`) | `src/lib/api/teamsApi.ts` |
+| `TeamTask` type | `src/types/social.ts` |
+| Tab integration ("Tasks" tab, member-gated) | `src/components/Teams/TeamPage.tsx` |
+| **DB:** `team_tasks` table + RLS | migration `20260618120000_team_tasks` |
+
+**Columns:** `todo` / `in_progress` / `done`. Each task has title, description, assignee, priority, due date, creator.  
+**Priority:** `low` / `medium` (default) / `high` — colored badge on every card; filterable in the header.  
+**Move restriction (drag/status):** only the **assignee** or **owner/admin** can drag an assigned task to another column. Unassigned tasks are moveable by any member. Lock icon shown on cards the current user cannot drag. Status dropdown in edit modal is disabled for non-authorized users.  
+**Assignment notification:** when owner/admin assigns (or re-assigns) a task, the new assignee receives a push notification via the `send-push-notification` edge function (`targetUserId` parameter — single-user targeting, not broadcast).  
+**RLS:** any member can read/create/edit tasks; only the **task creator or team owner/admin** can delete (`delete_tasks` policy via `team_role()`).  
+**Realtime:** Supabase channel `team-tasks-{teamId}` subscribes to `*` on `team_tasks` (filtered by `team_id`) and silently reloads the board, so drag/move/edit/delete by any member appears live for everyone.
+
+---
+
 ## World Cup 2026 (Live Event)
 
 | What | File | Lines |
@@ -228,6 +249,10 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `team_chat_realtime` | Add chat tables to `supabase_realtime` publication |
 | `reactions_one_per_user` | Reaction PK → `(message_id, user_id)` — Messenger-style single reaction |
 | `owner_protection` | `profiles.is_owner`; `set_user_admin` refuses to demote owner |
+| `chat_delete_owner_only` | Chat delete restricted to author or team owner |
+| `20260618120000_team_tasks` | `team_tasks` table + RLS (Kanban board) |
+| `team_tasks_realtime` | Add `team_tasks` to `supabase_realtime` publication |
+| `team_tasks_priority` | Add `priority` column (`low`/`medium`/`high`) to `team_tasks` |
 
 ---
 

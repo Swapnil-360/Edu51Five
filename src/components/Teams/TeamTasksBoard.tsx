@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -10,18 +10,23 @@ import {
   CheckCircle,
   Loader2,
   AlertCircle,
-  UserMinus,
-  CheckCircle2,
   Shield,
-  GripVertical
+  LayoutGrid,
+  ListChecks,
+  Lock,
+  ArrowUp,
+  Minus,
+  ArrowDown,
 } from "lucide-react";
-import { TeamMember, TeamTask } from "../../types/social";
+import { TeamMember, TeamTask, TaskPriority } from "../../types/social";
 import {
   listTeamTasks,
   createTeamTask,
   updateTeamTask,
-  deleteTeamTask
+  deleteTeamTask,
+  notifyTaskAssignment,
 } from "../../lib/api/teamsApi";
+import { supabase } from "../../lib/supabase";
 
 interface Props {
   teamId: string;
@@ -31,12 +36,34 @@ interface Props {
   canManage: boolean; // owner or admin
 }
 
+// Priority config
+const PRIORITY_CONFIG: Record<TaskPriority, { label: string; icon: React.ReactNode; badge: string; dot: string }> = {
+  high: {
+    label: "High",
+    icon: <ArrowUp className="w-3 h-3" />,
+    badge: "bg-red-500/10 text-red-500",
+    dot: "bg-red-500",
+  },
+  medium: {
+    label: "Medium",
+    icon: <Minus className="w-3 h-3" />,
+    badge: "bg-amber-500/10 text-amber-500",
+    dot: "bg-amber-400",
+  },
+  low: {
+    label: "Low",
+    icon: <ArrowDown className="w-3 h-3" />,
+    badge: "bg-slate-500/10 text-slate-400",
+    dot: "bg-slate-400",
+  },
+};
+
 export default function TeamTasksBoard({
   teamId,
   currentUserId,
   members,
   isDarkMode,
-  canManage
+  canManage,
 }: Props) {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,13 +72,14 @@ export default function TeamTasksBoard({
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
   // Drag states
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<Record<string, boolean>>({
     todo: false,
     in_progress: false,
-    done: false
+    done: false,
   });
 
   // Modals
@@ -64,8 +92,15 @@ export default function TeamTasksBoard({
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Name lookup for notifications
+  const myName = useMemo(() => {
+    const me = members.find((m) => m.user_id === currentUserId);
+    return me?.profile?.name ?? "A team member";
+  }, [members, currentUserId]);
 
   // Load tasks
   const loadTasks = async () => {
@@ -81,46 +116,63 @@ export default function TeamTasksBoard({
     }
   };
 
+  const silentReload = async () => {
+    try {
+      const data = await listTeamTasks(teamId);
+      setTasks(data);
+    } catch {
+      /* keep current state on transient errors */
+    }
+  };
+
   useEffect(() => {
     loadTasks();
+    const channel = supabase
+      .channel(`team-tasks-${teamId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "team_tasks", filter: `team_id=eq.${teamId}` },
+        () => silentReload(),
+      )
+      .subscribe();
+    return () => { channel.unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId]);
+
+  // Who can move this task?
+  const canMoveTask = (task: TeamTask): boolean =>
+    !task.assigned_to || task.assigned_to === currentUserId || canManage;
 
   // Handle Create Task
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      setFormError("Task title is required.");
-      return;
-    }
-    if (title.length > 150) {
-      setFormError("Title must be under 150 characters.");
-      return;
-    }
+    if (!title.trim()) { setFormError("Task title is required."); return; }
+    if (title.length > 150) { setFormError("Title must be under 150 characters."); return; }
 
     setBusy(true);
     setFormError(null);
     try {
       const finalAssignee = canManage ? (assignedTo || null) : null;
-
       const { task, error: apiErr } = await createTeamTask({
         team_id: teamId,
         title: title.trim(),
         description: description.trim() || undefined,
         status,
+        priority,
         assigned_to: finalAssignee,
         created_by: currentUserId,
-        due_date: dueDate || null
+        due_date: dueDate || null,
       });
 
       if (apiErr) {
         setFormError(apiErr);
       } else {
-        setTitle("");
-        setDescription("");
-        setAssignedTo("");
-        setDueDate("");
-        setStatus("todo");
+        // Notify assignee if it's someone else
+        if (finalAssignee && finalAssignee !== currentUserId && task) {
+          notifyTaskAssignment(finalAssignee, task.title, teamId, myName);
+        }
+        setTitle(""); setDescription(""); setAssignedTo(""); setDueDate("");
+        setStatus("todo"); setPriority("medium");
         setShowAddModal(false);
         await loadTasks();
       }
@@ -135,27 +187,30 @@ export default function TeamTasksBoard({
   const handleEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showEditModal) return;
-    if (!title.trim()) {
-      setFormError("Task title is required.");
-      return;
-    }
+    if (!title.trim()) { setFormError("Task title is required."); return; }
 
     setBusy(true);
     setFormError(null);
     try {
       const finalAssignee = canManage ? (assignedTo || null) : showEditModal.assigned_to;
+      const assigneeChanged = canManage && finalAssignee !== showEditModal.assigned_to;
 
       const { error: apiErr } = await updateTeamTask(showEditModal.id, {
         title: title.trim(),
         description: description.trim() || null,
         status,
+        priority,
         assigned_to: finalAssignee,
-        due_date: dueDate || null
+        due_date: dueDate || null,
       });
 
       if (apiErr) {
         setFormError(apiErr);
       } else {
+        // Notify new assignee
+        if (assigneeChanged && finalAssignee && finalAssignee !== currentUserId) {
+          notifyTaskAssignment(finalAssignee, title.trim(), teamId, myName);
+        }
         setShowEditModal(null);
         await loadTasks();
       }
@@ -166,26 +221,19 @@ export default function TeamTasksBoard({
     }
   };
 
-  // Update task status from Drop action
+  // Update task status from drag-drop — guarded by canMoveTask
   const handleUpdateStatus = async (taskId: string, newStatus: "todo" | "in_progress" | "done") => {
-    // Reset drag tracking state immediately to prevent visual placeholders from getting stuck
     setDraggingTaskId(null);
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.status === newStatus) return;
 
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    if (task.status === newStatus) return;
+    // Guard: only assignee or owner/admin can move assigned tasks
+    if (!canMoveTask(task)) return;
 
-    // Optimistically update local state for drag smoothness
-    setTasks(prev =>
-      prev.map(t => (t.id === taskId ? { ...t, status: newStatus } : t))
-    );
-
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
     try {
       const { error: apiErr } = await updateTeamTask(taskId, { status: newStatus });
-      if (apiErr) {
-        alert("Failed to move task: " + apiErr);
-        await loadTasks();
-      }
+      if (apiErr) { alert("Failed to move task: " + apiErr); await loadTasks(); }
     } catch (err: any) {
       alert("Error moving task: " + err.message);
       await loadTasks();
@@ -197,57 +245,52 @@ export default function TeamTasksBoard({
     if (!confirm("Are you sure you want to delete this task?")) return;
     try {
       const { error: apiErr } = await deleteTeamTask(taskId);
-      if (apiErr) {
-        alert("Failed to delete task: " + apiErr);
-      } else {
-        setTasks(prev => prev.filter(t => t.id !== taskId));
-      }
+      if (apiErr) alert("Failed to delete task: " + apiErr);
+      else setTasks((prev) => prev.filter((t) => t.id !== taskId));
     } catch (err: any) {
       alert("Error deleting task: " + err.message);
     }
   };
 
-  // Open edit modal and populate state
   const openEdit = (task: TeamTask) => {
     setTitle(task.title);
     setDescription(task.description ?? "");
     setAssignedTo(task.assigned_to ?? "");
     setDueDate(task.due_date ? new Date(task.due_date).toISOString().split("T")[0] : "");
     setStatus(task.status);
+    setPriority(task.priority ?? "medium");
     setFormError(null);
     setShowEditModal(task);
   };
 
-  // Open create modal and reset state
   const openCreate = (initialStatus: "todo" | "in_progress" | "done" = "todo") => {
-    setTitle("");
-    setDescription("");
-    setAssignedTo("");
-    setDueDate("");
-    setStatus(initialStatus);
-    setFormError(null);
+    setTitle(""); setDescription(""); setAssignedTo(""); setDueDate("");
+    setStatus(initialStatus); setPriority("medium"); setFormError(null);
     setShowAddModal(true);
   };
 
-  // Filter tasks
-  const filteredTasks = tasks.filter(task => {
+  // Filtered + split tasks
+  const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.description?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-
+      (task.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
     const matchesAssignee =
       assigneeFilter === "all" ||
       (assigneeFilter === "unassigned" && !task.assigned_to) ||
       task.assigned_to === assigneeFilter;
-
-    return matchesSearch && matchesAssignee;
+    const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
+    return matchesSearch && matchesAssignee && matchesPriority;
   });
 
-  const todoTasks = filteredTasks.filter(t => t.status === "todo");
-  const inProgressTasks = filteredTasks.filter(t => t.status === "in_progress");
-  const doneTasks = filteredTasks.filter(t => t.status === "done");
+  const todoTasks = filteredTasks.filter((t) => t.status === "todo");
+  const inProgressTasks = filteredTasks.filter((t) => t.status === "in_progress");
+  const doneTasks = filteredTasks.filter((t) => t.status === "done");
 
-  // Tailwind styling constants based on Dark Mode
+  const totalCount = tasks.length;
+  const doneCount = tasks.filter((t) => t.status === "done").length;
+  const progressPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  const filtersActive = searchQuery.trim() !== "" || assigneeFilter !== "all" || priorityFilter !== "all";
+
   const bgCard = isDarkMode ? "bg-slate-900 border-slate-700/50" : "bg-white border-slate-200";
   const textTitle = isDarkMode ? "text-white" : "text-slate-900";
   const textSub = isDarkMode ? "text-slate-400" : "text-slate-500";
@@ -260,46 +303,75 @@ export default function TeamTasksBoard({
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter Panel */}
-      <div className={`p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm backdrop-blur-md ${bgCard}`}>
-        <div className="flex flex-1 flex-col sm:flex-row items-center gap-3 w-full">
-          {/* Search bar */}
-          <div className="relative w-full sm:max-w-xs">
-            <Search className={`absolute left-3.5 top-3 w-4 h-4 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} />
+      {/* Header card */}
+      <div className={`p-4 sm:p-5 rounded-2xl border ${bgCard}`}>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <LayoutGrid className="w-5 h-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h2 className={`text-base font-bold ${textTitle}`}>Task Board</h2>
+              <p className={`text-xs ${textSub} flex items-center gap-1.5`}>
+                <ListChecks className="w-3.5 h-3.5" />
+                {totalCount === 0 ? "No tasks yet" : `${doneCount}/${totalCount} done · ${progressPct}% complete`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => openCreate("todo")}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0"
+          >
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Task</span>
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        {totalCount > 0 && (
+          <div className={`h-1.5 rounded-full overflow-hidden mb-4 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
+
+        {/* Filters row */}
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} />
             <input
               type="text"
-              placeholder="Search by title or details..."
+              placeholder="Search tasks..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className={`${inputClass} pl-10`}
             />
           </div>
-
-          {/* Assignee Filter */}
-          <div className="w-full sm:max-w-xs">
-            <select
-              value={assigneeFilter}
-              onChange={e => setAssigneeFilter(e.target.value)}
-              className={`${inputClass}`}
-            >
-              <option value="all">All Assignees</option>
-              <option value="unassigned">Unassigned Tasks</option>
-              {members.map(m => (
-                <option key={m.user_id} value={m.user_id}>
-                  {m.profile?.name || "Member"}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
+            className={`${inputClass} sm:max-w-[180px]`}
+          >
+            <option value="all">All assignees</option>
+            <option value="unassigned">Unassigned</option>
+            {members.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.profile?.name || "Member"}
+              </option>
+            ))}
+          </select>
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className={`${inputClass} sm:max-w-[150px]`}
+          >
+            <option value="all">All priorities</option>
+            <option value="high">🔴 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
         </div>
-
-        {/* Add Task Button */}
-        <button
-          onClick={() => openCreate("todo")}
-          className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-95"
-        >
-          <Plus className="w-4 h-4" /> Add Task
-        </button>
       </div>
 
       {error && (
@@ -309,7 +381,7 @@ export default function TeamTasksBoard({
         </div>
       )}
 
-      {/* Kanban Board Grid */}
+      {/* Kanban Board */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
@@ -317,339 +389,293 @@ export default function TeamTasksBoard({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {/* TO DO COLUMN */}
           <TaskColumn
-            title="To Do"
-            status="todo"
-            count={todoTasks.length}
-            tasks={todoTasks}
-            isDarkMode={isDarkMode}
-            bgCard={bgCard}
-            textTitle={textTitle}
-            textSub={textSub}
-            currentUserId={currentUserId}
-            canManage={canManage}
-            onEdit={openEdit}
-            onDelete={handleDeleteTask}
-            onAdd={() => openCreate("todo")}
+            title="To Do" status="todo" count={todoTasks.length} tasks={todoTasks}
+            isDarkMode={isDarkMode} bgCard={bgCard} textTitle={textTitle} textSub={textSub}
+            currentUserId={currentUserId} canManage={canManage} canMoveTask={canMoveTask}
+            onEdit={openEdit} onDelete={handleDeleteTask} onAdd={() => openCreate("todo")}
             onUpdateStatus={handleUpdateStatus}
             dragOver={dragOverColumn.todo}
-            setDragOver={active => setDragOverColumn(prev => ({ ...prev, todo: active }))}
-            headerBg={isDarkMode ? "bg-slate-800/60" : "bg-slate-200/50"}
-            dotAccent="bg-slate-400"
-            borderAccent="border-t-slate-400"
-            draggingTaskId={draggingTaskId}
-            setDraggingTaskId={setDraggingTaskId}
+            setDragOver={(a) => setDragOverColumn((p) => ({ ...p, todo: a }))}
+            dotAccent="bg-slate-400" draggingTaskId={draggingTaskId} setDraggingTaskId={setDraggingTaskId}
+            filtersActive={filtersActive}
           />
-
-          {/* IN PROGRESS COLUMN */}
           <TaskColumn
-            title="In Progress"
-            status="in_progress"
-            count={inProgressTasks.length}
-            tasks={inProgressTasks}
-            isDarkMode={isDarkMode}
-            bgCard={bgCard}
-            textTitle={textTitle}
-            textSub={textSub}
-            currentUserId={currentUserId}
-            canManage={canManage}
-            onEdit={openEdit}
-            onDelete={handleDeleteTask}
-            onAdd={() => openCreate("in_progress")}
+            title="In Progress" status="in_progress" count={inProgressTasks.length} tasks={inProgressTasks}
+            isDarkMode={isDarkMode} bgCard={bgCard} textTitle={textTitle} textSub={textSub}
+            currentUserId={currentUserId} canManage={canManage} canMoveTask={canMoveTask}
+            onEdit={openEdit} onDelete={handleDeleteTask} onAdd={() => openCreate("in_progress")}
             onUpdateStatus={handleUpdateStatus}
             dragOver={dragOverColumn.in_progress}
-            setDragOver={active => setDragOverColumn(prev => ({ ...prev, in_progress: active }))}
-            headerBg={isDarkMode ? "bg-indigo-950/20" : "bg-indigo-50/70"}
-            dotAccent="bg-indigo-500 animate-pulse"
-            borderAccent="border-t-indigo-500"
-            draggingTaskId={draggingTaskId}
-            setDraggingTaskId={setDraggingTaskId}
+            setDragOver={(a) => setDragOverColumn((p) => ({ ...p, in_progress: a }))}
+            dotAccent="bg-indigo-500 animate-pulse" draggingTaskId={draggingTaskId} setDraggingTaskId={setDraggingTaskId}
+            filtersActive={filtersActive}
           />
-
-          {/* DONE COLUMN */}
           <TaskColumn
-            title="Done"
-            status="done"
-            count={doneTasks.length}
-            tasks={doneTasks}
-            isDarkMode={isDarkMode}
-            bgCard={bgCard}
-            textTitle={textTitle}
-            textSub={textSub}
-            currentUserId={currentUserId}
-            canManage={canManage}
-            onEdit={openEdit}
-            onDelete={handleDeleteTask}
-            onAdd={() => openCreate("done")}
+            title="Done" status="done" count={doneTasks.length} tasks={doneTasks}
+            isDarkMode={isDarkMode} bgCard={bgCard} textTitle={textTitle} textSub={textSub}
+            currentUserId={currentUserId} canManage={canManage} canMoveTask={canMoveTask}
+            onEdit={openEdit} onDelete={handleDeleteTask} onAdd={() => openCreate("done")}
             onUpdateStatus={handleUpdateStatus}
             dragOver={dragOverColumn.done}
-            setDragOver={active => setDragOverColumn(prev => ({ ...prev, done: active }))}
-            headerBg={isDarkMode ? "bg-emerald-950/20" : "bg-emerald-50/70"}
-            dotAccent="bg-emerald-500"
-            borderAccent="border-t-emerald-500"
-            draggingTaskId={draggingTaskId}
-            setDraggingTaskId={setDraggingTaskId}
+            setDragOver={(a) => setDragOverColumn((p) => ({ ...p, done: a }))}
+            dotAccent="bg-emerald-500" draggingTaskId={draggingTaskId} setDraggingTaskId={setDraggingTaskId}
+            filtersActive={filtersActive}
           />
         </div>
       )}
 
-      {/* CREATE TASK MODAL */}
+      {/* CREATE MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`}>
-            <div className={`px-5 py-4 border-b flex items-center justify-between ${isDarkMode ? "border-slate-800 bg-slate-900/60" : "border-slate-100 bg-slate-50"}`}>
-              <h3 className={`font-bold text-lg ${textTitle}`}>Create Task</h3>
-              <button onClick={() => setShowAddModal(false)} className={isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-700"}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateTask} className="p-5 space-y-4">
-              {formError && (
-                <div className="p-3 text-xs rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-medium flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  {formError}
-                </div>
-              )}
-
-              <div>
-                <label className={labelClass}>Title *</label>
-                <input
-                  type="text"
-                  placeholder="Task title..."
-                  maxLength={150}
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className={inputClass}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>Description</label>
-                <textarea
-                  placeholder="Describe details, references, or instructions..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  className={`${inputClass} min-h-[90px] resize-y`}
-                  maxLength={1000}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Column Status</label>
-                  <select
-                    value={status}
-                    onChange={e => setStatus(e.target.value as any)}
-                    className={inputClass}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Due Date</label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={e => setDueDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-300">Assignee</label>
-                  {!canManage && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-500">
-                      <Shield className="w-2.5 h-2.5" /> Read-Only for Members
-                    </span>
-                  )}
-                </div>
-                <select
-                  value={assignedTo}
-                  onChange={e => setAssignedTo(e.target.value)}
-                  className={inputClass}
-                  disabled={!canManage}
-                >
-                  <option value="">Unassigned</option>
-                  {members.map(m => (
-                    <option key={m.user_id} value={m.user_id}>
-                      {m.profile?.name || "Member"}
-                    </option>
-                  ))}
-                </select>
-                {!canManage && (
-                  <p className="text-[10px] text-amber-500/90 mt-1 flex items-center gap-1 font-semibold">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> Only owners and admins can assign tasks.
-                  </p>
-                )}
-              </div>
-
-              <div className={`pt-4 border-t flex justify-end gap-2 ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-1.5 shadow-md"
-                >
-                  {busy && <Loader2 className="w-4 h-4 animate-spin" />} Create Task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <TaskModal
+          mode="create"
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          status={status} setStatus={setStatus}
+          priority={priority} setPriority={setPriority}
+          assignedTo={assignedTo} setAssignedTo={setAssignedTo}
+          dueDate={dueDate} setDueDate={setDueDate}
+          canManage={canManage}
+          members={members}
+          formError={formError}
+          busy={busy}
+          isDarkMode={isDarkMode}
+          textTitle={textTitle}
+          inputClass={inputClass}
+          labelClass={labelClass}
+          onSubmit={handleCreateTask}
+          onClose={() => setShowAddModal(false)}
+        />
       )}
 
-      {/* EDIT TASK MODAL */}
+      {/* EDIT MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`}>
-            <div className={`px-5 py-4 border-b flex items-center justify-between ${isDarkMode ? "border-slate-800 bg-slate-900/60" : "border-slate-100 bg-slate-50"}`}>
-              <h3 className={`font-bold text-lg ${textTitle}`}>Edit Task</h3>
-              <button onClick={() => setShowEditModal(null)} className={isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-700"}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditTask} className="p-5 space-y-4">
-              {formError && (
-                <div className="p-3 text-xs rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-medium flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  {formError}
-                </div>
-              )}
-
-              <div>
-                <label className={labelClass}>Title *</label>
-                <input
-                  type="text"
-                  maxLength={150}
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className={inputClass}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>Description</label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  className={`${inputClass} min-h-[90px] resize-y`}
-                  maxLength={1000}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Column Status</label>
-                  <select
-                    value={status}
-                    onChange={e => setStatus(e.target.value as any)}
-                    className={inputClass}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Due Date</label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={e => setDueDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-300">Assignee</label>
-                  {!canManage && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-500">
-                      <Shield className="w-2.5 h-2.5" /> Read-Only for Members
-                    </span>
-                  )}
-                </div>
-                <select
-                  value={assignedTo}
-                  onChange={e => setAssignedTo(e.target.value)}
-                  className={inputClass}
-                  disabled={!canManage}
-                >
-                  <option value="">Unassigned</option>
-                  {members.map(m => (
-                    <option key={m.user_id} value={m.user_id}>
-                      {m.profile?.name || "Member"}
-                    </option>
-                  ))}
-                </select>
-                {!canManage && (
-                  <p className="text-[10px] text-amber-500/90 mt-1 flex items-center gap-1 font-semibold">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> Only owners and admins can assign tasks.
-                  </p>
-                )}
-              </div>
-
-              <div className={`pt-4 border-t flex justify-between items-center ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
-                {/* Delete button */}
-                {(showEditModal.created_by === currentUserId || canManage) ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditModal(null);
-                      handleDeleteTask(showEditModal.id);
-                    }}
-                    className="px-3.5 py-2 rounded-xl text-red-500 bg-red-500/10 hover:bg-red-500/20 text-xs font-bold flex items-center gap-1 transition-colors duration-200"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(null)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={busy}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-1.5 shadow-md"
-                  >
-                    {busy && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+        <TaskModal
+          mode="edit"
+          editTask={showEditModal}
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          status={status} setStatus={setStatus}
+          priority={priority} setPriority={setPriority}
+          assignedTo={assignedTo} setAssignedTo={setAssignedTo}
+          dueDate={dueDate} setDueDate={setDueDate}
+          canManage={canManage}
+          canMoveTask={canMoveTask}
+          members={members}
+          currentUserId={currentUserId}
+          formError={formError}
+          busy={busy}
+          isDarkMode={isDarkMode}
+          textTitle={textTitle}
+          inputClass={inputClass}
+          labelClass={labelClass}
+          onSubmit={handleEditTask}
+          onClose={() => setShowEditModal(null)}
+          onDelete={(id) => { setShowEditModal(null); handleDeleteTask(id); }}
+        />
       )}
     </div>
   );
 }
 
-// ── TASK COLUMN COMPONENT ────────────────────────────────────────────────────
+// ── TASK MODAL (shared Create / Edit) ────────────────────────────────────────
+
+interface TaskModalProps {
+  mode: "create" | "edit";
+  editTask?: TeamTask;
+  title: string; setTitle: (v: string) => void;
+  description: string; setDescription: (v: string) => void;
+  status: "todo" | "in_progress" | "done"; setStatus: (v: any) => void;
+  priority: TaskPriority; setPriority: (v: TaskPriority) => void;
+  assignedTo: string; setAssignedTo: (v: string) => void;
+  dueDate: string; setDueDate: (v: string) => void;
+  canManage: boolean;
+  canMoveTask?: (task: TeamTask) => boolean;
+  members: TeamMember[];
+  currentUserId?: string;
+  formError: string | null;
+  busy: boolean;
+  isDarkMode: boolean;
+  textTitle: string;
+  inputClass: string;
+  labelClass: string;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+  onDelete?: (id: string) => void;
+}
+
+function TaskModal({
+  mode, editTask, title, setTitle, description, setDescription,
+  status, setStatus, priority, setPriority,
+  assignedTo, setAssignedTo, dueDate, setDueDate,
+  canManage, canMoveTask, members, currentUserId,
+  formError, busy, isDarkMode, textTitle, inputClass, labelClass,
+  onSubmit, onClose, onDelete,
+}: TaskModalProps) {
+  const canMove = editTask && canMoveTask ? canMoveTask(editTask) : true;
+  const canDelete = editTask
+    ? editTask.created_by === currentUserId || canManage
+    : false;
+
+  return (
+    <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm">
+      <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`}>
+        <div className={`px-5 py-4 border-b flex items-center justify-between ${isDarkMode ? "border-slate-800 bg-slate-900/60" : "border-slate-100 bg-slate-50"}`}>
+          <h3 className={`font-bold text-lg ${textTitle}`}>{mode === "create" ? "Create Task" : "Edit Task"}</h3>
+          <button onClick={onClose} className={isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-700"}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} className="p-5 space-y-4">
+          {formError && (
+            <div className="p-3 text-xs rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-medium flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {formError}
+            </div>
+          )}
+
+          {/* Title */}
+          <div>
+            <label className={labelClass}>Title *</label>
+            <input
+              type="text"
+              placeholder="Task title..."
+              maxLength={150}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea
+              placeholder="Describe details, references, or instructions..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${inputClass} min-h-[80px] resize-y`}
+              maxLength={1000}
+            />
+          </div>
+
+          {/* Priority + Status row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Priority</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={inputClass}>
+                <option value="high">🔴 High</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="low">🟢 Low</option>
+              </select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>Status</label>
+                {mode === "edit" && !canMove && (
+                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-500">
+                    <Lock className="w-2.5 h-2.5" /> Locked
+                  </span>
+                )}
+              </div>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className={inputClass}
+                disabled={mode === "edit" && !canMove}
+                title={mode === "edit" && !canMove ? "Only the assignee or owner/admin can change the status" : undefined}
+              >
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+              {mode === "edit" && !canMove && (
+                <p className="text-[10px] text-amber-500/80 mt-1 font-semibold">Only the assignee can move this task.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Due Date */}
+          <div>
+            <label className={labelClass}>Due Date</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          {/* Assignee */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>Assignee</label>
+              {!canManage && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-500">
+                  <Shield className="w-2.5 h-2.5" /> Owner/Admin only
+                </span>
+              )}
+            </div>
+            <select
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              className={inputClass}
+              disabled={!canManage}
+            >
+              <option value="">Unassigned</option>
+              {members.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.profile?.name || "Member"}
+                </option>
+              ))}
+            </select>
+            {canManage && assignedTo && assignedTo !== currentUserId && (
+              <p className="text-[10px] text-blue-500/80 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 flex-shrink-0" /> Assigned member will receive a push notification.
+              </p>
+            )}
+          </div>
+
+          {/* Footer actions */}
+          <div className={`pt-4 border-t flex items-center justify-between ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
+            {mode === "edit" && onDelete && canDelete ? (
+              <button
+                type="button"
+                onClick={() => editTask && onDelete(editTask.id)}
+                className="px-3.5 py-2 rounded-xl text-red-500 bg-red-500/10 hover:bg-red-500/20 text-xs font-bold flex items-center gap-1 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+            ) : (
+              <div />
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className={`px-4 py-2 rounded-xl text-sm font-medium ${isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-1.5 shadow-md"
+              >
+                {busy && <Loader2 className="w-4 h-4 animate-spin" />}
+                {mode === "create" ? "Create Task" : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── TASK COLUMN ───────────────────────────────────────────────────────────────
 
 interface ColumnProps {
   title: string;
@@ -662,64 +688,33 @@ interface ColumnProps {
   textSub: string;
   currentUserId: string;
   canManage: boolean;
+  canMoveTask: (task: TeamTask) => boolean;
   onEdit: (task: TeamTask) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
   onUpdateStatus: (taskId: string, newStatus: "todo" | "in_progress" | "done") => void;
   dragOver: boolean;
   setDragOver: (active: boolean) => void;
-  headerBg: string;
   dotAccent: string;
-  borderAccent: string;
   draggingTaskId: string | null;
   setDraggingTaskId: (id: string | null) => void;
+  filtersActive: boolean;
 }
 
 function TaskColumn({
-  title,
-  status,
-  count,
-  tasks,
-  isDarkMode,
-  bgCard,
-  textTitle,
-  textSub,
-  currentUserId,
-  canManage,
-  onEdit,
-  onDelete,
-  onAdd,
-  onUpdateStatus,
-  dragOver,
-  setDragOver,
-  headerBg,
-  dotAccent,
-  borderAccent,
-  draggingTaskId,
-  setDraggingTaskId
+  title, status, count, tasks, isDarkMode, textTitle, textSub,
+  currentUserId, canManage, canMoveTask, onEdit, onDelete, onAdd,
+  onUpdateStatus, dragOver, setDragOver, dotAccent,
+  draggingTaskId, setDraggingTaskId, filtersActive,
 }: ColumnProps) {
-  
-  // Drag and Drop Event Handlers
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); // Required to drop!
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragOver(false);
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); setDragOver(true); };
+  const handleDragLeave = () => setDragOver(false);
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const taskId = e.dataTransfer.getData("text/plain");
-    if (taskId) {
-      onUpdateStatus(taskId, status);
-    }
+    if (taskId) onUpdateStatus(taskId, status);
   };
 
   return (
@@ -728,49 +723,53 @@ function TaskColumn({
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`rounded-2xl border-t-4 flex flex-col min-h-[520px] max-h-[750px] overflow-hidden transition-all duration-300 shadow-md ${
-        isDarkMode ? "bg-slate-900/60" : "bg-slate-100"
-      } ${borderAccent} ${
+      className={`rounded-2xl flex flex-col min-h-[280px] max-h-[70vh] transition-all duration-200 ${
+        isDarkMode ? "bg-slate-900/50" : "bg-slate-50"
+      } ${
         dragOver
-          ? "border-2 border-dashed border-blue-500/80 bg-blue-500/5 dark:bg-blue-500/10 scale-[1.01]"
-          : "border border-slate-200 dark:border-slate-800/40"
+          ? "ring-2 ring-blue-500/60 ring-dashed bg-blue-500/5"
+          : `border ${isDarkMode ? "border-slate-800/60" : "border-slate-200/80"}`
       }`}
     >
-      {/* Header */}
-      <div className={`px-4 py-3 flex items-center justify-between border-b ${headerBg} ${isDarkMode ? "border-slate-800" : "border-slate-200"}`}>
+      <div className="px-3.5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${dotAccent}`} />
-          <span className={`font-bold text-sm tracking-wide ${textTitle}`}>{title}</span>
-          <span className={`text-[10px] px-2 py-0.5 rounded-md font-extrabold ${isDarkMode ? "bg-slate-800 text-slate-300" : "bg-white text-slate-600 shadow-sm border border-slate-200"}`}>
+          <div className={`w-2.5 h-2.5 rounded-full ${dotAccent}`} />
+          <span className={`font-bold text-sm ${textTitle}`}>{title}</span>
+          <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold ${isDarkMode ? "bg-slate-800 text-slate-400" : "bg-slate-200/70 text-slate-600"}`}>
             {count}
           </span>
         </div>
         <button
           onClick={onAdd}
-          className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-200 text-slate-600 hover:text-slate-800"}`}
+          className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-200 text-slate-500 hover:text-slate-800"}`}
           title={`Add task to ${title}`}
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Cards list */}
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
+      <div className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2.5">
         {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isDarkMode ? "bg-slate-800/40" : "bg-white shadow-sm border border-slate-200"}`}>
-              <CheckCircle2 className={`w-5 h-5 ${isDarkMode ? "text-slate-600" : "text-slate-300"}`} />
+          filtersActive ? (
+            <div className={`w-full flex flex-col items-center justify-center py-10 text-center ${isDarkMode ? "text-slate-600" : "text-slate-400"}`}>
+              <Search className="w-5 h-5 mb-1.5 opacity-60" />
+              <span className="text-xs font-semibold">No matching tasks</span>
             </div>
-            <p className={`text-xs font-semibold ${textSub}`}>Empty Column</p>
+          ) : (
             <button
               onClick={onAdd}
-              className="mt-1 text-[11px] text-blue-500 font-bold hover:underline"
+              className={`w-full flex flex-col items-center justify-center py-10 rounded-xl border-2 border-dashed transition-colors ${
+                isDarkMode
+                  ? "border-slate-800 text-slate-600 hover:border-slate-700 hover:text-slate-500"
+                  : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+              }`}
             >
-              Add task
+              <Plus className="w-5 h-5 mb-1" />
+              <span className="text-xs font-semibold">Add a task</span>
             </button>
-          </div>
+          )
         ) : (
-          tasks.map(task => (
+          tasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -779,6 +778,7 @@ function TaskColumn({
               textSub={textSub}
               currentUserId={currentUserId}
               canManage={canManage}
+              canMove={canMoveTask(task)}
               onEdit={onEdit}
               onDelete={onDelete}
               draggingTaskId={draggingTaskId}
@@ -791,19 +791,11 @@ function TaskColumn({
   );
 }
 
-// ── TASK CARD COMPONENT ──────────────────────────────────────────────────────
+// ── TASK CARD ─────────────────────────────────────────────────────────────────
 
 function TaskCard({
-  task,
-  isDarkMode,
-  textTitle,
-  textSub,
-  currentUserId,
-  canManage,
-  onEdit,
-  onDelete,
-  draggingTaskId,
-  setDraggingTaskId
+  task, isDarkMode, textTitle, textSub, currentUserId, canManage, canMove,
+  onEdit, onDelete, draggingTaskId, setDraggingTaskId,
 }: {
   task: TeamTask;
   isDarkMode: boolean;
@@ -811,6 +803,7 @@ function TaskCard({
   textSub: string;
   currentUserId: string;
   canManage: boolean;
+  canMove: boolean;
   onEdit: (task: TeamTask) => void;
   onDelete: (id: string) => void;
   draggingTaskId: string | null;
@@ -818,21 +811,16 @@ function TaskCard({
 }) {
   const isCreator = task.created_by === currentUserId;
   const isDone = task.status === "done";
-  
   const isDragging = draggingTaskId === task.id;
 
-  // Drag start handler
   const handleDragStart = (e: React.DragEvent) => {
+    if (!canMove) { e.preventDefault(); return; }
     e.dataTransfer.setData("text/plain", task.id);
     e.dataTransfer.effectAllowed = "move";
     setDraggingTaskId(task.id);
   };
+  const handleDragEnd = () => setDraggingTaskId(null);
 
-  const handleDragEnd = () => {
-    setDraggingTaskId(null);
-  };
-
-  // Due Date Badge Builder
   const getDueDateBadge = () => {
     if (!task.due_date) return null;
     const due = new Date(task.due_date);
@@ -841,83 +829,98 @@ function TaskCard({
     due.setHours(0, 0, 0, 0);
     const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 3600 * 24));
     const dateFormatted = due.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    
-    if (isDone) {
-      return (
-        <span className="inline-flex items-center gap-1 text-[9.5px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/10">
-          <CheckCircle className="w-2.5 h-2.5" /> Due {dateFormatted}
-        </span>
-      );
-    } else if (diffDays < 0) {
-      return (
-        <span className="inline-flex items-center gap-1 text-[9.5px] px-2 py-0.5 rounded bg-red-500/10 text-red-500 font-bold animate-pulse border border-red-500/15">
-          <AlertCircle className="w-2.5 h-2.5" /> Overdue
-        </span>
-      );
-    } else if (diffDays === 0) {
-      return (
-        <span className="inline-flex items-center gap-1 text-[9.5px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/10">
-          <Clock className="w-2.5 h-2.5" /> Today
-        </span>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center gap-1 text-[9.5px] px-2 py-0.5 rounded bg-slate-500/5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-          <Calendar className="w-2.5 h-2.5" /> {dateFormatted}
-        </span>
-      );
-    }
+
+    if (isDone) return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+        <CheckCircle className="w-3 h-3" /> {dateFormatted}
+      </span>
+    );
+    if (diffDays < 0) return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-red-500/10 text-red-500 font-semibold">
+        <AlertCircle className="w-3 h-3" /> Overdue
+      </span>
+    );
+    if (diffDays === 0) return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold">
+        <Clock className="w-3 h-3" /> Today
+      </span>
+    );
+    if (diffDays <= 3) return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold">
+        <Clock className="w-3 h-3" /> {diffDays}d left
+      </span>
+    );
+    return (
+      <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg font-medium ${isDarkMode ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+        <Calendar className="w-3 h-3" /> {dateFormatted}
+      </span>
+    );
   };
 
-  // Dragging State Placeholder
   if (isDragging) {
     return (
       <div
         onDragEnd={handleDragEnd}
-        className={`p-4 rounded-xl border-2 border-dashed h-[135px] flex items-center justify-center transition-all duration-200 select-none ${
-          isDarkMode
-            ? "border-slate-700 bg-slate-800/10 text-slate-600"
-            : "border-slate-350 bg-slate-100/40 text-slate-400"
+        className={`rounded-xl border-2 border-dashed h-24 flex items-center justify-center select-none ${
+          isDarkMode ? "border-slate-700 bg-slate-800/20 text-slate-600" : "border-slate-300 bg-slate-100/60 text-slate-400"
         }`}
       >
-        <span className="text-xs font-semibold">Moving task...</span>
+        <span className="text-xs font-semibold">Moving…</span>
       </div>
     );
   }
 
-  // Left Border Accent Indicator
-  const leftBorderColor = 
-    task.status === "todo" ? "border-l-slate-400" :
-    task.status === "in_progress" ? "border-l-indigo-500" : "border-l-emerald-500";
+  const accent =
+    task.status === "todo" ? "bg-slate-400" :
+    task.status === "in_progress" ? "bg-indigo-500" : "bg-emerald-500";
+
+  const priorityCfg = PRIORITY_CONFIG[task.priority ?? "medium"];
+  const assignee = task.assigned_profile;
+  const creatorName = task.creator_profile?.name ?? "Unknown";
 
   return (
     <div
-      draggable={true}
+      draggable={canMove}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className={`group p-4 rounded-xl border-l-4 border transition-all duration-200 relative flex flex-col justify-between cursor-grab hover:cursor-grab active:cursor-grabbing hover:-translate-y-0.5 ${leftBorderColor} ${
+      onClick={() => onEdit(task)}
+      title={`Created by ${creatorName}`}
+      className={`group relative rounded-xl border overflow-hidden transition-all duration-200 ${
+        canMove ? "cursor-grab active:cursor-grabbing hover:-translate-y-0.5" : "cursor-pointer"
+      } ${
         isDarkMode
-          ? "bg-slate-900 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700 hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-          : "bg-white border-slate-200 hover:border-slate-350 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+          ? "bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+          : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)]"
       }`}
     >
-      <div>
-        <div className="flex items-start justify-between gap-2.5">
-          <div className="flex items-start gap-1.5 min-w-0">
-            {/* Draggable Grip Handle Icon — styled high contrast for visibility */}
-            <GripVertical className="w-4 h-4 mt-0.5 text-slate-450 dark:text-slate-500 cursor-grab active:cursor-grabbing flex-shrink-0 hover:text-slate-600 dark:hover:text-slate-400" />
-            <h4 className={`text-sm font-bold leading-snug tracking-tight ${textTitle} ${isDone ? "line-through opacity-50 text-slate-400" : ""}`}>
-              {task.title}
-            </h4>
+      {/* Status accent stripe */}
+      <div className={`h-1 w-full ${accent} ${isDone ? "opacity-60" : ""}`} />
+
+      <div className="p-3">
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {/* Priority badge */}
+            <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md font-bold flex-shrink-0 ${priorityCfg.badge}`}>
+              {priorityCfg.icon}
+              {priorityCfg.label}
+            </span>
           </div>
-          {/* Action buttons (shown on hover) */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
+          <div
+            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {!canMove && (
+              <span title="Only the assignee or owner/admin can move this task" className={`p-1 ${isDarkMode ? "text-slate-600" : "text-slate-300"}`}>
+                <Lock className="w-3 h-3" />
+              </span>
+            )}
             <button
               onClick={() => onEdit(task)}
               className={`p-1 rounded-md transition-colors ${isDarkMode ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-100 text-slate-500 hover:text-slate-800"}`}
               title="Edit task"
             >
-              <Edit2 className="w-3 h-3" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
             {(isCreator || canManage) && (
               <button
@@ -925,80 +928,48 @@ function TaskCard({
                 className="p-1 rounded-md hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors"
                 title="Delete task"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
 
+        {/* Task title */}
+        <h4 className={`text-sm font-semibold leading-snug mt-1.5 ${isDone ? "line-through opacity-50" : textTitle}`}>
+          {task.title}
+        </h4>
+
+        {/* Description */}
         {task.description && (
-          <p className={`text-xs mt-2 pl-5.5 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-600"} ${isDone ? "opacity-50" : ""}`}>
+          <p className={`text-xs mt-1 leading-relaxed line-clamp-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"} ${isDone ? "opacity-50" : ""}`}>
             {task.description}
           </p>
         )}
-      </div>
 
-      {/* Assignment and Creator Badges */}
-      <div className="mt-4 pt-3.5 pl-5.5 border-t border-slate-100 dark:border-slate-850 space-y-2">
-        <div className="flex flex-col gap-2">
-          {/* To (Assignee) badge */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[9px] uppercase font-extrabold tracking-wider text-slate-400 dark:text-slate-500 w-8">To:</span>
-            {task.assigned_profile ? (
-              <div className={`flex items-center gap-1.5 min-w-0 px-2 py-0.5 rounded-md border ${
-                isDarkMode 
-                  ? "bg-blue-950/40 border-blue-800/30 text-blue-300" 
-                  : "bg-blue-50 border-blue-100 text-blue-700 font-bold"
-              }`}>
-                <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0 bg-blue-500 flex items-center justify-center text-[8px] font-bold text-white">
-                  {task.assigned_profile.avatar_url || task.assigned_profile.profile_pic ? (
-                    <img src={task.assigned_profile.avatar_url || task.assigned_profile.profile_pic!} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    task.assigned_profile.name.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <span className="text-xs font-semibold truncate">
-                  {task.assigned_profile.name}
-                </span>
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-2 mt-3">
+          <div className="min-w-0">{getDueDateBadge()}</div>
+          {assignee ? (
+            <div className="flex items-center gap-1.5 min-w-0" title={`Assigned to ${assignee.name}`}>
+              <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                {assignee.avatar_url || assignee.profile_pic ? (
+                  <img src={assignee.avatar_url || assignee.profile_pic!} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  assignee.name.charAt(0).toUpperCase()
+                )}
               </div>
-            ) : (
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">Unassigned</span>
-            )}
-          </div>
-
-          {/* By (Creator) badge */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[9px] uppercase font-extrabold tracking-wider text-slate-400 dark:text-slate-500 w-8">By:</span>
-            {task.creator_profile ? (
-              <div className={`flex items-center gap-1.5 min-w-0 px-2 py-0.5 rounded-md border ${
-                isDarkMode 
-                  ? "bg-slate-800/40 border-slate-750/30 text-slate-350" 
-                  : "bg-slate-100 border-slate-200 text-slate-700 font-bold"
-              }`}>
-                <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0 bg-slate-400 flex items-center justify-center text-[8px] font-bold text-white">
-                  {task.creator_profile.avatar_url || task.creator_profile.profile_pic ? (
-                    <img src={task.creator_profile.avatar_url || task.creator_profile.profile_pic!} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    task.creator_profile.name.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <span className="text-xs font-semibold truncate">
-                  {task.creator_profile.name}
-                </span>
-              </div>
-            ) : (
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">Unknown</span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 pt-1">
-          {getDueDateBadge()}
-          <span className="inline-flex items-center gap-0.5 text-[8.5px] px-1 rounded bg-slate-500/10 text-slate-400 dark:text-slate-500/80 font-mono">
-            {task.id.slice(0, 4)}
-          </span>
+              <span className={`text-[11px] font-medium truncate max-w-[80px] ${textSub}`}>
+                {assignee.name.split(" ")[0]}
+              </span>
+            </div>
+          ) : (
+            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg ${isDarkMode ? "bg-slate-800/60 text-slate-500" : "bg-slate-100 text-slate-400"}`}>
+              Unassigned
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

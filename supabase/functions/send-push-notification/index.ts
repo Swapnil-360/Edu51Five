@@ -19,6 +19,7 @@ interface PushPayload {
   body: string;
   url?: string;
   broadcast?: boolean;
+  targetUserId?: string; // when set, only send to this user's subscriptions
 }
 
 serve(async (req) => {
@@ -70,13 +71,19 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Fetch active subscriptions
-    console.log('📡 Fetching push subscriptions...')
-    
-    const { data: subscriptions, error: subError } = await supabaseClient
+    // Fetch active subscriptions (optionally scoped to one user)
+    console.log('📡 Fetching push subscriptions...', payload.targetUserId ? `for user ${payload.targetUserId}` : 'broadcast')
+
+    let subQuery = supabaseClient
       .from('push_subscriptions')
       .select('id, session_id, endpoint, subscription, updated_at')
       .order('updated_at', { ascending: false })
+
+    if (payload.targetUserId) {
+      subQuery = subQuery.eq('user_id', payload.targetUserId)
+    }
+
+    const { data: subscriptions, error: subError } = await subQuery
 
     if (subError) {
       console.error('❌ Database error:', subError.message)
