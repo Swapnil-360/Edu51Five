@@ -183,6 +183,22 @@ export interface TeamMessage {
   reactions?: { emoji: string; user_ids: string[] }[];
 }
 
+export interface TeamTask {
+  id: string;
+  team_id: string;
+  title: string;
+  description: string | null;
+  status: "todo" | "in_progress" | "done";
+  assigned_to: string | null;
+  created_by: string;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+  assigned_profile?: SocialProfile | null;
+  creator_profile?: SocialProfile | null;
+}
+
+
 // Columns selected for profile lists/cards (never select legacy base64 profile_pic in lists)
 export const SOCIAL_PROFILE_COLS =
   "id,username,name,headline,about,location,website,social_links,avatar_url,cover_photo_url,skills,interests,visibility,is_alumni,is_admin,section,major,bubt_email,phone,wc26_team,created_at";
