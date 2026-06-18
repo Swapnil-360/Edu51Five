@@ -111,13 +111,12 @@ interface Props {
   teamId: string;
   currentUserId: string;
   isMember: boolean;
-  canManage: boolean;
-  isAdmin?: boolean;
+  isOwner: boolean;
   isDarkMode: boolean;
   members: TeamMember[];
 }
 
-export default function TeamChat({ teamId, currentUserId, isMember, canManage, isAdmin = false, isDarkMode, members }: Props) {
+export default function TeamChat({ teamId, currentUserId, isMember, isOwner, isDarkMode, members }: Props) {
   const [messages, setMessages] = useState<TeamMessage[]>([]);
   const [input, setInput] = useState("");
   const [replyingTo, setReplyingTo] = useState<TeamMessage | null>(null);
@@ -130,6 +129,7 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -175,8 +175,11 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
   const msgOther = dark ? "bg-slate-800 text-slate-100 border border-slate-700/50" : "bg-white text-slate-900 border border-slate-200";
   const replyBg = dark ? "bg-slate-700/60" : "bg-slate-100";
 
+  // Scroll only the inner message list — never the page (scrollIntoView would
+  // bubble up and yank the whole page, hiding the header when opening Chat).
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-    bottomRef.current?.scrollIntoView({ behavior });
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
   };
 
   useEffect(() => {
@@ -441,9 +444,9 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
   }
 
   return (
-    <div className={`flex flex-col rounded-2xl border overflow-hidden ${card}`} style={{ height: "calc(100dvh - 260px)", minHeight: 380 }}>
+    <div className={`flex flex-col rounded-2xl border overflow-hidden ${card}`} style={{ height: "calc(100dvh - 320px)", minHeight: 300 }}>
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5">
+      <div ref={listRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5">
         {messages.length === 0 && (
           <div className={`flex flex-col items-center justify-center h-full gap-2 ${sub}`}>
             <MessageSquare className="w-8 h-8 opacity-30" />
@@ -463,7 +466,8 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
 
           const { msg, isFirst } = item;
           const isOwn = msg.user_id === currentUserId;
-          const canDelete = isOwn || canManage || isAdmin;
+          // Own messages, or the team owner can delete anyone's. Admins/members cannot delete others'.
+          const canDelete = isOwn || isOwner;
           const senderName = msg.sender?.name ?? "Unknown";
           // Prefer Storage avatar_url, fall back to legacy base64 profile_pic
           const avatar = msg.sender?.avatar_url || msg.sender?.profile_pic || null;

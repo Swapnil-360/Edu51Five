@@ -48,10 +48,9 @@ interface Props {
   onClose: () => void;
   onViewProfile: (username: string) => void;
   isDarkMode: boolean;
-  isAdmin?: boolean;
 }
 
-export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode, isAdmin = false }: Props) {
+export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode }: Props) {
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [announcements, setAnnouncements] = useState<TeamAnnouncement[]>([]);
@@ -204,61 +203,70 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
       </div>
 
       {/* Banner + identity */}
-      <div className="max-w-3xl mx-auto px-4 mt-6 space-y-4">
+      <div className="max-w-3xl mx-auto px-4 mt-4 space-y-3">
         <div className={`rounded-2xl border overflow-hidden ${card}`}>
-          {/* Banner with logo straddling its bottom edge */}
-          <div className="relative">
-            <div className="h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 relative">
-              {team.banner_url && (
-                <img src={team.banner_url} alt="" className="w-full h-full object-cover" />
-              )}
-              {canManage && (
-                <button
-                  onClick={() => bannerInputRef.current?.click()}
-                  disabled={uploadingBanner}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors"
-                  title="Upload cover photo (max 5MB)"
-                >
-                  {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                </button>
-              )}
-            </div>
-            {/* Logo with camera overlay */}
-            <div className={`absolute bottom-0 left-5 translate-y-1/2 w-20 h-20 relative`}>
-              <div className={`w-20 h-20 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-3xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
-                {team.logo_url ? <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" /> : team.name.charAt(0).toUpperCase()}
-              </div>
-              {canManage && (
-                <button
-                  onClick={() => logoInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                  className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
-                  title="Upload logo (max 2MB)"
-                >
-                  {uploadingLogo ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="px-5 pb-5 pt-14">
-            <h2 className={`text-xl font-bold ${title}`}>{team.name}</h2>
-            <p className={`text-sm mt-0.5 ${sub}`}>
-              {TEAM_CATEGORY_LABELS[team.category]} · {members.length}/{team.max_members} members
-            </p>
-            {team.description && <p className={`text-sm mt-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{team.description}</p>}
-            {team.goal && (
-              <p className={`text-sm mt-2 flex items-start gap-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
-                <Target className="w-4 h-4 mt-0.5 text-emerald-500 flex-shrink-0" />
-                {team.goal}
-              </p>
+          {/* Banner (full size) */}
+          <div className="relative h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+            {team.banner_url && (
+              <img src={team.banner_url} alt="" className="w-full h-full object-cover" />
             )}
-            {team.required_skills.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {team.required_skills.map((s) => (
-                  <span key={s} className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${isDarkMode ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
-                    {s}
-                  </span>
-                ))}
+            {canManage && (
+              <button
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={uploadingBanner}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors"
+                title="Upload cover photo (max 5MB)"
+              >
+                {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+
+          {/* Identity — logo lifted over the banner, name/meta vertically centered beside it */}
+          <div className="px-5 pb-3 pt-2">
+            <div className="flex items-center gap-3">
+              <div className="relative w-16 h-16 flex-shrink-0 -mt-5">
+                <div className={`w-16 h-16 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
+                  {team.logo_url ? <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" /> : team.name.charAt(0).toUpperCase()}
+                </div>
+                {canManage && (
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
+                    title="Upload logo (max 2MB)"
+                  >
+                    {uploadingLogo ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
+                  </button>
+                )}
+              </div>
+              <div className="min-w-0 -mt-3">
+                <h2 className={`text-lg font-bold truncate ${title}`}>{team.name}</h2>
+                <p className={`text-xs ${sub}`}>
+                  {TEAM_CATEGORY_LABELS[team.category]} · {members.length}/{team.max_members} members
+                </p>
+              </div>
+            </div>
+
+            {/* Description, goal, and skills only on Overview — keeps Members/Chat compact */}
+            {tab === "overview" && (team.description || team.goal || team.required_skills.length > 0) && (
+              <div className="mt-3">
+                {team.description && <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{team.description}</p>}
+                {team.goal && (
+                  <p className={`text-sm mt-2 flex items-start gap-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                    <Target className="w-4 h-4 mt-0.5 text-emerald-500 flex-shrink-0" />
+                    {team.goal}
+                  </p>
+                )}
+                {team.required_skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {team.required_skills.map((s) => (
+                      <span key={s} className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${isDarkMode ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-700"}`}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -332,8 +340,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             teamId={teamId}
             currentUserId={currentUserId}
             isMember={isMember}
-            canManage={canManage}
-            isAdmin={isAdmin}
+            isOwner={myRole === "owner"}
             isDarkMode={isDarkMode}
             members={members}
           />

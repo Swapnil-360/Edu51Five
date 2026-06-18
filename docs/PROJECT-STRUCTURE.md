@@ -127,7 +127,7 @@ Real-time chat inside each team. Members-only. Non-members see a join prompt.
 **Reply threading:** `reply_to_id` FK on `team_messages`; reply snippet (sender name + truncated content) shown above the bubble.  
 **Who reacted:** clicking a reaction badge opens a popover listing reactors by emoji (names resolved from team members).  
 **@Mentions:** typing `@` opens a member autocomplete (↑/↓/Enter/Tab to pick); mentioned names render highlighted in the bubble, with a stronger amber highlight when you are the one mentioned.  
-**Delete rules:** a regular member can delete only their own messages; team owner/admin and the app owner/admin can delete any message (enforced in UI via `isOwn || canManage || isAdmin`, and at the DB by RLS).
+**Delete rules:** a user can delete only their own messages; the **team owner** can delete anyone's. Team admins/members and the app admin cannot delete others' messages (UI: `isOwn || isOwner`; DB RLS `chat_delete`: author or team `role = 'owner'`).
 
 ---
 
