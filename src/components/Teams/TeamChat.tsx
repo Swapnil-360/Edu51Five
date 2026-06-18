@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CornerDownLeft, Trash2, X, MessageSquare } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { listMessages, sendMessage, deleteMessage, setReaction, fetchProfiles } from "../../lib/api/chatApi";
@@ -59,6 +59,54 @@ function isSameGroup(a: TeamMessage, b: TeamMessage): boolean {
   return Math.abs(new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) < 5 * 60 * 1000;
 }
 
+/**
+ * Render message text with @mentions highlighted. Greedy-matches known member
+ * names (longest first) right after an "@". The mention of the current user is
+ * highlighted more strongly.
+ */
+function renderMessageContent(
+  text: string,
+  memberNames: string[],
+  myName: string | null,
+  isOwn: boolean,
+): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+  let buffer = "";
+  const flush = () => {
+    if (buffer) { nodes.push(<span key={`t${key++}`}>{buffer}</span>); buffer = ""; }
+  };
+  while (i < text.length) {
+    if (text[i] === "@") {
+      const rest = text.slice(i + 1);
+      const matched = memberNames.find((n) => rest.toLowerCase().startsWith(n.toLowerCase()));
+      if (matched) {
+        flush();
+        const isMe = !!myName && matched.toLowerCase() === myName.toLowerCase();
+        nodes.push(
+          <span
+            key={`m${key++}`}
+            className={`font-semibold rounded px-0.5 ${
+              isMe
+                ? "bg-amber-400/30 text-amber-200"
+                : isOwn ? "text-blue-100 underline decoration-blue-200/50" : "text-blue-500"
+            }`}
+          >
+            @{matched}
+          </span>,
+        );
+        i += 1 + matched.length;
+        continue;
+      }
+    }
+    buffer += text[i];
+    i++;
+  }
+  flush();
+  return nodes;
+}
+
 interface Props {
   teamId: string;
   currentUserId: string;
@@ -76,9 +124,48 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [reactionDetailFor, setReactionDetailFor] = useState<string | null>(null);
+  // @mention autocomplete
+  const [mentionActive, setMentionActive] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // userId → display name / avatar, for resolving reactors and mentions
+  const memberMap = useMemo(() => {
+    const map: Record<string, { name: string; avatar: string | null }> = {};
+    for (const m of members) {
+      if (m.profile) {
+        map[m.user_id] = {
+          name: m.profile.name || "Unknown",
+          avatar: m.profile.avatar_url || m.profile.profile_pic || null,
+        };
+      }
+    }
+    return map;
+  }, [members]);
+
+  // Member names sorted longest-first for greedy @mention highlighting
+  const memberNames = useMemo(
+    () =>
+      members
+        .map((m) => m.profile?.name?.trim())
+        .filter((n): n is string => !!n)
+        .sort((a, b) => b.length - a.length),
+    [members],
+  );
+
+  const mentionCandidates = useMemo(() => {
+    const q = mentionQuery.toLowerCase();
+    return members
+      .filter((m) => m.user_id !== currentUserId && m.profile?.name)
+      .filter((m) => !q || m.profile!.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [members, mentionQuery, currentUserId]);
+
+  const myName = memberMap[currentUserId]?.name ?? null;
 
   const dark = isDarkMode;
   const card = dark ? "bg-slate-900 border-slate-700/50" : "bg-white border-slate-200";
@@ -189,6 +276,7 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
     if (!trimmed || sending) return;
     setSending(true);
     setInput("");
+    setMentionActive(false);
     const replied = replyingTo;
     setReplyingTo(null);
 
@@ -226,7 +314,65 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
     inputRef.current?.focus();
   };
 
+  // Detect "@query" right before the caret and open the mention dropdown
+  const detectMention = (value: string, caret: number) => {
+    const before = value.slice(0, caret);
+    const m = before.match(/(?:^|\s)@([^\s@]*)$/);
+    if (m) {
+      setMentionActive(true);
+      setMentionQuery(m[1]);
+      setMentionIndex(0);
+    } else {
+      setMentionActive(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setInput(value);
+    detectMention(value, e.target.selectionStart ?? value.length);
+  };
+
+  const insertMention = (name: string) => {
+    const el = inputRef.current;
+    const caret = el?.selectionStart ?? input.length;
+    const before = input.slice(0, caret);
+    const after = input.slice(caret);
+    // Replace the trailing "@query" with "@Name "
+    const newBefore = before.replace(/@([^\s@]*)$/, `@${name} `);
+    const newValue = newBefore + after;
+    setInput(newValue);
+    setMentionActive(false);
+    setMentionQuery("");
+    requestAnimationFrame(() => {
+      el?.focus();
+      const pos = newBefore.length;
+      el?.setSelectionRange(pos, pos);
+    });
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionActive && mentionCandidates.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionCandidates.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(mentionCandidates[mentionIndex].profile!.name);
+        return;
+      }
+      if (e.key === "Escape") {
+        setMentionActive(false);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -355,34 +501,55 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
 
                 {/* Bubble (with Messenger-style reaction badge anchored to bottom corner) */}
                 <div className="relative">
-                  <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${isOwn ? msgOwn : msgOther} ${isOwn ? "rounded-br-sm" : "rounded-bl-sm"} ${msg.reactions && msg.reactions.length > 0 ? "mb-2.5" : ""}`}>
-                    {msg.content}
+                  <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words whitespace-pre-wrap ${isOwn ? msgOwn : msgOther} ${isOwn ? "rounded-br-sm" : "rounded-bl-sm"} ${msg.reactions && msg.reactions.length > 0 ? "mb-2.5" : ""}`}>
+                    {renderMessageContent(msg.content, memberNames, myName, isOwn)}
                     <span className={`text-[10px] ml-2 opacity-60 align-baseline`}>{formatTime(msg.created_at)}</span>
                   </div>
 
-                  {/* Reaction badge — overlaps the bubble's outer-bottom corner like Messenger */}
+                  {/* Reaction badge — click to see who reacted (Messenger-style) */}
                   {msg.reactions && msg.reactions.length > 0 && (() => {
                     const total = msg.reactions.reduce((sum, r) => sum + r.user_ids.length, 0);
                     const iReacted = msg.reactions.some((r) => r.user_ids.includes(currentUserId));
                     return (
-                      <button
-                        onClick={() => {
-                          const mine = msg.reactions!.find((r) => r.user_ids.includes(currentUserId));
-                          handleReact(msg.id, mine ? mine.emoji : msg.reactions![0].emoji);
-                        }}
-                        title={msg.reactions.map((r) => `${r.emoji} ${r.user_ids.length}`).join("  ")}
-                        className={`absolute -bottom-2.5 ${isOwn ? "right-1" : "left-1"} inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-sm transition-transform hover:scale-105 ${
-                          dark
-                            ? `bg-slate-800 border border-slate-700 ${iReacted ? "ring-1 ring-blue-500/50" : ""}`
-                            : `bg-white border border-slate-200 ${iReacted ? "ring-1 ring-blue-400" : ""}`
-                        }`}
-                        style={{ outline: dark ? "2px solid rgb(15 23 42)" : "2px solid white" }}
-                      >
-                        {msg.reactions.slice(0, 3).map((r) => (
-                          <span key={r.emoji} className="text-xs leading-none">{r.emoji}</span>
-                        ))}
-                        {total > 1 && <span className={`text-[10px] font-semibold ml-0.5 ${dark ? "text-slate-300" : "text-slate-500"}`}>{total}</span>}
-                      </button>
+                      <div className={`absolute -bottom-2.5 ${isOwn ? "right-1" : "left-1"} z-[5]`}>
+                        <button
+                          onClick={() => setReactionDetailFor(reactionDetailFor === msg.id ? null : msg.id)}
+                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-sm transition-transform hover:scale-105 ${
+                            dark
+                              ? `bg-slate-800 border border-slate-700 ${iReacted ? "ring-1 ring-blue-500/50" : ""}`
+                              : `bg-white border border-slate-200 ${iReacted ? "ring-1 ring-blue-400" : ""}`
+                          }`}
+                          style={{ outline: dark ? "2px solid rgb(15 23 42)" : "2px solid white" }}
+                        >
+                          {msg.reactions.slice(0, 3).map((r) => (
+                            <span key={r.emoji} className="text-xs leading-none">{r.emoji}</span>
+                          ))}
+                          {total > 1 && <span className={`text-[10px] font-semibold ml-0.5 ${dark ? "text-slate-300" : "text-slate-500"}`}>{total}</span>}
+                        </button>
+
+                        {/* Who-reacted popover */}
+                        {reactionDetailFor === msg.id && (
+                          <>
+                            <div className="fixed inset-0 z-[8]" onClick={() => setReactionDetailFor(null)} />
+                            <div className={`absolute ${isOwn ? "right-0" : "left-0"} bottom-7 z-[9] w-52 max-h-56 overflow-y-auto rounded-xl shadow-xl p-2 ${dark ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-200"}`}>
+                              {msg.reactions.map((r) => (
+                                <div key={r.emoji} className="mb-1.5 last:mb-0">
+                                  <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide mb-1 ${sub}`}>
+                                    <span className="text-sm">{r.emoji}</span> {r.user_ids.length}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    {r.user_ids.map((uid) => (
+                                      <div key={uid} className={`text-xs pl-1 ${dark ? "text-slate-200" : "text-slate-700"}`}>
+                                        {uid === currentUserId ? "You" : (memberMap[uid]?.name ?? "Unknown")}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     );
                   })()}
                 </div>
@@ -444,13 +611,38 @@ export default function TeamChat({ teamId, currentUserId, isMember, canManage, i
       )}
 
       {/* Input */}
-      <div className={`flex items-end gap-2 p-3 border-t ${dark ? "border-slate-700/50" : "border-slate-200"}`}>
+      <div className={`relative flex items-end gap-2 p-3 border-t ${dark ? "border-slate-700/50" : "border-slate-200"}`}>
+        {/* @mention autocomplete dropdown */}
+        {mentionActive && mentionCandidates.length > 0 && (
+          <div className={`absolute bottom-full left-3 mb-2 w-64 max-h-56 overflow-y-auto rounded-xl shadow-xl z-20 p-1 ${dark ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-200"}`}>
+            <div className={`px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${sub}`}>Mention a member</div>
+            {mentionCandidates.map((m, idx) => {
+              const name = m.profile!.name;
+              const av = m.profile!.avatar_url || m.profile!.profile_pic || null;
+              return (
+                <button
+                  key={m.user_id}
+                  onClick={() => insertMention(name)}
+                  onMouseEnter={() => setMentionIndex(idx)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
+                    idx === mentionIndex ? (dark ? "bg-slate-700" : "bg-slate-100") : ""
+                  }`}
+                >
+                  <AvatarCircle name={name} avatarUrl={av} isOwn={false} />
+                  <span className={`text-sm truncate ${dark ? "text-slate-200" : "text-slate-700"}`}>{name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <textarea
           ref={inputRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Message… (Enter to send, Shift+Enter for new line)"
+          onClick={(e) => detectMention(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)}
+          placeholder="Message…  (@ to mention, Enter to send)"
           rows={1}
           className={`flex-1 resize-none px-3 py-2 rounded-xl text-sm border outline-none focus:border-blue-500 transition-colors ${inputBg}`}
           style={{ maxHeight: 120, overflowY: "auto" }}

@@ -124,7 +124,10 @@ Real-time chat inside each team. Members-only. Non-members see a join prompt.
 
 **Realtime:** Supabase channel `team-chat-{teamId}` — subscribes to INSERT/DELETE on `team_messages` and `*` on `team_message_reactions`.  
 **Reactions:** 5 fixed emoji (👍 ❤️ 😂 😮 🔥), Messenger-style — one reaction per user per message (PK `(message_id, user_id)`), clicking a different emoji swaps it, same emoji toggles off (`setReaction` in `chatApi.ts`). Optimistic UI update on click; reaction badge overlaps the bubble's bottom corner.  
-**Reply threading:** `reply_to_id` FK on `team_messages`; reply snippet (sender name + truncated content) shown above the bubble.
+**Reply threading:** `reply_to_id` FK on `team_messages`; reply snippet (sender name + truncated content) shown above the bubble.  
+**Who reacted:** clicking a reaction badge opens a popover listing reactors by emoji (names resolved from team members).  
+**@Mentions:** typing `@` opens a member autocomplete (↑/↓/Enter/Tab to pick); mentioned names render highlighted in the bubble, with a stronger amber highlight when you are the one mentioned.  
+**Delete rules:** a regular member can delete only their own messages; team owner/admin and the app owner/admin can delete any message (enforced in UI via `isOwn || canManage || isAdmin`, and at the DB by RLS).
 
 ---
 
