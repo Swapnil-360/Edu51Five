@@ -24,46 +24,40 @@ export async function listMessages(teamId: string, limit = 60): Promise<TeamMess
   if (error || !data) return [];
 
   const messages = data as TeamMessage[];
-
-  // Fetch sender profiles
-  const userIds = [...new Set(messages.map((m) => m.user_id))];
-  const profileMap = await fetchProfiles(userIds);
-
-  // Fetch reply snippets
+  const msgIds = messages.map((m) => m.id);
+  const senderIds = [...new Set(messages.map((m) => m.user_id))];
   const replyIds = messages.map((m) => m.reply_to_id).filter(Boolean) as string[];
-  let replyMap: Record<string, { content: string; sender_name: string }> = {};
-  if (replyIds.length > 0) {
-    const { data: replies } = await supabase
-      .from("team_messages")
-      .select("id, content, user_id")
-      .in("id", replyIds);
-    if (replies) {
-      const replyUserIds = [...new Set((replies as any[]).map((r) => r.user_id))];
-      const replyProfileMap = await fetchProfiles(replyUserIds);
-      for (const r of replies as any[]) {
-        replyMap[r.id] = {
-          content: r.content,
-          sender_name: replyProfileMap[r.user_id]?.name ?? "Unknown",
-        };
-      }
-    }
+
+  // Fire all independent fetches in parallel — profiles, reactions, reply snippets
+  const [profileMap, reactionsRaw, repliesRaw] = await Promise.all([
+    fetchProfiles(senderIds),
+    msgIds.length
+      ? supabase.from("team_message_reactions").select("message_id, user_id, emoji").in("message_id", msgIds)
+      : Promise.resolve({ data: [] }),
+    replyIds.length
+      ? supabase.from("team_messages").select("id, content, user_id").in("id", replyIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  // Build reactions map
+  const reactionsMap: Record<string, { emoji: string; user_ids: string[] }[]> = {};
+  for (const r of (reactionsRaw.data ?? []) as any[]) {
+    if (!reactionsMap[r.message_id]) reactionsMap[r.message_id] = [];
+    const existing = reactionsMap[r.message_id].find((x) => x.emoji === r.emoji);
+    if (existing) existing.user_ids.push(r.user_id);
+    else reactionsMap[r.message_id].push({ emoji: r.emoji, user_ids: [r.user_id] });
   }
 
-  // Fetch reactions
-  const msgIds = messages.map((m) => m.id);
-  let reactionsMap: Record<string, { emoji: string; user_ids: string[] }[]> = {};
-  if (msgIds.length > 0) {
-    const { data: reactions } = await supabase
-      .from("team_message_reactions")
-      .select("message_id, user_id, emoji")
-      .in("message_id", msgIds);
-    if (reactions) {
-      for (const r of reactions as any[]) {
-        if (!reactionsMap[r.message_id]) reactionsMap[r.message_id] = [];
-        const existing = reactionsMap[r.message_id].find((x) => x.emoji === r.emoji);
-        if (existing) existing.user_ids.push(r.user_id);
-        else reactionsMap[r.message_id].push({ emoji: r.emoji, user_ids: [r.user_id] });
-      }
+  // Build reply map — re-use already-fetched profiles where possible
+  const replyMap: Record<string, { content: string; sender_name: string }> = {};
+  if (repliesRaw.data?.length) {
+    const unseenIds = [...new Set((repliesRaw.data as any[]).map((r) => r.user_id))].filter(
+      (id) => !profileMap[id],
+    );
+    const extraProfiles = unseenIds.length ? await fetchProfiles(unseenIds) : {};
+    const allProfiles = { ...profileMap, ...extraProfiles };
+    for (const r of repliesRaw.data as any[]) {
+      replyMap[r.id] = { content: r.content, sender_name: allProfiles[r.user_id]?.name ?? "Unknown" };
     }
   }
 

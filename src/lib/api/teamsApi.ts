@@ -345,10 +345,10 @@ export async function listTeamTasks(teamId: string): Promise<TeamTask[]> {
     .select(`
       *,
       assigned_profile:profiles!assigned_to (
-        id, username, name, headline, avatar_url
+        id, username, name, headline, avatar_url, profile_pic
       ),
       creator_profile:profiles!created_by (
-        id, username, name, headline, avatar_url
+        id, username, name, headline, avatar_url, profile_pic
       )
     `)
     .eq("team_id", teamId)
