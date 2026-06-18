@@ -15,6 +15,7 @@ import {
   UserPlus,
   Users,
   X,
+  Trello,
 } from "lucide-react";
 import {
   Team,
@@ -38,9 +39,10 @@ import {
 } from "../../lib/api/teamsApi";
 import InviteMembersModal from "./InviteMembersModal";
 import TeamChat from "./TeamChat";
+import TeamTasksBoard from "./TeamTasksBoard";
 import { uploadImage } from "../../lib/storage";
 
-type Tab = "overview" | "members" | "chat";
+type Tab = "overview" | "members" | "chat" | "tasks";
 
 interface Props {
   teamId: string;
@@ -333,6 +335,12 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           >
             <MessageSquare className="w-3.5 h-3.5" /> Chat
           </button>
+          <button
+            onClick={() => setTab("tasks")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "tasks" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
+          >
+            <Trello className="w-3.5 h-3.5" /> Tasks
+          </button>
         </div>
 
         {tab === "chat" ? (
@@ -344,6 +352,22 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             isDarkMode={isDarkMode}
             members={members}
           />
+        ) : tab === "tasks" ? (
+          !isMember ? (
+            <div className={`rounded-2xl border p-8 text-center ${card}`}>
+              <Trello className="w-12 h-12 mx-auto mb-3 text-slate-400 animate-pulse" />
+              <h3 className={`text-base font-bold mb-1 ${title}`}>Task Board</h3>
+              <p className={`text-sm ${sub}`}>Join this team to view and manage task tracking.</p>
+            </div>
+          ) : (
+            <TeamTasksBoard
+              teamId={teamId}
+              currentUserId={currentUserId}
+              members={members}
+              isDarkMode={isDarkMode}
+              canManage={canManage}
+            />
+          )
         ) : tab === "overview" ? (
           /* Announcements */
           <section className={`rounded-2xl border p-5 ${card}`}>
@@ -448,7 +472,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                         setBusy(null);
                       }}
                       disabled={busy === m.user_id}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${isDarkMode ? "bg-slate-800 text-blue-400 hover:bg-slate-700" : "bg-slate-100 text-blue-600 hover:bg-slate-200"}`}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${isDarkMode ? "bg-slate-800 text-blue-400 hover:bg-slate-700" : "bg-slate-100 text-blue-600 hover:bg-blue-200"}`}
                     >
                       {m.role === "admin" ? "Demote" : "Make Admin"}
                     </button>
@@ -655,7 +679,7 @@ function TeamSettingsModal({
           <button onClick={onClose} className={`px-4 py-2 rounded-lg text-sm font-medium ${isDarkMode ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-700"}`}>
             Cancel
           </button>
-          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2">
+          <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60 flex items-center gap-2">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save
           </button>
         </div>

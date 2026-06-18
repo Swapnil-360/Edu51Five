@@ -8,6 +8,7 @@ import {
   TeamAnnouncement,
   TeamCategory,
   PROFILE_CARD_COLS,
+  TeamTask,
 } from "../../types/social";
 import { normalizeProfile } from "./profileApi";
 
@@ -334,3 +335,66 @@ export async function deleteAnnouncement(id: string): Promise<{ error: string | 
   const { error } = await supabase.from("team_announcements").delete().eq("id", id);
   return { error: error?.message ?? null };
 }
+
+// ── Tasks / Kanban Board ───────────────────────────────────────────────────
+
+export async function listTeamTasks(teamId: string): Promise<TeamTask[]> {
+  const { data, error } = await supabase
+    .from("team_tasks")
+    .select(`
+      *,
+      assigned_profile:profiles!assigned_to (
+        id, username, name, headline, avatar_url
+      ),
+      creator_profile:profiles!created_by (
+        id, username, name, headline, avatar_url
+      )
+    `)
+    .eq("team_id", teamId)
+    .order("created_at", { ascending: true });
+  
+  if (error || !data) return [];
+  
+  // Normalize the profile structures using normalizeProfile if necessary
+  const rawTasks = data as any[];
+  return rawTasks.map(t => ({
+    ...t,
+    assigned_profile: t.assigned_profile ? normalizeProfile(t.assigned_profile) : null,
+    creator_profile: t.creator_profile ? normalizeProfile(t.creator_profile) : null,
+  })) as unknown as TeamTask[];
+}
+
+export async function createTeamTask(payload: {
+  team_id: string;
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  assigned_to?: string | null;
+  created_by: string;
+  due_date?: string | null;
+}): Promise<{ task: TeamTask | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from("team_tasks")
+    .insert([payload])
+    .select()
+    .single();
+  if (error) return { task: null, error: error.message };
+  return { task: data as TeamTask, error: null };
+}
+
+export async function updateTeamTask(
+  taskId: string,
+  payload: Partial<Omit<TeamTask, "id" | "team_id" | "created_at" | "created_by">>
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("team_tasks")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", taskId);
+  return { error: error?.message ?? null };
+}
+
+export async function deleteTeamTask(taskId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("team_tasks").delete().eq("id", taskId);
+  return { error: error?.message ?? null };
+}
+
