@@ -11,11 +11,12 @@ export const COURSE_FOLDER_LINKS = {
     shareLink: 'https://drive.google.com/drive/folders/1ZlnWXpA2pH8l5X1jfwWjHmnacIj2jxgp?usp=drive_link'
   },
   
-  // AI-specific courses - only visible to AI major students
+  // AI-specific courses - standalone folder, Common folder is NOT loaded for AI students
   'AI': {
     name: 'AI Major Courses',
     folderId: '1UvxprKhePf6gUWxtSExfg9ik6ncSp54y',
-    shareLink: 'https://drive.google.com/drive/folders/1UvxprKhePf6gUWxtSExfg9ik6ncSp54y?usp=drive_link'
+    shareLink: 'https://drive.google.com/drive/folders/1UvxprKhePf6gUWxtSExfg9ik6ncSp54y?usp=drive_link',
+    skipCommon: true,
   },
   
   // Software Engineering-specific courses - only visible to Software major students

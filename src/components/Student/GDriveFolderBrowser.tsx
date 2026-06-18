@@ -45,24 +45,21 @@ export const GDriveFolderBrowser: React.FC<GDriveFolderBrowserProps> = ({
     try {
       const coursesFound: GDriveCourse[] = [];
 
-      // Get Common folder
-      const commonFolder = COURSE_FOLDER_LINKS['Common'];
-      if (commonFolder && commonFolder.folderId) {
-        const commonCourses = await listFoldersInFolder(
-          commonFolder.folderId,
-          'Common'
-        );
-        coursesFound.push(...commonCourses);
-      }
-
-      // Get Major-specific folder
+      // Load major-specific folder first
       const majorFolder = COURSE_FOLDER_LINKS[userMajor as keyof typeof COURSE_FOLDER_LINKS];
       if (majorFolder && majorFolder.folderId) {
-        const majorCourses = await listFoldersInFolder(
-          majorFolder.folderId,
-          userMajor
-        );
+        const majorCourses = await listFoldersInFolder(majorFolder.folderId, userMajor);
         coursesFound.push(...majorCourses);
+      }
+
+      // Only load Common folder if the major doesn't have its own standalone folder
+      const skipCommon = (majorFolder as any)?.skipCommon === true;
+      if (!skipCommon) {
+        const commonFolder = COURSE_FOLDER_LINKS['Common'];
+        if (commonFolder && commonFolder.folderId) {
+          const commonCourses = await listFoldersInFolder(commonFolder.folderId, 'Common');
+          coursesFound.push(...commonCourses);
+        }
       }
 
       console.log('Courses found from Google Drive:', coursesFound);
