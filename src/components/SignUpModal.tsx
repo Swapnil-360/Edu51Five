@@ -273,8 +273,14 @@ export function SignUpModal({
             const isAlreadyRegistered =
               error.message?.toLowerCase().includes("already registered") ||
               error.message?.toLowerCase().includes("already exists");
+            // Network dropped after Supabase created the account — the DB trigger
+            // already created the profile, so attempt sign-in recovery silently.
+            const isNetworkError =
+              error.message?.toLowerCase().includes("failed to fetch") ||
+              error.message?.toLowerCase().includes("network") ||
+              error.message?.toLowerCase().includes("timeout");
 
-            if (!isEmailDeliveryError && !isAlreadyRegistered) {
+            if (!isEmailDeliveryError && !isAlreadyRegistered && !isNetworkError) {
               setError(error.message || "Unable to create account");
               return;
             }
@@ -301,6 +307,19 @@ export function SignUpModal({
           if (!userId) {
             setError("Failed to create user account. Please try again.");
             return;
+          }
+
+          // If signUp succeeded but returned no session (e.g. network blip on response),
+          // sign in now so we have a session to upsert the profile.
+          if (!hasSession && password) {
+            const { data: siData } = await supabase.auth.signInWithPassword({
+              email: bubtEmail,
+              password,
+            });
+            if (siData?.user) {
+              userId = siData.user.id;
+              hasSession = true;
+            }
           }
 
           if (hasSession) {
