@@ -3049,9 +3049,9 @@ For any queries, contact your course instructors or the department.`,
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative">
           <div className="flex items-center justify-between h-[72px] lg:h-20 gap-4">
 
-            {/* Left: Hamburger (mobile) + Logo */}
+            {/* Left: Hamburger (mobile only) + Logo (desktop only) */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Mobile menu toggle */}
+              {/* Mobile hamburger */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className={`p-2 rounded-xl transition-all duration-200 lg:hidden ${
@@ -3066,10 +3066,10 @@ For any queries, contact your course instructors or the department.`,
                 </svg>
               </button>
 
-              {/* Logo — no clipping wrapper */}
+              {/* Logo — desktop only (left-aligned) */}
               <button
                 onClick={() => goToView("home")}
-                className="flex items-center gap-3 focus:outline-none group"
+                className="hidden lg:flex items-center gap-3 focus:outline-none group"
                 title="Go to Home"
               >
                 <img
@@ -3080,52 +3080,90 @@ For any queries, contact your course instructors or the department.`,
                   height="44"
                   decoding="async"
                 />
-                <div className="hidden sm:block">
-                  <span className={`text-xl font-extrabold tracking-tight whitespace-nowrap ${
-                    isDarkMode ? "text-white" : "text-slate-900"
-                  }`}>
-                    Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>Portal</span>
-                  </span>
-                </div>
+                <span className={`text-xl font-extrabold tracking-tight whitespace-nowrap ${
+                  isDarkMode ? "text-white" : "text-slate-900"
+                }`}>
+                  Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>Portal</span>
+                </span>
               </button>
             </div>
 
-            {/* Center: Sliding pill nav (desktop only) */}
-            <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-              <AppNavHeader
-                currentView={currentView}
-                isDarkMode={isDarkMode}
-                isLoggedIn={isLoggedIn}
-                goToView={goToView}
-                showMajorAccessNotification={showMajorAccessNotification}
-                setShowSignInModal={setShowSignInModal}
-              />
-            </nav>
+            {/* Center: Logo (mobile, absolute center) + Pill nav (desktop, absolute center) */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+              {/* Mobile: centered logo */}
+              <button
+                onClick={() => goToView("home")}
+                className="flex lg:hidden items-center gap-2.5 focus:outline-none"
+                title="Go to Home"
+              >
+                <img
+                  src="/Edu_51_Logo.png"
+                  alt="Edu51Portal Logo"
+                  className="h-10 w-10 object-contain drop-shadow-sm"
+                  width="40"
+                  height="40"
+                  decoding="async"
+                />
+                <span className={`text-lg font-extrabold tracking-tight whitespace-nowrap ${
+                  isDarkMode ? "text-white" : "text-slate-900"
+                }`}>
+                  Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>Portal</span>
+                </span>
+              </button>
+
+              {/* Desktop: sliding pill nav */}
+              <nav className="hidden lg:flex">
+                <AppNavHeader
+                  currentView={currentView}
+                  isDarkMode={isDarkMode}
+                  isLoggedIn={isLoggedIn}
+                  goToView={goToView}
+                  showMajorAccessNotification={showMajorAccessNotification}
+                  setShowSignInModal={setShowSignInModal}
+                />
+              </nav>
+            </div>
 
             {/* Right: Auth buttons / User dropdown */}
             <div className="flex items-center gap-2 justify-end flex-shrink-0">
               {!isLoggedIn && (
-                <div className="flex items-center gap-2">
+                <>
+                  {/* Desktop: full Login + Create Account buttons */}
+                  <div className="hidden lg:flex items-center gap-2">
+                    <button
+                      onClick={() => setShowSignInModal(true)}
+                      className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                        isDarkMode
+                          ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                      }`}
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingProfile(false);
+                        setShowSignUpModal(true);
+                      }}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/25 transition-all duration-150"
+                    >
+                      Create Account
+                    </button>
+                  </div>
+
+                  {/* Mobile: single sign-in icon button */}
                   <button
                     onClick={() => setShowSignInModal(true)}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                    className={`lg:hidden flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 ${
                       isDarkMode
-                        ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                        ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
                     }`}
+                    title="Sign In"
                   >
-                    Login
+                    <LogIn className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingProfile(false);
-                      setShowSignUpModal(true);
-                    }}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/25 transition-all duration-150 hover:shadow-blue-500/40 hover:scale-[1.02]"
-                  >
-                    Create Account
-                  </button>
-                </div>
+                </>
               )}
 
               {/* User Dropdown Menu - visible when logged in */}
@@ -3388,77 +3426,6 @@ For any queries, contact your course instructors or the department.`,
               </div>
             </div>
 
-            {/* User Profile Section - Only show when logged in */}
-            {isLoggedIn && (
-              <div
-                className={`p-4 sm:p-6 border-b transition-colors duration-300 ${
-                  isDarkMode
-                    ? "border-gray-700/30 bg-gray-900/40"
-                    : "border-gray-200/50 bg-white/60"
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shadow-lg border-2 border-indigo-500/50 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    {userProfile.profilePic || userProfile.avatar_url ? (
-                      <img
-                        src={userProfile.profilePic || userProfile.avatar_url}
-                        alt="Profile"
-                        className="w-full h-full object-cover block"
-                        width="64"
-                        height="64"
-                        decoding="async"
-                      />
-                    ) : (
-                      <svg
-                        className="w-8 h-8 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <p
-                      className={`font-bold text-base sm:text-lg leading-tight ${isDarkMode ? "text-white" : "text-gray-900"}`}
-                    >
-                      {userProfile.name}
-                    </p>
-                    <p
-                      className={`text-xs sm:text-sm mt-1 font-medium ${isDarkMode ? "text-indigo-400" : "text-indigo-600"}`}
-                    >
-                      ID: {extractBubtId(userProfile.bubtEmail)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => {
-                      goToView("profile");
-                      setShowMobileMenu(false);
-                    }}
-                    className="flex-1 px-4 py-2 rounded-lg font-medium transition-all bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    My Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingProfile(true);
-                      setShowSignUpModal(true);
-                      setShowMobileMenu(false);
-                    }}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                      isDarkMode
-                        ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                        : "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                    }`}
-                    title="Account Settings"
-                  >
-                    Account Settings
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
