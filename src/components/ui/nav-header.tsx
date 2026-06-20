@@ -1,0 +1,186 @@
+import React, { useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Trophy, Clock, Users, UserPlus, GraduationCap, BookOpen } from "lucide-react";
+
+interface NavTab {
+  label: string;
+  view: string;
+  icon: React.ReactNode;
+  badge?: { text: string; className: string };
+  onClick: () => void;
+  isActive: boolean;
+}
+
+interface SlideNavProps {
+  tabs: NavTab[];
+  isDarkMode: boolean;
+}
+
+function SlideNav({ tabs, isDarkMode }: SlideNavProps) {
+  const [position, setPosition] = useState({ left: 0, width: 0, opacity: 0 });
+
+  return (
+    <ul
+      className={`relative flex items-center rounded-full p-1 border transition-colors duration-300 ${
+        isDarkMode
+          ? "bg-slate-800/60 border-slate-700/50"
+          : "bg-slate-100/80 border-slate-200/60"
+      }`}
+      onMouseLeave={() => setPosition((pv) => ({ ...pv, opacity: 0 }))}
+    >
+      {tabs.map((tab) => (
+        <NavTab
+          key={tab.view}
+          tab={tab}
+          setPosition={setPosition}
+          isDarkMode={isDarkMode}
+        />
+      ))}
+      <Cursor position={position} isDarkMode={isDarkMode} />
+    </ul>
+  );
+}
+
+const NavTab = ({
+  tab,
+  setPosition,
+  isDarkMode,
+}: {
+  tab: NavTab;
+  setPosition: React.Dispatch<React.SetStateAction<{ left: number; width: number; opacity: number }>>;
+  isDarkMode: boolean;
+}) => {
+  const ref = useRef<HTMLLIElement>(null);
+
+  return (
+    <li
+      ref={ref}
+      onClick={tab.onClick}
+      onMouseEnter={() => {
+        if (!ref.current) return;
+        const { width } = ref.current.getBoundingClientRect();
+        setPosition({ width, opacity: 1, left: ref.current.offsetLeft });
+      }}
+      className={`relative z-10 flex items-center gap-1.5 cursor-pointer select-none px-3 py-1.5 text-xs font-semibold rounded-full transition-colors duration-150 whitespace-nowrap ${
+        tab.isActive
+          ? isDarkMode ? "text-white" : "text-slate-900"
+          : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+      }`}
+    >
+      {tab.icon}
+      <span>{tab.label}</span>
+      {tab.badge && (
+        <span className={`px-1 rounded text-[8px] font-extrabold leading-4 ${tab.badge.className}`}>
+          {tab.badge.text}
+        </span>
+      )}
+      {/* Active underline indicator */}
+      {tab.isActive && (
+        <motion.span
+          layoutId="active-pill"
+          className={`absolute inset-0 rounded-full -z-10 ${
+            isDarkMode ? "bg-slate-700" : "bg-white shadow-sm"
+          }`}
+        />
+      )}
+    </li>
+  );
+};
+
+const Cursor = ({
+  position,
+  isDarkMode,
+}: {
+  position: { left: number; width: number; opacity: number };
+  isDarkMode: boolean;
+}) => (
+  <motion.li
+    animate={position}
+    transition={{ type: "spring", stiffness: 400, damping: 35 }}
+    className={`absolute z-0 h-8 rounded-full pointer-events-none ${
+      isDarkMode ? "bg-slate-600/70" : "bg-white shadow"
+    }`}
+  />
+);
+
+// The actual component used in App.tsx
+interface AppNavHeaderProps {
+  currentView: string;
+  isDarkMode: boolean;
+  isLoggedIn: boolean;
+  goToView: (view: string) => void;
+  showMajorAccessNotification: (type: string, msg: string) => void;
+  setShowSignInModal: (v: boolean) => void;
+}
+
+export function AppNavHeader({
+  currentView,
+  isDarkMode,
+  isLoggedIn,
+  goToView,
+  showMajorAccessNotification,
+  setShowSignInModal,
+}: AppNavHeaderProps) {
+  const requireLogin = (view: string, label: string) => {
+    if (!isLoggedIn) {
+      showMajorAccessNotification("error", `Please sign in to access ${label}`);
+      setShowSignInModal(true);
+      return;
+    }
+    goToView(view);
+  };
+
+  const tabs: NavTab[] = [
+    {
+      label: "World Cup '26",
+      view: "wc26",
+      icon: <Trophy className="w-3.5 h-3.5 flex-shrink-0" />,
+      badge: { text: "LIVE", className: "bg-green-500 text-white animate-pulse" },
+      isActive: currentView === "wc26",
+      onClick: () => requireLogin("wc26", "the World Cup 2026 event"),
+    },
+    {
+      label: "Semester",
+      view: "semester",
+      icon: <Clock className="w-3.5 h-3.5 flex-shrink-0" />,
+      isActive: currentView === "semester",
+      onClick: () => requireLogin("semester", "Semester Tracker"),
+    },
+    {
+      label: "Teams",
+      view: "teams",
+      icon: <Users className="w-3.5 h-3.5 flex-shrink-0" />,
+      badge: { text: "NEW", className: "bg-emerald-500 text-white" },
+      isActive: currentView === "teams" || currentView === "team",
+      onClick: () => requireLogin("teams", "Team Building"),
+    },
+    {
+      label: "Network",
+      view: "network",
+      icon: <UserPlus className="w-3.5 h-3.5 flex-shrink-0" />,
+      badge: { text: "NEW", className: "bg-sky-500 text-white" },
+      isActive: currentView === "network",
+      onClick: () => requireLogin("network", "My Network"),
+    },
+    {
+      label: "Alumni",
+      view: "alumni",
+      icon: <GraduationCap className="w-3.5 h-3.5 flex-shrink-0" />,
+      badge: {
+        text: "SOON",
+        className: isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600",
+      },
+      isActive: currentView === "alumni",
+      onClick: () => goToView("alumni"),
+    },
+    {
+      label: "Routine",
+      view: "custom",
+      icon: <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />,
+      isActive: currentView === "custom",
+      onClick: () => requireLogin("custom", "Custom Routine"),
+    },
+  ];
+
+  return <SlideNav tabs={tabs} isDarkMode={isDarkMode} />;
+}

@@ -28,6 +28,7 @@ import {
   EmailNotification,
 } from "./lib/emailNotifications";
 import { SignUpModal } from "./components/SignUpModal";
+import { AppNavHeader } from "./components/ui/nav-header";
 import { ResetPasswordModal } from "./components/ResetPasswordModal";
 import { SetNewPasswordModal } from "./components/SetNewPasswordModal";
 import { ChangeEmailModal } from "./components/ChangeEmailModal";
@@ -3102,120 +3103,16 @@ For any queries, contact your course instructors or the department.`,
               </button>
             </div>
 
-            {/* Desktop Top Navigation Bar (Centered) */}
-            <nav className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2 items-center gap-1.5 xl:gap-2.5">
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    showMajorAccessNotification("error", "Please sign in to join the World Cup 2026 event");
-                    setShowSignInModal(true);
-                    return;
-                  }
-                  goToView("wc26");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "wc26"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>World Cup '26</span>
-                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-green-500 text-white animate-pulse">LIVE</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    showMajorAccessNotification("error", "Please sign in to access Semester Tracker");
-                    setShowSignInModal(true);
-                    return;
-                  }
-                  goToView("semester");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "semester"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>Semester Tracker</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    showMajorAccessNotification("error", "Please sign in to access Team Building");
-                    setShowSignInModal(true);
-                    return;
-                  }
-                  goToView("teams");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "teams" || currentView === "team"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Team Building</span>
-                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-emerald-500 text-white">NEW</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    showMajorAccessNotification("error", "Please sign in to access My Network");
-                    setShowSignInModal(true);
-                    return;
-                  }
-                  goToView("network");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "network"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>My Network</span>
-                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-sky-500 text-white">NEW</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  goToView("alumni");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "alumni"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Alumni Hub</span>
-                <span className={`px-1 py-0.2 rounded text-[8px] font-extrabold ${isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-650"}`}>SOON</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    showMajorAccessNotification("error", "Please sign in to access Custom Routine");
-                    setShowSignInModal(true);
-                    return;
-                  }
-                  goToView("custom");
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
-                  currentView === "custom"
-                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
-                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Custom Routine</span>
-              </button>
+            {/* Desktop Top Navigation Bar (Centered) — sliding highlight pill nav */}
+            <nav className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
+              <AppNavHeader
+                currentView={currentView}
+                isDarkMode={isDarkMode}
+                isLoggedIn={isLoggedIn}
+                goToView={goToView}
+                showMajorAccessNotification={showMajorAccessNotification}
+                setShowSignInModal={setShowSignInModal}
+              />
             </nav>
 
             {/* Right Side: Theme Toggle & Notification Bell & Auth Actions */}
