@@ -3040,71 +3040,66 @@ For any queries, contact your course instructors or the department.`,
         document.body
       )}
 
-      {/* Enhanced Mobile-First Responsive Header */}
+      {/* Header */}
       <header
-        className={`fixed top-0 left-0 right-0 w-full shadow-2xl border-b z-50 transition-colors duration-300 backdrop-blur-md ${
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 border-b backdrop-blur-xl ${
           isDarkMode
-            ? "bg-gray-900/95 border-gray-700/40 text-white"
-            : "bg-white/95 border-gray-200 text-gray-900"
+            ? "bg-slate-900/90 border-slate-700/50 text-white shadow-xl shadow-black/20"
+            : "bg-white/90 border-slate-200/80 text-gray-900 shadow-lg shadow-black/5"
         }`}
       >
-        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 relative">
-          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 gap-2 sm:gap-3 md:gap-4">
-            {/* Left side: Mobile Toggle + Logo */}
-            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-              {/* Menu Button (Mobile-only) */}
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative">
+          <div className="flex items-center justify-between h-16 lg:h-[68px] gap-4">
+
+            {/* Left: Hamburger (mobile) + Logo */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Mobile menu toggle */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className={`p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 lg:hidden ${
-                  isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
+                className={`p-2 rounded-xl transition-all duration-200 lg:hidden ${
+                  isDarkMode
+                    ? "hover:bg-slate-800 text-slate-300"
+                    : "hover:bg-slate-100 text-slate-600"
                 }`}
                 title="Menu"
               >
-                <svg
-                  className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h7"
-                  />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
               </button>
 
-              {/* Logo and Brand Title */}
+              {/* Logo */}
               <button
                 onClick={() => goToView("home")}
-                className="flex items-center space-x-2 sm:space-x-3 focus:outline-none"
+                className="flex items-center gap-3 focus:outline-none group"
                 title="Go to Home"
               >
-                <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
+                <div className={`flex-shrink-0 h-9 w-9 rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
+                  isDarkMode
+                    ? "ring-slate-700 group-hover:ring-blue-500/50"
+                    : "ring-slate-200 group-hover:ring-blue-400/50"
+                }`}>
                   <img
                     src="/Edu_51_Logo.png"
                     alt="Edu51Portal Logo"
-                    className="h-full w-full object-contain block"
-                    width="48"
-                    height="48"
+                    className="h-full w-full object-contain"
+                    width="36"
+                    height="36"
                     decoding="async"
                   />
                 </div>
-                <div className="min-w-0">
-                  <h1
-                    className={`text-base sm:text-lg md:text-xl font-bold no-select whitespace-nowrap ${
-                      isDarkMode ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    Edu<span className="text-[#ef4444]">51</span>Portal
-                  </h1>
+                <div className="hidden sm:block">
+                  <span className={`text-lg font-extrabold tracking-tight whitespace-nowrap ${
+                    isDarkMode ? "text-white" : "text-slate-900"
+                  }`}>
+                    Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-700"}>Portal</span>
+                  </span>
                 </div>
               </button>
             </div>
 
-            {/* Desktop Top Navigation Bar (Centered) — sliding highlight pill nav */}
-            <nav className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
+            {/* Center: Sliding pill nav (desktop only) */}
+            <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
               <AppNavHeader
                 currentView={currentView}
                 isDarkMode={isDarkMode}
@@ -3115,16 +3110,16 @@ For any queries, contact your course instructors or the department.`,
               />
             </nav>
 
-            {/* Right Side: Theme Toggle & Notification Bell & Auth Actions */}
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-end flex-shrink-0">
+            {/* Right: Auth buttons / User dropdown */}
+            <div className="flex items-center gap-2 justify-end flex-shrink-0">
               {!isLoggedIn && (
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowSignInModal(true)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                       isDarkMode
                         ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
-                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
                     }`}
                   >
                     Login
@@ -3134,7 +3129,7 @@ For any queries, contact your course instructors or the department.`,
                       setIsEditingProfile(false);
                       setShowSignUpModal(true);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-150"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/25 transition-all duration-150 hover:shadow-blue-500/40 hover:scale-[1.02]"
                   >
                     Create Account
                   </button>
