@@ -21,10 +21,10 @@ function SlideNav({ tabs, isDarkMode }: SlideNavProps) {
 
   return (
     <ul
-      className={`relative flex items-center rounded-2xl p-1.5 gap-0.5 border transition-colors duration-300 ${
+      className={`relative flex items-center rounded-2xl p-2 gap-1 border transition-colors duration-300 ${
         isDarkMode
-          ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/30"
-          : "bg-white border-slate-200 shadow-md shadow-black/8"
+          ? "bg-slate-800/90 border-slate-700 shadow-lg shadow-black/30"
+          : "bg-white border-slate-200 shadow-lg shadow-black/10"
       }`}
       onMouseLeave={() => setPosition((pv) => ({ ...pv, opacity: 0 }))}
     >
@@ -61,7 +61,7 @@ const NavTab = ({
         const { width } = ref.current.getBoundingClientRect();
         setPosition({ width, opacity: 1, left: ref.current.offsetLeft });
       }}
-      className={`relative z-10 flex items-center gap-2 cursor-pointer select-none px-4 py-2 text-sm font-semibold rounded-xl transition-colors duration-150 whitespace-nowrap ${
+      className={`relative z-10 flex items-center gap-2 cursor-pointer select-none px-5 py-2.5 text-sm font-semibold rounded-xl transition-colors duration-150 whitespace-nowrap ${
         tab.isActive
           ? isDarkMode ? "text-white" : "text-slate-900"
           : isDarkMode
@@ -103,7 +103,7 @@ const Cursor = ({
   <motion.li
     animate={position}
     transition={{ type: "spring", stiffness: 350, damping: 30 }}
-    className={`absolute z-0 h-9 rounded-xl pointer-events-none ${
+    className={`absolute z-0 h-10 rounded-xl pointer-events-none ${
       isDarkMode ? "bg-slate-700/60" : "bg-white/70 shadow-sm"
     }`}
   />
@@ -140,7 +140,7 @@ export function AppNavHeader({
     {
       label: "World Cup '26",
       view: "wc26",
-      icon: <Trophy className="w-4 h-4" />,
+      icon: <Trophy className="w-5 h-5" />,
       badge: { text: "LIVE", className: "bg-green-500 text-white animate-pulse" },
       isActive: currentView === "wc26",
       onClick: () => requireLogin("wc26", "the World Cup 2026 event"),
@@ -148,14 +148,14 @@ export function AppNavHeader({
     {
       label: "Semester",
       view: "semester",
-      icon: <Clock className="w-4 h-4" />,
+      icon: <Clock className="w-5 h-5" />,
       isActive: currentView === "semester",
       onClick: () => requireLogin("semester", "Semester Tracker"),
     },
     {
       label: "Teams",
       view: "teams",
-      icon: <Users className="w-4 h-4" />,
+      icon: <Users className="w-5 h-5" />,
       badge: { text: "NEW", className: "bg-emerald-500 text-white" },
       isActive: currentView === "teams" || currentView === "team",
       onClick: () => requireLogin("teams", "Team Building"),
@@ -163,7 +163,7 @@ export function AppNavHeader({
     {
       label: "Network",
       view: "network",
-      icon: <UserPlus className="w-4 h-4" />,
+      icon: <UserPlus className="w-5 h-5" />,
       badge: { text: "NEW", className: "bg-sky-500 text-white" },
       isActive: currentView === "network",
       onClick: () => requireLogin("network", "My Network"),
@@ -171,7 +171,7 @@ export function AppNavHeader({
     {
       label: "Alumni",
       view: "alumni",
-      icon: <GraduationCap className="w-4 h-4" />,
+      icon: <GraduationCap className="w-5 h-5" />,
       badge: {
         text: "SOON",
         className: isDarkMode ? "bg-slate-600 text-slate-300" : "bg-slate-200 text-slate-600",
@@ -182,7 +182,7 @@ export function AppNavHeader({
     {
       label: "Routine",
       view: "custom",
-      icon: <BookOpen className="w-4 h-4" />,
+      icon: <BookOpen className="w-5 h-5" />,
       isActive: currentView === "custom",
       onClick: () => requireLogin("custom", "Custom Routine"),
     },

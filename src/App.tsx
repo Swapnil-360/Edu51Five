@@ -3042,14 +3042,12 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Header */}
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 border-b ${
-          isDarkMode
-            ? "bg-slate-900 border-slate-700/60 text-white shadow-xl shadow-black/30"
-            : "bg-slate-50 border-slate-200 text-gray-900 shadow-md shadow-black/8"
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 ${
+          isDarkMode ? "text-white" : "text-gray-900"
         }`}
       >
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative">
-          <div className="flex items-center justify-between h-16 lg:h-[68px] gap-4">
+          <div className="flex items-center justify-between h-[72px] lg:h-20 gap-4">
 
             {/* Left: Hamburger (mobile) + Logo */}
             <div className="flex items-center gap-3 flex-shrink-0">
@@ -3058,41 +3056,35 @@ For any queries, contact your course instructors or the department.`,
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className={`p-2 rounded-xl transition-all duration-200 lg:hidden ${
                   isDarkMode
-                    ? "hover:bg-slate-800 text-slate-300"
-                    : "hover:bg-slate-100 text-slate-600"
+                    ? "hover:bg-white/10 text-slate-300"
+                    : "hover:bg-black/5 text-slate-600"
                 }`}
                 title="Menu"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
               </button>
 
-              {/* Logo */}
+              {/* Logo — no clipping wrapper */}
               <button
                 onClick={() => goToView("home")}
                 className="flex items-center gap-3 focus:outline-none group"
                 title="Go to Home"
               >
-                <div className={`flex-shrink-0 h-9 w-9 rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
-                  isDarkMode
-                    ? "ring-slate-600 group-hover:ring-blue-500/60"
-                    : "ring-slate-300 group-hover:ring-blue-500/50"
-                }`}>
-                  <img
-                    src="/Edu_51_Logo.png"
-                    alt="Edu51Portal Logo"
-                    className="h-full w-full object-contain"
-                    width="36"
-                    height="36"
-                    decoding="async"
-                  />
-                </div>
+                <img
+                  src="/Edu_51_Logo.png"
+                  alt="Edu51Portal Logo"
+                  className="h-11 w-11 object-contain flex-shrink-0 drop-shadow-sm"
+                  width="44"
+                  height="44"
+                  decoding="async"
+                />
                 <div className="hidden sm:block">
-                  <span className={`text-lg font-extrabold tracking-tight whitespace-nowrap ${
+                  <span className={`text-xl font-extrabold tracking-tight whitespace-nowrap ${
                     isDarkMode ? "text-white" : "text-slate-900"
                   }`}>
-                    Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-700"}>Portal</span>
+                    Edu<span className="text-red-500">51</span><span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>Portal</span>
                   </span>
                 </div>
               </button>
