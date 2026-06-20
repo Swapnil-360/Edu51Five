@@ -7776,90 +7776,106 @@ For any queries, contact your course instructors or the department.`,
               </div>
             )}
 
-            {/* Enhanced PDF Viewer */}
+            {/* PDF Viewer */}
             <PDFViewer
               fileUrl={currentFileUrl}
               fileName={currentFileName}
               isOpen={showFileViewer}
               onClose={closeFileViewer}
+              isDarkMode={isDarkMode}
             />
 
             {/* Material Viewer Modal - Enhanced with Fullscreen, Zoom, Navigation */}
             {showMaterialViewer && selectedMaterial && (
               <div
-                className={`fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center ${isFullscreen ? "p-0" : "p-2 sm:p-3 md:p-4"}`}
+                onClick={(e) => { if (!isFullscreen && e.target === e.currentTarget) closeMaterialViewer(); }}
+                className={`fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md ${isFullscreen ? "p-0" : "p-2 sm:p-4"}`}
               >
                 <div
-                  className={`shadow-2xl flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-slate-900 overflow-hidden ${
+                  className={`flex flex-col overflow-hidden transition-all duration-200 ${
                     isFullscreen
-                      ? "w-full h-full max-w-none rounded-none border-0"
-                      : "w-[98vw] sm:w-[94vw] md:w-[90vw] lg:w-[85vw] xl:w-full xl:max-w-6xl h-[92vh] sm:h-[92vh] md:h-[92vh] lg:h-[90vh] rounded-xl lg:rounded-2xl border border-gray-700/50"
+                      ? "w-full h-full rounded-none border-0"
+                      : `w-full sm:w-[92vw] md:w-[88vw] lg:max-w-6xl h-[calc(100dvh-1rem)] sm:h-[90dvh] rounded-2xl border shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_32px_64px_rgba(0,0,0,0.7)] ${isDarkMode ? "bg-slate-900 border-slate-700/60" : "bg-white border-slate-200"}`
                   }`}
+                  style={{ animation: 'pdf-scale-in 0.2s cubic-bezier(0.22,1,0.36,1) both' }}
                 >
-                  {/* Modal Header with Controls */}
-                  <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-700/50 p-1 sm:p-1.5 md:p-2 sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 z-10 rounded-t-lg md:rounded-t-2xl">
-                    <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-1 min-w-0 overflow-hidden">
-                      <div className="flex-shrink-0 p-1 sm:p-1.5 rounded-md bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-                        <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4">
-                          {getTypeIcon(selectedMaterial.type)}
-                        </div>
+                  {/* Top accent stripe */}
+                  <div className="flex-shrink-0 h-[3px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600" />
+
+                  {/* ── Header ─────────────────────────────── */}
+                  <div className={`flex-shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b ${isDarkMode ? "bg-slate-800/80 border-slate-700/60" : "bg-slate-50 border-slate-200"}`}>
+                    {/* Left: icon + meta */}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-sm ${
+                        selectedMaterial.type === "video"
+                          ? "bg-gradient-to-br from-red-500 to-red-600"
+                          : selectedMaterial.type === "image"
+                          ? "bg-gradient-to-br from-purple-500 to-purple-600"
+                          : selectedMaterial.type === "slides"
+                          ? "bg-gradient-to-br from-amber-500 to-amber-600"
+                          : "bg-gradient-to-br from-blue-500 to-blue-600"
+                      } text-white`}>
+                        <div className="w-4 h-4">{getTypeIcon(selectedMaterial.type)}</div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-xs sm:text-sm md:text-base font-bold text-gray-100 leading-tight line-clamp-2 break-words">
+                        <h2 className={`text-sm sm:text-base font-semibold leading-tight truncate ${isDarkMode ? "text-white" : "text-slate-900"}`}>
                           {selectedMaterial.title}
                         </h2>
-                        <p className="text-[9px] sm:text-xs text-gray-400 hidden md:block leading-tight line-clamp-2 break-words">
-                          {selectedMaterial.description}
-                        </p>
+                        {selectedMaterial.size && (
+                          <p className={`text-xs mt-0.5 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            {selectedMaterial.size}
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    {/* Control Buttons */}
-                    <div className="flex items-center gap-0.5 sm:gap-1 ml-1 sm:ml-2 flex-shrink-0">
-                      {/* Fullscreen Toggle */}
+                    {/* Right: controls */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                      {/* Open in tab — sm+ */}
+                      {selectedMaterial.file_url && (
+                        <a
+                          href={selectedMaterial.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm"
+                          title="Open in browser"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Open
+                        </a>
+                      )}
+                      {/* Fullscreen */}
                       <button
                         onClick={toggleFullscreen}
-                        className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                        title={
-                          isFullscreen
-                            ? "Exit Fullscreen (F)"
-                            : "Fullscreen (F)"
-                        }
+                        title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                        className={`p-1.5 sm:p-2 rounded-lg border transition-colors ${isDarkMode ? "border-slate-700 bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-600" : "border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
                       >
-                        {isFullscreen ? (
-                          <Minimize className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                        ) : (
-                          <Maximize className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                        )}
+                        {isFullscreen
+                          ? <Minimize className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          : <Maximize className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                       </button>
-
-                      {/* Close Button */}
+                      {/* Close */}
                       <button
                         onClick={closeMaterialViewer}
-                        className="p-1 sm:p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-red-700 rounded transition-colors"
-                        title="Close (ESC)"
+                        title="Close"
+                        className={`p-1.5 sm:p-2 rounded-lg border transition-colors ${isDarkMode ? "border-slate-700 bg-slate-700/50 text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30" : "border-slate-200 bg-white text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200"}`}
                       >
-                        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Modal Body - Content Display with Loading */}
-                  <div className="flex-1 overflow-hidden min-h-0 flex flex-col relative">
-                    {/* Loading Spinner Overlay with Reserved Space */}
+                  {/* ── Body ───────────────────────────────── */}
+                  <div className={`flex-1 overflow-hidden min-h-0 flex flex-col relative ${isDarkMode ? "bg-slate-950" : "bg-slate-100"}`}>
+                    {/* Loading overlay */}
                     {isViewerLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-950/80 z-20">
-                        <div className="flex flex-col items-center gap-3">
-                          <Loader className="h-10 w-10 text-blue-500 animate-spin" />
-                          <p className="text-gray-300 text-sm">
-                            Loading content...
-                          </p>
-                        </div>
+                      <div className={`absolute inset-0 flex flex-col items-center justify-center gap-3 z-20 ${isDarkMode ? "bg-slate-950/90" : "bg-white/90"}`}>
+                        <div className={`w-10 h-10 rounded-full border-[3px] animate-spin ${isDarkMode ? "border-slate-700 border-t-blue-400" : "border-slate-200 border-t-blue-500"}`} />
+                        <p className={`text-sm font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Loading…</p>
                       </div>
                     )}
-                    {/* Reserve space to prevent CLS */}
                     {isViewerLoading && !selectedMaterial.type && (
-                      <div className="w-full h-96 bg-gray-900/50" />
+                      <div className={`w-full h-96 ${isDarkMode ? "bg-slate-900" : "bg-slate-100"}`} />
                     )}
 
                     {/* Video Content */}
@@ -8071,62 +8087,49 @@ For any queries, contact your course instructors or the department.`,
                       )}
                   </div>
 
-                  {/* Compact Footer - stays visible in fullscreen & mobile */}
-                  <div
-                    className={`flex-shrink-0 border-t px-1.5 sm:px-2 py-1 sm:py-1.5 flex items-center gap-2 rounded-b-lg md:rounded-b-2xl transition-colors duration-300 ${
-                      isDarkMode
-                        ? "border-gray-700/50 bg-gray-900/95 backdrop-blur-sm"
-                        : "border-gray-200/50 bg-white/95 backdrop-blur-sm"
-                    }`}
-                  >
-                    {/* Left: File info (wrap on small) */}
-                    <div
-                      className={`flex items-center gap-1 text-[10px] sm:text-xs min-w-0 flex-1 transition-colors duration-300 ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      <span className="truncate">{selectedMaterial.title}</span>
-                      <span className="hidden xs:inline">•</span>
-                      <span className="truncate">{selectedMaterial.type}</span>
+                  {/* ── Footer ─────────────────────────────── */}
+                  <div className={`flex-shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 py-2 border-t ${isDarkMode ? "bg-slate-800/80 border-slate-700/60" : "bg-slate-50 border-slate-200"}`}>
+                    {/* Left: file meta */}
+                    <div className={`flex items-center gap-1.5 text-xs min-w-0 flex-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      <span className="truncate font-medium">{selectedMaterial.title}</span>
+                      <span className="opacity-40 flex-shrink-0">·</span>
+                      <span className="uppercase text-[10px] tracking-wide flex-shrink-0 font-semibold opacity-70">{selectedMaterial.type}</span>
                       {selectedMaterial.size && (
                         <>
-                          <span className="hidden sm:inline">•</span>
-                          <span className="hidden sm:inline truncate">
-                            {selectedMaterial.size}
-                          </span>
+                          <span className="opacity-40 flex-shrink-0 hidden sm:inline">·</span>
+                          <span className="hidden sm:inline flex-shrink-0">{selectedMaterial.size}</span>
                         </>
                       )}
                     </div>
-
-                    {/* Right: Action Buttons */}
-                    <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                    {/* Right: action icons */}
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
                       {selectedMaterial.file_url && (
                         <a
                           href={selectedMaterial.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-blue-400 rounded transition-all"
-                          title="Open in Google Drive"
+                          title="Open in browser"
+                          className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400 hover:bg-slate-700" : "text-slate-500 hover:text-blue-600 hover:bg-slate-200"}`}
                         >
-                          <ExternalLink className="h-4 w-4 sm:h-4 sm:w-4" />
+                          <ExternalLink className="h-4 w-4" />
                         </a>
                       )}
                       {selectedMaterial.file_url && (
                         <a
                           href={selectedMaterial.file_url}
                           download
-                          className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-teal-400 rounded transition-all"
                           title="Download"
+                          className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? "text-slate-400 hover:text-teal-400 hover:bg-slate-700" : "text-slate-500 hover:text-teal-600 hover:bg-slate-200"}`}
                         >
-                          <Download className="h-4 w-4 sm:h-4 sm:w-4" />
+                          <Download className="h-4 w-4" />
                         </a>
                       )}
                       <button
                         onClick={closeMaterialViewer}
-                        className="p-1.5 sm:p-2 hover:bg-gray-800 text-gray-400 hover:text-red-400 rounded transition-all"
-                        title="Close (ESC)"
+                        title="Close"
+                        className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? "text-slate-400 hover:text-red-400 hover:bg-slate-700" : "text-slate-500 hover:text-red-600 hover:bg-slate-200"}`}
                       >
-                        <X className="h-4 w-4 sm:h-4 sm:w-4" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                   </div>

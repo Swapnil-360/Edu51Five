@@ -1,562 +1,237 @@
-import React, { useState, useEffect } from 'react';
-import { X, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Maximize2, Minimize2, ExternalLink, FileText, AlertTriangle, RotateCcw } from 'lucide-react';
 import './PDFViewer.css';
 
 interface PDFViewerProps {
   fileUrl: string;
   fileName: string;
+  fileSize?: string;
   onClose: () => void;
   isOpen: boolean;
+  isDarkMode?: boolean;
 }
 
-// Utility to detect mobile
-const isMobileDevice = () => {
-  return /android|iPad|iPhone|iPod|blackberry|iemobile|opera mini/i.test(navigator.userAgent) || window.innerWidth <= 768 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-};
-
-// Calculate optimal dimensions based on screen size and aspect ratio
-const getOptimalDimensions = (isFullscreen: boolean, isMobile: boolean) => {
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-
-  if (isFullscreen) {
-    return {
-      width: '100vw',
-      height: '100vh',
-      maxWidth: '100vw',
-      maxHeight: '100vh',
-      minWidth: '100vw',
-      minHeight: '100vh',
-    };
-  }
-
-  if (isMobile) {
-    // Mobile: Use safe area and viewport calculations
-    const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0');
-    const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
-    const safeAreaLeft = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)') || '0');
-    const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
-
-    // Account for safe areas and notches
-    const availableWidth = screenWidth - safeAreaLeft - safeAreaRight;
-    const availableHeight = screenHeight - safeAreaTop - safeAreaBottom;
-
-    // Use 92% of available space for better centering
-    const optimalWidth = Math.min(availableWidth * 0.92, availableWidth - 32); // 32px padding
-    const optimalHeight = Math.min(availableHeight * 0.88, availableHeight - 120); // Account for header
-
-    return {
-      width: `${optimalWidth}px`,
-      height: `${optimalHeight}px`,
-      maxWidth: `${availableWidth * 0.95}px`,
-      maxHeight: `${availableHeight * 0.92}px`,
-      minWidth: `${Math.min(320, availableWidth * 0.9)}px`,
-      minHeight: `${Math.min(400, availableHeight * 0.7)}px`,
-    };
-  } else {
-    // Desktop: Optimize for productivity
-    const optimalWidth = Math.min(screenWidth * 0.8, 1000);
-    const optimalHeight = Math.min(screenHeight * 0.9, 800);
-    return {
-      width: `${optimalWidth}px`,
-      height: `${optimalHeight}px`,
-      maxWidth: '80vw',
-      maxHeight: '90vh',
-      minWidth: '600px',
-      minHeight: '500px',
-    };
-  }
-};
-
-const PDFViewer: React.FC<PDFViewerProps> = ({ fileUrl, fileName, onClose, isOpen }) => {
-  const [viewerKey, setViewerKey] = useState(0);
+const PDFViewer: React.FC<PDFViewerProps> = ({
+  fileUrl,
+  fileName,
+  fileSize,
+  onClose,
+  isOpen,
+  isDarkMode = false,
+}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [dimensions, setDimensions] = useState({
-    width: '800px',
-    height: '600px',
-    maxWidth: '80vw',
-    maxHeight: '90vh',
-    minWidth: '600px',
-    minHeight: '500px'
-  });
+  const [viewerKey, setViewerKey] = useState(0);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Update dimensions on resize or fullscreen change
-  useEffect(() => {
-    const updateDimensions = () => {
-      const mobile = isMobileDevice();
-      setIsMobile(mobile);
-      setDimensions(getOptimalDimensions(isFullscreen, mobile));
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    window.addEventListener('orientationchange', updateDimensions);
-    
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-      window.removeEventListener('orientationchange', updateDimensions);
-    };
-  }, [isFullscreen]);
-
-  // Body scroll lock and viewport positioning
-  useEffect(() => {
-    if (isOpen) {
-      // Get current scroll position before locking
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-
-      // Store original styles to restore later
-      const originalBodyStyle = {
-        overflow: document.body.style.overflow || '',
-        position: document.body.style.position || '',
-        top: document.body.style.top || '',
-        left: document.body.style.left || '',
-        right: document.body.style.right || '',
-        width: document.body.style.width || '',
-        height: document.body.style.height || '',
-        paddingRight: document.body.style.paddingRight || '',
-      };
-
-      const originalHtmlStyle = {
-        overflow: document.documentElement.style.overflow || '',
-      };
-
-      // Calculate scrollbar width to prevent layout shift
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-      // Lock body scroll and ensure modal is positioned relative to viewport
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = `-${scrollX}px`;
-      document.body.style.right = '0';
-      document.body.style.width = '100vw';
-      document.body.style.height = '100vh';
-
-      // Prevent layout shift on mobile by adding padding for scrollbar
-      if (scrollbarWidth > 0 && !isMobile) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      // Lock document overflow to prevent any scrolling
-      document.documentElement.style.overflow = 'hidden';
-
-      // Enhanced viewport meta tag handling for mobile
-      let viewportMeta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
-      const originalViewportContent = viewportMeta?.content || '';
-      if (viewportMeta && isMobile) {
-        viewportMeta.content = 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0';
-      }
-
-      return () => {
-        // Restore original body styles with proper cleanup
-        try {
-          Object.keys(originalBodyStyle).forEach(key => {
-            if (originalBodyStyle[key as keyof typeof originalBodyStyle]) {
-              document.body.style[key as any] = originalBodyStyle[key as keyof typeof originalBodyStyle];
-            } else {
-              document.body.style.removeProperty(key);
-            }
-          });
-
-          // Restore original html styles
-          if (originalHtmlStyle.overflow) {
-            document.documentElement.style.overflow = originalHtmlStyle.overflow;
-          } else {
-            document.documentElement.style.removeProperty('overflow');
-          }
-
-          // Restore viewport meta tag
-          if (viewportMeta && originalViewportContent) {
-            viewportMeta.content = originalViewportContent;
-          }
-
-          // Restore scroll position with smooth behavior
-          requestAnimationFrame(() => {
-            window.scrollTo({
-              left: scrollX,
-              top: scrollY,
-              behavior: 'instant'
-            });
-          });
-        } catch (error) {
-          console.warn('Error restoring scroll state:', error);
-          // Fallback restoration
-          document.body.style.overflow = '';
-          document.body.style.position = '';
-          document.documentElement.style.overflow = '';
-        }
-      };
-    }
-  }, [isOpen, isMobile]);
-
-  // Reset viewerKey and loading state on file change
+  // Reset state when a new file opens
   useEffect(() => {
     if (isOpen && fileUrl) {
-      setViewerKey(Date.now() + Math.random());
       setIsLoading(true);
       setError(false);
-      // Remove any lingering iframes (for mobile)
-      if (isMobile) {
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach(iframe => {
-          iframe.src = 'about:blank';
-          setTimeout(() => iframe.remove(), 100);
-        });
-      }
+      setViewerKey(k => k + 1);
     }
-  }, [fileUrl, isOpen, isMobile]);
+  }, [fileUrl, isOpen]);
 
-  // Enhanced touch gesture handling for mobile
+  // Reset fullscreen when closed
   useEffect(() => {
-    if (!isOpen || !isMobile) return;
+    if (!isOpen) setIsFullscreen(false);
+  }, [isOpen]);
 
-    let touchStartY = 0;
-    let touchStartX = 0;
-    let isTracking = false;
+  // Body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const prevTop = document.body.style.top;
 
-    const handleTouchStart = (e: Event) => {
-      const touchEvent = e as TouchEvent;
-      if (touchEvent.touches.length === 1) {
-        touchStartY = touchEvent.touches[0].clientY;
-        touchStartX = touchEvent.touches[0].clientX;
-        isTracking = true;
-      }
-    };
-
-    const handleTouchMove = (e: Event) => {
-      const touchEvent = e as TouchEvent;
-      if (!isTracking || touchEvent.touches.length !== 1) return;
-
-      const touchCurrentY = touchEvent.touches[0].clientY;
-      const touchCurrentX = touchEvent.touches[0].clientX;
-      const deltaY = touchCurrentY - touchStartY;
-      const deltaX = Math.abs(touchCurrentX - touchStartX);
-
-      // If horizontal movement is greater than vertical, allow default scrolling
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        return;
-      }
-
-      // Prevent pull-to-refresh and overscroll effects
-      if (Math.abs(deltaY) > 10) {
-        e.preventDefault();
-      }
-    };
-
-    const handleTouchEnd = () => {
-      isTracking = false;
-    };
-
-    // Add touch event listeners to modal overlay
-    const modalOverlay = document.querySelector('.pdf-modal-overlay');
-    if (modalOverlay) {
-      modalOverlay.addEventListener('touchstart', handleTouchStart, { passive: false });
-      modalOverlay.addEventListener('touchmove', handleTouchMove, { passive: false });
-      modalOverlay.addEventListener('touchend', handleTouchEnd, { passive: true });
-    }
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
 
     return () => {
-      if (modalOverlay) {
-        modalOverlay.removeEventListener('touchstart', handleTouchStart);
-        modalOverlay.removeEventListener('touchmove', handleTouchMove);
-        modalOverlay.removeEventListener('touchend', handleTouchEnd);
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.top = prevTop;
+      window.scrollTo({ top: scrollY, left: scrollX, behavior: 'instant' });
+    };
+  }, [isOpen]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isFullscreen) setIsFullscreen(false);
+        else onClose();
       }
     };
-  }, [isOpen, isMobile]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, isFullscreen, onClose]);
 
-  // Cleanup on close
-  useEffect(() => {
-    if (!isOpen) {
-      setViewerKey(0);
-      setIsLoading(true);
-      setError(false);
-      // Remove any lingering iframes
-      if (isMobile) {
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach(iframe => {
-          iframe.src = 'about:blank';
-          setTimeout(() => iframe.remove(), 100);
-        });
-      }
-    }
-  }, [isOpen, isMobile]);
+  const handleRetry = () => {
+    setError(false);
+    setIsLoading(true);
+    setViewerKey(k => k + 1);
+  };
+
+  // Backdrop click to close (only when not fullscreen)
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (!isFullscreen && e.target === overlayRef.current) onClose();
+  };
 
   if (!isOpen) return null;
 
+  const dk = isDarkMode;
+
   return (
     <div
-      className="pdf-modal-overlay"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 9999,
-        background: 'rgba(0, 0, 0, 0.95)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        // Prevent scrolling and ensure proper viewport
-        overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'touch',
-        // Hardware acceleration for smooth performance
-        transform: 'translateZ(0)',
-        willChange: 'transform',
-        // Ensure modal stays in viewport
-        contain: 'layout style paint',
-      }}
+      ref={overlayRef}
+      onClick={handleBackdropClick}
+      className={`pdf-overlay ${isFullscreen ? 'pdf-overlay--fullscreen' : ''}`}
     >
       <div
-        className="pdf-modal-content"
-        style={{
-          position: 'absolute',
-          top: isFullscreen ? 0 : '50%',
-          left: isFullscreen ? 0 : '50%',
-          transform: isFullscreen ? 'none' : 'translate(-50%, -50%)',
-          // Use calculated dimensions
-          width: isFullscreen ? '100vw' : dimensions.width,
-          height: isFullscreen ? '100vh' : dimensions.height,
-          maxWidth: isFullscreen ? '100vw' : dimensions.maxWidth,
-          maxHeight: isFullscreen ? '100vh' : dimensions.maxHeight,
-          minWidth: isFullscreen ? '100vw' : dimensions.minWidth,
-          minHeight: isFullscreen ? '100vh' : dimensions.minHeight,
-          // Visual styling
-          background: 'white',
-          borderRadius: isFullscreen ? '0px' : '16px',
-          boxShadow: isFullscreen
-            ? 'none'
-            : '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-          // Layout
-          display: 'flex',
-          flexDirection: 'column',
-          // Hardware acceleration
-          backfaceVisibility: 'hidden',
-          willChange: 'transform',
-          // Smooth transitions
-          transition: 'all 0.3s ease-out',
-        }}
+        className={`pdf-modal ${isFullscreen ? 'pdf-modal--fullscreen' : ''} pdf-modal--enter ${
+          dk ? 'pdf-modal--dark' : 'pdf-modal--light'
+        }`}
       >
-        {/* Professional Header with Enhanced Design */}
-        <div className={`flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b border-slate-200/60 ${
-          isFullscreen ? 'px-6 py-4' : 'px-5 py-4'
-        } ${!isFullscreen ? 'rounded-t-2xl' : ''}`}
-        style={{
-          background: isFullscreen 
-            ? 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)' 
-            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)',
-          borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        }}>
-          <div className="flex items-center space-x-4 min-w-0 flex-1">
-            {/* Enhanced PDF Icon */}
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-red-500/20">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-              </div>
+        {/* Top accent stripe */}
+        <div className="pdf-accent" />
+
+        {/* ── Header ────────────────────────────────────────── */}
+        <header className={`pdf-header ${dk ? 'pdf-header--dark' : 'pdf-header--light'}`}>
+          {/* Left: icon + meta */}
+          <div className="pdf-header__meta">
+            <div className={`pdf-header__icon ${dk ? 'pdf-header__icon--dark' : ''}`}>
+              <FileText size={18} strokeWidth={2} />
             </div>
-            {/* Enhanced Title Section */}
-            <div className="min-w-0 flex-1">
-              <h3 className={`font-bold text-slate-800 truncate leading-tight ${
-                isFullscreen ? 'text-xl' : 'text-lg sm:text-xl'
-              }`} style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+            <div className="pdf-header__text">
+              <span className={`pdf-header__name ${dk ? 'text-white' : 'text-slate-900'}`}>
                 {fileName}
-              </h3>
-              <div className="flex items-center space-x-2 mt-1">
-                <p className="text-sm text-slate-500 font-medium">
-                  {isFullscreen ? '🖥️ Fullscreen Mode' : '📱 Preview Mode'}
-                </p>
-                {!isFullscreen && (
-                  <span className="text-xs text-slate-400 hidden sm:inline">
-                    • Click maximize for fullscreen experience
-                  </span>
-                )}
-              </div>
+              </span>
+              {fileSize && (
+                <span className={`pdf-header__size ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {fileSize}
+                </span>
+              )}
             </div>
           </div>
-          
-          {/* Enhanced Control Buttons */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            {/* Fullscreen Toggle with Enhanced Design */}
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all duration-200 hover:shadow-md hover:scale-105"
-              title={isFullscreen ? "Exit fullscreen (ESC)" : "Enter fullscreen (F11)"}
-              style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-              }}
-            >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-            </button>
-            
-            {/* Enhanced Open in New Tab */}
+
+          {/* Right: controls */}
+          <div className="pdf-header__controls">
+            {/* Open in browser — hidden on xs, visible from sm */}
             <button
               onClick={() => window.open(fileUrl, '_blank')}
-              className="hidden sm:flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 hover:shadow-lg hover:scale-105"
-              title="Open in new browser tab"
-              style={{
-                boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.35)',
-              }}
+              title="Open in browser tab"
+              className={`pdf-btn pdf-btn--primary ${dk ? 'pdf-btn--primary-dark' : ''}`}
             >
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden md:inline">Open</span>
+              <ExternalLink size={15} strokeWidth={2.2} />
+              <span className="pdf-btn__label">Open</span>
             </button>
-            
-            {/* Enhanced Close Button */}
+
+            {/* Fullscreen toggle */}
+            <button
+              onClick={() => setIsFullscreen(f => !f)}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              className={`pdf-btn pdf-btn--icon ${dk ? 'pdf-btn--icon-dark' : 'pdf-btn--icon-light'}`}
+            >
+              {isFullscreen
+                ? <Minimize2 size={16} strokeWidth={2.2} />
+                : <Maximize2 size={16} strokeWidth={2.2} />}
+            </button>
+
+            {/* Close */}
             <button
               onClick={onClose}
-              className="p-3 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-md hover:scale-105"
-              title="Close (ESC)"
-              style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-              }}
+              title="Close"
+              className={`pdf-btn pdf-btn--close ${dk ? 'pdf-btn--close-dark' : 'pdf-btn--close-light'}`}
             >
-              <X className="w-5 h-5" />
+              <X size={16} strokeWidth={2.5} />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Enhanced Content Area with Premium Design */}
-        <div className={`flex-1 relative overflow-hidden ${
-          !isFullscreen ? 'rounded-b-2xl' : ''
-        }`}
-        style={{
-          background: isFullscreen 
-            ? 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)' 
-            : 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-        }}>
-          {/* Premium Loading State */}
-          {isLoading && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-20">
-              <div className="flex flex-col items-center space-y-6 p-8">
-                {/* Enhanced Loading Animation */}
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-slate-200 rounded-full animate-spin"></div>
-                  <div className="absolute inset-0 w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <div className="absolute inset-2 w-12 h-12 border-2 border-blue-300 border-b-transparent rounded-full animate-spin-reverse"></div>
-                </div>
-                {/* Enhanced Loading Text */}
-                <div className="text-center">
-                  <h4 className="text-xl font-bold text-slate-800 mb-2">Loading PDF Document</h4>
-                  <p className="text-sm text-slate-600 max-w-sm">
-                    Please wait while we prepare your document for optimal viewing experience
-                  </p>
-                  <div className="mt-3 flex items-center justify-center space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
+        {/* ── Body ──────────────────────────────────────────── */}
+        <div className={`pdf-body ${dk ? 'pdf-body--dark' : 'pdf-body--light'}`}>
+          {/* Loading overlay */}
+          {isLoading && !error && (
+            <div className={`pdf-loading ${dk ? 'pdf-loading--dark' : 'pdf-loading--light'}`}>
+              <div className="pdf-loading__spinner">
+                <div className={`pdf-loading__ring ${dk ? 'pdf-loading__ring--dark' : 'pdf-loading__ring--light'}`} />
               </div>
+              <p className={`pdf-loading__text ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+                Loading document…
+              </p>
             </div>
           )}
 
-          {/* Enhanced PDF Container with Perfect Fit */}
-          <div className="w-full h-full p-1" style={{
-            background: isFullscreen ? 'transparent' : 'linear-gradient(145deg, #f8fafc, #ffffff)',
-          }}>
-            <iframe
-              key={viewerKey}
-              src={fileUrl}
-              title={fileName}
-              className={`w-full h-full border-0 transition-all duration-300 ${
-                !isFullscreen ? 'rounded-xl shadow-inner' : ''
-              }`}
-              allow="autoplay; clipboard-read; clipboard-write; fullscreen"
-              loading="eager"
-              referrerPolicy="no-referrer-when-downgrade"
-              sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox allow-presentation"
-              onLoad={() => setIsLoading(false)}
-              onError={() => setError(true)}
-              style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                background: '#ffffff',
-                display: 'block',
-                borderRadius: isFullscreen ? '0px' : '12px',
-                boxShadow: isFullscreen
-                  ? 'none'
-                  : 'inset 0 2px 8px 0 rgba(0, 0, 0, 0.08), inset 0 1px 4px 0 rgba(0, 0, 0, 0.05)',
-                // Enhanced touch scrolling for mobile
-                WebkitOverflowScrolling: isMobile ? 'touch' : 'auto',
-                overscrollBehavior: isMobile ? 'contain' : 'auto',
-                // Prevent zoom on double tap
-                touchAction: isMobile ? 'manipulation' : 'auto',
-                // Hardware acceleration for smooth scrolling
-                transform: 'translateZ(0)',
-                willChange: 'transform',
-              }}
-            />
-          </div>
-
-          {/* Premium Error State with Enhanced Design */}
+          {/* Error overlay */}
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-30 p-8"
-              style={{
-                background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
-            >
-              <div className="text-center max-w-md">
-                {/* Enhanced Error Icon */}
-                <div className="w-20 h-20 mx-auto mb-6 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-100 to-red-200 rounded-full opacity-80"></div>
-                  <div className="relative w-full h-full bg-gradient-to-br from-red-50 to-red-100 rounded-full flex items-center justify-center shadow-lg ring-4 ring-red-100/50">
-                    <svg className="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                    </svg>
-                  </div>
-                </div>
-                
-                {/* Enhanced Error Content */}
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-slate-800 mb-3" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-                    Unable to Load PDF Document
-                  </h3>
-                  <p className="text-slate-600 leading-relaxed text-base">
-                    The document couldn't be loaded. This might be due to network issues, browser restrictions, or file access permissions.
-                  </p>
-                </div>
-                
-                {/* Enhanced Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => window.open(fileUrl, '_blank')}
-                    className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:scale-105"
-                    style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-                  >
-                    🔗 Open in New Tab
-                  </button>
-                  <button
-                    onClick={onClose}
-                    className="px-8 py-3.5 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-xl hover:from-slate-200 hover:to-slate-300 transition-all duration-200 font-semibold shadow-md hover:shadow-lg hover:scale-105 border border-slate-300"
-                    style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-                  >
-                    ✖️ Close
-                  </button>
-                </div>
-                
-                {/* Enhanced Help Text */}
-                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
-                  <p className="text-sm text-blue-700 leading-relaxed">
-                    💡 <strong>Tip:</strong> If the PDF still won't load, try opening it in a new tab or downloading it directly to your device.
-                  </p>
-                </div>
+            <div className={`pdf-error ${dk ? 'pdf-error--dark' : 'pdf-error--light'}`}>
+              <div className={`pdf-error__icon-wrap ${dk ? 'pdf-error__icon-wrap--dark' : 'pdf-error__icon-wrap--light'}`}>
+                <AlertTriangle size={28} strokeWidth={1.8} className={dk ? 'text-amber-400' : 'text-amber-500'} />
+              </div>
+              <h3 className={`pdf-error__title ${dk ? 'text-white' : 'text-slate-900'}`}>
+                Unable to load document
+              </h3>
+              <p className={`pdf-error__desc ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+                The file couldn't be displayed inline. Try opening it in a new tab.
+              </p>
+              <div className="pdf-error__actions">
+                <button
+                  onClick={() => window.open(fileUrl, '_blank')}
+                  className="pdf-btn pdf-btn--primary"
+                >
+                  <ExternalLink size={15} strokeWidth={2.2} />
+                  Open in browser
+                </button>
+                <button
+                  onClick={handleRetry}
+                  className={`pdf-btn pdf-btn--icon ${dk ? 'pdf-btn--icon-dark' : 'pdf-btn--icon-light'} gap-1.5`}
+                >
+                  <RotateCcw size={14} strokeWidth={2.2} />
+                  <span className="text-sm font-medium">Retry</span>
+                </button>
               </div>
             </div>
           )}
+
+          {/* iframe */}
+          <iframe
+            key={viewerKey}
+            src={fileUrl}
+            title={fileName}
+            className="pdf-iframe"
+            allow="fullscreen"
+            loading="eager"
+            referrerPolicy="no-referrer-when-downgrade"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox allow-presentation"
+            onLoad={() => setIsLoading(false)}
+            onError={() => { setIsLoading(false); setError(true); }}
+          />
         </div>
+
+        {/* ── Footer ────────────────────────────────────────── */}
+        <footer className={`pdf-footer ${dk ? 'pdf-footer--dark' : 'pdf-footer--light'}`}>
+          <span className={`pdf-footer__name ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+            {fileName}
+            {fileSize && <span className="pdf-footer__sep">·</span>}
+            {fileSize && <span>{fileSize}</span>}
+          </span>
+          <button
+            onClick={() => window.open(fileUrl, '_blank')}
+            className={`pdf-footer__open ${dk ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+          >
+            <ExternalLink size={12} strokeWidth={2.2} />
+            Open in browser
+          </button>
+        </footer>
       </div>
     </div>
   );

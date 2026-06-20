@@ -180,7 +180,7 @@ Collaborative Kanban board per team — third-party member contribution, with re
 | Semester tracker | `src/components/SemesterTracker.tsx` | — |
 | Custom routine | `src/components/Student/CustomRoutine.tsx` | — |
 | Exam materials dashboard | `src/components/Student/ExamMaterialsDashboard.tsx` | — |
-| PDF viewer | `src/components/PDFViewer.tsx` | — |
+| PDF viewer | `src/components/PDFViewer.tsx` + `PDFViewer.css` | Fullscreen-capable modal with dark/light mode, entry animation, loading/error states, responsive sizing via CSS (`dvh`, `min()`), no emojis — fully keyboard and touch accessible |
 | Search | `src/components/Search/` | — |
 
 ---
