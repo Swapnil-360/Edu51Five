@@ -801,7 +801,7 @@ html {
   gap: 1.5rem;
   min-width: 200%;
   /* Faster loop and guaranteed width so the ticker visibly scrolls */
-  animation: marquee 16s linear infinite;
+  animation: marquee 10s linear infinite;
 }
 
 /* Pause animation when user hovers for accessibility */

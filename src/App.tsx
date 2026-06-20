@@ -85,6 +85,9 @@ import {
   User,
   Settings,
   ArrowLeft,
+  AlertCircle,
+  CheckCircle,
+  Info,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
@@ -3005,36 +3008,35 @@ For any queries, contact your course instructors or the department.`,
       {majorAccessMessage && createPortal(
         <div className="fixed top-20 inset-x-0 z-[200] flex justify-center px-3 pointer-events-none animate-fade-in-down">
           <div
-            className={`pointer-events-auto w-full max-w-md rounded-lg shadow-2xl p-3 sm:p-4 border-2 ${
+            className={`pointer-events-auto w-full max-w-md rounded-xl shadow-2xl p-3 sm:p-4 border flex items-start gap-3 ${
               majorAccessMessage.type === "error"
-                ? "bg-red-50 border-red-500 text-red-900"
+                ? "bg-red-50 border-red-200"
                 : majorAccessMessage.type === "success"
-                  ? "bg-green-50 border-green-500 text-green-900"
-                  : "bg-blue-50 border-blue-500 text-blue-900"
+                  ? "bg-blue-50 border-blue-200"
+                  : "bg-slate-50 border-slate-200"
             }`}
           >
-            <div className="flex items-start gap-2 sm:gap-3">
-              <div
-                className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm ${
-                  majorAccessMessage.type === "error"
-                    ? "bg-red-100"
-                    : majorAccessMessage.type === "success"
-                      ? "bg-green-100"
-                      : "bg-blue-100"
-                }`}
-              >
-                {majorAccessMessage.type === "error" ? "✕" : majorAccessMessage.type === "success" ? "✓" : "i"}
-              </div>
-              <p className="flex-1 font-semibold text-xs sm:text-sm leading-snug break-words min-w-0">
+            {/* Icon — shape differentiates, not just color */}
+            {majorAccessMessage.type === "error" ? (
+              <AlertCircle className="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5" />
+            ) : majorAccessMessage.type === "success" ? (
+              <CheckCircle className="flex-shrink-0 w-5 h-5 text-blue-600 mt-0.5" />
+            ) : (
+              <Info className="flex-shrink-0 w-5 h-5 text-slate-500 mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${
+                majorAccessMessage.type === "error" ? "text-red-500" : majorAccessMessage.type === "success" ? "text-blue-500" : "text-slate-400"
+              }`}>
+                {majorAccessMessage.type === "error" ? "Error" : majorAccessMessage.type === "success" ? "Success" : "Notice"}
+              </p>
+              <p className="font-medium text-xs sm:text-sm leading-snug break-words text-slate-800">
                 {majorAccessMessage.message}
               </p>
-              <button
-                onClick={() => setMajorAccessMessage(null)}
-                className="flex-shrink-0 text-gray-500 hover:text-gray-700 mt-0.5"
-              >
-                <X className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
             </div>
+            <button onClick={() => setMajorAccessMessage(null)} className="flex-shrink-0 text-slate-400 hover:text-slate-600 mt-0.5">
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>,
         document.body
@@ -7084,91 +7086,62 @@ For any queries, contact your course instructors or the department.`,
             {/* Notice Modal */}
             {showNoticeModal && selectedNotice && (
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]"
+                className="fixed inset-0 bg-black/50 backdrop-blur-[3px] z-[110]"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="notice-modal-title"
+                onClick={(e) => { if (e.target === e.currentTarget) closeNoticeModal(); }}
               >
                 <div className="grid place-items-center h-dvh w-full px-4">
                   <div
-                    className={`relative z-[120] w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-300 ${
-                      isDarkMode ? "bg-gray-800" : "bg-[#E6F5FF]"
+                    className={`relative z-[120] w-full mx-auto max-w-[92vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[88dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden ${
+                      isDarkMode ? "bg-slate-900 border border-slate-800" : "bg-white border border-slate-200"
                     }`}
                   >
-                    <div
-                      className={`flex-shrink-0 p-3 sm:p-4 border-l-4 transition-colors duration-300 ${
-                        // In light mode, use muted-blue accents for the full modal header
-                        isDarkMode
-                          ? selectedNotice.type === "info"
-                            ? "border-blue-400 bg-blue-900/30"
-                            : selectedNotice.type === "warning"
-                              ? "border-yellow-400 bg-yellow-900/30"
-                              : selectedNotice.type === "success"
-                                ? "border-green-400 bg-green-900/30"
-                                : "border-red-400 bg-red-900/30"
-                          : "border-[#2B7CBF] bg-[#D1ECFF]"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
-                          <div
-                            className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg transition-colors duration-300 ${
-                              isDarkMode
-                                ? selectedNotice.type === "info"
-                                  ? "bg-blue-700/50"
-                                  : selectedNotice.type === "warning"
-                                    ? "bg-yellow-700/50"
-                                    : selectedNotice.type === "success"
-                                      ? "bg-green-700/50"
-                                      : "bg-red-700/50"
-                                : "bg-[#D1ECFF]"
-                            }`}
+                    {/* Thin top accent line based on notice type */}
+                    <div className={`h-1 flex-shrink-0 w-full ${
+                      selectedNotice.type === "warning" ? "bg-amber-400"
+                      : selectedNotice.type === "success" ? "bg-blue-500"
+                      : selectedNotice.type === "error" ? "bg-red-500"
+                      : "bg-blue-500"
+                    }`} />
+
+                    {/* Header */}
+                    <div className={`flex-shrink-0 px-5 py-4 border-b ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          {/* Meta row */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                              selectedNotice.type === "warning"
+                                ? isDarkMode ? "bg-amber-900/40 text-amber-400" : "bg-amber-100 text-amber-700"
+                                : isDarkMode ? "bg-blue-900/40 text-blue-400" : "bg-blue-100 text-blue-700"
+                            }`}>
+                              {selectedNotice.category || selectedNotice.type}
+                            </span>
+                            <span className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                              {new Date(selectedNotice.created_at).toLocaleDateString("en-BD", { year: "numeric", month: "short", day: "numeric" })}
+                            </span>
+                          </div>
+                          <h2
+                            id="notice-modal-title"
+                            className={`text-base sm:text-lg font-bold leading-snug ${isDarkMode ? "text-white" : "text-slate-900"}`}
                           >
-                            <Bell
-                              className={`h-4 w-4 sm:h-5 sm:w-5 ${isDarkMode ? (selectedNotice.type === "info" ? "text-blue-600" : selectedNotice.type === "warning" ? "text-yellow-600" : selectedNotice.type === "success" ? "text-green-600" : "text-red-600") : "text-[#2B7CBF]"}`}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h2
-                              id="notice-modal-title"
-                              className={`text-base sm:text-lg md:text-xl font-bold transition-colors duration-300 leading-tight ${
-                                isDarkMode ? "text-gray-100" : "text-gray-900"
-                              }`}
-                            >
-                              {selectedNotice.title}
-                            </h2>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${isDarkMode ? (selectedNotice.type === "info" ? "bg-blue-900/50 text-blue-300" : selectedNotice.type === "warning" ? "bg-yellow-900/50 text-yellow-300" : selectedNotice.type === "success" ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300") : "bg-[#D1ECFF] text-[#2B7CBF]"}`}
-                              >
-                                {selectedNotice.type.toUpperCase()}
-                              </span>
-                              <span
-                                className={`text-xs transition-colors duration-300 ${
-                                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                                }`}
-                              >
-                                {new Date(
-                                  selectedNotice.created_at,
-                                ).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
+                            {selectedNotice.title.replace(/^[^\w\s]+\s*/, "")}
+                          </h2>
                         </div>
                         <button
                           onClick={closeNoticeModal}
-                          className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 ${
-                            isDarkMode
-                              ? "hover:bg-gray-700 text-gray-400"
-                              : "hover:bg-gray-100 text-gray-500"
+                          className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                            isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
                           }`}
                         >
-                          <X className="h-5 w-5" />
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="p-3 sm:p-4 overflow-y-auto flex-1 min-h-0">
+                    <div className="px-5 py-4 overflow-y-auto flex-1 min-h-0">
                       {/* Routine attachment (image or PDF) */}
                       {selectedNotice.attachment_url && (
                         <div className="mb-4">
@@ -7226,64 +7199,28 @@ For any queries, contact your course instructors or the department.`,
                             // Apply theme-aware styling to HTML content - preserve existing styles
                             let styledContent = content;
                             if (isDarkMode) {
-                              // For dark mode, enhance with dark theme colors while preserving existing styles
                               styledContent = content
-                                .replace(
-                                  /<table(?!\s+style)/g,
-                                  '<table style="border-collapse: collapse; width: 100%; background: rgba(31, 41, 55, 0.5); margin: 16px 0; overflow-x: auto;"',
-                                )
-                                .replace(
-                                  /<th(?!\s+style)/g,
-                                  '<th style="padding: 12px 8px; border: 1px solid rgb(107, 114, 128); color: white; font-weight: 600; background: #1f4f82;"',
-                                )
-                                .replace(
-                                  /<td(?!\s+style)/g,
-                                  '<td style="padding: 10px 8px; border: 1px solid rgb(107, 114, 128); color: rgb(229, 231, 235);"',
-                                )
-                                .replace(
-                                  /<h3(?!\s+style)/g,
-                                  '<h3 style="color: rgb(229, 231, 235); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;"',
-                                )
-                                .replace(
-                                  /<p(?!\s+style)/g,
-                                  '<p style="color: rgb(209, 213, 219); margin-bottom: 12px; line-height: 1.6;"',
-                                )
-                                .replace(
-                                  /<strong(?!\s+style)/g,
-                                  '<strong style="color: rgb(229, 231, 235); font-weight: 700;">',
-                                );
+                                .replace(/<table(?!\s+style)/g, '<table style="border-collapse:collapse;width:100%;background:rgba(31,41,55,0.5);margin:16px 0;overflow-x:auto;"')
+                                .replace(/<th(?!\s+style)/g, '<th style="padding:12px 8px;border:1px solid rgb(107,114,128);color:white;font-weight:600;background:#1f4f82;"')
+                                .replace(/<td(?!\s+style)/g, '<td style="padding:10px 8px;border:1px solid rgb(107,114,128);color:rgb(229,231,235);"')
+                                .replace(/<h3(?!\s+style)/g, '<h3 style="color:rgb(229,231,235);margin-top:16px;margin-bottom:12px;font-size:18px;font-weight:700;"')
+                                .replace(/<p(?!\s+style)/g, '<p style="color:rgb(209,213,219);margin-bottom:12px;line-height:1.6;"')
+                                .replace(/<li(?!\s+style)/g, '<li style="color:rgb(209,213,219);margin-bottom:6px;"')
+                                .replace(/<strong(?!\s+style)>/g, '<strong style="color:rgb(229,231,235);font-weight:700;">');
                             } else {
-                              // For light mode, ensure good contrast
                               styledContent = content
-                                .replace(
-                                  /<table(?!\s+style)/g,
-                                  '<table style="border-collapse: collapse; width: 100%; background: white; margin: 16px 0; overflow-x: auto;"',
-                                )
-                                .replace(
-                                  /<th(?!\s+style)/g,
-                                  '<th style="padding: 12px 8px; border: 1px solid rgb(209, 213, 219); color: white; font-weight: 600; background: #1f4f82;"',
-                                )
-                                .replace(
-                                  /<td(?!\s+style)/g,
-                                  '<td style="padding: 10px 8px; border: 1px solid rgb(209, 213, 219); color: rgb(51, 65, 85);"',
-                                )
-                                .replace(
-                                  /<h3(?!\s+style)/g,
-                                  '<h3 style="color: rgb(15, 23, 42); margin-top: 16px; margin-bottom: 12px; font-size: 18px; font-weight: 700;"',
-                                )
-                                .replace(
-                                  /<p(?!\s+style)/g,
-                                  '<p style="color: rgb(55, 65, 81); margin-bottom: 12px; line-height: 1.6;"',
-                                )
-                                .replace(
-                                  /<strong(?!\s+style)/g,
-                                  '<strong style="color: rgb(15, 23, 42); font-weight: 700;">',
-                                );
+                                .replace(/<table(?!\s+style)/g, '<table style="border-collapse:collapse;width:100%;background:white;margin:16px 0;overflow-x:auto;"')
+                                .replace(/<th(?!\s+style)/g, '<th style="padding:12px 8px;border:1px solid rgb(209,213,219);color:white;font-weight:600;background:#1f4f82;"')
+                                .replace(/<td(?!\s+style)/g, '<td style="padding:10px 8px;border:1px solid rgb(209,213,219);color:rgb(51,65,85);"')
+                                .replace(/<h3(?!\s+style)/g, '<h3 style="color:rgb(15,23,42);margin-top:16px;margin-bottom:12px;font-size:18px;font-weight:700;"')
+                                .replace(/<p(?!\s+style)/g, '<p style="color:rgb(55,65,81);margin-bottom:12px;line-height:1.6;"')
+                                .replace(/<li(?!\s+style)/g, '<li style="color:rgb(55,65,81);margin-bottom:6px;"')
+                                .replace(/<strong(?!\s+style)>/g, '<strong style="color:rgb(15,23,42);font-weight:700;">');
                             }
 
                             return (
                               <div
-                                className={`prose prose-sm sm:prose max-w-none transition-colors duration-300 overflow-x-auto`}
+                                className={`text-sm leading-relaxed overflow-x-auto [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_table]:w-full [&_table]:border-collapse ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}
                                 dangerouslySetInnerHTML={{
                                   __html: styledContent,
                                 }}
@@ -7805,36 +7742,34 @@ For any queries, contact your course instructors or the department.`,
                             );
                           }
 
+                          // Parse **bold** and render paragraphs
+                          const parsedParagraphs = content.split(/\r?\n\r?\n/).filter(Boolean);
                           return (
-                            <p
-                              className={`leading-relaxed whitespace-pre-wrap select-text transition-colors duration-300 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
-                            >
-                              {content}
-                            </p>
+                            <div className={`space-y-3 select-text ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                              {parsedParagraphs.map((para, pi) => (
+                                <p key={pi} className="leading-relaxed text-sm sm:text-base"
+                                  dangerouslySetInnerHTML={{
+                                    __html: para
+                                      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                                      .replace(/\r?\n/g, "<br/>")
+                                  }}
+                                />
+                              ))}
+                            </div>
                           );
                         })()}
                       </div>
                     </div>
 
-                    <div
-                      className={`flex-shrink-0 p-3 sm:p-4 border-t transition-colors duration-300 ${
-                        isDarkMode
-                          ? "bg-gray-700/50 border-gray-600"
-                          : "bg-gray-50 border-gray-200"
-                      }`}
-                    >
-                      <div className="flex justify-end">
-                        <button
-                          onClick={closeNoticeModal}
-                          className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors duration-300 ${
-                            isDarkMode
-                              ? "bg-gray-600 text-white hover:bg-gray-500"
-                              : "bg-gray-600 text-white hover:bg-gray-700"
-                          }`}
-                        >
-                          Close
-                        </button>
-                      </div>
+                    <div className={`flex-shrink-0 px-5 py-3.5 border-t flex justify-end ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
+                      <button
+                        onClick={closeNoticeModal}
+                        className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
+                          isDarkMode ? "bg-white text-slate-900 hover:bg-slate-100" : "bg-slate-900 text-white hover:bg-slate-700"
+                        }`}
+                      >
+                        Close
+                      </button>
                     </div>
                   </div>
                 </div>

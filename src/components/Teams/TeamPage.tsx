@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  AlertCircle,
   Camera,
   Crown,
   Loader2,
@@ -270,9 +271,12 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
 
         {/* Upload error */}
         {uploadError && (
-          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
-            {uploadError}
-            <button onClick={() => setUploadError(null)} className="ml-3 text-red-400 hover:text-red-300">×</button>
+          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{uploadError}</span>
+            </div>
+            <button onClick={() => setUploadError(null)} className="flex-shrink-0 ml-2 text-red-400 hover:text-red-300"><X className="w-4 h-4" /></button>
           </div>
         )}
 
@@ -622,7 +626,7 @@ function TeamSettingsModal({
           </button>
         </div>
         <div className="p-5 space-y-3">
-          {error && <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">{error}</div>}
+          {error && <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4 flex-shrink-0" />{error}</div>}
           <div>
             <label className={labelCls}>Team Name</label>
             <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
