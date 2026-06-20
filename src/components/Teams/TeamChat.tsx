@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CornerDownLeft, Trash2, X, MessageSquare } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { listMessages, sendMessage, deleteMessage, setReaction, fetchProfiles } from "../../lib/api/chatApi";
+import { createMentionNotification } from "../../lib/api/notificationsApi";
 import { TeamMessage, TeamMember } from "../../types/social";
 
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "🔥"];
@@ -109,6 +110,7 @@ function renderMessageContent(
 
 interface Props {
   teamId: string;
+  teamName: string;
   currentUserId: string;
   isMember: boolean;
   isOwner: boolean;
@@ -116,7 +118,7 @@ interface Props {
   members: TeamMember[];
 }
 
-export default function TeamChat({ teamId, currentUserId, isMember, isOwner, isDarkMode, members }: Props) {
+export default function TeamChat({ teamId, teamName, currentUserId, isMember, isOwner, isDarkMode, members }: Props) {
   const [messages, setMessages] = useState<TeamMessage[]>([]);
   const [input, setInput] = useState("");
   const [replyingTo, setReplyingTo] = useState<TeamMessage | null>(null);
@@ -308,6 +310,34 @@ export default function TeamChat({ teamId, currentUserId, isMember, isOwner, isD
     // Replace optimistic entry with the real DB row (has correct id/created_at)
     if (saved) {
       setMessages((prev) => prev.map((m) => (m.id === optimisticId ? { ...saved, sender: mySenderProfile ?? saved.sender, reply_to: optimistic.reply_to } : m)));
+
+      // Fire mention notifications (non-blocking, best-effort)
+      const senderName = memberMap[currentUserId]?.name ?? "Someone";
+      const preview = trimmed.length > 100 ? trimmed.slice(0, 97) + "…" : trimmed;
+      const mentionedMembers = members.filter((m) => {
+        if (m.user_id === currentUserId || !m.profile?.name) return false;
+        const name = m.profile.name.trim();
+        return new RegExp(`@${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s|$)`, "i").test(trimmed);
+      });
+      mentionedMembers.forEach((mu) => {
+        createMentionNotification({
+          userId: mu.user_id,
+          actorId: currentUserId,
+          actorName: senderName,
+          teamId,
+          teamName,
+          messageId: saved.id,
+          preview,
+        });
+        supabase.functions.invoke("send-push-notification", {
+          body: {
+            title: `${senderName} mentioned you in ${teamName}`,
+            body: preview,
+            url: `/teams/${teamId}`,
+            targetUserId: mu.user_id,
+          },
+        });
+      });
     } else {
       // Failed — remove the optimistic message
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));

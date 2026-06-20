@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { X, Bug, Lightbulb, Sparkles, MessageSquare, Send, Loader2 } from "lucide-react";
 import { submitFeedback } from "../lib/api/feedbackApi";
 import type { FeedbackCategory } from "../types";
@@ -83,11 +84,17 @@ export function FeedbackModal({
     : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-500";
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
       className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
         className={`w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border shadow-2xl ${card}`}
       >
@@ -191,7 +198,7 @@ export function FeedbackModal({
             {submitting ? "Sending…" : "Send Feedback"}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -346,6 +346,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
         {tab === "chat" ? (
           <TeamChat
             teamId={teamId}
+            teamName={team.name}
             currentUserId={currentUserId}
             isMember={isMember}
             isOwner={myRole === "owner"}
@@ -378,66 +379,119 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             onCountChange={setFileCount}
           />
         ) : tab === "overview" ? (
-          /* Announcements */
-          <section className={`rounded-2xl border p-5 ${card}`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-base font-bold flex items-center gap-2 ${title}`}>
-                <Megaphone className="w-5 h-5 text-orange-500" /> Announcements
-              </h3>
-              {canManage && (
-                <button onClick={() => setShowAnnForm(!showAnnForm)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-500/10">
-                  {showAnnForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                </button>
-              )}
+          <div className="space-y-3">
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Members", value: members.length, color: "text-blue-500" },
+                { label: "Updates", value: announcements.length, color: "text-orange-500" },
+                { label: "Files", value: fileCount, color: "text-violet-500" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className={`rounded-2xl border p-3 text-center ${card}`}>
+                  <p className={`text-xl font-bold ${color}`}>{value}</p>
+                  <p className={`text-[11px] font-medium mt-0.5 ${sub}`}>{label}</p>
+                </div>
+              ))}
             </div>
 
-            {showAnnForm && (
-              <div className={`mb-4 p-3 rounded-xl border space-y-2 ${isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
-                <input className={inputCls} value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} placeholder="Announcement title…" maxLength={150} />
-                <textarea className={`${inputCls} min-h-[60px] resize-y`} value={annBody} onChange={(e) => setAnnBody(e.target.value)} placeholder="Details (optional)…" maxLength={2000} />
-                <button
-                  onClick={submitAnnouncement}
-                  disabled={busy === "ann" || !annTitle.trim()}
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  {busy === "ann" && <Loader2 className="w-4 h-4 animate-spin" />} Post
-                </button>
-              </div>
-            )}
+            {/* Team leads */}
+            {(() => {
+              const leads = members.filter(m => m.role === "owner" || m.role === "admin");
+              if (leads.length === 0) return null;
+              return (
+                <div className={`rounded-2xl border p-4 ${card}`}>
+                  <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${sub}`}>Team Leads</p>
+                  <div className="flex flex-wrap gap-3">
+                    {leads.map((m) => (
+                      <button
+                        key={m.user_id}
+                        onClick={() => m.profile?.username && onViewProfile(m.profile.username)}
+                        className="flex items-center gap-2 group"
+                      >
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
+                          {m.profile?.avatar_url || m.profile?.profile_pic
+                            ? <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" />
+                            : m.profile?.name?.charAt(0)?.toUpperCase() ?? "?"
+                          }
+                        </div>
+                        <div className="text-left">
+                          <p className={`text-xs font-semibold leading-tight group-hover:underline ${title}`}>{m.profile?.name ?? "User"}</p>
+                          <p className={`text-[10px] leading-tight ${m.role === "owner" ? "text-amber-500" : "text-blue-400"}`}>
+                            {m.role === "owner" ? "Owner" : "Admin"}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
-            {!isMember ? (
-              <p className={`text-sm ${sub}`}>Join this team to see announcements.</p>
-            ) : announcements.length === 0 ? (
-              <p className={`text-sm ${sub}`}>No announcements yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {announcements.map((a) => (
-                  <li key={a.id} className={`p-3 rounded-xl border ${isDarkMode ? "border-slate-700/60 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className={`text-sm font-semibold ${title}`}>{a.title}</p>
-                        {a.body && <p className={`text-xs mt-1 whitespace-pre-wrap ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{a.body}</p>}
-                        <p className={`text-[11px] mt-1.5 ${sub}`}>
-                          {a.author_profile?.name ?? "Admin"} · {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </p>
+            {/* Announcements */}
+            <section className={`rounded-2xl border p-5 ${card}`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-base font-bold flex items-center gap-2 ${title}`}>
+                  <Megaphone className="w-5 h-5 text-orange-500" /> Announcements
+                </h3>
+                {canManage && (
+                  <button onClick={() => setShowAnnForm(!showAnnForm)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-500/10">
+                    {showAnnForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  </button>
+                )}
+              </div>
+
+              {showAnnForm && (
+                <div className={`mb-4 p-3 rounded-xl border space-y-2 ${isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
+                  <input className={inputCls} value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} placeholder="Announcement title…" maxLength={150} />
+                  <textarea className={`${inputCls} min-h-[60px] resize-y`} value={annBody} onChange={(e) => setAnnBody(e.target.value)} placeholder="Details (optional)…" maxLength={2000} />
+                  <button
+                    onClick={submitAnnouncement}
+                    disabled={busy === "ann" || !annTitle.trim()}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {busy === "ann" && <Loader2 className="w-4 h-4 animate-spin" />} Post
+                  </button>
+                </div>
+              )}
+
+              {!isMember ? (
+                <p className={`text-sm ${sub}`}>Join this team to see announcements.</p>
+              ) : announcements.length === 0 ? (
+                <div className="text-center py-6">
+                  <Megaphone className={`w-8 h-8 mx-auto mb-2 opacity-20 ${title}`} />
+                  <p className={`text-sm ${sub}`}>No announcements yet.</p>
+                  {canManage && <p className={`text-xs mt-1 ${sub} opacity-70`}>Use the + button to post one.</p>}
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {announcements.map((a) => (
+                    <li key={a.id} className={`p-3 rounded-xl border ${isDarkMode ? "border-slate-700/60 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold ${title}`}>{a.title}</p>
+                          {a.body && <p className={`text-xs mt-1 whitespace-pre-wrap ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{a.body}</p>}
+                          <p className={`text-[11px] mt-1.5 ${sub}`}>
+                            {a.author_profile?.name ?? "Admin"} · {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                        </div>
+                        {canManage && (
+                          <button
+                            onClick={async () => {
+                              await deleteAnnouncement(a.id);
+                              setAnnouncements(await listAnnouncements(teamId));
+                            }}
+                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                      {canManage && (
-                        <button
-                          onClick={async () => {
-                            await deleteAnnouncement(a.id);
-                            setAnnouncements(await listAnnouncements(teamId));
-                          }}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 flex-shrink-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         ) : (
           /* Members */
           <section className={`rounded-2xl border p-5 ${card}`}>

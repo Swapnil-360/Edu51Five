@@ -266,9 +266,40 @@ export function WorldCupPage({ currentUserId, onClose, isDarkMode }: Props) {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-          </div>
+          (() => {
+            const sk = isDarkMode ? "bg-slate-800/70" : "bg-slate-200/60";
+            const skCard = isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm";
+            return (
+              <div className="space-y-6">
+                {[8, 8].map((count, gi) => (
+                  <div key={gi} className="space-y-2">
+                    <div className={`h-2.5 rounded-full animate-pulse ${sk}`} style={{ width: `${gi === 0 ? 18 : 22}%` }} />
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: count }).map((_, i) => (
+                        <div key={i} className={`flex flex-col items-center gap-2 p-3 rounded-2xl border animate-pulse ${skCard}`}>
+                          <div className={`w-12 h-8 rounded-lg ${sk}`} />
+                          <div className={`h-2 rounded-full ${sk}`} style={{ width: "65%" }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className={`rounded-2xl border divide-y ${skCard} ${isDarkMode ? "divide-slate-800" : "divide-slate-100"}`}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
+                      <div className={`w-6 h-6 rounded-full ${sk}`} />
+                      <div className={`w-9 h-9 rounded-full ${sk}`} />
+                      <div className="flex-1 space-y-1.5">
+                        <div className={`h-2.5 rounded-full ${sk}`} style={{ width: `${45 + i * 10}%` }} />
+                        <div className={`h-2 rounded-full ${sk}`} style={{ width: "30%" }} />
+                      </div>
+                      <div className={`w-8 h-5 rounded ${sk}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()
         ) : (
           <>
             {/* ── PICK TEAM ── */}

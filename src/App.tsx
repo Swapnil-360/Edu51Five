@@ -23,6 +23,12 @@ import {
   validateCurrentSubscription,
 } from "./lib/pushNotifications";
 import {
+  getUnreadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  type AppNotification,
+} from "./lib/api/notificationsApi";
+import {
   sendEmailToAllStudents,
   sendEmailNotification,
   EmailNotification,
@@ -831,6 +837,9 @@ function App() {
     useState<NotificationPermission>("default");
   const hasInitializedPush = useRef(false);
 
+  // In-app mention notifications
+  const [mentionNotifications, setMentionNotifications] = useState<AppNotification[]>([]);
+
   // Admin broadcast push notification state
   const [broadcastPush, setBroadcastPush] = useState({
     title: "",
@@ -1091,9 +1100,9 @@ function App() {
         return false;
       }
 
-      // Save subscription to database
+      // Save subscription to database (include user_id for targeted push)
       const sessionId = getSessionId();
-      const saved = await savePushSubscription(subscription, sessionId);
+      const saved = await savePushSubscription(subscription, sessionId, authSession?.user?.id);
 
       if (saved) {
         // Validate the new subscription has encryption keys
@@ -1407,6 +1416,54 @@ function App() {
       initializePushNotifications();
     }
   }, [currentView, isAdmin]);
+
+  // On login: load mention notifications, subscribe realtime, auto-prompt push
+  useEffect(() => {
+    const userId = authSession?.user?.id;
+    if (!userId) {
+      setMentionNotifications([]);
+      return;
+    }
+
+    // Load unread notifications
+    getUnreadNotifications(userId).then(setMentionNotifications);
+
+    // Realtime: get new mention notifications as they arrive
+    const channel = supabase
+      .channel(`user-notifications-${userId}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        (payload: any) => {
+          setMentionNotifications((prev) => [payload.new as AppNotification, ...prev]);
+        },
+      )
+      .subscribe();
+
+    // Auto-prompt for push permission 3 s after login (non-intrusive)
+    const promptTimer = setTimeout(async () => {
+      if (!isPushNotificationSupported()) return;
+      const perm = getNotificationPermission();
+      if (perm === "default") {
+        const granted = await requestNotificationPermission();
+        setPushPermission(granted);
+        if (granted === "granted") {
+          const sub = await subscribeToPushNotifications();
+          if (sub) {
+            const sid = getSessionId();
+            await savePushSubscription(sub, sid, userId);
+            setIsPushEnabled(true);
+          }
+        }
+      }
+    }, 3000);
+
+    return () => {
+      clearTimeout(promptTimer);
+      channel.unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authSession?.user?.id]);
 
   // Handle click outside to close mobile menu and notification panel
   useEffect(() => {
@@ -3374,9 +3431,9 @@ For any queries, contact your course instructors or the department.`,
                     }`}
                   >
                     <Bell className="h-4 w-4" />
-                    {getUnreadNoticeCount() > 0 && (
+                    {(getUnreadNoticeCount() + mentionNotifications.length) > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                        {getUnreadNoticeCount() > 99 ? "99+" : getUnreadNoticeCount()}
+                        {(getUnreadNoticeCount() + mentionNotifications.length) > 99 ? "99+" : (getUnreadNoticeCount() + mentionNotifications.length)}
                       </span>
                     )}
                   </button>
@@ -3817,25 +3874,38 @@ For any queries, contact your course instructors or the department.`,
             <div className={`flex-shrink-0 flex items-center justify-between px-5 py-4 border-b ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
               <div className="flex items-center gap-2.5">
                 <h2 className={`font-bold text-base ${isDarkMode ? "text-white" : "text-slate-900"}`}>Notifications</h2>
-                {getUnreadNoticeCount() > 0 && (
+                {(getUnreadNoticeCount() + mentionNotifications.length) > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
-                    {getUnreadNoticeCount()}
+                    {getUnreadNoticeCount() + mentionNotifications.length}
                   </span>
                 )}
               </div>
-              <button
-                onClick={() => setShowNoticePanel(false)}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                  isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {mentionNotifications.length > 0 && authSession?.user?.id && (
+                  <button
+                    onClick={() => {
+                      markAllNotificationsRead(authSession.user.id);
+                      setMentionNotifications([]);
+                    }}
+                    className={`text-xs px-2 py-1 rounded-lg transition-colors ${isDarkMode ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowNoticePanel(false)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                    isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto">
-              {notices.length === 0 && emergencyAlerts.length === 0 && emergencyLinks.length === 0 ? (
+              {notices.length === 0 && emergencyAlerts.length === 0 && emergencyLinks.length === 0 && mentionNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
                     <Bell className={`h-7 w-7 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} />
@@ -3845,6 +3915,35 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
+                  {/* Mention Notifications */}
+                  {mentionNotifications.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => {
+                        markNotificationRead(n.id);
+                        setMentionNotifications((prev) => prev.filter((x) => x.id !== n.id));
+                        setShowNoticePanel(false);
+                        if (n.team_id) {
+                          setSelectedTeamId(n.team_id);
+                          goToView("team", n.team_id);
+                        }
+                      }}
+                      className={`w-full flex gap-3 px-5 py-4 text-left transition-colors ${isDarkMode ? "hover:bg-amber-900/20 bg-amber-950/10" : "hover:bg-amber-50 bg-amber-50/70"}`}
+                    >
+                      <div className="w-8 h-8 rounded-full flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold mt-0.5">
+                        {n.actor_name?.charAt(0)?.toUpperCase() ?? "@"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 text-amber-500`}>Mentioned you</p>
+                        <p className={`text-sm font-medium leading-snug ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{n.title}</p>
+                        {n.body && <p className={`text-xs mt-0.5 truncate ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>"{n.body}"</p>}
+                        <p className={`text-[10px] mt-1 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                          {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Tap to open chat
+                        </p>
+                      </div>
+                    </button>
+                  ))}
 
                   {/* Emergency Alerts */}
                   {emergencyAlerts.map((alert) => (

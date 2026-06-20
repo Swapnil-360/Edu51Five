@@ -117,7 +117,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionJS
 /**
  * Save push subscription to database
  */
-export async function savePushSubscription(subscription: PushSubscriptionJSON, sessionId: string): Promise<boolean> {
+export async function savePushSubscription(subscription: PushSubscriptionJSON, sessionId: string, userId?: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('push_subscriptions')
@@ -125,7 +125,8 @@ export async function savePushSubscription(subscription: PushSubscriptionJSON, s
         session_id: sessionId,
         subscription: subscription,
         endpoint: subscription.endpoint,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        ...(userId ? { user_id: userId } : {}),
       }, {
         onConflict: 'session_id'
       });
