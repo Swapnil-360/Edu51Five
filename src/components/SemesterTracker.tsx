@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp, ArrowLeft, CreditCard, Sparkles, UserCheck, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Target, Users, TrendingUp, CreditCard, Sparkles, UserCheck, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getCurrentSemesterStatus } from '../config/semester';
 import { MID_TERM_SCHEDULE } from '../config/examSchedule';
 import { 
@@ -93,680 +94,421 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
     });
   };
 
+  const dm = isDarkMode;
+  const card = dm ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200 shadow-sm';
+  const innerCard = dm ? 'bg-slate-800/60 border border-slate-700/60' : 'bg-slate-50 border border-slate-200';
+  const head = dm ? 'text-white' : 'text-slate-900';
+  const sub = dm ? 'text-slate-400' : 'text-slate-500';
+  const label = dm ? 'text-slate-300' : 'text-slate-700';
+
   return (
     <div className={`h-screen overflow-hidden transition-colors duration-300 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900' 
-        : 'bg-gradient-to-br from-slate-50 via-white to-blue-50'
+      dm ? 'bg-slate-950' : 'bg-slate-50'
     }`}>
       <div className="h-full overflow-y-auto p-2 sm:p-4">
         <div className="max-w-7xl mx-auto">
 
         {/* Live Clock */}
-        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-blue-900/50 via-blue-800/50 to-indigo-900/50 border border-blue-700/50'
-            : 'bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 border border-blue-300'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Clock className="h-8 w-8 text-blue-600 animate-pulse" />
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className={`rounded-2xl p-5 mb-6 ${card}`}
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${dm ? 'bg-blue-900/40' : 'bg-blue-50'}`}>
+                <Clock className="h-5 w-5 text-blue-500" />
+              </div>
               <div>
-                <div className={`text-2xl font-bold transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                }`}>{formatTime(currentTime)} BST</div>
-                <div className={`transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                }`}>{formatDate(currentTime)}</div>
+                <div className={`text-2xl font-black tracking-tight ${head}`}>{formatTime(currentTime)} <span className={`text-sm font-semibold ${sub}`}>BST</span></div>
+                <div className={`text-xs ${sub}`}>{formatDate(currentTime)}</div>
               </div>
             </div>
-            <div className="text-right">
-              <div className={`text-lg font-semibold transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>Week {semesterStatus.semesterWeek}</div>
-              <div className={`transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-400' : 'text-slate-600'
-              }`}>of {semesterStatus.semesterName}</div>
+            <div className={`px-4 py-2 rounded-xl text-right ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`text-base font-bold ${head}`}>Week {semesterStatus.semesterWeek}</div>
+              <div className={`text-xs ${sub}`}>{semesterStatus.semesterName}</div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Semester Deadlines & Key Events */}
-        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
-          isDarkMode
-            ? 'bg-slate-800/40 border border-slate-700/50'
-            : 'bg-slate-50/70 border border-slate-200'
-        }`}>
-          <div className="flex items-center space-x-3 mb-6">
-            <Calendar className="h-6 w-6 text-blue-600" />
-            <h2 className={`text-xl font-bold transition-colors duration-300 ${
-              isDarkMode ? 'text-gray-100' : 'text-slate-800'
-            }`}>Semester Deadlines & Key Events</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className={`rounded-2xl p-5 mb-6 ${card}`}
+        >
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dm ? 'bg-blue-900/40' : 'bg-blue-50'}`}>
+              <Calendar className="h-4 w-4 text-blue-500" />
+            </div>
+            <h2 className={`text-base font-bold ${head}`}>Semester Deadlines & Key Events</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Payment Deadlines */}
-            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
-              isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                : 'bg-white/90 border-slate-200 hover:border-slate-300'
-            }`}>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                  <CreditCard className="h-5 w-5" />
+            <div className={`p-4 rounded-xl ${innerCard}`}>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className={`p-1.5 rounded-lg ${dm ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <CreditCard className="h-4 w-4" />
                 </div>
-                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
-                  Payment Installments
-                </h3>
+                <h3 className={`font-semibold text-sm ${head}`}>Payment Installments</h3>
               </div>
-              <ul className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                <li className="flex justify-between items-center pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
-                  <span className="font-medium">1st Installment</span>
-                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>May 6 - 22</span>
+              <ul className={`text-xs space-y-2.5 ${label}`}>
+                <li className={`flex justify-between items-center pb-2 border-b ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+                  <span>1st Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>May 6–22</span>
                 </li>
-                <li className="flex justify-between items-center pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
-                  <span className="font-medium">2nd Installment</span>
-                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>June 10 - 24</span>
+                <li className={`flex justify-between items-center pb-2 border-b ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+                  <span>2nd Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>Jun 10–24</span>
                 </li>
                 <li className="flex justify-between items-center">
-                  <span className="font-medium">Final Installment</span>
-                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>Aug 6 - 19</span>
+                  <span>Final Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>Aug 6–19</span>
                 </li>
               </ul>
             </div>
 
             {/* Special Events */}
-            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
-              isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                : 'bg-white/90 border-slate-200 hover:border-slate-300'
-            }`}>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                  <Sparkles className="h-5 w-5" />
+            <div className={`p-4 rounded-xl ${innerCard}`}>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className={`p-1.5 rounded-lg ${dm ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <Sparkles className="h-4 w-4" />
                 </div>
-                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
-                  Special Events
-                </h3>
+                <h3 className={`font-semibold text-sm ${head}`}>Special Events</h3>
               </div>
-              <ul className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                <li className="pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Club Member Collection</span>
-                  </div>
-                  <div className="flex justify-end mt-1">
-                    <span className={`font-semibold text-xs px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>June 7 - 10</span>
-                  </div>
+              <ul className={`text-xs space-y-2.5 ${label}`}>
+                <li className={`pb-2 border-b ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+                  <span className="block mb-1">Club Member Collection</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>June 7–10</span>
                 </li>
-                <li className="">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Research Showcase</span>
-                  </div>
-                  <div className="flex justify-end mt-1">
-                    <span className={`font-semibold text-xs px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>August 16 - 20</span>
-                  </div>
+                <li>
+                  <span className="block mb-1">Research Showcase</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>Aug 16–20</span>
                 </li>
               </ul>
             </div>
 
             {/* Teacher Evaluation */}
-            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
-              isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                : 'bg-white/90 border-slate-200 hover:border-slate-300'
-            }`}>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                  <UserCheck className="h-5 w-5" />
+            <div className={`p-4 rounded-xl ${innerCard}`}>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className={`p-1.5 rounded-lg ${dm ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <UserCheck className="h-4 w-4" />
                 </div>
-                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
-                  Teacher Evaluation
-                </h3>
+                <h3 className={`font-semibold text-sm ${head}`}>Teacher Evaluation</h3>
               </div>
-              <div className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                <p className="leading-relaxed font-medium">
-                  The portal will be open for student feedback on BUBT faculty.
-                </p>
-                <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800/65 flex justify-between items-center">
-                  <span className="font-medium text-slate-500 dark:text-slate-400">Period:</span>
-                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>August 17 - 22</span>
-                </div>
+              <p className={`text-xs leading-relaxed mb-3 ${label}`}>
+                Student feedback portal for BUBT faculty will be open.
+              </p>
+              <div className={`flex justify-between items-center pt-2 border-t ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+                <span className={`text-xs ${sub}`}>Period</span>
+                <span className={`font-semibold text-xs px-2 py-0.5 rounded-md ${dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>Aug 17–22</span>
               </div>
             </div>
 
             {/* Important Remarks */}
-            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
-              isDarkMode
-                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                : 'bg-white/90 border-slate-200 hover:border-slate-300'
-            }`}>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                  <AlertCircle className="h-5 w-5" />
+            <div className={`p-4 rounded-xl ${innerCard}`}>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className={`p-1.5 rounded-lg ${dm ? 'bg-amber-900/40 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+                  <AlertCircle className="h-4 w-4" />
                 </div>
-                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
-                  Important Remarks
-                </h3>
+                <h3 className={`font-semibold text-sm ${head}`}>Important Notes</h3>
               </div>
-              <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-slate-600'} space-y-2.5`}>
+              <div className={`text-xs space-y-2.5 ${label}`}>
                 <div className="flex gap-2 items-start">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
-                  <p className="leading-relaxed">
-                    Some academic and holiday dates marked with <span className="font-bold text-blue-600">*</span> are subject to moon appearance.
-                  </p>
+                  <p className="leading-relaxed">Dates marked <span className="font-bold text-blue-500">*</span> are subject to moon appearance.</p>
                 </div>
                 <div className="flex gap-2 items-start">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
-                  <p className="leading-relaxed">
-                    Deadlines and schedules are subject to official BUBT administrative decisions.
-                  </p>
+                  <p className="leading-relaxed">All schedules subject to official BUBT administrative decisions.</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           {/* Semester Progress */}
-          <div className={`lg:col-span-2 rounded-2xl p-6 hover-lift shadow-lg transition-colors duration-300 ${
-            isDarkMode
-              ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
-              : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
-          }`}>
-            <div className="flex items-center space-x-3 mb-6">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-              <h2 className={`text-xl font-bold transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>Semester Progress</h2>
-            </div>
-            
-            {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className={`transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                }`}>Overall Progress</span>
-                <span className={`${isDarkMode ? 'text-gray-100' : 'text-slate-800'} font-bold`}>{semesterStatus.progressPercentage}%</span>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className={`lg:col-span-2 rounded-2xl p-5 ${card}`}
+          >
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dm ? 'bg-blue-900/40' : 'bg-blue-50'}`}>
+                <TrendingUp className="h-4 w-4 text-blue-500" />
               </div>
-              <div className="w-full bg-blue-100 rounded-full h-4 overflow-hidden progress-glow">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000 ease-out"
+              <h2 className={`text-base font-bold ${head}`}>Semester Progress</h2>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-5">
+              <div className="flex justify-between items-center mb-2">
+                <span className={`text-xs font-medium ${sub}`}>Overall Progress</span>
+                <span className={`text-sm font-black ${head}`}>{semesterStatus.progressPercentage}%</span>
+              </div>
+              <div className={`w-full rounded-full h-3 overflow-hidden ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-1000 ease-out"
                   style={{ width: `${semesterStatus.progressPercentage}%` }}
                 />
               </div>
+              <div className={`flex justify-between text-[10px] mt-1 ${sub}`}>
+                <span>May 6</span><span>Sep 4</span>
+              </div>
             </div>
 
-            {/* Current Phase */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className={`rounded-xl p-4 hover-lift shadow-sm transition-colors duration-300 ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-blue-900/40 to-blue-800/40 border border-blue-700/50'
-                  : 'bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-300'
-              }`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                  <span className={`transition-colors duration-300 ${
-                    isDarkMode ? 'text-blue-400' : 'text-blue-700'
-                  }`}>Current Phase</span>
+            {/* Current Phase + Next Milestone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className={`rounded-xl p-4 ${dm ? 'bg-blue-900/20 border border-blue-800/40' : 'bg-blue-50 border border-blue-100'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="h-4 w-4 text-blue-500" />
+                  <span className={`text-xs font-semibold ${dm ? 'text-blue-400' : 'text-blue-700'}`}>Current Phase</span>
                 </div>
-                <div className={`text-xl font-bold transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                }`}>{semesterStatus.currentPhase}</div>
+                <div className={`text-base font-bold ${head}`}>{semesterStatus.currentPhase}</div>
               </div>
-              
-              <div className={`rounded-xl p-4 hover-lift shadow-sm transition-colors duration-300 ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-indigo-900/40 to-indigo-800/40 border border-indigo-700/50'
-                  : 'bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-300'
-              }`}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Target className="h-5 w-5 text-indigo-600" />
-                  <span className={`transition-colors duration-300 ${
-                    isDarkMode ? 'text-indigo-400' : 'text-indigo-700'
-                  }`}>Next Milestone</span>
+              <div className={`rounded-xl p-4 ${dm ? 'bg-indigo-900/20 border border-indigo-800/40' : 'bg-indigo-50 border border-indigo-100'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-indigo-500" />
+                  <span className={`text-xs font-semibold ${dm ? 'text-indigo-400' : 'text-indigo-700'}`}>Next Milestone</span>
                 </div>
-                <div className={`text-xl font-bold transition-colors duration-300 ${
-                  isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                }`}>{semesterStatus.nextMilestone}</div>
-                <div className={`text-sm mt-1 transition-colors duration-300 ${
-                  isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-                }`}>
-                  {semesterStatus.daysToMilestone > 0 
-                    ? `${semesterStatus.daysToMilestone} days remaining`
-                    : 'Active now'
-                  }
+                <div className={`text-base font-bold ${head}`}>{semesterStatus.nextMilestone}</div>
+                <div className={`text-xs mt-0.5 ${dm ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                  {semesterStatus.daysToMilestone > 0 ? `${semesterStatus.daysToMilestone} days remaining` : 'Active now'}
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Academic Timeline */}
-          <div className={`rounded-2xl p-6 hover-lift shadow-lg transition-colors duration-300 ${
-            isDarkMode
-              ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
-              : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
-          }`}>
-              <div className="flex items-center space-x-3 mb-6">
-              <Calendar className="h-6 w-6 text-blue-600" />
-              <h2 className={`text-xl font-bold transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>Timeline</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className={`rounded-2xl p-5 ${card}`}
+          >
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dm ? 'bg-blue-900/40' : 'bg-blue-50'}`}>
+                <Calendar className="h-4 w-4 text-blue-500" />
+              </div>
+              <h2 className={`text-base font-bold ${head}`}>Timeline</h2>
             </div>
 
-            <div className="space-y-4">
-              <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors duration-300 ${
-                isDarkMode
-                  ? 'bg-green-900/30 border-green-700/50'
-                  : 'bg-green-50 border-green-200'
-              }`}>
+            <div className="space-y-3">
+              {/* Semester Start */}
+              <div className={`flex items-center justify-between p-3 rounded-xl border ${dm ? 'bg-emerald-900/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-100'}`}>
                 <div>
-                  <div className={`font-semibold transition-colors duration-300 ${
-                    isDarkMode ? 'text-green-400' : 'text-green-700'
-                  }`}>Semester Started</div>
-                  <div className={`text-sm transition-colors duration-300 ${
-                    isDarkMode ? 'text-green-500' : 'text-green-600'
-                  }`}>{new Date('2026-05-06').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                  <div className={`text-sm font-bold ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>Semester Started</div>
+                  <div className={`text-xs ${dm ? 'text-emerald-500' : 'text-emerald-600'}`}>May 6, 2026</div>
                 </div>
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
               </div>
 
-              <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors duration-300 ${
-                semesterStatus.currentPhase === 'Mid-term Examinations' 
-                  ? isDarkMode
-                    ? 'bg-red-900/30 border-red-700/50'
-                    : 'bg-red-50 border-red-200'
-                  : isDarkMode
-                  ? 'bg-blue-900/30 border-blue-700/50'
-                  : 'bg-blue-50 border-blue-200'
+              {/* Mid-terms */}
+              <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                semesterStatus.currentPhase === 'Mid-term Examinations'
+                  ? dm ? 'bg-red-900/20 border-red-700/40' : 'bg-red-50 border-red-100'
+                  : dm ? 'bg-blue-900/20 border-blue-800/40' : 'bg-blue-50 border-blue-100'
               }`}>
                 <div>
-                  <div className={`font-semibold ${
-                    semesterStatus.currentPhase === 'Mid-term Examinations' ? 'text-red-700' : 'text-blue-700'
+                  <div className={`text-sm font-bold ${
+                    semesterStatus.currentPhase === 'Mid-term Examinations'
+                      ? dm ? 'text-red-400' : 'text-red-700'
+                      : dm ? 'text-blue-400' : 'text-blue-700'
                   }`}>Mid-term Exams</div>
-                  <div className={`text-sm ${
-                    semesterStatus.currentPhase === 'Mid-term Examinations' ? 'text-red-600' : 'text-blue-600'
-                  }`}>Jun 25 - Jul 3, 2026</div>
+                  <div className={`text-xs ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Jun 25–Jul 3</div>
                 </div>
-                <div className={`w-3 h-3 rounded-full ${
-                  semesterStatus.currentPhase === 'Mid-term Examinations' 
-                    ? 'bg-red-500 animate-pulse' 
+                <div className={`w-2.5 h-2.5 rounded-full ${
+                  semesterStatus.currentPhase === 'Mid-term Examinations'
+                    ? 'bg-red-500 animate-pulse'
                     : 'bg-blue-500'
-                }`}></div>
+                }`} />
               </div>
 
-              <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors duration-300 ${
-                isDarkMode
-                  ? 'bg-purple-900/30 border-purple-700/50'
-                  : 'bg-purple-50 border-purple-200'
+              {/* Final Exams */}
+              <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                dm ? 'bg-purple-900/20 border-purple-800/40' : 'bg-purple-50 border-purple-100'
               }`}>
                 <div>
-                  <div className={`font-semibold ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>Final Exams</div>
-                  <div className={`text-sm ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>Aug 22-30, 2026</div>
+                  <div className={`text-sm font-bold ${dm ? 'text-purple-400' : 'text-purple-700'}`}>Final Exams</div>
+                  <div className={`text-xs ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Aug 22–30, 2026</div>
                 </div>
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <div className="w-2.5 h-2.5 bg-purple-500 rounded-full" />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Academic Calendar Section */}
-        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
-            : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
-        }`}>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
-              <Calendar className="h-6 w-6 text-white" />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className={`rounded-2xl p-5 mb-6 ${card}`}
+        >
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className={`text-xl font-bold transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>Academic Calendar</h2>
-              <p className={`text-sm transition-colors duration-300 ${
-                isDarkMode ? 'text-blue-400' : 'text-blue-700'
-              }`}>{semesterStatus.semesterName} - Key Dates & Events</p>
+              <h2 className={`text-base font-bold ${head}`}>Academic Calendar</h2>
+              <p className={`text-xs ${sub}`}>{semesterStatus.semesterName} — Key Dates & Events</p>
             </div>
           </div>
 
-          {/* Current Phase Indicator */}
-          <div className={`mb-6 p-4 rounded-xl border-2 ${
-            isDarkMode
-              ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-600/50'
-              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="flex-1">
-                <div className={`font-bold text-sm ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
-                  Current Phase: {semesterStatus.currentPhase}
-                </div>
-                <div className={`text-xs ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>
-                  {semesterStatus.daysToMilestone} days until {semesterStatus.nextMilestone}
-                </div>
+          {/* Current Phase Banner */}
+          <div className={`mb-4 px-4 py-3 rounded-xl flex items-center gap-3 ${dm ? 'bg-emerald-900/20 border border-emerald-800/40' : 'bg-emerald-50 border border-emerald-100'}`}>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse flex-shrink-0" />
+            <div>
+              <div className={`text-xs font-bold ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                Current: {semesterStatus.currentPhase}
+              </div>
+              <div className={`text-xs ${dm ? 'text-emerald-500' : 'text-emerald-600'}`}>
+                {semesterStatus.daysToMilestone} days until {semesterStatus.nextMilestone}
               </div>
             </div>
           </div>
 
           {/* Calendar Events Grid */}
-          <div className="space-y-3">
-            {/* Orientation & Classes Start */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-05-06')
-                ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
-                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-05-06')
-                    ? 'bg-blue-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">🚀</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Classes Commence
+          <div className="space-y-2">
+            {/* Helper to build event row */}
+            {[
+              {
+                emoji: '🚀', title: 'Classes Commence', date: 'May 6, 2026 (Wednesday)',
+                note: 'Orientation and start of Summer Semester',
+                active: new Date() < new Date('2026-05-06'), past: new Date() >= new Date('2026-05-06'),
+                accentDark: 'border-l-blue-500', accentLight: 'border-l-blue-400',
+              },
+              {
+                emoji: '📝', title: 'Add/Drop & Withdrawal Deadline', date: 'May 21, 2026 (Thursday)',
+                note: 'Last day for course add/drop and withdrawal changes',
+                active: new Date() < new Date('2026-05-21'), past: new Date() >= new Date('2026-05-21'),
+                accentDark: 'border-l-orange-500', accentLight: 'border-l-orange-400',
+              },
+              {
+                emoji: '📝', title: 'Mid-term Examinations', date: 'Jun 25–Jul 3, 2026 (9 days)',
+                note: 'Preparatory leave: June 24',
+                badge: semesterStatus.isMidtermPeriod ? 'ONGOING' : null, badgeColor: 'bg-red-500',
+                active: !semesterStatus.isMidtermPeriod && new Date() < new Date('2026-06-25'),
+                past: !semesterStatus.isMidtermPeriod && new Date() >= new Date('2026-07-04'),
+                accentDark: 'border-l-red-500', accentLight: 'border-l-red-400',
+              },
+              {
+                emoji: '📊', title: 'Mid-term Results Submission', date: 'July 26, 2026 (Sunday)',
+                note: 'Deadline for submission of Midterm Examination Results',
+                active: new Date() < new Date('2026-07-26'), past: new Date() >= new Date('2026-07-26'),
+                accentDark: 'border-l-indigo-500', accentLight: 'border-l-indigo-400',
+              },
+              {
+                emoji: '🎯', title: 'Final Examinations', date: 'Aug 22–30, 2026 (9 days)',
+                note: 'Preparatory leave: Aug 21',
+                badge: semesterStatus.isFinalPeriod ? 'ONGOING' : null, badgeColor: 'bg-purple-500',
+                active: !semesterStatus.isFinalPeriod && new Date() < new Date('2026-08-22'),
+                past: !semesterStatus.isFinalPeriod && new Date() >= new Date('2026-08-31'),
+                accentDark: 'border-l-purple-500', accentLight: 'border-l-purple-400',
+              },
+              {
+                emoji: '📢', title: 'Final Results Publication', date: 'September 3, 2026 (Thursday)',
+                note: 'Summer 2026 semester results',
+                active: new Date() < new Date('2026-09-03'), past: new Date() >= new Date('2026-09-03'),
+                accentDark: 'border-l-emerald-500', accentLight: 'border-l-emerald-400',
+              },
+              {
+                emoji: '🏖️', title: 'Semester Break', date: 'September 4, 2026',
+                note: 'Fall 2026 starts: September 5',
+                badge: semesterStatus.isBreak ? 'ACTIVE' : null, badgeColor: 'bg-teal-500',
+                active: !semesterStatus.isBreak && new Date() < new Date('2026-09-04'), past: false,
+                accentDark: 'border-l-teal-500', accentLight: 'border-l-teal-400',
+              },
+            ].map((ev, i) => (
+              <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-xl border-l-4 ${
+                dm
+                  ? `${ev.accentDark} ${ev.past ? 'bg-slate-800/30 opacity-60' : 'bg-slate-800/60'}`
+                  : `${ev.accentLight} ${ev.past ? 'bg-slate-50 opacity-60' : 'bg-white border border-slate-100'}`
+              }`}>
+                <span className={`text-base leading-none pt-0.5 flex-shrink-0 ${ev.past ? 'grayscale opacity-50' : ''}`}>{ev.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-semibold flex items-center gap-2 flex-wrap ${head}`}>
+                    {ev.title}
+                    {ev.badge && <span className={`text-[10px] px-2 py-0.5 rounded-full text-white font-bold ${ev.badgeColor}`}>{ev.badge}</span>}
+                    {ev.past && <span className={`text-[10px] px-2 py-0.5 rounded-full ${dm ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-400'}`}>Done</span>}
                   </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    May 6, 2026 (Wednesday)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Orientation and start of Summer Semester
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Registration Deadline */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-05-21')
-                ? isDarkMode ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200'
-                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-05-21')
-                    ? 'bg-orange-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">📝</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Add/Drop & Withdrawal Deadline
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    May 21, 2026 (Thursday)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Last day for course add/drop and withdrawal changes
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mid-term Period */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              semesterStatus.isMidtermPeriod
-                ? isDarkMode ? 'bg-red-900/30 border-red-700/50 ring-2 ring-red-500/50' : 'bg-red-50 border-red-200 ring-2 ring-red-400/50'
-                : new Date() < new Date('2026-06-25')
-                  ? isDarkMode ? 'bg-blue-900/30 border-blue-700/50' : 'bg-blue-50 border-blue-200'
-                  : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  semesterStatus.isMidtermPeriod
-                    ? 'bg-red-600 text-white animate-pulse'
-                    : new Date() < new Date('2026-06-25')
-                      ? 'bg-blue-600 text-white'
-                      : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">📝</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Mid-term Examinations
-                    {semesterStatus.isMidtermPeriod && (
-                      <span className="ml-2 text-xs px-2 py-1 bg-red-500 text-white rounded-full">ONGOING</span>
-                    )}
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    June 25 - July 3, 2026 (9 days)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Preparatory leave: June 24
-                  </div>
+                  <div className={`text-xs mt-0.5 ${sub}`}>{ev.date}</div>
+                  {ev.note && <div className={`text-xs mt-0.5 ${sub} opacity-70`}>{ev.note}</div>}
                 </div>
               </div>
-            </div>
-
-            {/* Mid-term Results */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-07-26')
-                ? isDarkMode ? 'bg-indigo-900/30 border-indigo-700/50' : 'bg-indigo-50 border-indigo-200'
-                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-07-26')
-                    ? 'bg-indigo-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">📊</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Mid-term Results Submission
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    July 26, 2026 (Sunday)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Deadline of submission of Midterm Examination Results
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Final Examinations */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              semesterStatus.isFinalPeriod
-                ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50 ring-2 ring-purple-500/50' : 'bg-purple-50 border-purple-200 ring-2 ring-purple-400/50'
-                : new Date() < new Date('2026-08-22')
-                  ? isDarkMode ? 'bg-purple-900/30 border-purple-700/50' : 'bg-purple-50 border-purple-200'
-                  : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  semesterStatus.isFinalPeriod
-                    ? 'bg-purple-600 text-white animate-pulse'
-                    : new Date() < new Date('2026-08-22')
-                      ? 'bg-purple-600 text-white'
-                      : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">🎯</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Final Examinations
-                    {semesterStatus.isFinalPeriod && (
-                      <span className="ml-2 text-xs px-2 py-1 bg-purple-500 text-white rounded-full">ONGOING</span>
-                    )}
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    August 22-30, 2026 (9 days)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Preparatory leave: Aug 21
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Final Results */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              new Date() < new Date('2026-09-03')
-                ? isDarkMode ? 'bg-green-900/30 border-green-700/50' : 'bg-green-50 border-green-200'
-                : isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  new Date() < new Date('2026-09-03')
-                    ? 'bg-green-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  <span className="text-lg">📢</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Final Results Publication
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    September 3, 2026 (Thursday)
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Summer 2026 semester results
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Semester Break */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              semesterStatus.isBreak
-                ? isDarkMode ? 'bg-teal-900/30 border-teal-700/50 ring-2 ring-teal-500/50' : 'bg-teal-50 border-teal-200 ring-2 ring-teal-400/50'
-                : isDarkMode ? 'bg-teal-900/30 border-teal-700/50' : 'bg-teal-50 border-teal-200'
-            }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${
-                  semesterStatus.isBreak
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-teal-600 text-white'
-                }`}>
-                  <span className="text-lg">🏖️</span>
-                </div>
-                <div className="flex-1">
-                  <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Semester Break
-                    {semesterStatus.isBreak && (
-                      <span className="ml-2 text-xs px-2 py-1 bg-teal-500 text-white rounded-full">ACTIVE</span>
-                    )}
-                  </div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    September 4, 2026
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Fall 2026 starts: September 5
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-        </div>
+        </motion.div>
 
 
-        {/* Mid-term Schedule - Only show during final exam period */}
+        {/* Final Exam Schedule - show during final exam period */}
         {semesterStatus.isFinalPeriod && (
-        <div className={`rounded-2xl p-6 hover-lift shadow-lg transition-colors duration-300 ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
-            : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
-        }`}>
-          <div className="flex items-center space-x-3 mb-6">
-            <Users className="h-6 w-6 text-blue-600" />
-            <h2 className={`text-xl font-bold transition-colors duration-300 ${
-              isDarkMode ? 'text-gray-100' : 'text-slate-800'
-            }`}>Final Examination Schedule</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className={`rounded-2xl p-5 ${card}`}
+        >
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dm ? 'bg-purple-900/40' : 'bg-purple-50'}`}>
+              <Users className="h-4 w-4 text-purple-500" />
+            </div>
+            <h2 className={`text-base font-bold ${head}`}>Final Examination Schedule</h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
+          <div className="overflow-x-auto rounded-xl">
+            <table className="w-full min-w-[580px] text-sm">
               <thead>
-                <tr className={`border-b transition-colors duration-300 ${
-                  isDarkMode ? 'border-slate-700' : 'border-slate-200'
-                }`}>
-                  <th className={`text-left py-3 px-4 font-semibold min-w-[100px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-blue-300' : 'text-slate-700'
-                  }`}>Course</th>
-                  <th className={`text-left py-3 px-4 font-semibold min-w-[120px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
-                  }`}>Date & Day</th>
-                  <th className={`text-left py-3 px-4 font-semibold min-w-[80px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
-                  }`}>Teacher</th>
-                  <th className={`text-left py-3 px-4 font-semibold min-w-[100px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
-                  }`}>Time</th>
-                  <th className={`text-left py-3 px-4 font-semibold min-w-[80px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
-                  }`}>Status</th>
+                <tr className={`text-xs font-semibold uppercase tracking-wide ${dm ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>
+                  <th className="text-left py-2.5 px-4 rounded-l-lg">Course</th>
+                  <th className="text-left py-2.5 px-4">Date & Day</th>
+                  <th className="text-left py-2.5 px-4">Teacher</th>
+                  <th className="text-left py-2.5 px-4">Time</th>
+                  <th className="text-left py-2.5 px-4 rounded-r-lg">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-800/30">
                 {Object.entries(MID_TERM_SCHEDULE).map(([courseCode, exam]) => {
                   const examDate = new Date(exam.date);
                   const today = new Date();
-                  const currentTime = new Date();
-                  
-                  // Set time comparison for date only
+                  const nowTime = new Date();
                   today.setHours(0, 0, 0, 0);
                   examDate.setHours(0, 0, 0, 0);
-                  
+
                   let status = 'Upcoming';
-                  let statusColor = isDarkMode ? 'text-blue-400' : 'text-blue-600';
-                  let bgColor = isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50';
-                  
+                  let statusCls = dm ? 'text-blue-400' : 'text-blue-600';
+
                   if (examDate < today) {
-                    status = 'Completed';
-                    statusColor = isDarkMode ? 'text-green-400' : 'text-green-600';
-                    bgColor = isDarkMode ? 'bg-green-900/30' : 'bg-green-50';
+                    status = 'Done';
+                    statusCls = dm ? 'text-emerald-400' : 'text-emerald-600';
                   } else if (examDate.getTime() === today.getTime()) {
-                    // Check if exam time has passed (exam ends at 11:30 AM)
-                    const examEndTime = new Date();
-                    examEndTime.setHours(11, 30, 0, 0); // 11:30 AM
-                    
-                    if (currentTime >= examEndTime) {
-                      status = 'Completed';
-                      statusColor = isDarkMode ? 'text-green-400' : 'text-green-600';
-                      bgColor = isDarkMode ? 'bg-green-900/30' : 'bg-green-50';
-                    } else {
-                      status = 'Today';
-                      statusColor = isDarkMode ? 'text-red-400' : 'text-red-600';
-                      bgColor = isDarkMode ? 'bg-red-900/30' : 'bg-red-50';
-                    }
+                    const examEnd = new Date(); examEnd.setHours(11, 30, 0, 0);
+                    if (nowTime >= examEnd) { status = 'Done'; statusCls = dm ? 'text-emerald-400' : 'text-emerald-600'; }
+                    else { status = 'Today'; statusCls = dm ? 'text-red-400' : 'text-red-600'; }
                   }
 
+                  const isToday = status === 'Today';
                   return (
-                    <tr key={courseCode} className={`${bgColor} border-b transition-colors duration-300 ${
-                      isDarkMode ? 'border-slate-700/30' : 'border-slate-100'
-                    }`}>
-                      <td className={`py-3 px-4 font-semibold transition-colors duration-300 ${
-                        isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                      }`}>{courseCode}</td>
+                    <tr key={courseCode} className={`${isToday ? (dm ? 'bg-red-900/20' : 'bg-red-50') : ''}`}>
+                      <td className={`py-3 px-4 font-bold text-sm ${head}`}>{courseCode}</td>
                       <td className="py-3 px-4">
-                        <div className={`transition-colors duration-300 ${
-                          isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                        }`}>{exam.date.split('-').reverse().join('/')}</div>
-                        <div className={`text-sm transition-colors duration-300 ${
-                          isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                        }`}>{exam.day}</div>
+                        <div className={`text-xs font-semibold ${head}`}>{exam.date.split('-').reverse().join('/')}</div>
+                        <div className={`text-xs ${sub}`}>{exam.day}</div>
                       </td>
-                      <td className={`py-3 px-4 transition-colors duration-300 ${
-                        isDarkMode ? 'text-gray-200' : 'text-slate-700'
-                      }`}>{exam.teacher}</td>
+                      <td className={`py-3 px-4 text-xs ${label}`}>{exam.teacher}</td>
                       <td className="py-3 px-4">
-                        <div className={`text-sm transition-colors duration-300 ${
-                          isDarkMode ? 'text-gray-100' : 'text-slate-800'
-                        }`}>{exam.time}</div>
-                        <div className={`text-xs transition-colors duration-300 ${
-                          isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                        }`}>Room {exam.room}</div>
+                        <div className={`text-xs font-semibold ${head}`}>{exam.time}</div>
+                        <div className={`text-xs ${sub}`}>Room {exam.room}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`${statusColor} font-semibold`}>{status}</span>
+                        <span className={`text-xs font-bold ${statusCls}`}>{status}</span>
                       </td>
                     </tr>
                   );
@@ -774,7 +516,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
         )}
 
         </div>
