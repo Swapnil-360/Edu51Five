@@ -80,7 +80,7 @@ export default function EditBasicInfoModal({ profile, onClose, onSaved, isDarkMo
           }`}
         >
           <h2 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-            Edit Profile
+            Edit Profile Details
           </h2>
           <button onClick={onClose} className={isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}>
             <X className="w-5 h-5" />

@@ -81,6 +81,9 @@ import {
   Users,
   GraduationCap,
   Trophy,
+  User,
+  Settings,
+  ArrowLeft,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
@@ -352,6 +355,8 @@ function App() {
   const [authSession, setAuthSession] = useState<any>(null);
   const [unreadNotices, setUnreadNotices] = useState<string[]>([]);
   const [showWC26Intro, setShowWC26Intro] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // Authoritative admin check: only an authenticated Supabase session whose
   // profile has is_admin=true grants admin. This mirrors exactly what the DB
@@ -372,6 +377,21 @@ function App() {
       cancelled = true;
     };
   }, [authSession]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // User profile state
   const [userProfile, setUserProfile] = useState({
@@ -1690,13 +1710,13 @@ FOR ALL USING (true) WITH CHECK (true);
         console.log("🏗️ [initializeDefaultNotices] Creating welcome notice...");
         welcomeNotice = {
           id: "welcome-notice",
-          title: "🎉 Welcome to Edu51Portal - BUBT Intake 51 Section 5",
+          title: "Welcome to Edu51Portal - BUBT Intake 51 Section 5",
           content: `Dear BUBT Intake 51 Students,
 
 Welcome to Edu51Portal, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
 
-🎯 **Your Exam Success Platform:**
-📚 Complete Study Materials • 📝 Past Exam Questions • 🔔 Real-time Updates
+**Your Exam Success Platform:**
+Complete Study Materials • Past Exam Questions • Real-time Updates
 
 This platform is your centralized hub for all Section 5 (Computer Science & Engineering) resources. Use it regularly to stay ahead in your studies and achieve academic excellence!
 
@@ -1765,7 +1785,7 @@ Best of luck with your studies!
       const bareMinimumNotices: Notice[] = [
         {
           id: "welcome-notice",
-          title: "🎉 Welcome to Edu51Portal",
+          title: "Welcome to Edu51Portal",
           content: "Welcome to Edu51Portal, your academic platform!",
           type: "info",
           category: "announcement",
@@ -1777,7 +1797,7 @@ Best of luck with your studies!
         } as Notice,
         {
           id: "exam-routine-notice",
-          title: "📅 Exam Information",
+          title: "Exam Information",
           content: "Check your exam schedule on the platform.",
           type: "warning",
           category: "exam",
@@ -2660,7 +2680,7 @@ Best of luck with your studies!
       setRoutineFile(null);
       setShowCreateNotice(false);
 
-      alert("✅ Notice published to all users! Push notifications sent.");
+      alert("Notice published to all users! Push notifications sent.");
     } catch (error) {
       console.error("Error creating notice:", error);
       alert("Error creating notice. Please try again.");
@@ -2717,7 +2737,7 @@ Best of luck with your studies!
         if (error) {
           console.error("Database delete error:", error);
           alert(
-            "⚠️ Notice deleted locally, but database update may have failed. Refresh page to verify.",
+            "Notice deleted locally, but database update may have failed. Refresh page to verify.",
           );
         } else {
           deletedFromDB = true;
@@ -2729,7 +2749,7 @@ Best of luck with your studies!
           error,
         );
         alert(
-          "⚠️ Notice deleted locally, but database update may have failed. Refresh page to verify.",
+          "Notice deleted locally, but database update may have failed. Refresh page to verify.",
         );
       }
 
@@ -2741,11 +2761,11 @@ Best of luck with your studies!
       );
 
       if (deletedFromDB) {
-        alert("✅ Notice deleted successfully!");
+        alert("Notice deleted successfully!");
       }
     } catch (error) {
       console.error("Error deleting notice:", error);
-      alert("❌ Error deleting notice. Please try again.");
+      alert("Error deleting notice. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -2813,7 +2833,7 @@ Best of luck with your studies!
       if (updateError) {
         console.error("Database update failed:", updateError);
         alert(
-          "❌ Notice update did NOT reach all users.\n\n" +
+          "Notice update did NOT reach all users.\n\n" +
             (updateError.message || "Database error") +
             "\n\nMake sure you are signed in as an admin and try again.",
         );
@@ -2843,6 +2863,7 @@ Best of luck with your studies!
         content: "",
         type: "info",
         category: "announcement",
+        border: "border-slate-200",
         priority: "normal",
         exam_type: null,
         event_date: "",
@@ -2855,10 +2876,10 @@ Best of luck with your studies!
       setEditingNoticeId(null);
       setShowCreateNotice(false);
 
-      alert("✅ Notice updated successfully! Page refreshing...");
+      alert("Notice updated successfully! Page refreshing...");
     } catch (error) {
       console.error("Error updating notice:", error);
-      alert("❌ Error updating notice. Please try again.");
+      alert("Error updating notice. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -2868,13 +2889,13 @@ Best of luck with your studies!
   const handleDeleteExamRoutine = async (noticeId: string) => {
     // Only allow deletion of exam routine notice
     if (noticeId !== "exam-routine-notice") {
-      alert("❌ This action is only available for exam routine notices.");
+      alert("This action is only available for exam routine notices.");
       return;
     }
 
     if (
       !confirm(
-        "⚠️ This will reset the exam routine to default content and remove any uploaded image. Continue?",
+        "This will reset the exam routine to default content and remove any uploaded image. Continue?",
       )
     ) {
       return;
@@ -3026,51 +3047,52 @@ For any queries, contact your course instructors or the department.`,
             : "bg-white/95 border-gray-200 text-gray-900"
         }`}
       >
-        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12">
-          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 xl:h-24 gap-2 sm:gap-3 md:gap-4">
-            {/* Left: Menu Button Only */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className={`p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
-              }`}
-              title="Menu"
-            >
-              <svg
-                className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 relative">
+          <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-22 gap-2 sm:gap-3 md:gap-4">
+            {/* Left side: Mobile Toggle + Logo */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              {/* Menu Button (Mobile-only) */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className={`p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 lg:hidden ${
+                  isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
+                }`}
+                title="Menu"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h7"
-                />
-              </svg>
-            </button>
+                <svg
+                  className={`h-6 w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h7"
+                  />
+                </svg>
+              </button>
 
-            {/* Center: Logo and Name - Centered */}
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0 absolute left-1/2 transform -translate-x-1/2">
+              {/* Logo and Brand Title */}
               <button
                 onClick={() => goToView("home")}
-                className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 focus:outline-none"
+                className="flex items-center space-x-2 sm:space-x-3 focus:outline-none"
                 title="Go to Home"
               >
-                <div className="flex-shrink-0 h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 lg:h-20 lg:w-20">
+                <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
                   <img
                     src="/Edu_51_Logo.png"
                     alt="Edu51Portal Logo"
                     className="h-full w-full object-contain block"
-                    width="80"
-                    height="80"
+                    width="48"
+                    height="48"
                     decoding="async"
                   />
                 </div>
                 <div className="min-w-0">
                   <h1
-                    className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold no-select whitespace-nowrap ${
+                    className={`text-base sm:text-lg md:text-xl font-bold no-select whitespace-nowrap ${
                       isDarkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
@@ -3080,124 +3102,360 @@ For any queries, contact your course instructors or the department.`,
               </button>
             </div>
 
-            {/* Left Side - Removed Logo from here */}
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0 min-w-0 invisible"></div>
-
-            {/* Right: Theme Toggle & Notification Bell & Admin Logout */}
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-end flex-shrink-0">
-              {!isLoggedIn && (
-                <div
-                  className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
-                    isDarkMode
-                      ? "bg-blue-900/40 text-blue-200 border-blue-500/40"
-                      : "bg-blue-50 text-blue-700 border-blue-200"
-                  }`}
-                >
-                  <span className="text-sm">👋</span>
-                  <span>Guest Mode</span>
-                </div>
-              )}
-              {/* Theme Toggle Button */}
+            {/* Desktop Top Navigation Bar (Centered) */}
+            <nav className="hidden lg:flex absolute left-1/2 transform -translate-x-1/2 items-center gap-1.5 xl:gap-2.5">
               <button
-                onClick={toggleDarkMode}
-                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                  isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification("error", "Please sign in to join the World Cup 2026 event");
+                    setShowSignInModal(true);
+                    return;
+                  }
+                  goToView("wc26");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "wc26"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
                 }`}
-                title={isDarkMode ? "Light Mode" : "Dark Mode"}
               >
-                {isDarkMode ? (
-                  <Sun className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
-                ) : (
-                  <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
-                )}
+                <Trophy className="w-3.5 h-3.5" />
+                <span>World Cup '26</span>
+                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-green-500 text-white animate-pulse">LIVE</span>
               </button>
 
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification("error", "Please sign in to access Semester Tracker");
+                    setShowSignInModal(true);
+                    return;
+                  }
+                  goToView("semester");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "semester"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Semester Tracker</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification("error", "Please sign in to access Team Building");
+                    setShowSignInModal(true);
+                    return;
+                  }
+                  goToView("teams");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "teams" || currentView === "team"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Team Building</span>
+                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-emerald-500 text-white">NEW</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification("error", "Please sign in to access My Network");
+                    setShowSignInModal(true);
+                    return;
+                  }
+                  goToView("network");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "network"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>My Network</span>
+                <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-sky-500 text-white">NEW</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  goToView("alumni");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "alumni"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>Alumni Hub</span>
+                <span className={`px-1 py-0.2 rounded text-[8px] font-extrabold ${isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-650"}`}>SOON</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    showMajorAccessNotification("error", "Please sign in to access Custom Routine");
+                    setShowSignInModal(true);
+                    return;
+                  }
+                  goToView("custom");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  currentView === "custom"
+                    ? isDarkMode ? "bg-slate-800 text-white border border-slate-700/60 shadow-sm" : "bg-slate-100 text-slate-900 border border-slate-200/50 shadow-sm"
+                    : isDarkMode ? "text-slate-300 hover:bg-slate-800/40 hover:text-white" : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-900"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Custom Routine</span>
+              </button>
+            </nav>
+
+            {/* Right Side: Theme Toggle & Notification Bell & Auth Actions */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-end flex-shrink-0">
+              {!isLoggedIn && (
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <button
+                    onClick={() => setShowSignInModal(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                      isDarkMode
+                        ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
+                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      setShowSignUpModal(true);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-150"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              )}
+
+              {/* User Dropdown Menu - visible when logged in */}
+              {isLoggedIn && (
+                <div className="relative" ref={userDropdownRef}>
+                  <button
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                    className={`flex items-center gap-2 p-1 sm:p-1.5 rounded-lg border transition-all duration-200 hover-lift ${
+                      isDarkMode
+                        ? "bg-slate-800 border-slate-700/60 text-slate-200 hover:bg-slate-700 hover:text-white"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-full overflow-hidden shadow bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                      {userProfile.profilePic || userProfile.avatar_url ? (
+                        <img
+                          src={userProfile.profilePic || userProfile.avatar_url}
+                          alt={userProfile.name}
+                          className="w-full h-full object-cover block"
+                          width="32"
+                          height="32"
+                          decoding="async"
+                        />
+                      ) : (
+                        <User className="w-4 h-4 text-white" />
+                      )}
+                    </div>
+                    <span className="hidden sm:inline text-xs font-semibold max-w-[120px] truncate">
+                      {userProfile.name}
+                    </span>
+                    <svg
+                      className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${
+                        showUserDropdown ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Content */}
+                  {showUserDropdown && (
+                    <div
+                      className={`absolute right-0 mt-2 w-52 rounded-xl border shadow-xl py-2 z-50 transition-all duration-200 ${
+                        isDarkMode
+                          ? "bg-slate-900 border-slate-700 text-slate-200"
+                          : "bg-white border-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {/* User Info Header in Dropdown */}
+                      <div className="px-4 py-2 border-b border-opacity-10 border-slate-500">
+                        <p className="text-xs opacity-60">Signed in as</p>
+                        <p className="font-semibold text-sm truncate">{userProfile.name}</p>
+                      </div>
+                      
+                      {/* My Profile */}
+                      <button
+                        onClick={() => {
+                          goToView("profile");
+                          setShowUserDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors ${
+                          isDarkMode
+                            ? "hover:bg-slate-800 text-slate-200 hover:text-white"
+                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <User className="w-4 h-4 text-blue-500" />
+                        My Profile
+                      </button>
+
+                      {/* Edit Profile */}
+                      <button
+                        onClick={() => {
+                          setIsEditingProfile(true);
+                          setShowSignUpModal(true);
+                          setShowUserDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors ${
+                          isDarkMode
+                            ? "hover:bg-slate-800 text-slate-200 hover:text-white"
+                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <Settings className="w-4 h-4 text-purple-500" />
+                        Account Settings
+                      </button>
+
+                      {/* Switch Theme Option */}
+                      <button
+                        onClick={toggleDarkMode}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors ${
+                          isDarkMode
+                            ? "hover:bg-slate-800 text-slate-200 hover:text-white"
+                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        {isDarkMode ? (
+                          <>
+                            <Sun className="w-4 h-4 text-yellow-400" />
+                            <span>Light Mode</span>
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="w-4 h-4 text-slate-500" />
+                            <span>Dark Mode</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="border-t border-opacity-10 border-slate-500 my-1"></div>
+
+                      {/* Exit Admin */}
+                      {isAdmin && currentView === "admin" && (
+                        <button
+                          onClick={() => {
+                            handleExitAdmin();
+                            setShowUserDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors ${
+                            isDarkMode
+                              ? "hover:bg-slate-800 text-slate-200 hover:text-white"
+                              : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                          }`}
+                        >
+                          <ArrowLeft className="w-4 h-4 text-blue-500" />
+                          Exit Admin
+                        </button>
+                      )}
+
+                      {/* Logout */}
+                      <button
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          setIsLoggedIn(false);
+                          setAuthSession(null);
+                          setIsAdmin(false);
+                          setUserProfile({
+                            name: "Welcome Student",
+                            section: "",
+                            major: "",
+                            bubtEmail: "",
+                            notificationEmail: "",
+                            phone: "",
+                            password: "",
+                            profilePic: "",
+                            avatar_url: "",
+                          });
+                          [
+                            "userProfileBubtEmail",
+                            "userProfileName",
+                            "userProfileMajor",
+                            "userProfileSection",
+                            "userProfileNotificationEmail",
+                            "userProfilePhone",
+                            "userProfilePic",
+                            "userProfilePassword",
+                            "userProfileAvatarUrl",
+                            "userProfile",
+                          ].forEach((k) => localStorage.removeItem(k));
+                          goToView("home");
+                          showMajorAccessNotification(
+                            "success",
+                            "Signed out successfully. See you soon!",
+                          );
+                          supabase.auth.signOut().catch((err: any) =>
+                            console.error("[SIGN OUT] Supabase error:", err),
+                          );
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors ${
+                          isDarkMode
+                            ? "hover:bg-slate-800 text-red-400 hover:text-red-300"
+                            : "hover:bg-slate-100 text-red-650 hover:text-red-750"
+                        }`}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Notification Bell */}
-              <div className="relative">
-                <button
-                  onClick={toggleNoticePanel}
-                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                    isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
-                  }`}
-                  title="Notifications"
-                >
-                  <div className="relative">
-                    <Bell
-                      className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
-                    />
-                    {getUnreadNoticeCount() > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                        {getUnreadNoticeCount()}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              </div>
-
-              {/* User Logout Button - visible for logged-in regular users */}
-              {isLoggedIn && !isAdmin && (
-                <button
-                  onClick={() => {
-                    setIsLoggedIn(false);
-                    setAuthSession(null);
-                    setIsAdmin(false);
-                    setUserProfile({
-                      name: "Welcome Student",
-                      section: "",
-                      major: "",
-                      bubtEmail: "",
-                      notificationEmail: "",
-                      phone: "",
-                      password: "",
-                      profilePic: "",
-                      avatar_url: "",
-                    });
-                    [
-                      "userProfileBubtEmail",
-                      "userProfileName",
-                      "userProfileMajor",
-                      "userProfileSection",
-                      "userProfileNotificationEmail",
-                      "userProfilePhone",
-                      "userProfilePic",
-                      "userProfilePassword",
-                      "userProfileAvatarUrl",
-                      "userProfile",
-                    ].forEach((k) => localStorage.removeItem(k));
-                    goToView("home");
-                    showMajorAccessNotification(
-                      "success",
-                      "Signed out successfully. See you soon!",
-                    );
-                    supabase.auth.signOut().catch((err: any) =>
-                      console.error("[SIGN OUT] Supabase error:", err),
-                    );
-                  }}
-                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                    isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
-                  }`}
-                  title="Sign Out"
-                >
-                  <LogOut
-                    className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-red-400" : "text-red-600"}`}
-                  />
-                </button>
+              {isLoggedIn && (
+                <div className="relative">
+                  <button
+                    onClick={toggleNoticePanel}
+                    className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
+                      isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
+                    }`}
+                    title="Notifications"
+                  >
+                    <div className="relative">
+                      <Bell
+                        className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
+                      />
+                      {getUnreadNoticeCount() > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                          {getUnreadNoticeCount()}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </div>
               )}
 
-              {/* Exit Admin Button - only while viewing the admin dashboard */}
-              {isAdmin && currentView === "admin" && (
-                <button
-                  onClick={handleExitAdmin}
-                  className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                    isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
-                  }`}
-                  title="Exit Admin"
-                >
-                  <LogOut
-                    className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-red-400" : "text-red-600"}`}
-                  />
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -3310,9 +3568,9 @@ For any queries, contact your course instructors or the department.`,
                         ? "bg-slate-700 text-slate-200 hover:bg-slate-600"
                         : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                     }`}
-                    title="Edit account details"
+                    title="Account Settings"
                   >
-                    Edit
+                    Account Settings
                   </button>
                 </div>
               </div>
@@ -4125,13 +4383,12 @@ For any queries, contact your course instructors or the department.`,
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-2xs font-semibold backdrop-blur-sm border shadow-sm ${
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-semibold backdrop-blur-sm border shadow-sm ${
                             isDarkMode
                               ? "bg-white/20 border-white/30 text-white"
-                              : "bg-white border-indigo-100 text-indigo-700"
+                              : "bg-indigo-50 border-indigo-100 text-indigo-700"
                           }`}
                         >
-                          <span className="text-amber-300">⚡</span>
                           <span>New version</span>
                         </div>
                         <div className="min-w-0">

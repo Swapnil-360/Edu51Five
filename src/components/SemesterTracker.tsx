@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Target, Users, GraduationCap, TrendingUp, ArrowLeft, CreditCard, Sparkles, UserCheck, AlertCircle } from 'lucide-react';
 import { getCurrentSemesterStatus } from '../config/semester';
 import { MID_TERM_SCHEDULE } from '../config/examSchedule';
 import { 
@@ -104,6 +104,19 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
         <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 p-2 sm:p-0">
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
+            {onClose && (
+              <button
+                onClick={onClose}
+                className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+                  isDarkMode 
+                    ? 'hover:bg-slate-800 text-slate-300' 
+                    : 'hover:bg-slate-100 text-slate-600'
+                }`}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
             <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl hover-lift flex-shrink-0 shadow-sm transition-colors duration-300 ${
               isDarkMode
                 ? 'bg-gradient-to-br from-blue-900 to-indigo-900 border border-blue-700'
@@ -120,15 +133,6 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               }`}>BUBT Intake 51 - All Sections</p>
             </div>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover-lift text-sm sm:text-base flex-shrink-0 shadow-lg"
-            >
-              <span className="hidden sm:inline">Back to Dashboard</span>
-              <span className="sm:hidden">Back</span>
-            </button>
-          )}
         </div>
 
         {/* Live Clock */}
@@ -156,6 +160,141 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
               <div className={`transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-400' : 'text-slate-600'
               }`}>of {semesterStatus.semesterName}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Semester Deadlines & Key Events */}
+        <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
+          isDarkMode
+            ? 'bg-slate-800/40 border border-slate-700/50'
+            : 'bg-slate-50/70 border border-slate-200'
+        }`}>
+          <div className="flex items-center space-x-3 mb-6">
+            <Calendar className="h-6 w-6 text-blue-600" />
+            <h2 className={`text-xl font-bold transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-100' : 'text-slate-800'
+            }`}>Semester Deadlines & Key Events</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Payment Deadlines */}
+            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
+              isDarkMode
+                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                : 'bg-white/90 border-slate-200 hover:border-slate-300'
+            }`}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
+                  Payment Installments
+                </h3>
+              </div>
+              <ul className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                <li className="flex justify-between items-center pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
+                  <span className="font-medium">1st Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>May 6 - 22</span>
+                </li>
+                <li className="flex justify-between items-center pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
+                  <span className="font-medium">2nd Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>June 10 - 24</span>
+                </li>
+                <li className="flex justify-between items-center">
+                  <span className="font-medium">Final Installment</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>Aug 6 - 19</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Special Events */}
+            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
+              isDarkMode
+                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                : 'bg-white/90 border-slate-200 hover:border-slate-300'
+            }`}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
+                  Special Events
+                </h3>
+              </div>
+              <ul className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                <li className="pb-2 border-b border-dashed border-slate-200 dark:border-slate-800/65">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Club Member Collection</span>
+                  </div>
+                  <div className="flex justify-end mt-1">
+                    <span className={`font-semibold text-xs px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>June 7 - 10</span>
+                  </div>
+                </li>
+                <li className="">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Research Showcase</span>
+                  </div>
+                  <div className="flex justify-end mt-1">
+                    <span className={`font-semibold text-xs px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>August 16 - 20</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Teacher Evaluation */}
+            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
+              isDarkMode
+                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                : 'bg-white/90 border-slate-200 hover:border-slate-300'
+            }`}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
+                  Teacher Evaluation
+                </h3>
+              </div>
+              <div className={`text-xs space-y-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                <p className="leading-relaxed font-medium">
+                  The portal will be open for student feedback on BUBT faculty.
+                </p>
+                <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800/65 flex justify-between items-center">
+                  <span className="font-medium text-slate-500 dark:text-slate-400">Period:</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>August 17 - 22</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Important Remarks */}
+            <div className={`p-5 rounded-xl border transition-all duration-300 hover-lift shadow-sm ${
+              isDarkMode
+                ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                : 'bg-white/90 border-slate-200 hover:border-slate-300'
+            }`}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <h3 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-slate-800'}`}>
+                  Important Remarks
+                </h3>
+              </div>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-slate-600'} space-y-2.5`}>
+                <div className="flex gap-2 items-start">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                  <p className="leading-relaxed">
+                    Some academic and holiday dates marked with <span className="font-bold text-blue-600">*</span> are subject to moon appearance.
+                  </p>
+                </div>
+                <div className="flex gap-2 items-start">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                  <p className="leading-relaxed">
+                    Deadlines and schedules are subject to official BUBT administrative decisions.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -238,11 +377,11 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
           {/* Academic Timeline */}
           <div className={`rounded-2xl p-6 hover-lift shadow-lg transition-colors duration-300 ${
             isDarkMode
-              ? 'bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-purple-800/40 border border-indigo-700/50'
-              : 'bg-gradient-to-br from-indigo-100 via-purple-50 to-purple-100 border border-indigo-300'
+              ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
+              : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
           }`}>
               <div className="flex items-center space-x-3 mb-6">
-              <Calendar className="h-6 w-6 text-indigo-600" />
+              <Calendar className="h-6 w-6 text-blue-600" />
               <h2 className={`text-xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-100' : 'text-slate-800'
               }`}>Timeline</h2>
@@ -307,11 +446,11 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
         {/* Academic Calendar Section */}
         <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${
           isDarkMode
-            ? 'bg-gradient-to-br from-purple-900/40 via-pink-900/30 to-purple-800/40 border border-purple-700/50'
-            : 'bg-gradient-to-br from-purple-100 via-pink-50 to-purple-100 border border-purple-300'
+            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
+            : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
         }`}>
           <div className="flex items-center space-x-3 mb-6">
-            <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
               <Calendar className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -319,7 +458,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
                 isDarkMode ? 'text-gray-100' : 'text-slate-800'
               }`}>Academic Calendar</h2>
               <p className={`text-sm transition-colors duration-300 ${
-                isDarkMode ? 'text-purple-400' : 'text-purple-700'
+                isDarkMode ? 'text-blue-400' : 'text-blue-700'
               }`}>{semesterStatus.semesterName} - Key Dates & Events</p>
             </div>
           </div>
@@ -559,24 +698,6 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             </div>
           </div>
 
-          {/* Additional Info */}
-          <div className={`mt-6 p-4 rounded-xl border ${
-            isDarkMode
-              ? 'bg-purple-900/20 border-purple-700/50'
-              : 'bg-purple-50 border-purple-200'
-          }`}>
-            <div className={`text-xs font-semibold mb-2 ${
-              isDarkMode ? 'text-purple-400' : 'text-purple-700'
-            }`}>📌 Important Notes:</div>
-            <ul className={`text-xs space-y-1 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>
-              <li>• Payment deadlines: 1st installment (May 6-22), 2nd installment (June 10-24), Final (Aug 6-19)</li>
-              <li>• Club Member Collection Week: June 7-10 | Research Showcase Week: August 16-20</li>
-              <li>• Teachers Evaluation: August 17-22</li>
-              <li>• Some holiday dates marked with * are subject to moon appearance</li>
-            </ul>
-          </div>
         </div>
 
 
@@ -584,11 +705,11 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
         {semesterStatus.isFinalPeriod && (
         <div className={`rounded-2xl p-6 hover-lift shadow-lg transition-colors duration-300 ${
           isDarkMode
-            ? 'bg-gradient-to-br from-emerald-900/40 via-teal-900/30 to-teal-800/40 border border-emerald-700/50'
-            : 'bg-gradient-to-br from-emerald-100 via-teal-50 to-teal-100 border border-emerald-300'
+            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-slate-800 border border-gray-700'
+            : 'bg-gradient-to-br from-slate-100 via-blue-50 to-blue-100 border border-slate-300'
         }`}>
           <div className="flex items-center space-x-3 mb-6">
-            <Users className="h-6 w-6 text-emerald-600" />
+            <Users className="h-6 w-6 text-blue-600" />
             <h2 className={`text-xl font-bold transition-colors duration-300 ${
               isDarkMode ? 'text-gray-100' : 'text-slate-800'
             }`}>Final Examination Schedule</h2>
@@ -598,10 +719,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className={`border-b transition-colors duration-300 ${
-                  isDarkMode ? 'border-emerald-700/50' : 'border-slate-200'
+                  isDarkMode ? 'border-slate-700' : 'border-slate-200'
                 }`}>
                   <th className={`text-left py-3 px-4 font-semibold min-w-[100px] transition-colors duration-300 ${
-                    isDarkMode ? 'text-emerald-300' : 'text-slate-700'
+                    isDarkMode ? 'text-blue-300' : 'text-slate-700'
                   }`}>Course</th>
                   <th className={`text-left py-3 px-4 font-semibold min-w-[120px] transition-colors duration-300 ${
                     isDarkMode ? 'text-emerald-300' : 'text-slate-700'
@@ -653,7 +774,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
 
                   return (
                     <tr key={courseCode} className={`${bgColor} border-b transition-colors duration-300 ${
-                      isDarkMode ? 'border-emerald-700/30' : 'border-slate-100'
+                      isDarkMode ? 'border-slate-700/30' : 'border-slate-100'
                     }`}>
                       <td className={`py-3 px-4 font-semibold transition-colors duration-300 ${
                         isDarkMode ? 'text-gray-100' : 'text-slate-800'

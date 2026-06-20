@@ -491,7 +491,7 @@ export function SignUpModal({
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                {initialProfile?.name ? "Edit Profile" : "Sign Up"}
+                {initialProfile?.name ? "Account Settings" : "Sign Up"}
               </h2>
               <button
                 onClick={onClose}
