@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Mail, Plus, Search } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Loader2, Mail, Plus, Search, Users, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Team,
   TeamCategory,
@@ -41,6 +42,12 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<TeamCategory | "">("");
   const [skillFilter, setSkillFilter] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -86,8 +93,10 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
     const existing = pendingReqByTeam.get(team.id);
     if (existing) {
       await cancelJoinRequest(existing.id);
+      showToast("Request cancelled");
     } else {
       await requestToJoin(team.id, currentUserId);
+      showToast(`Request sent to ${team.name}!`);
     }
     setMyRequests(await listMyJoinRequests(currentUserId));
     setBusy(null);
@@ -102,6 +111,26 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
+      {/* Toast */}
+      <div className="fixed bottom-4 right-4 z-50 pointer-events-none">
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className={`pointer-events-auto flex items-center gap-2 px-3.5 py-2.5 rounded-xl shadow-lg text-xs font-semibold ${
+                isDarkMode ? "bg-slate-800 border border-slate-700 text-white" : "bg-white border border-slate-200 text-slate-900 shadow-black/10"
+              }`}
+            >
+              <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 pt-6">
         <div className="flex items-center justify-between mb-5">
           <h1 className={`text-xl font-bold ${title}`}>Team Building</h1>
@@ -209,9 +238,33 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(tab === "discover" ? teams : myTeams).length === 0 && (
-              <p className={`text-sm text-center py-10 col-span-full ${sub}`}>
-                {tab === "discover" ? "No teams found. Create the first one!" : "You haven't joined any teams yet."}
-              </p>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="col-span-full flex flex-col items-center justify-center py-16 text-center gap-4"
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                  <Users size={28} className={isDarkMode ? "text-slate-600" : "text-slate-300"} />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                    {tab === "discover" ? "No teams found" : "No teams yet"}
+                  </p>
+                  <p className={`text-xs mt-1 ${sub}`}>
+                    {tab === "discover"
+                      ? query || category || skillFilter ? "Try different filters" : "Be the first to create one!"
+                      : "Join or create a team to collaborate"}
+                  </p>
+                </div>
+                {tab === "mine" && (
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
+                  >
+                    <Plus size={13} /> Create Team
+                  </button>
+                )}
+              </motion.div>
             )}
             {(tab === "discover" ? teams : myTeams).map((team) => {
               const isMember = myTeamIds.has(team.id);

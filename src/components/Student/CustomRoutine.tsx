@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
-import { X, Plus, Trash2, Calendar, AlertTriangle, Save } from 'lucide-react';
+import { X, Plus, Trash2, AlertTriangle, Save, Clock, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 
 export type RoutineType = 'regular' | 'improvement' | 'retake';
@@ -697,354 +698,412 @@ export default function CustomRoutine({ onClose, isDarkMode }: CustomRoutineProp
     return marks;
   }, []);
 
+  const todayName = (['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as Day[])[new Date().getDay()];
+
+  const inputCls = `w-full px-3 py-2.5 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`;
+  const labelCls = `text-[11px] font-bold uppercase tracking-wider block mb-1.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`;
+
   return (
-    <div className={`min-h-screen w-full pb-8 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header */}
-      {/* Save action bar — no back button */}
-      <div className={`print-hide sticky top-0 z-10 flex items-center justify-end gap-2 px-4 sm:px-6 py-3 border-b ${isDarkMode ? 'bg-gray-900/80 backdrop-blur border-gray-800' : 'bg-white/80 backdrop-blur border-gray-200'}`}>
-        {syncMessage && (
-          <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-            {syncMessage}
-          </span>
-        )}
-        {isSyncing && (
-          <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-            Syncing...
-          </span>
-        )}
-        <button onClick={handleSave} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${isDarkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}>
-          <Save className="w-4 h-4" /> Save
-        </button>
+    <div className={`min-h-screen w-full pb-10 ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+
+      {/* ── Sticky action bar ──────────────────────────── */}
+      <div className={`print-hide sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b ${isDarkMode ? 'bg-slate-950/90 backdrop-blur-md border-slate-800/80' : 'bg-white/90 backdrop-blur-md border-slate-200'}`}>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>My Routine</span>
+          <span className={`text-[11px] ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>· Intake 51</span>
+          {entries.length > 0 && (
+            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'}`}>
+              {entries.length} {entries.length === 1 ? 'class' : 'classes'}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {syncMessage && (
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${syncMessage.startsWith('✓') ? isDarkMode ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200' : isDarkMode ? 'bg-red-900/30 text-red-400 border-red-800/50' : 'bg-red-50 text-red-700 border-red-200'}`}>
+              {syncMessage}
+            </span>
+          )}
+          {isSyncing && (
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'}`}>
+              Syncing…
+            </span>
+          )}
+          <button onClick={handleSave} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-all shadow-sm hover:shadow-blue-600/25">
+            <Save className="w-3.5 h-3.5" /> Save
+          </button>
+        </div>
       </div>
 
-      {/* Builder */}
-      <div className="routine-grid-container px-4 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Form */}
-        <div className={`print-hide lg:col-span-1 rounded-xl border ${isDarkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'}`}>
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 font-semibold">Add Class</div>
-          <div className="p-4 space-y-3">
+      {/* ── Builder layout ─────────────────────────────── */}
+      <div className="routine-grid-container px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* ── Form panel ──────────────────────────────── */}
+        <div className={`print-hide lg:col-span-1 rounded-2xl border shadow-sm ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+          {/* Panel header */}
+          <div className={`flex items-center gap-2.5 px-4 py-3.5 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isDarkMode ? 'bg-blue-500/15' : 'bg-blue-50'}`}>
+              <Plus className="w-4 h-4 text-blue-500" />
+            </div>
+            <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Add Class</span>
+          </div>
+
+          <div className="p-4 space-y-3.5">
+            {/* Title */}
+            <div>
+              <label className={labelCls}>Course Title</label>
+              <input value={form.title || ''} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputCls} placeholder="e.g., CSE-327 Data Comm" />
+            </div>
+
+            {/* Code */}
+            <div>
+              <label className={labelCls}>Course Code</label>
+              <input value={form.courseCode || ''} onChange={e => setForm(f => ({ ...f, courseCode: e.target.value }))} className={inputCls} placeholder="CSE-327" />
+            </div>
+
+            {/* Type — segmented */}
+            <div>
+              <label className={labelCls}>Type</label>
+              <div className={`flex rounded-xl p-0.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                {([['regular','Regular','bg-emerald-600'],['improvement','Improve','bg-blue-600'],['retake','Retake','bg-rose-600']] as const).map(([v, label, active]) => (
+                  <button key={v} type="button" onClick={() => setForm(f => ({ ...f, type: v as RoutineType }))}
+                    className={`flex-1 text-[11px] font-bold py-2 rounded-lg transition-all ${form.type === v ? `${active} text-white shadow-sm` : isDarkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mode — segmented */}
+            <div>
+              <label className={labelCls}>Mode</label>
+              <div className={`flex rounded-xl p-0.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                {(['theory','lab'] as const).map(v => (
+                  <button key={v} type="button" onClick={() => setForm(f => ({ ...f, mode: v }))}
+                    className={`flex-1 text-[11px] font-bold py-2 rounded-lg transition-all capitalize ${form.mode === v ? 'bg-violet-600 text-white shadow-sm' : isDarkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Duration (lab only) + Day */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="text-sm block mb-1">Title</label>
-                <input value={form.title || ''} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={fieldClass()} placeholder="e.g., CSE-327 Data Comm" />
-              </div>
               <div>
-                <label className="text-sm block mb-1">Course Code</label>
-                <input value={form.courseCode || ''} onChange={e => setForm(f => ({ ...f, courseCode: e.target.value }))} className={fieldClass()} placeholder="CSE-327" />
-              </div>
-              <div>
-                <label className="text-sm block mb-1">Type</label>
-                <select value={form.type as string} onChange={e => setForm(f => ({ ...f, type: e.target.value as RoutineType }))} className={fieldClass()}>
-                  <option value="regular">Regular</option>
-                  <option value="improvement">Improvement</option>
-                  <option value="retake">Retake</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm block mb-1">Mode</label>
-                <select value={form.mode as string} onChange={e => setForm(f => ({ ...f, mode: e.target.value as ClassMode }))} className={fieldClass()}>
-                  <option value="theory">Theory</option>
-                  <option value="lab">Lab</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm block mb-1">Duration</label>
+                <label className={labelCls}>Duration</label>
                 {form.mode === 'lab' ? (
-                  <select value={labDuration} onChange={e => setLabDuration(Number(e.target.value) as 90 | 180)} className={fieldClass()}>
-                    <option value={90}>1 hr 30 min (1 slot)</option>
-                    <option value={180}>3 hr (2 slots)</option>
+                  <select value={labDuration} onChange={e => setLabDuration(Number(e.target.value) as 90 | 180)}
+                    className={inputCls}>
+                    <option value={90}>1h 30m</option>
+                    <option value={180}>3h (2 slots)</option>
                   </select>
                 ) : (
-                  <input value="1 hr 30 min" readOnly className={fieldClass('cursor-not-allowed')} />
+                  <div className={`px-3 py-2.5 rounded-xl border text-sm font-semibold ${isDarkMode ? 'bg-slate-800/40 border-slate-700 text-slate-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                    1h 30m
+                  </div>
                 )}
               </div>
               <div>
-                <label className="text-sm block mb-1">Day</label>
-                <select value={form.day as string} onChange={e => setForm(f => ({ ...f, day: e.target.value as Day }))} className={fieldClass()}>
+                <label className={labelCls}>Day</label>
+                <select value={form.day as string} onChange={e => setForm(f => ({ ...f, day: e.target.value as Day }))} className={inputCls}>
                   {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
+            </div>
+
+            {/* Start + End row */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm block mb-1">Start</label>
-                <select value={form.start} onChange={e => setForm(f => ({ ...f, start: e.target.value }))} className={fieldClass()}>
+                <label className={labelCls}>Start</label>
+                <select value={form.start} onChange={e => setForm(f => ({ ...f, start: e.target.value }))} className={inputCls}>
                   {allowedStartTimes.map(t => <option key={t} value={t}>{format12h(t)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm block mb-1">End</label>
-                <input value={format12h(form.end || '')} readOnly className={fieldClass('cursor-not-allowed')} />
-              </div>
-              <div>
-                <label className="text-sm block mb-1">Room</label>
-                <input value={form.room || ''} onChange={e => setForm(f => ({ ...f, room: e.target.value }))} className={fieldClass()} placeholder="2710" />
-              </div>
-              <div>
-                <label className="text-sm block mb-1">Section</label>
-                <input value={form.section || ''} onChange={e => setForm(f => ({ ...f, section: e.target.value }))} className={fieldClass()} placeholder="Intake 51, S-5" />
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm block mb-1">Course Teacher</label>
-                <input value={form.teacher || ''} onChange={e => setForm(f => ({ ...f, teacher: e.target.value }))} className={fieldClass()} placeholder="e.g., SHB or S. H. Bhuiyan" />
+                <label className={labelCls}>End (auto)</label>
+                <div className={`px-3 py-2.5 rounded-xl border text-sm font-semibold ${isDarkMode ? 'bg-slate-800/40 border-slate-700 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                  {format12h(form.end || '')}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={addEntry} className={`inline-flex items-center gap-1 px-3 py-2 rounded ${isDarkMode ? 'bg-green-700 hover:bg-green-600' : 'bg-green-600 hover:bg-green-700'} text-white`}>
-                <Plus className="w-4 h-4" /> Add Class
-              </button>
-              <button onClick={clearAll} className={`inline-flex items-center gap-1 px-3 py-2 rounded ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                <Trash2 className="w-4 h-4" /> Clear All
-              </button>
+
+            {/* Room + Section */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Room</label>
+                <input value={form.room || ''} onChange={e => setForm(f => ({ ...f, room: e.target.value }))} className={inputCls} placeholder="2710" />
+              </div>
+              <div>
+                <label className={labelCls}>Section</label>
+                <input value={form.section || ''} onChange={e => setForm(f => ({ ...f, section: e.target.value }))} className={inputCls} placeholder="S-5" />
+              </div>
             </div>
+
+            {/* Teacher */}
+            <div>
+              <label className={labelCls}>Teacher</label>
+              <input value={form.teacher || ''} onChange={e => setForm(f => ({ ...f, teacher: e.target.value }))} className={inputCls} placeholder="e.g., SHB" />
+            </div>
+
+            {/* Error */}
             {formError && (
-              <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-amber-300' : 'text-amber-700'}`}>
-                <AlertTriangle className="w-4 h-4" /> {formError}
+              <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl text-sm border ${isDarkMode ? 'bg-amber-900/20 text-amber-300 border-amber-800/40' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{formError}</span>
               </div>
             )}
-            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Lunch & Prayer Break: 12:45–1:15 PM (no classes). Slots are 1h 30m; labs can be 3h. 3hr labs spanning the break are auto-split into two 1h30 slots. Overlap: Regular vs improvement/retake is shown with a smart overlay; same-level keeps earliest.
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-0.5">
+              <button onClick={addEntry} className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-all shadow-sm">
+                <Plus className="w-4 h-4" /> Add Class
+              </button>
+              <button onClick={clearAll} title="Clear all" className={`px-3.5 py-2.5 rounded-xl border text-sm transition-all ${isDarkMode ? 'border-slate-700 text-slate-500 hover:text-rose-400 hover:border-rose-800/50 hover:bg-rose-900/10' : 'border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50'}`}>
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
+
+            <p className={`text-[11px] leading-relaxed ${isDarkMode ? 'text-slate-700' : 'text-slate-400'}`}>
+              Break: 12:45–1:15 PM · Slots 1h 30m · 3hr labs auto-split across break
+            </p>
           </div>
         </div>
 
-        {/* Grid */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Header */}
-          <div className={`hidden sm:flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${isDarkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50 text-gray-900'}`}>
+        {/* ── Grid panel ──────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-3">
+
+          {/* Grid branding header */}
+          <div className={`hidden sm:flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 shadow-sm ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
             <div>
-              <div className="text-xl font-extrabold">
-                Edu<span className="text-[#ef4444]">51</span>Portal
+              <div className={`text-lg font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                Edu<span className="text-red-500">51</span>Portal
               </div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Custom Routine · Intake 51</div>
+              <div className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>Custom Routine · Intake 51</div>
             </div>
-            <div className={`text-xs text-right ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Generated on {new Date().toLocaleDateString()}
+            <div className={`text-[11px] font-semibold ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
             </div>
           </div>
-          
+
+          {/* Timetable */}
           <div className="overflow-x-auto">
-            <div className={`rounded-xl overflow-hidden border ${isDarkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-300 bg-gradient-to-br from-slate-50 to-gray-100'} min-w-[520px]`}>
-            <div className={`grid grid-cols-6 text-xs font-semibold border-b ${isDarkMode ? 'border-gray-800 bg-gray-800 text-gray-200' : 'border-gray-300 bg-gradient-to-r from-blue-100 to-purple-100 text-gray-900'}`}>
-              <div className="p-2 text-center text-[10px]"></div>
-              {DAYS.map(d => (
-                <div key={d} className="p-2 text-center text-sm font-bold">{d}</div>
-              ))}
-            </div>
-            <div className="relative">
-              <div className="grid grid-cols-6">
-                {/* Time labels */}
-                <div className={`border-r w-20 ${isDarkMode ? 'border-gray-800 bg-gray-800/50' : 'border-gray-300 bg-slate-100'}`}>
-                  {hourMarks.map((m, idx) => (
-                    <div key={idx} className={`h-24 px-2 text-[11px] flex items-center justify-center font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {format12h(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`)}
+            <div className={`rounded-2xl overflow-hidden border shadow-sm min-w-[520px] ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+
+              {/* Day headers */}
+              <div className={`grid grid-cols-6 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
+                <div className="py-3" />
+                {DAYS.map(d => {
+                  const isToday = d === todayName;
+                  return (
+                    <div key={d} className="py-3 text-center">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg inline-block transition-colors ${isToday ? 'bg-blue-600 text-white' : isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {d}
+                      </span>
                     </div>
+                  );
+                })}
+              </div>
+
+              <div className="relative">
+                <div className="grid grid-cols-6">
+                  {/* Time column */}
+                  <div className={`border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                    {hourMarks.map((m, idx) => (
+                      <div key={idx} className={`h-24 px-2 text-[10px] font-semibold flex items-start pt-1.5 justify-end ${isDarkMode ? 'text-slate-700' : 'text-slate-400'}`}>
+                        {format12h(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`)}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Day columns */}
+                  {DAYS.map((d, colIdx) => (
+                    <motion.div
+                      key={d}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: colIdx * 0.05, duration: 0.3, ease: 'easeOut' }}
+                      className={`relative border-l ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}
+                    >
+                      {/* Hour grid lines */}
+                      {hourMarks.slice(1).map((m, idx) => (
+                        <div key={idx} className="absolute left-0 right-0" style={{ top: `${((m - START_MINUTES) / totalMinutes) * 100}%`, height: '1px', background: isDarkMode ? 'rgba(30,41,59,0.9)' : 'rgba(241,245,249,1)' }} />
+                      ))}
+
+                      {/* Break band */}
+                      {(() => {
+                        const top = ((toMinutes(BREAK_START) - START_MINUTES) / (END_MINUTES - START_MINUTES)) * 100;
+                        const height = ((toMinutes(BREAK_END) - toMinutes(BREAK_START)) / (END_MINUTES - START_MINUTES)) * 100;
+                        return (
+                          <div className={`absolute left-0 right-0 flex items-center justify-center overflow-hidden ${isDarkMode ? 'bg-amber-500/6' : 'bg-amber-50'}`} style={{ top: `${top}%`, height: `${height}%` }}>
+                            <span className={`text-[9px] font-black tracking-widest uppercase ${isDarkMode ? 'text-amber-700' : 'text-amber-400'}`}>Break</span>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Entry cards */}
+                      <AnimatePresence>
+                      {entries.filter(e => e.day === d).map(entry => {
+                        const top = timeToTop(entry.start);
+                        const height = heightFromRange(entry.start, entry.end);
+                        const isDeemphasized = deemphasize.has(entry.id);
+
+                        const borderAccent = entry.type === 'regular' ? 'border-l-emerald-500' : entry.type === 'improvement' ? 'border-l-blue-500' : 'border-l-rose-500';
+                        const bgTint = entry.type === 'regular'
+                          ? isDarkMode ? 'bg-emerald-950/50' : 'bg-emerald-50/90'
+                          : entry.type === 'improvement'
+                          ? isDarkMode ? 'bg-blue-950/50' : 'bg-blue-50/90'
+                          : isDarkMode ? 'bg-rose-950/50' : 'bg-rose-50/90';
+                        const outerBorder = isDarkMode ? 'border-y border-r border-slate-800/80' : 'border-y border-r border-slate-200/80';
+                        const styleOffset = isDeemphasized
+                          ? { zIndex: 0, opacity: 0.82, width: 'calc(100% - 10px)', marginLeft: '3px' } as React.CSSProperties
+                          : { zIndex: 1, width: 'calc(100% - 2px)' } as React.CSSProperties;
+
+                        return (
+                          <motion.div
+                            key={entry.id}
+                            initial={{ opacity: 0, scale: 0.94 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                            whileHover={{ scale: 1.015, zIndex: 20 }}
+                            transition={{ type: 'spring', stiffness: 340, damping: 26 }}
+                            className={`absolute border-l-[3px] rounded-r-lg cursor-pointer group shadow-sm hover:shadow-lg ${borderAccent} ${bgTint} ${outerBorder}`}
+                            style={{ left: '1px', top: `${top}%`, height: `${height}%`, minHeight: 80, right: '1px', ...styleOffset }}
+                            onClick={() => { setSelectedOverlapEntry(entry.id); setShowOverlapModal(true); }}
+                          >
+                            <div className="h-full p-2 flex flex-col gap-0.5 overflow-hidden">
+                              <div className={`text-[12px] font-bold leading-tight line-clamp-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {entry.title}
+                              </div>
+                              {entry.courseCode && (
+                                <div className={`text-[10px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{entry.courseCode}</div>
+                              )}
+                              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                <span className={`text-[9px] font-black px-1.5 py-[2px] rounded-full text-white leading-none ${entry.type === 'regular' ? 'bg-emerald-600' : entry.type === 'improvement' ? 'bg-blue-600' : 'bg-rose-600'}`}>
+                                  {entry.type === 'regular' ? 'REG' : entry.type === 'improvement' ? 'IMP' : 'RT'}
+                                </span>
+                                <span className={`text-[9px] font-black px-1.5 py-[2px] rounded-full text-white leading-none ${entry.mode === 'lab' ? 'bg-violet-600' : 'bg-slate-500'}`}>
+                                  {entry.mode === 'lab' ? 'LAB' : 'TH'}
+                                </span>
+                              </div>
+                              <div className={`flex items-center gap-1 mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                                <span className="text-[10px] font-semibold">{format12h(entry.start)}–{format12h(entry.end)}</span>
+                              </div>
+                              {entry.teacher && (
+                                <div className={`text-[10px] line-clamp-1 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>{entry.teacher}</div>
+                              )}
+                              {(entry.room || entry.section) && (
+                                <div className={`flex items-center gap-1 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                                  <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                                  <span className="text-[10px] line-clamp-1">{[entry.room, entry.section].filter(Boolean).join(' · ')}</span>
+                                </div>
+                              )}
+                              <div className="mt-auto flex justify-end">
+                                <button
+                                  onClick={e => { e.stopPropagation(); removeEntry(entry.id); }}
+                                  className={`p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-600 hover:text-rose-400 hover:bg-rose-900/20' : 'text-slate-300 hover:text-rose-500 hover:bg-rose-50'}`}
+                                  title="Remove"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                      </AnimatePresence>
+                    </motion.div>
                   ))}
                 </div>
-                {/* Day columns */}
-                {DAYS.map((d) => (
-                  <div key={d} className={`relative border-l ${isDarkMode ? 'border-gray-800' : 'border-gray-300'}`}>
-                    {/* Hour lines */}
-                    {hourMarks.slice(1).map((m, idx) => (
-                      <div key={idx} className={`absolute left-0 right-0`} style={{ top: `${((m - START_MINUTES) / totalMinutes) * 100}%`, height: '1px', background: isDarkMode ? 'rgba(75,85,99,0.3)' : 'rgba(229,231,235,0.8)' }} />
-                    ))}
-
-                    {/* Break band 12:45–13:15 */}
-                    {(() => {
-                      const top = ((toMinutes(BREAK_START) - START_MINUTES) / (END_MINUTES - START_MINUTES)) * 100;
-                      const height = ((toMinutes(BREAK_END) - toMinutes(BREAK_START)) / (END_MINUTES - START_MINUTES)) * 100;
-                      return (
-                        <div className={`absolute left-0 right-0 ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-200/30'} flex items-center justify-center`} style={{ top: `${top}%`, height: `${height}%` }}>
-                          <div className={`text-[10px] font-semibold ${isDarkMode ? 'text-amber-300' : 'text-amber-800'}`}>Lunch & Prayer Break 12:45–1:15 PM</div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Entries for this day */}
-                    {entries.filter(e => e.day === d).map(entry => {
-                      const top = timeToTop(entry.start);
-                      const height = heightFromRange(entry.start, entry.end);
-                      const hasConflict = !!conflicts[entry.id]?.length;
-                      const color = entry.type === 'regular' ? 'bg-green-600' : entry.type === 'improvement' ? 'bg-blue-600' : 'bg-red-600';
-                      const badge = entry.type === 'regular' ? 'Regular' : entry.type === 'improvement' ? 'Improvement' : 'Retake';
-                      const isDeemphasized = deemphasize.has(entry.id);
-                      const styleOffset = isDeemphasized ? { 
-                        transform: 'translateX(-2px)', 
-                        zIndex: 0, 
-                        opacity: 0.92,
-                        width: 'calc(100% - 12px)',
-                        marginLeft: '4px'
-                      } as React.CSSProperties : { zIndex: 1, width: 'calc(100% - 2px)' } as React.CSSProperties;
-                      return (
-                        <div
-                          key={entry.id}
-                          className={`absolute rounded-lg cursor-pointer hover:ring-2 transition-all backdrop-blur-md ${isDarkMode ? 'hover:ring-white/60 bg-white/10 hover:bg-white/15 border border-white/20 text-white' : 'hover:ring-blue-400/60 bg-slate-100/70 hover:bg-slate-100/85 border border-slate-300/60 text-slate-900'}`}
-                          style={{ left: '2px', top: `${top}%`, height: `${height}%`, minHeight: 90, right: '2px', ...styleOffset }}
-                          onClick={() => { setSelectedOverlapEntry(entry.id); setShowOverlapModal(true); }}
-                        >
-                          <div className={`h-full w-full rounded-lg p-2 flex flex-col gap-1 ${isDeemphasized ? isDarkMode ? 'ring-2 ring-white/40 border border-white/20' : 'ring-2 ring-blue-400/40 border border-blue-300/40' : ''}`}> 
-                            <div className="space-y-0.5 flex-1">
-                              <div className="text-sm font-bold leading-tight drop-shadow-md line-clamp-2">{entry.title}</div>
-                              {entry.courseCode && <div className="text-xs opacity-90 font-semibold">{entry.courseCode}</div>}
-                            </div>
-                            <div className="flex items-center justify-center gap-1 text-[10px] font-bold flex-wrap">
-                              <span className={`px-2 py-0.5 rounded-full whitespace-nowrap text-white font-semibold ${entry.type === 'regular' ? 'bg-green-500/80' : entry.type === 'improvement' ? 'bg-blue-500/80' : 'bg-red-500/80'}`}>{badge}</span>
-                              <span className={`px-2 py-0.5 rounded-full whitespace-nowrap text-white font-semibold ${entry.mode === 'lab' ? 'bg-purple-500/80' : 'bg-indigo-500/80'}`}>{entry.mode === 'lab' ? 'Lab' : 'Theory'}</span>
-                            </div>
-                            <div className="text-xs font-bold opacity-95 whitespace-normal leading-tight text-center">
-                              {format12h(entry.start)}–{format12h(entry.end)}
-                            </div>
-                            {entry.teacher && (
-                              <div className="text-[11px] opacity-90 font-semibold whitespace-normal line-clamp-1">
-                                {entry.teacher}
-                              </div>
-                            )}
-                            {(entry.room || entry.section) && (
-                              <div className="text-[11px] opacity-90 flex gap-1.5 font-semibold">
-                                {entry.room && <span className="whitespace-normal line-clamp-1">{entry.room}</span>}
-                                {entry.section && <span className="whitespace-normal line-clamp-1">{entry.section}</span>}
-                              </div>
-                            )}
-                            <div className="mt-auto flex items-center justify-end">
-                              <button onClick={(e) => { e.stopPropagation(); removeEntry(entry.id); }} className={`p-0.5 rounded transition-colors ${isDarkMode ? 'hover:bg-white/30' : 'hover:bg-white/60'}`} title="Remove">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
               </div>
             </div>
-          </div>
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 text-xs flex-wrap">
-            <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded bg-green-600"></span> Regular</span>
-            <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded bg-blue-600"></span> Improvement</span>
-            <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded bg-red-600"></span> Retake</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {([
+              ['bg-emerald-600','Regular'],
+              ['bg-blue-600','Improvement'],
+              ['bg-rose-600','Retake'],
+              ['bg-violet-600','Lab'],
+              ['bg-slate-500','Theory'],
+            ] as const).map(([color, label]) => (
+              <span key={label} className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-800/80 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${color}`} />
+                {label}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Course Details Modal */}
+      {/* ── Course Details / Overlap Modal ─────────────── */}
       {showOverlapModal && selectedOverlapEntry && (() => {
         const selectedEntry = entries.find(e => e.id === selectedOverlapEntry);
         if (!selectedEntry) return null;
         const conflictingEntries = conflicts[selectedOverlapEntry]?.map(id => entries.find(e => e.id === id)).filter(Boolean) || [];
         const hasConflicts = conflictingEntries.length > 0;
-        const totalCourses = 1 + (hasConflicts ? conflictingEntries.length : 0);
-        const isSingleCourse = totalCourses === 1;
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowOverlapModal(false)}>
-            <div className={`${isSingleCourse ? 'max-w-sm' : 'max-w-2xl'} w-full max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-              <div className={`sticky top-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <div>
-                  <h3 className="text-base font-bold">{hasConflicts ? 'Overlapping Courses' : 'Course Details'}</h3>
+        const isSingleCourse = !hasConflicts;
+
+        const renderCard = (entry: RoutineEntry, isSelected: boolean) => {
+          const badge = entry.type === 'regular' ? 'Regular' : entry.type === 'improvement' ? 'Improvement' : 'Retake';
+          const accentBar = entry.type === 'regular' ? 'bg-emerald-500' : entry.type === 'improvement' ? 'bg-blue-500' : 'bg-rose-500';
+          const typePill = entry.type === 'regular' ? 'bg-emerald-600' : entry.type === 'improvement' ? 'bg-blue-600' : 'bg-rose-600';
+          const modePill = entry.mode === 'lab' ? 'bg-violet-600' : 'bg-slate-500';
+          return (
+            <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+              <div className={`h-[3px] w-full ${accentBar}`} />
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="min-w-0">
+                    <div className={`font-bold text-sm leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.title}</div>
+                    {entry.courseCode && <div className={`text-xs font-bold mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{entry.courseCode}</div>}
+                  </div>
+                  <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${typePill}`}>{badge}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${modePill}`}>{entry.mode === 'lab' ? 'Lab' : 'Theory'}</span>
+                  </div>
                 </div>
-                <button onClick={() => setShowOverlapModal(false)} className={`p-1.5 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                <div className={`space-y-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <div className="font-semibold">{entry.day} · {format12h(entry.start)}–{format12h(entry.end)}</div>
+                  {entry.teacher && <div>{entry.teacher}</div>}
+                  {(entry.room || entry.section) && <div>{[entry.room, entry.section].filter(Boolean).join(' · ')}</div>}
+                </div>
+                {!isSelected && (
+                  <button
+                    onClick={() => removeEntry(entry.id)}
+                    className={`mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${isDarkMode ? 'bg-rose-900/20 text-rose-400 hover:bg-rose-900/40 border-rose-900/40' : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100'}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowOverlapModal(false)}>
+            <div
+              className={`${isSingleCourse ? 'max-w-sm' : 'max-w-xl'} w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className={`sticky top-0 flex items-center justify-between px-4 py-3.5 border-b ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+                <h3 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {hasConflicts ? 'Overlapping Courses' : 'Course Details'}
+                </h3>
+                <button onClick={() => setShowOverlapModal(false)} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-100 text-slate-400'}`}>
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className={`p-3 space-y-2.5 ${isSingleCourse ? '' : 'space-y-3'}`}>
-                <div className={`grid ${isSingleCourse ? 'grid-cols-1' : 'grid-cols-2'} gap-3 ${isSingleCourse ? '' : 'gap-2.5'}`}>
-                  {/* Selected Entry */}
-                  {(() => {
-                    const typeBg = selectedEntry.type === 'regular' ? 'bg-green-500/80' : selectedEntry.type === 'improvement' ? 'bg-blue-500/80' : 'bg-red-500/80';
-                    const modeBg = selectedEntry.mode === 'lab' ? 'bg-purple-500/80' : 'bg-indigo-500/80';
-                    const badge = selectedEntry.type === 'regular' ? 'Regular' : selectedEntry.type === 'improvement' ? 'Improvement' : 'Retake';
-                    return (
-                      <div className={`rounded-lg p-3 flex flex-col backdrop-blur-md border ${isDarkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100/70 border-slate-300/60 text-slate-900'}`}>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold leading-tight line-clamp-2">{selectedEntry.title}</div>
-                            {selectedEntry.courseCode && <div className="text-xs opacity-90 mt-1 font-semibold">{selectedEntry.courseCode}</div>}
-                          </div>
-                          <div className="flex flex-col gap-0.5 text-right">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap text-white ${typeBg}`}>{badge}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap text-white ${modeBg}`}>{selectedEntry.mode === 'lab' ? 'Lab' : 'Theory'}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-1 text-xs flex-1">
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold min-w-fit">{selectedEntry.day}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold">{format12h(selectedEntry.start)}–{format12h(selectedEntry.end)}</span>
-                          </div>
-                          {selectedEntry.teacher && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{selectedEntry.teacher}</span>
-                            </div>
-                          )}
-                          {selectedEntry.room && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{selectedEntry.room}</span>
-                            </div>
-                          )}
-                          {selectedEntry.section && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{selectedEntry.section}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Conflicting Entries */}
-                  {conflictingEntries.map(entry => {
-                    if (!entry) return null;
-                    const typeBg = entry.type === 'regular' ? 'bg-green-500/80' : entry.type === 'improvement' ? 'bg-blue-500/80' : 'bg-red-500/80';
-                    const modeBg = entry.mode === 'lab' ? 'bg-purple-500/80' : 'bg-indigo-500/80';
-                    const badge = entry.type === 'regular' ? 'Regular' : entry.type === 'improvement' ? 'Improvement' : 'Retake';
-                    const isDeemphasized = deemphasize.has(entry.id);
-                    return (
-                      <div key={entry.id} className={`rounded-lg p-3 flex flex-col backdrop-blur-md border transition-all ${isDeemphasized ? isDarkMode ? 'ring-2 ring-white/40' : 'ring-2 ring-blue-400/40' : ''} ${isDarkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-slate-100/70 border-slate-300/60 text-slate-900'}`}>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold leading-tight line-clamp-2">{entry.title}</div>
-                            {entry.courseCode && <div className="text-xs opacity-90 mt-1 font-semibold">{entry.courseCode}</div>}
-                          </div>
-                          <div className="flex flex-col gap-0.5 text-right">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap text-white ${typeBg}`}>{badge}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap text-white ${modeBg}`}>{entry.mode === 'lab' ? 'Lab' : 'Theory'}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-1 text-xs flex-1">
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold min-w-fit">{entry.day}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold">{format12h(entry.start)}–{format12h(entry.end)}</span>
-                          </div>
-                          {entry.teacher && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{entry.teacher}</span>
-                            </div>
-                          )}
-                          {entry.room && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{entry.room}</span>
-                            </div>
-                          )}
-                          {entry.section && (
-                            <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{entry.section}</span>
-                            </div>
-                          )}
-                        </div>
-                        <button onClick={() => removeEntry(entry.id)} className="mt-2 px-2 py-1.5 rounded bg-black/30 hover:bg-black/50 text-xs font-semibold flex items-center justify-center gap-1 transition-colors w-full">
-                          <Trash2 className="w-3.5 h-3.5" /> Remove
-                        </button>
-                      </div>
-                    );
-                  })}
+              <div className="p-4 space-y-3">
+                <div className={`grid ${isSingleCourse ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                  {renderCard(selectedEntry, true)}
+                  {conflictingEntries.map(entry => entry && renderCard(entry, false))}
                 </div>
                 {hasConflicts && (
-                  <div className={`p-2.5 rounded text-xs ${isDarkMode ? 'bg-amber-900/20 text-amber-100' : 'bg-amber-50 text-amber-900'}`}>
-                    <p className="font-semibold">Remove one course or adjust times to resolve overlap.</p>
+                  <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs border ${isDarkMode ? 'bg-amber-900/15 text-amber-300 border-amber-800/30' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    Remove one course or adjust times to resolve the overlap.
                   </div>
                 )}
               </div>

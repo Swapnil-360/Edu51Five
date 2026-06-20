@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Search, UserCheck, UserPlus, UserX, X } from "lucide-react";
+import { Loader2, Search, UserCheck, UserPlus, UserX, X, Users, Inbox, SearchX } from "lucide-react";
+import { motion } from "framer-motion";
 import { Connection, SocialProfile } from "../../types/social";
 import {
   listMyConnections,
@@ -138,9 +139,25 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
         ) : tab === "connections" ? (
           <div className="space-y-3">
             {accepted.length === 0 && (
-              <p className={`text-sm text-center py-10 ${sub}`}>
-                No connections yet. Head to <button className="text-blue-500 hover:underline" onClick={() => setTab("discover")}>Discover</button> to find people.
-              </p>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-16 text-center gap-4"
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                  <Users size={28} className={isDarkMode ? "text-slate-600" : "text-slate-300"} />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>No connections yet</p>
+                  <p className={`text-xs mt-1 ${sub}`}>Find and connect with classmates</p>
+                </div>
+                <button
+                  onClick={() => setTab("discover")}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
+                >
+                  Discover People
+                </button>
+              </motion.div>
             )}
             {accepted.map((c) =>
               c.other_profile ? (
@@ -170,7 +187,12 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
             <div>
               <h3 className={`text-sm font-semibold mb-2 ${title}`}>Incoming ({incoming.length})</h3>
               <div className="space-y-3">
-                {incoming.length === 0 && <p className={`text-sm ${sub}`}>No pending requests.</p>}
+                {incoming.length === 0 && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border ${isDarkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50"}`}>
+                    <Inbox size={16} className={isDarkMode ? "text-slate-600" : "text-slate-300"} />
+                    <p className={`text-sm ${sub}`}>No incoming requests</p>
+                  </motion.div>
+                )}
                 {incoming.map((c) =>
                   c.other_profile ? (
                     <UserCard
@@ -207,7 +229,12 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
             <div>
               <h3 className={`text-sm font-semibold mb-2 ${title}`}>Sent ({outgoing.length})</h3>
               <div className="space-y-3">
-                {outgoing.length === 0 && <p className={`text-sm ${sub}`}>No outgoing requests.</p>}
+                {outgoing.length === 0 && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border ${isDarkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50"}`}>
+                    <UserPlus size={16} className={isDarkMode ? "text-slate-600" : "text-slate-300"} />
+                    <p className={`text-sm ${sub}`}>No sent requests</p>
+                  </motion.div>
+                )}
                 {outgoing.map((c) =>
                   c.other_profile ? (
                     <UserCard
@@ -264,7 +291,21 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
               </div>
             ) : (
               <div className="space-y-3">
-                {results.length === 0 && <p className={`text-sm text-center py-10 ${sub}`}>No users found.</p>}
+                {results.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center justify-center py-16 text-center gap-3"
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                      <SearchX size={24} className={isDarkMode ? "text-slate-600" : "text-slate-300"} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-bold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>No users found</p>
+                      <p className={`text-xs mt-1 ${sub}`}>Try a different name, username, or skill</p>
+                    </div>
+                  </motion.div>
+                )}
                 {results.map((p) => {
                   const existing = connStateFor(p.id);
                   return (

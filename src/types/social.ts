@@ -207,6 +207,21 @@ export interface TeamTask {
   creator_profile?: SocialProfile | null;
 }
 
+export interface TeamFile {
+  id: string;
+  team_id: string;
+  uploader_id: string;
+  name: string;
+  file_path: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  visibility: 'private' | 'public';
+  created_at: string;
+  team?: { id: string; name: string; logo_url?: string | null };
+  uploader?: SocialProfile;
+}
+
 
 // Columns selected for profile lists/cards (never select legacy base64 profile_pic in lists)
 export const SOCIAL_PROFILE_COLS =

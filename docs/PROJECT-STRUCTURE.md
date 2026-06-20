@@ -153,6 +153,27 @@ Collaborative Kanban board per team — third-party member contribution, with re
 
 ---
 
+## Team File Sharing (Phase 2)
+
+Per-team file sharing with public/private visibility. Members upload; owner/admin can expose files publicly. A dedicated Shared Resources page shows all public files across all teams with team badge.
+
+| What | File |
+|------|------|
+| Files tab UI (upload, drag-and-drop, grid, visibility toggle, realtime) | `src/components/Teams/TeamFiles.tsx` |
+| Shared Resources page (search, type filter, team badge, load-more) | `src/components/Teams/PublicFilesPage.tsx` |
+| API (listTeamFiles, listPublicFiles, uploadTeamFile, deleteTeamFile, setFileVisibility) | `src/lib/api/filesApi.ts` |
+| `TeamFile` type | `src/types/social.ts` |
+| Tab integration ("Files" tab, Paperclip icon) | `src/components/Teams/TeamPage.tsx` |
+| Sidebar entry + `/shared-resources` route | `src/App.tsx` |
+| **DB:** `team_files` table + RLS (member select, member insert, owner/admin update/delete) | migration `team_files` |
+| **Storage:** `team-files` bucket (public, 20 MB limit, PDF/DOCX/XLSX/PNG/JPG/WebP) | migration `team_files_storage` |
+
+**Visibility:** `private` (default) — team members only. `public` — all authenticated users; URL never shown to non-members for private files (DB RLS gates discovery).  
+**Realtime:** Supabase channel `team-files-{teamId}` — INSERT/DELETE/UPDATE on `team_files`.  
+**Path convention:** `{teamId}/{fileId}.{ext}` in `team-files` bucket.
+
+---
+
 ## World Cup 2026 (Live Event)
 
 | What | File | Lines |

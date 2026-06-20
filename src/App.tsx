@@ -94,6 +94,7 @@ import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
 import TeamsPage from "./components/Teams/TeamsPage";
 import TeamPage from "./components/Teams/TeamPage";
+import PublicFilesPage from "./components/Teams/PublicFilesPage";
 import { WorldCupPage } from "./components/WorldCup/WorldCupPage";
 import { WC26IntroModal } from "./components/WorldCup/WC26IntroModal";
 
@@ -164,6 +165,7 @@ function App() {
     | "team"
     | "alumni"
     | "wc26"
+    | "shared-resources"
   >(() => {
     const path = window.location.pathname;
     if (path === "/admin") return "admin";
@@ -180,6 +182,7 @@ function App() {
     if (path === "/teams") return "teams";
     if (path === "/alumni") return "alumni";
     if (path === "/wc26") return "wc26";
+    if (path === "/shared-resources") return "shared-resources";
     // Always treat root, /home, or empty as home
     if (path === "/" || path === "/home" || path === "" || !path) return "home";
     // Fallback: if path is not recognized, force home view
@@ -215,7 +218,8 @@ function App() {
         | "teams"
         | "team"
         | "alumni"
-        | "wc26",
+        | "wc26"
+        | "shared-resources",
       extra?: string | null,
     ) => {
       let path = "/";
@@ -237,6 +241,7 @@ function App() {
       } else if (view === "teams") path = "/teams";
       else if (view === "alumni") path = "/alumni";
       else if (view === "wc26") path = "/wc26";
+      else if (view === "shared-resources") path = "/shared-resources";
       else if (view === "home") path = "/home";
       window.history.pushState({}, "", path);
       setCurrentView(view);
@@ -3543,6 +3548,31 @@ For any queries, contact your course instructors or the department.`,
                     className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
                   >
                     Create teams & find members
+                  </p>
+                </div>
+              </button>
+
+              {/* Shared Resources */}
+              <button
+                onClick={() => {
+                  goToView("shared-resources");
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? "hover:bg-blue-900/30 border-gray-700/50 hover:border-blue-500/50 text-gray-100"
+                    : "hover:bg-blue-50 border-gray-200/50 hover:border-blue-300 text-gray-900"
+                }`}
+              >
+                <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-blue-900/40" : "bg-blue-100"}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isDarkMode ? "text-blue-400" : "text-blue-600"}>
+                    <circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-semibold text-sm">Shared Resources</p>
+                  <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    Public files from all teams
                   </p>
                 </div>
               </button>
@@ -8018,6 +8048,16 @@ For any queries, contact your course instructors or the department.`,
             onClose={() => goToView("teams")}
             onViewProfile={(username) => goToView("profile", username)}
             isDarkMode={isDarkMode}
+          />
+        </main>
+      )}
+
+      {/* ── Shared Resources ── */}
+      {currentView === "shared-resources" && (
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+          <PublicFilesPage
+            isDarkMode={isDarkMode}
+            onViewTeam={(teamId) => goToView("team", teamId)}
           />
         </main>
       )}

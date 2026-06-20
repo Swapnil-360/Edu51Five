@@ -162,26 +162,38 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
   const sub = isDarkMode ? "text-slate-400" : "text-slate-500";
 
   if (loading) {
+    const skBg = isDarkMode ? "bg-slate-800/60" : "bg-slate-200/70";
     return (
       <div className={`min-h-screen ${pageBg}`}>
         {/* Cover skeleton */}
-        <div className="relative h-48 bg-slate-700/30 animate-pulse" />
-        {/* Avatar + name row skeleton */}
-        <div className="max-w-3xl mx-auto px-4 -mt-12 pb-8">
-          <div className="flex items-end gap-4 mb-4">
-            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-900 overflow-hidden flex-shrink-0 bg-slate-600/30">
+        <div className={`relative h-48 animate-pulse ${isDarkMode ? "bg-slate-800" : "bg-slate-200"}`} />
+        {/* Avatar + content skeleton */}
+        <div className="max-w-3xl mx-auto px-4 -mt-12 pb-12">
+          {/* Avatar row */}
+          <div className="flex items-end gap-4 mb-6">
+            <div className={`w-24 h-24 rounded-full border-4 flex-shrink-0 overflow-hidden animate-pulse ${isDarkMode ? "border-slate-950 bg-slate-700" : "border-slate-100 bg-slate-300"}`}>
               {initialAvatarUrl && (
                 <img src={initialAvatarUrl} alt="" className="w-full h-full object-cover" fetchPriority="high" decoding="async" />
               )}
             </div>
-            <div className="mb-2 flex-1 space-y-2">
-              <div className="h-5 w-48 rounded bg-slate-600/30 animate-pulse" />
-              <div className="h-3 w-32 rounded bg-slate-600/20 animate-pulse" />
+            <div className="mb-2 flex-1 space-y-2.5">
+              <div className={`h-5 w-44 rounded-lg animate-pulse ${skBg}`} />
+              <div className={`h-3 w-28 rounded animate-pulse ${skBg}`} />
+              <div className={`h-3 w-36 rounded animate-pulse ${skBg}`} />
             </div>
           </div>
-          <div className="flex justify-center pt-8">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500/60" />
+          {/* Stats row skeleton */}
+          <div className="flex gap-3 mb-5">
+            {[80, 96, 72].map((w, i) => (
+              <div key={i} className={`h-16 rounded-xl flex-1 animate-pulse ${skBg}`} />
+            ))}
           </div>
+          {/* Bio skeleton */}
+          <div className={`h-24 rounded-2xl animate-pulse mb-4 ${skBg}`} />
+          {/* Skills skeleton */}
+          <div className={`h-20 rounded-2xl animate-pulse mb-4 ${skBg}`} />
+          {/* Education skeleton */}
+          <div className={`h-28 rounded-2xl animate-pulse ${skBg}`} />
         </div>
       </div>
     );

@@ -16,6 +16,7 @@ import {
   Users,
   X,
   LayoutGrid,
+  Paperclip,
 } from "lucide-react";
 import {
   Team,
@@ -40,9 +41,10 @@ import {
 import InviteMembersModal from "./InviteMembersModal";
 import TeamChat from "./TeamChat";
 import TeamTasksBoard from "./TeamTasksBoard";
+import TeamFiles from "./TeamFiles";
 import { uploadImage } from "../../lib/storage";
 
-type Tab = "overview" | "members" | "chat" | "tasks";
+type Tab = "overview" | "members" | "chat" | "tasks" | "files";
 
 interface Props {
   teamId: string;
@@ -68,6 +70,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [fileCount, setFileCount] = useState(0);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -324,6 +327,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             { key: "members", label: `Members (${members.length})` },
             { key: "chat",    label: "Chat",  icon: <MessageSquare className="w-3.5 h-3.5" /> },
             { key: "tasks",   label: "Tasks", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+            { key: "files",   label: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
           ] as { key: typeof tab; label: string; icon?: React.ReactNode }[]).map(({ key, label, icon }) => (
             <button
               key={key}
@@ -364,6 +368,15 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
               canManage={canManage}
             />
           )
+        ) : tab === "files" ? (
+          <TeamFiles
+            teamId={teamId}
+            currentUserId={currentUserId}
+            isMember={isMember}
+            canManage={canManage}
+            isDarkMode={isDarkMode}
+            onCountChange={setFileCount}
+          />
         ) : tab === "overview" ? (
           /* Announcements */
           <section className={`rounded-2xl border p-5 ${card}`}>
