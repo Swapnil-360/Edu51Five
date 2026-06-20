@@ -3042,10 +3042,10 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Header */}
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 border-b backdrop-blur-xl ${
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 border-b ${
           isDarkMode
-            ? "bg-slate-900/90 border-slate-700/50 text-white shadow-xl shadow-black/20"
-            : "bg-white/90 border-slate-200/80 text-gray-900 shadow-lg shadow-black/5"
+            ? "bg-slate-900 border-slate-700/60 text-white shadow-xl shadow-black/30"
+            : "bg-slate-50 border-slate-200 text-gray-900 shadow-md shadow-black/8"
         }`}
       >
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative">
@@ -3076,8 +3076,8 @@ For any queries, contact your course instructors or the department.`,
               >
                 <div className={`flex-shrink-0 h-9 w-9 rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
                   isDarkMode
-                    ? "ring-slate-700 group-hover:ring-blue-500/50"
-                    : "ring-slate-200 group-hover:ring-blue-400/50"
+                    ? "ring-slate-600 group-hover:ring-blue-500/60"
+                    : "ring-slate-300 group-hover:ring-blue-500/50"
                 }`}>
                   <img
                     src="/Edu_51_Logo.png"

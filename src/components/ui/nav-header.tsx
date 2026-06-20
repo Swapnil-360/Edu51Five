@@ -23,8 +23,8 @@ function SlideNav({ tabs, isDarkMode }: SlideNavProps) {
     <ul
       className={`relative flex items-center rounded-2xl p-1.5 gap-0.5 border transition-colors duration-300 ${
         isDarkMode
-          ? "bg-slate-800/80 border-slate-700/60 shadow-lg shadow-black/20"
-          : "bg-slate-100 border-slate-200/80 shadow-md shadow-black/5"
+          ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/30"
+          : "bg-white border-slate-200 shadow-md shadow-black/8"
       }`}
       onMouseLeave={() => setPosition((pv) => ({ ...pv, opacity: 0 }))}
     >
