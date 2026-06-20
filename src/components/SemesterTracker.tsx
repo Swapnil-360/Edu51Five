@@ -102,10 +102,10 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
   const label = dm ? 'text-slate-300' : 'text-slate-700';
 
   return (
-    <div className={`h-screen overflow-hidden transition-colors duration-300 ${
+    <div className={`h-full transition-colors duration-300 ${
       dm ? 'bg-slate-950' : 'bg-slate-50'
     }`}>
-      <div className="h-full overflow-y-auto p-2 sm:p-4">
+      <div className="h-full overflow-y-auto p-2 sm:p-4 pb-8">
         <div className="max-w-7xl mx-auto">
 
         {/* Live Clock */}
