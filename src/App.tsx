@@ -41,6 +41,7 @@ import {
 import { uploadRoutineAttachment } from "./lib/storage";
 import type { Feedback, FeedbackStatus } from "./types";
 import MarqueeTicker from "./components/MarqueeTicker";
+import { MajorCardStack } from "./components/ui/MajorCardStack";
 import PDFViewer from "./components/PDFViewer";
 import { DirectDriveUpload } from "./components/Admin/DirectDriveUpload";
 import { DriveManager } from "./components/Admin/DriveManager";
@@ -4024,290 +4025,100 @@ For any queries, contact your course instructors or the department.`,
 
                 {/* Major-Based Sections - Spring 2026 */}
                 <div className="w-full">
-                  <div className="mb-4 text-center">
-                    <p
-                      className={`text-sm font-medium transition-colors duration-300 ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
+                  <div className="mb-5 text-center">
+                    <p className={`text-sm font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                       Select your major section
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-                    {/* AI Major Card */}
-                    <button
-                      onClick={() => {
-                        if (!isLoggedIn) {
-                          setGuestMajor("AI");
-                          showMajorAccessNotification(
-                            "info",
-                            "Guest access enabled for this semester. Please create your profile before next semester.",
-                          );
-                          goToView("ai");
-                          return;
-                        }
-                        if (userProfile.major !== "AI") {
-                          showMajorAccessNotification(
-                            "error",
-                            `Access Denied: This section is for AI major students only. Your major: ${userProfile.major || "Not set"}`,
-                          );
-                          return;
-                        }
-                        showMajorAccessNotification(
-                          "success",
-                          "Welcome to AI Major Section!",
-                        );
-                        goToView("ai");
-                      }}
-                      className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700"
-                          : "bg-white border-gray-100"
-                      }`}
-                    >
-                      <div
-                        className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
-                        style={{ backgroundImage: "url('/Ai_Cover.jpg')" }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-fuchsia-900/40 to-pink-900/40"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                        {!isLoggedIn && (
-                          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            Guest Access
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h2
-                                className={`text-lg sm:text-xl font-bold group-hover:text-purple-600 transition-colors ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
-                              >
-                                Artificial Intelligence 🤖
-                              </h2>
-                            </div>
-                            <p
-                              className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                            >
-                              Artificial Intelligence • Intake 51
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              <div className="inline-flex items-center bg-purple-50 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Machine Learning 🧠
-                              </div>
-                              <div className="inline-flex items-center bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Deep Learning 🔮
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
-                            <div
-                              className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? "bg-purple-600 text-white group-hover:bg-purple-700" : "bg-gray-400 text-white"}`}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2.5}
-                                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600"></div>
-                    </button>
+                  {/* Card Stack — user's major on top; random for guests */}
+                  {(() => {
+                    const MAJOR_DEFS = [
+                      {
+                        id: "AI",
+                        title: "Artificial Intelligence",
+                        subtitle: "AI · Intake 51",
+                        imageSrc: "/Ai_Cover.jpg",
+                        accentGradient: "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600",
+                        glowColor: "#a855f7",
+                        tags: [
+                          { label: "Machine Learning", color: "bg-purple-100 text-purple-700" },
+                          { label: "Deep Learning", color: "bg-pink-100 text-pink-700" },
+                        ],
+                        view: "ai" as const,
+                        majorKey: "AI",
+                      },
+                      {
+                        id: "SE",
+                        title: "Software Engineering",
+                        subtitle: "SE · Intake 51",
+                        imageSrc: "/SE_cover.jpg",
+                        accentGradient: "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600",
+                        glowColor: "#6366f1",
+                        tags: [
+                          { label: "Web Development", color: "bg-blue-100 text-blue-700" },
+                          { label: "Database Systems", color: "bg-indigo-100 text-indigo-700" },
+                        ],
+                        view: "software" as const,
+                        majorKey: "Software Engineering",
+                      },
+                      {
+                        id: "NET",
+                        title: "Networking",
+                        subtitle: "NET · Intake 51",
+                        imageSrc: "/Networking_cover.jpg",
+                        accentGradient: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500",
+                        glowColor: "#10b981",
+                        tags: [
+                          { label: "Network Security", color: "bg-emerald-100 text-emerald-700" },
+                          { label: "Wireless Systems", color: "bg-teal-100 text-teal-700" },
+                        ],
+                        view: "networking" as const,
+                        majorKey: "Networking",
+                      },
+                    ];
 
-                    {/* Software Engineering Major Card */}
-                    <button
-                      onClick={() => {
-                        if (!isLoggedIn) {
-                          setGuestMajor("Software Engineering");
-                          showMajorAccessNotification(
-                            "info",
-                            "Guest access enabled for this semester. Please create your profile before next semester.",
-                          );
-                          return;
-                        }
-                        if (userProfile.major !== "Software Engineering") {
-                          showMajorAccessNotification(
-                            "error",
-                            `Access Denied: This section is for Software Engineering students only. Your major: ${userProfile.major || "Not set"}`,
-                          );
-                          return;
-                        }
-                        showMajorAccessNotification(
-                          "success",
-                          "Welcome to Software Engineering Section!",
-                        );
-                        goToView("software");
-                      }}
-                      className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700"
-                          : "bg-white border-gray-100"
-                      }`}
-                    >
-                      <div
-                        className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
-                        style={{ backgroundImage: "url('/SE_cover.jpg')" }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 via-cyan-900/40 to-teal-900/40"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                        {!isLoggedIn && (
-                          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            Guest Access
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h2
-                                className={`text-lg sm:text-xl font-bold group-hover:text-indigo-600 transition-colors ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
-                              >
-                                Software Engineering 💻
-                              </h2>
-                            </div>
-                            <p
-                              className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                            >
-                              Software Engineering • Intake 51
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Web Development ⚡
-                              </div>
-                              <div className="inline-flex items-center bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Database Systems 🗄️
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
-                            <div
-                              className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? "bg-indigo-600 text-white group-hover:bg-indigo-700" : "bg-gray-400 text-white"}`}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2.5}
-                                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
-                    </button>
+                    // Build ordered list — user's major first if logged in
+                    const userMajorKey = isLoggedIn ? userProfile.major : null;
+                    const userMajorIdx = MAJOR_DEFS.findIndex(m => m.majorKey === userMajorKey);
 
-                    {/* Networking Major Card */}
-                    <button
-                      onClick={() => {
+                    const initialIdx = userMajorIdx >= 0 ? userMajorIdx : 0;
+
+                    const stackItems = MAJOR_DEFS.map(def => ({
+                      id: def.id,
+                      title: def.title,
+                      subtitle: def.subtitle,
+                      imageSrc: def.imageSrc,
+                      accentGradient: def.accentGradient,
+                      glowColor: def.glowColor,
+                      tags: def.tags,
+                      isUserMajor: def.majorKey === userMajorKey,
+                      locked: isLoggedIn && def.majorKey !== userMajorKey,
+                      onClick: () => {
                         if (!isLoggedIn) {
-                          setGuestMajor("Networking");
-                          showMajorAccessNotification(
-                            "info",
-                            "Guest access enabled for this semester. Please create your profile before next semester.",
-                          );
+                          setGuestMajor(def.majorKey);
+                          showMajorAccessNotification("info", "Guest access enabled for this semester. Please create your profile before next semester.");
+                          goToView(def.view);
                           return;
                         }
-                        if (userProfile.major !== "Networking") {
-                          showMajorAccessNotification(
-                            "error",
-                            `Access Denied: This section is for Networking students only. Your major: ${userProfile.major || "Not set"}`,
-                          );
+                        if (def.majorKey !== userProfile.major) {
+                          showMajorAccessNotification("error", `Access Denied: This section is for ${def.majorKey} students only. Your major: ${userProfile.major || "Not set"}`);
                           return;
                         }
-                        showMajorAccessNotification(
-                          "success",
-                          "Welcome to Networking Section!",
-                        );
-                        goToView("networking");
-                      }}
-                      className={`w-full group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border select-none ${
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700"
-                          : "bg-white border-gray-100"
-                      }`}
-                    >
-                      <div
-                        className="relative h-32 sm:h-40 overflow-hidden bg-center bg-cover"
-                        style={{
-                          backgroundImage: "url('/Networking_cover.jpg')",
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-emerald-900/40 to-teal-900/40"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                        {!isLoggedIn && (
-                          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            Guest Access
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h2
-                                className={`text-lg sm:text-xl font-bold group-hover:text-emerald-600 transition-colors ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
-                              >
-                                Networking 🌐
-                              </h2>
-                            </div>
-                            <p
-                              className={`text-xs sm:text-sm mb-2 transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                            >
-                              Networking • Intake 51
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              <div className="inline-flex items-center bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Network Security 📡
-                              </div>
-                              <div className="inline-flex items-center bg-teal-50 text-teal-700 text-xs font-semibold px-2.5 py-1 rounded-md">
-                                Wireless Systems 📶
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
-                            <div
-                              className={`rounded-full p-2.5 transition-all shadow-md ${isLoggedIn ? "bg-emerald-600 text-white group-hover:bg-emerald-700" : "bg-gray-400 text-white"}`}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2.5}
-                                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
-                    </button>
-                  </div>
+                        showMajorAccessNotification("success", `Welcome to ${def.title}!`);
+                        goToView(def.view);
+                      },
+                    }));
+
+                    return (
+                      <MajorCardStack
+                        items={stackItems}
+                        initialIndex={initialIdx}
+                        isDarkMode={isDarkMode}
+                      />
+                    );
+                  })()}
+
                 </div>
                 {/* New Version CTA moved above; removing duplicate here */}
 

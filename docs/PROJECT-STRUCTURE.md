@@ -15,6 +15,7 @@ Feature → file → approximate line numbers.
 | Sidebar menu | `src/App.tsx` | 3374–3550 |
 | Fullscreen render branches | `src/App.tsx` | 8550–8630 |
 | Header / layout | `src/components/Layout/Header.tsx` | — |
+| Desktop nav pill bar | `src/components/ui/nav-header.tsx` | framer-motion spring-animated highlight pill that follows hover/active tab; `layoutId="nav-cursor"` for smooth transitions; dark/light aware; LIVE/NEW/SOON badges; login guards. Redesigned 2026-06-20: fully transparent header (no background panel), floating pill container with `backdrop-blur`, unclipped logo 44×44 with drop-shadow, 68px desktop height, gradient active pill, blue-tinted active icon, polished auth buttons (white Login / blue Create Account with scale hover). |
 
 ---
 
@@ -181,6 +182,8 @@ Collaborative Kanban board per team — third-party member contribution, with re
 | Custom routine | `src/components/Student/CustomRoutine.tsx` | — |
 | Exam materials dashboard | `src/components/Student/ExamMaterialsDashboard.tsx` | — |
 | PDF viewer | `src/components/PDFViewer.tsx` + `PDFViewer.css` | Fullscreen-capable modal with dark/light mode, entry animation, loading/error states, responsive sizing via CSS (`dvh`, `min()`), no emojis — fully keyboard and touch accessible |
+| Material viewer modal | `src/App.tsx` (~line 7789) | Inline modal opened via `openMaterialViewer(material)` from GDriveCourseView. Redesigned 2026-06-20: backdrop blur, color-coded file type icons, gradient header, dark/light aware, `pdf-scale-in` entry animation. |
+| Major card stack | `src/components/ui/MajorCardStack.tsx` | Fan/stack animated card picker (framer-motion). Full-bleed glassmorphism cards with per-major glow ring. Logged-in user's major is foregrounded; guest starts at index 0. Swipe, drag, keyboard, and dot-nav supported. Redesigned 2026-06-21: removed separate info panel, all content overlaid on image with glass tags, white CTA arrow, colored `glowColor` box-shadow per major (AI=purple, SE=indigo, NET=emerald). |
 | Search | `src/components/Search/` | — |
 
 ---
