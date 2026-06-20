@@ -230,12 +230,6 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
         .wc-logo:hover { animation: wcPop 0.5s ease forwards; filter: drop-shadow(0 0 6px rgba(34,197,94,0.8)) drop-shadow(0 0 12px rgba(250,204,21,0.5)); cursor: pointer; }
       `}</style>
       {/* Top bar */}
-      <div className={`sticky top-0 z-20 px-4 py-3 flex items-center gap-3 border-b backdrop-blur ${isDarkMode ? "bg-slate-950/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
-        <button onClick={onClose} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}>
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className={`font-bold ${titleCls}`}>{isOwn ? "My Profile" : profile.name}</h1>
-      </div>
 
       <div className="max-w-3xl mx-auto px-4 mt-6 space-y-4">
         {uploadError && (

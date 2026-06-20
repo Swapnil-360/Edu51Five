@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft,
   Camera,
   Crown,
   Loader2,
@@ -15,7 +14,7 @@ import {
   UserPlus,
   Users,
   X,
-  Trello,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Team,
@@ -180,29 +179,24 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
-      <div className={`sticky top-0 z-20 px-4 py-3 flex items-center gap-3 border-b backdrop-blur ${isDarkMode ? "bg-slate-950/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
-        <button onClick={onClose} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}>
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className={`font-bold flex-1 truncate ${title}`}>{team.name}</h1>
-        {canManage && (
-          <>
-            <button
-              onClick={() => setShowInvite(true)}
-              className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-1.5"
-            >
-              <UserPlus className="w-4 h-4" /> Invite
-            </button>
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}
-              title="Team settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </>
-        )}
-      </div>
+      {/* action bar — no back button, actions only */}
+      {canManage && (
+        <div className="max-w-3xl mx-auto px-4 pt-4 flex justify-end gap-2">
+          <button
+            onClick={() => setShowInvite(true)}
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5 shadow-sm"
+          >
+            <UserPlus className="w-4 h-4" /> Invite
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className={`p-2 rounded-xl ${isDarkMode ? "hover:bg-slate-800 text-slate-300 border border-slate-700" : "hover:bg-slate-100 text-slate-600 border border-slate-200"}`}
+            title="Team settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Banner + identity */}
       <div className="max-w-3xl mx-auto px-4 mt-4 space-y-3">
@@ -315,32 +309,30 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           </div>
         )}
 
-        {/* Tabs: Overview | Members | Chat */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTab("overview")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "overview" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setTab("members")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "members" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-          >
-            Members ({members.length})
-          </button>
-          <button
-            onClick={() => setTab("chat")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "chat" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" /> Chat
-          </button>
-          <button
-            onClick={() => setTab("tasks")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === "tasks" ? "bg-blue-600 text-white" : isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-          >
-            <Trello className="w-3.5 h-3.5" /> Tasks
-          </button>
+        {/* Tabs: Overview | Members | Chat | Tasks — pill nav style */}
+        <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
+            : "bg-white border-slate-300 shadow-md shadow-black/8"
+        }`}>
+          {([
+            { key: "overview", label: "Overview" },
+            { key: "members", label: `Members (${members.length})` },
+            { key: "chat",    label: "Chat",  icon: <MessageSquare className="w-3.5 h-3.5" /> },
+            { key: "tasks",   label: "Tasks", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+          ] as { key: typeof tab; label: string; icon?: React.ReactNode }[]).map(({ key, label, icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 rounded-full text-sm transition-colors duration-150 flex items-center gap-1.5 ${
+                tab === key
+                  ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
+                  : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {icon}{label}
+            </button>
+          ))}
         </div>
 
         {tab === "chat" ? (
@@ -355,7 +347,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
         ) : tab === "tasks" ? (
           !isMember ? (
             <div className={`rounded-2xl border p-8 text-center ${card}`}>
-              <Trello className="w-12 h-12 mx-auto mb-3 text-slate-400 animate-pulse" />
+              <LayoutGrid className="w-12 h-12 mx-auto mb-3 text-slate-400 animate-pulse" />
               <h3 className={`text-base font-bold mb-1 ${title}`}>Task Board</h3>
               <p className={`text-sm ${sub}`}>Join this team to view and manage task tracking.</p>
             </div>

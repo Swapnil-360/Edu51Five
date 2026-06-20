@@ -1,51 +1,65 @@
-// Marquee Ticker Component for Available Features
 interface MarqueeTickerProps {
     isDarkMode: boolean;
 }
 
+const features = [
+    { label: "World Cup '26 — Team Challenges & Leaderboard" },
+    { label: 'Semester Progress Tracker' },
+    { label: 'Team Building & Kanban Board' },
+    { label: 'Student Network & Connections' },
+    { label: 'Course Materials & PDF Resources' },
+    { label: 'Exam Questions Archive' },
+    { label: 'Real-time Push Notifications' },
+    { label: 'Google Drive Integration' },
+    { label: 'Custom Class Routine Planner' },
+    { label: 'Academic Calendar & Deadlines' },
+    { label: 'Alumni Hub' },
+    { label: 'Student Profile & Portfolio' },
+    { label: 'Team Announcements & Chat' },
+    { label: 'Major-Based Secure Access' },
+];
+
 export default function MarqueeTicker({ isDarkMode }: MarqueeTickerProps) {
-    const features = [
-        { icon: '📚', label: 'Course Materials & Resources' },
-        { icon: '📋', label: 'Exam Questions Archive' },
-        { icon: '🔔', label: 'Real-time Notifications' },
-        { icon: '☁️', label: 'Cloud Storage Integration' },
-        { icon: '📅', label: 'Academic Calendar Tracking' },
-        { icon: '📊', label: 'Semester Progress Monitor' },
-        { icon: '🗓️', label: 'Class Routine Management' },
-        { icon: '👥', label: 'Multi-Section Support' }
-    ];
-
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mb-6">
-            <div className={`relative overflow-hidden rounded-2xl border shadow-md ${isDarkMode ? 'bg-gradient-to-r from-gray-900/70 via-indigo-900/50 to-gray-800/60 border-gray-700/50' : 'bg-white/95 border-gray-200'} `}>
-                <div className="flex items-center py-3 px-3 sm:px-4">
-                    {/* Label removed - header already displays the title above */}
+        <div className="w-full mb-6">
+            <div
+                className={`relative overflow-hidden rounded-2xl border ${
+                    isDarkMode
+                        ? 'bg-slate-800/60 border-slate-700/60 shadow-lg shadow-black/20'
+                        : 'bg-white border-slate-200 shadow-md shadow-black/6'
+                }`}
+            >
+                {/* Left fade */}
+                <div
+                    className={`pointer-events-none absolute left-0 top-0 bottom-0 w-20 z-10 ${
+                        isDarkMode
+                            ? 'bg-gradient-to-r from-slate-800 to-transparent'
+                            : 'bg-gradient-to-r from-white to-transparent'
+                    }`}
+                />
+                {/* Right fade */}
+                <div
+                    className={`pointer-events-none absolute right-0 top-0 bottom-0 w-20 z-10 ${
+                        isDarkMode
+                            ? 'bg-gradient-to-l from-slate-800 to-transparent'
+                            : 'bg-gradient-to-l from-white to-transparent'
+                    }`}
+                />
 
-                    {/* Scrolling Marquee */}
-                    <div className="marquee-container flex-1 overflow-hidden whitespace-nowrap relative" aria-hidden="false" role="region" aria-label="Available features ticker">
-                        <div className="animate-marquee inline-block" style={{ willChange: 'transform' }}>
-                            {/* First set of features */}
-                            {features.map((feature, index) => (
-                                <span key={`first-${index}`} className="inline-flex items-center mr-6">
-                                    <span className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{feature.icon}&nbsp;</span>
-                                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{feature.label}</span>
-                                    {index < features.length - 1 && (
-                                        <span className="mx-3 text-gray-400">•</span>
-                                    )}
-                                </span>
-                            ))}
-
-                            {/* Duplicate set for seamless loop */}
-                            {features.map((feature, index) => (
-                                <span key={`second-${index}`} className="inline-flex items-center mr-6">
-                                    <span className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{feature.icon}&nbsp;</span>
-                                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{feature.label}</span>
-                                    {index < features.length - 1 && (
-                                        <span className="mx-3 text-gray-400">•</span>
-                                    )}
-                                </span>
-                            ))}
-                        </div>
+                <div
+                    className="flex items-center py-3.5 overflow-hidden whitespace-nowrap"
+                    role="region"
+                    aria-label="Available features"
+                >
+                    <div className="animate-marquee inline-flex items-center" style={{ willChange: 'transform' }}>
+                        {[...features, ...features].map((f, i) => (
+                            <span key={i} className="inline-flex items-center gap-4 px-6">
+                                <span className={`w-1 h-1 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-500' : 'bg-slate-300'}`} />
+                                <span className={`text-sm font-medium tracking-wide ${
+                                    isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                                }`}>{f.label}</span>
+                            </span>
+                        ))}
                     </div>
                 </div>
             </div>

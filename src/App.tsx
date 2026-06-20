@@ -3171,13 +3171,13 @@ For any queries, contact your course instructors or the department.`,
                 <div className="relative" ref={userDropdownRef}>
                   <button
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
-                    className={`flex items-center gap-2 p-1 sm:p-1.5 rounded-lg border transition-all duration-200 hover-lift ${
+                    className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border transition-all duration-200 ${
                       isDarkMode
-                        ? "bg-slate-800 border-slate-700/60 text-slate-200 hover:bg-slate-700 hover:text-white"
-                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full overflow-hidden shadow bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                       {userProfile.profilePic || userProfile.avatar_url ? (
                         <img
                           src={userProfile.profilePic || userProfile.avatar_url}
@@ -3191,23 +3191,17 @@ For any queries, contact your course instructors or the department.`,
                         <User className="w-4 h-4 text-white" />
                       )}
                     </div>
-                    <span className="hidden sm:inline text-xs font-semibold max-w-[120px] truncate">
-                      {userProfile.name}
-                    </span>
+                    <div className="hidden sm:flex flex-col items-start leading-tight min-w-0">
+                      <span className="text-xs font-semibold max-w-[110px] truncate">{userProfile.name}</span>
+                      <span className={`text-[10px] max-w-[110px] truncate ${isDarkMode ? "text-slate-400" : "text-slate-400"}`}>
+                        {extractBubtId(userProfile.bubtEmail)}
+                      </span>
+                    </div>
                     <svg
-                      className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${
-                        showUserDropdown ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      className={`w-3 h-3 opacity-50 transition-transform duration-200 flex-shrink-0 ${showUserDropdown ? "rotate-180" : ""}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
 
@@ -3221,9 +3215,14 @@ For any queries, contact your course instructors or the department.`,
                       }`}
                     >
                       {/* User Info Header in Dropdown */}
-                      <div className="px-4 py-2 border-b border-opacity-10 border-slate-500">
-                        <p className="text-xs opacity-60">Signed in as</p>
-                        <p className="font-semibold text-sm truncate">{userProfile.name}</p>
+                      <div className={`px-4 py-3 border-b ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                        <p className={`text-[10px] font-medium uppercase tracking-wider mb-1 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Signed in as</p>
+                        <p className={`font-semibold text-sm truncate ${isDarkMode ? "text-white" : "text-slate-900"}`}>{userProfile.name}</p>
+                        {userProfile.bubtEmail && (
+                          <p className={`text-xs mt-0.5 truncate ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            ID: {extractBubtId(userProfile.bubtEmail)}
+                          </p>
+                        )}
                       </div>
                       
                       {/* My Profile */}
@@ -3359,21 +3358,19 @@ For any queries, contact your course instructors or the department.`,
                 <div className="relative">
                   <button
                     onClick={toggleNoticePanel}
-                    className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:bg-opacity-10 ${
-                      isDarkMode ? "hover:bg-white" : "hover:bg-gray-900"
-                    }`}
                     title="Notifications"
+                    className={`relative flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 ${
+                      isDarkMode
+                        ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+                    }`}
                   >
-                    <div className="relative">
-                      <Bell
-                        className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-white" : "text-gray-700"}`}
-                      />
-                      {getUnreadNoticeCount() > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                          {getUnreadNoticeCount()}
-                        </span>
-                      )}
-                    </div>
+                    <Bell className="h-4 w-4" />
+                    {getUnreadNoticeCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {getUnreadNoticeCount() > 99 ? "99+" : getUnreadNoticeCount()}
+                      </span>
+                    )}
                   </button>
                 </div>
               )}
@@ -3773,357 +3770,136 @@ For any queries, contact your course instructors or the department.`,
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] transition-opacity duration-300"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[110]"
             onClick={() => setShowNoticePanel(false)}
           />
 
-          {/* Notification Sidebar */}
+          {/* Notification Drawer */}
           <div
-            className={`fixed top-0 right-0 h-[100dvh] w-[80vw] max-w-xs sm:max-w-sm md:max-w-md shadow-2xl z-[120] transition-all duration-300 overflow-y-auto flex flex-col ${
-              isDarkMode
-                ? "bg-gradient-to-b from-gray-900 via-slate-900 to-gray-800"
-                : "bg-gradient-to-b from-slate-50 via-white to-gray-50"
+            className={`notification-panel fixed top-0 right-0 h-[100dvh] w-[88vw] max-w-sm shadow-2xl z-[120] flex flex-col ${
+              isDarkMode ? "bg-slate-900 border-l border-slate-800" : "bg-white border-l border-slate-200"
             }`}
           >
-            {/* Sidebar Header */}
-            <div
-              className={`flex-shrink-0 p-4 sm:p-5 md:p-6 border-b transition-colors duration-300 ${
-                isDarkMode ? "border-gray-700/50" : "border-gray-200/50"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 sm:p-2.5 rounded-xl transition-colors duration-300 ${
-                      isDarkMode ? "bg-blue-900/40" : "bg-blue-100"
-                    }`}
-                  >
-                    <Bell
-                      className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? "text-blue-400" : "text-blue-600"}`}
-                    />
-                  </div>
-                  <div>
-                    <h2
-                      className={`font-bold text-base sm:text-lg ${isDarkMode ? "text-white" : "text-gray-900"}`}
-                    >
-                      Notifications
-                    </h2>
-                    <p
-                      className={`text-xs sm:text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                    >
-                      All updates
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowNoticePanel(false)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isDarkMode
-                      ? "hover:bg-gray-700 text-gray-400"
-                      : "hover:bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  <X className="h-5 w-5" />
-                </button>
+            {/* Header */}
+            <div className={`flex-shrink-0 flex items-center justify-between px-5 py-4 border-b ${isDarkMode ? "border-slate-800" : "border-slate-100"}`}>
+              <div className="flex items-center gap-2.5">
+                <h2 className={`font-bold text-base ${isDarkMode ? "text-white" : "text-slate-900"}`}>Notifications</h2>
+                {getUnreadNoticeCount() > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
+                    {getUnreadNoticeCount()}
+                  </span>
+                )}
               </div>
+              <button
+                onClick={() => setShowNoticePanel(false)}
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                  isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            {/* Notifications List - Scrollable */}
+            {/* List */}
             <div className="flex-1 overflow-y-auto">
-              {notices.length === 0 &&
-              emergencyAlerts.length === 0 &&
-              emergencyLinks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                  <div
-                    className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 transition-colors duration-300 ${
-                      isDarkMode
-                        ? "bg-gradient-to-r from-blue-900/50 to-indigo-900/50"
-                        : "bg-gradient-to-r from-blue-100 to-indigo-100"
-                    }`}
-                  >
-                    <Bell
-                      className={`h-10 w-10 transition-colors duration-300 ${
-                        isDarkMode ? "text-blue-400" : "text-blue-500"
-                      }`}
-                    />
+              {notices.length === 0 && emergencyAlerts.length === 0 && emergencyLinks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                    <Bell className={`h-7 w-7 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} />
                   </div>
-                  <p
-                    className={`text-base font-semibold transition-colors duration-300 ${
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    No notifications
-                  </p>
-                  <p
-                    className={`text-sm mt-2 transition-colors duration-300 ${
-                      isDarkMode ? "text-gray-500" : "text-gray-500"
-                    }`}
-                  >
-                    You're all caught up!
-                  </p>
+                  <p className={`font-semibold text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>All caught up</p>
+                  <p className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No new notifications right now.</p>
                 </div>
               ) : (
-                <>
-                  {/* Emergency Alerts Section */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
+                  {/* Emergency Alerts */}
                   {emergencyAlerts.map((alert) => (
-                    <div
-                      key={alert.id}
-                      className={`p-4 border-b cursor-pointer transition-all duration-200 ${
-                        isDarkMode
-                          ? "border-gray-700/30 hover:bg-red-900/20"
-                          : "border-gray-200/50 hover:bg-red-50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`p-2 rounded-lg flex-shrink-0 ${
-                            isDarkMode ? "bg-red-900/40" : "bg-red-100"
-                          }`}
-                        >
-                          <span className="text-lg">🚨</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-xs font-semibold uppercase tracking-wide ${
-                              isDarkMode ? "text-red-400" : "text-red-600"
-                            }`}
-                          >
-                            Emergency
-                          </p>
-                          <p
-                            className={`text-sm mt-1 break-words ${
-                              isDarkMode ? "text-gray-200" : "text-gray-900"
-                            }`}
-                          >
-                            {alert.message}
-                          </p>
-                        </div>
+                    <div key={alert.id} className={`flex gap-3 px-5 py-4 ${isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-red-50"} transition-colors cursor-default`}>
+                      <span className="text-xl flex-shrink-0 mt-0.5">🚨</span>
+                      <div className="min-w-0">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 text-red-500`}>Emergency</p>
+                        <p className={`text-sm leading-snug ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{alert.message}</p>
                       </div>
                     </div>
                   ))}
 
-                  {/* Emergency Links Section */}
+                  {/* Emergency Links */}
                   {emergencyLinks.map((link) => (
                     <div
                       key={link.id}
-                      className={`p-4 border-b cursor-pointer transition-all duration-200 ${
-                        isDarkMode
-                          ? "border-gray-700/30 hover:bg-purple-900/20"
-                          : "border-gray-200/50 hover:bg-purple-50"
-                      }`}
-                      onClick={() => {
-                        if (link.url) window.open(link.url, "_blank");
-                      }}
+                      className={`flex gap-3 px-5 py-4 ${isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-purple-50"} transition-colors cursor-pointer`}
+                      onClick={() => { if (link.url) window.open(link.url, "_blank"); }}
                     >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`p-2 rounded-lg flex-shrink-0 ${
-                            isDarkMode ? "bg-purple-900/40" : "bg-purple-100"
-                          }`}
-                        >
-                          <span className="text-lg">🔗</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-xs font-semibold uppercase tracking-wide ${
-                              isDarkMode ? "text-purple-400" : "text-purple-600"
-                            }`}
-                          >
-                            Important Link
-                          </p>
-                          <p
-                            className={`text-sm mt-1 break-words ${
-                              isDarkMode ? "text-gray-200" : "text-gray-900"
-                            }`}
-                          >
-                            {link.title}
-                          </p>
-                          <p
-                            className={`text-xs mt-1 break-all ${
-                              isDarkMode ? "text-purple-400" : "text-purple-500"
-                            }`}
-                          >
-                            {link.url}
-                          </p>
-                        </div>
+                      <span className="text-xl flex-shrink-0 mt-0.5">🔗</span>
+                      <div className="min-w-0">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 text-purple-500`}>Important Link</p>
+                        <p className={`text-sm font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{link.title}</p>
+                        {link.url && <p className={`text-xs mt-0.5 truncate ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{link.url}</p>}
                       </div>
                     </div>
                   ))}
 
-                  {/* Regular Notices Section */}
-                  {activeNotices.map((notice, index) => (
-                    <div
-                      key={notice.id}
-                      className={`p-4 border-b cursor-pointer transition-all duration-200 ${
-                        isDarkMode
-                          ? "border-gray-700/30 hover:bg-blue-900/20"
-                          : "border-gray-200/50 hover:bg-blue-50"
-                      }`}
-                      onClick={() => {
-                        handleNoticeClick(notice);
-                        markNoticeAsRead(notice.id);
-                        setShowNoticePanel(false);
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* Category Icon */}
-                        <div
-                          className={`p-2 rounded-lg flex-shrink-0 ${
-                            notice.type === "info"
-                              ? isDarkMode
-                                ? "bg-blue-900/40"
-                                : "bg-blue-100"
-                              : notice.type === "warning"
-                                ? isDarkMode
-                                  ? "bg-yellow-900/40"
-                                  : "bg-yellow-100"
-                                : notice.type === "success"
-                                  ? isDarkMode
-                                    ? "bg-green-900/40"
-                                    : "bg-green-100"
-                                  : isDarkMode
-                                    ? "bg-red-900/40"
-                                    : "bg-red-100"
-                          }`}
-                        >
-                          {/* Category-based icons */}
-                          {notice.category === "exam" ? (
-                            <span className="text-lg">📚</span>
-                          ) : notice.category === "event" ? (
-                            <span className="text-lg">🎉</span>
-                          ) : notice.category === "academic" ? (
-                            <span className="text-lg">🎓</span>
-                          ) : notice.category === "information" ? (
-                            <span className="text-lg">ℹ️</span>
-                          ) : notice.category === "random" ? (
-                            <span className="text-lg">🎲</span>
-                          ) : (
-                            <Bell
-                              className={`h-5 w-5 ${
-                                notice.type === "info"
-                                  ? "text-blue-600"
-                                  : notice.type === "warning"
-                                    ? "text-yellow-600"
-                                    : notice.type === "success"
-                                      ? "text-green-600"
-                                      : "text-red-600"
-                              }`}
-                            />
-                          )}
+                  {/* Regular Notices */}
+                  {activeNotices.map((notice) => {
+                    const isUnread = !unreadNotices.includes(notice.id);
+                    const emoji =
+                      notice.category === "exam" ? "📚"
+                      : notice.category === "event" ? "🎉"
+                      : notice.category === "academic" ? "🎓"
+                      : notice.category === "information" ? "ℹ️"
+                      : notice.category === "random" ? "🎲"
+                      : "🔔";
+                    return (
+                      <div
+                        key={notice.id}
+                        onClick={() => { handleNoticeClick(notice); markNoticeAsRead(notice.id); setShowNoticePanel(false); }}
+                        className={`relative flex gap-3 px-5 py-4 cursor-pointer transition-colors ${
+                          isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-slate-50"
+                        } ${isUnread ? (isDarkMode ? "bg-blue-950/30" : "bg-blue-50/60") : ""}`}
+                      >
+                        {/* Unread dot */}
+                        {isUnread && <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-500" />}
 
-                          {/* Priority indicator */}
-                          {notice.priority === "urgent" && (
-                            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
-                          )}
-                          {notice.priority === "high" && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
-                          )}
-                        </div>
+                        <span className="text-xl flex-shrink-0 mt-0.5">{emoji}</span>
 
                         <div className="flex-1 min-w-0">
-                          {/* Title */}
-                          <p
-                            className={`text-sm font-semibold line-clamp-2 ${
-                              isDarkMode ? "text-gray-200" : "text-gray-900"
-                            }`}
-                          >
-                            {notice.title}
-                          </p>
-
-                          {/* Date and badges */}
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <p
-                              className={`text-xs ${
-                                isDarkMode ? "text-gray-400" : "text-gray-500"
-                              }`}
-                            >
-                              {new Date(notice.created_at).toLocaleDateString()}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={`text-sm font-semibold line-clamp-2 leading-snug ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>
+                              {notice.title}
                             </p>
-
-                            {/* Priority badges */}
                             {notice.priority === "urgent" && (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-bold animate-pulse ${
-                                  isDarkMode
-                                    ? "bg-red-900/50 text-red-300"
-                                    : "bg-red-100 text-red-700"
-                                }`}
-                              >
-                                🔴 URGENT
-                              </span>
+                              <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white animate-pulse">URGENT</span>
                             )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className={`text-[11px] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                              {new Date(notice.created_at).toLocaleDateString("en-BD", { month: "short", day: "numeric" })}
+                            </span>
                             {notice.priority === "high" && (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                                  isDarkMode
-                                    ? "bg-yellow-900/50 text-yellow-300"
-                                    : "bg-yellow-100 text-yellow-700"
-                                }`}
-                              >
-                                🟡 HIGH
-                              </span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isDarkMode ? "bg-yellow-900/40 text-yellow-400" : "bg-yellow-100 text-yellow-700"}`}>High</span>
                             )}
-
-                            {/* Exam type */}
                             {notice.category === "exam" && notice.exam_type && (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                  isDarkMode
-                                    ? "bg-orange-900/50 text-orange-300"
-                                    : "bg-orange-100 text-orange-700"
-                                }`}
-                              >
-                                {notice.exam_type === "midterm"
-                                  ? "📝 Mid"
-                                  : "🎯 Final"}
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isDarkMode ? "bg-orange-900/40 text-orange-400" : "bg-orange-100 text-orange-700"}`}>
+                                {notice.exam_type === "midterm" ? "Midterm" : "Final"}
                               </span>
                             )}
-
-                            {/* Routine attachment indicator */}
                             {notice.attachment_url && (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                  isDarkMode
-                                    ? "bg-blue-900/50 text-blue-300"
-                                    : "bg-blue-100 text-blue-700"
-                                }`}
-                              >
-                                📎 {notice.attachment_type === "pdf" ? "PDF" : "Routine"}
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+                                📎 {notice.attachment_type === "pdf" ? "PDF" : "File"}
                               </span>
                             )}
-
-                            {/* Event date */}
-                            {notice.category === "event" &&
-                              notice.event_date && (
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                    isDarkMode
-                                      ? "bg-purple-900/50 text-purple-300"
-                                      : "bg-purple-100 text-purple-700"
-                                  }`}
-                                >
-                                  📅{" "}
-                                  {new Date(
-                                    notice.event_date,
-                                  ).toLocaleDateString("en-BD", {
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </span>
-                              )}
-
-                            {/* New indicator */}
-                            {!unreadNotices.includes(notice.id) && (
-                              <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse">
-                                NEW
+                            {notice.category === "event" && notice.event_date && (
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isDarkMode ? "bg-purple-900/40 text-purple-400" : "bg-purple-100 text-purple-700"}`}>
+                                📅 {new Date(notice.event_date).toLocaleDateString("en-BD", { month: "short", day: "numeric" })}
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
@@ -4131,8 +3907,8 @@ For any queries, contact your course instructors or the department.`,
       )}
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
-      {currentView !== "semester" && (
-        <main className="pt-16 sm:pt-20 md:pt-20 lg:pt-24 xl:pt-24 min-h-screen overflow-x-hidden">
+      {!["semester","custom","profile","network","teams","team","alumni","wc26"].includes(currentView) && (
+        <main className="pt-[72px] lg:pt-20 min-h-screen overflow-x-hidden">
 
           {/* ── Announcement Banner ── */}
           {showAnnouncementBanner && (
@@ -4169,14 +3945,14 @@ For any queries, contact your course instructors or the department.`,
             </div>
           )}
 
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 md:py-8 lg:py-10">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-5 lg:py-6">
             {/* Home Page */}
             {currentView === "home" && (
-              <div className="space-y-4 sm:space-y-6 md:space-y-8 w-full">
+              <div className="space-y-6 sm:space-y-8 md:space-y-10 w-full">
                 {/* Welcome Hero Section */}
-                <div className="text-center py-8 sm:py-10">
+                <div className="text-center pt-3 pb-1 sm:pt-5 sm:pb-2">
                   {/* Logo */}
-                  <div className="flex justify-center mb-6">
+                  <div className="flex justify-center mb-3">
                     <div className="relative inline-block">
                       <img
                         src="/image.png"
@@ -4222,68 +3998,25 @@ For any queries, contact your course instructors or the department.`,
                   </div>
                 </div>
 
-                {/* New Version CTA - Compact headline strip (moved above section cards) - Only show for guests */}
+                {/* Guest notice — clean minimal banner */}
                 {!isLoggedIn && (
-                  <div
-                    className={`rounded-xl shadow-lg border overflow-hidden transition-colors duration-300 ${
-                      isDarkMode
-                        ? "bg-gradient-to-r from-indigo-900 via-slate-900 to-gray-900 border-indigo-900/60"
-                        : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-semibold backdrop-blur-sm border shadow-sm ${
-                            isDarkMode
-                              ? "bg-white/20 border-white/30 text-white"
-                              : "bg-indigo-50 border-indigo-100 text-indigo-700"
-                          }`}
-                        >
-                          <span>New version</span>
-                        </div>
-                        <div className="min-w-0">
-                          <p
-                            className={`text-sm sm:text-base font-semibold leading-tight ${isDarkMode ? "text-white" : "text-gray-900"}`}
-                          >
-                            Guest access is available for this semester only
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 mt-1 text-2xs sm:text-xs">
-                            <span
-                              className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}
-                            >
-                              Materials access
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? "bg-blue-500/20 text-blue-200 border border-blue-500/40" : "bg-blue-50 text-blue-700 border border-blue-200"}`}
-                            >
-                              No account needed
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-full font-semibold ${isDarkMode ? "bg-purple-500/20 text-purple-200 border border-purple-500/40" : "bg-purple-50 text-purple-700 border border-purple-200"}`}
-                            >
-                              Create profile later
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-center text-center sm:justify-end sm:text-left">
-                        <button
-                          onClick={() => {
-                            setIsEditingProfile(false);
-                            setShowSignUpModal(true);
-                          }}
-                          className="px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 transition-transform duration-150 hover:-translate-y-0.5"
-                        >
-                          Create profile
-                        </button>
-                        <span
-                          className={`${isDarkMode ? "text-gray-300" : "text-gray-600"} text-2xs sm:text-xs whitespace-nowrap`}
-                        >
-                          Please create your profile before next semester
-                        </span>
-                      </div>
+                  <div className={`flex items-center justify-between gap-4 px-5 py-3.5 rounded-2xl border transition-colors duration-300 ${
+                    isDarkMode
+                      ? "bg-slate-800/60 border-slate-700"
+                      : "bg-slate-50 border-slate-200"
+                  }`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 bg-emerald-500`} />
+                      <p className={`text-sm font-medium ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                        Browsing as guest — course materials available this semester
+                      </p>
                     </div>
+                    <button
+                      onClick={() => { setIsEditingProfile(false); setShowSignUpModal(true); }}
+                      className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150"
+                    >
+                      Create Account
+                    </button>
                   </div>
                 )}
 
@@ -4295,9 +4028,7 @@ For any queries, contact your course instructors or the department.`,
                         isDarkMode ? "text-gray-400" : "text-gray-600"
                       }`}
                     >
-                      {isLoggedIn
-                        ? "Select your major section"
-                        : "Guest access enabled for this semester. Please create your profile before next semester."}
+                      Select your major section
                     </p>
                   </div>
 
@@ -4578,33 +4309,23 @@ For any queries, contact your course instructors or the department.`,
                 </div>
                 {/* New Version CTA moved above; removing duplicate here */}
 
-                {/* Platform Features - Floating Pills Grid */}
-                <div className="max-w-14xl mx-auto px-4">
+                {/* Platform Features ticker */}
+                <div className="w-full">
                   <div className="text-center mb-4">
-                    <p
-                      className={`text-sm font-medium transition-colors duration-300 ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      Available Features
+                    <p className={`text-sm font-semibold tracking-wide uppercase transition-colors duration-300 ${
+                      isDarkMode ? "text-slate-500" : "text-slate-400"
+                    }`}>
+                      What you can do on Edu51Portal
                     </p>
                   </div>
-
-                  {/* Marquee-style Available Features ticker */}
                   <MarqueeTicker isDarkMode={isDarkMode} />
-
-                  <p
-                    className={`text-center text-xs transition-colors duration-300 ${
-                      isDarkMode ? "text-gray-500" : "text-gray-400"
-                    }`}
-                  ></p>
                 </div>
 
                 {/* Compact Connect & Support Section removed - moved into main footer below */}
 
                 {/* ── Footer ── */}
                 <footer
-                  className={`rounded-2xl mt-4 border overflow-hidden transition-colors duration-300 ${
+                  className={`rounded-2xl border overflow-hidden transition-colors duration-300 ${
                     isDarkMode ? "bg-slate-900 border-slate-700/50" : "bg-white border-slate-200"
                   }`}
                 >
@@ -8483,7 +8204,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Semester Tracker Page */}
       {currentView === "semester" && (
-        <main className="fixed inset-0 z-50 overflow-hidden">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-hidden">
           <SemesterTracker
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
@@ -8493,7 +8214,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Custom Routine Page */}
       {currentView === "custom" && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <CustomRoutine
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
@@ -8503,7 +8224,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Profile Page ── */}
       {currentView === "profile" && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <ProfilePage
             username={viewedUsername}
             currentUserId={authSession?.user?.id ?? null}
@@ -8517,7 +8238,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: My Network ── */}
       {currentView === "network" && authSession?.user?.id && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <NetworkPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}
@@ -8529,7 +8250,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Team Building ── */}
       {currentView === "teams" && authSession?.user?.id && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <TeamsPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}
@@ -8541,7 +8262,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Team Detail ── */}
       {currentView === "team" && selectedTeamId && authSession?.user?.id && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <TeamPage
             teamId={selectedTeamId}
             currentUserId={authSession.user.id}
@@ -8554,8 +8275,8 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Alumni Hub (Phase 3 — coming soon) ── */}
       {currentView === "alumni" && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
-          <div className={`min-h-screen flex flex-col items-center justify-center gap-4 px-4 ${isDarkMode ? "bg-slate-950" : "bg-slate-100"}`}>
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+          <div className={`h-full flex flex-col items-center justify-center gap-4 px-4 ${isDarkMode ? "bg-slate-950" : "bg-slate-50"}`}>
             <GraduationCap className={`w-14 h-14 ${isDarkMode ? "text-amber-400" : "text-amber-500"}`} />
             <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Alumni Hub</h1>
             <p className={`text-sm text-center max-w-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
@@ -8573,7 +8294,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── World Cup 2026 ── */}
       {currentView === "wc26" && authSession?.user?.id && (
-        <main className="fixed inset-0 z-50 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
           <WorldCupPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}

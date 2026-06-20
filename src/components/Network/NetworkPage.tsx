@@ -88,17 +88,17 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
   const tabBtn = (t: Tab, label: string, count?: number) => (
     <button
       onClick={() => setTab(t)}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+      className={`relative px-5 py-2 rounded-full text-sm transition-colors duration-150 flex items-center gap-2 ${
         tab === t
-          ? "bg-blue-600 text-white"
-          : isDarkMode
-            ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-            : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+          ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
+          : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
       }`}
     >
       {label}
       {count !== undefined && count > 0 && (
-        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${tab === t ? "bg-white/20" : "bg-red-500 text-white"}`}>
+        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+          tab === t ? (isDarkMode ? "bg-slate-900/20 text-slate-700" : "bg-white/20 text-white") : "bg-blue-500 text-white"
+        }`}>
           {count}
         </span>
       )}
@@ -111,15 +111,14 @@ export default function NetworkPage({ currentUserId, onClose, onViewProfile, isD
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
-      <div className={`sticky top-0 z-20 px-4 py-3 flex items-center gap-3 border-b backdrop-blur ${isDarkMode ? "bg-slate-950/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
-        <button onClick={onClose} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}>
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className={`font-bold ${title}`}>My Network</h1>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-4 mt-6">
-        <div className="flex gap-2 mb-5 flex-wrap">
+      <div className="max-w-3xl mx-auto px-4 pt-6">
+        {/* Pill tab row — matches navbar style */}
+        <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border mb-6 ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
+            : "bg-white border-slate-300 shadow-md shadow-black/8"
+        }`}>
           {tabBtn("connections", "Connections", accepted.length)}
           {tabBtn("requests", "Requests", incoming.length)}
           {tabBtn("discover", "Discover")}

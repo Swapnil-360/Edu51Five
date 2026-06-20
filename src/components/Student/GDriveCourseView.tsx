@@ -313,30 +313,22 @@ export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div
-          className={`w-full max-w-sm rounded-2xl border p-6 flex flex-col items-center gap-4 text-center shadow-md ${
-            isDarkMode ? 'bg-slate-900/70 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
-          }`}
-        >
-          <div className="relative h-12 w-12">
-            <div className={`absolute inset-0 rounded-full border-2 opacity-30 ${isDarkMode ? 'border-blue-200/40' : 'border-blue-500/40'}`} />
-            <div className={`absolute inset-0 rounded-full border-t-2 animate-spin ${isDarkMode ? 'border-t-blue-400' : 'border-t-blue-600'}`} style={{ animationDuration: '0.9s' }} />
-          </div>
-          <div className="text-sm font-semibold">Loading course materials…</div>
-          <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-            Pulling folders and files from Google Drive.
-          </p>
-          <div className="w-full space-y-2">
-            {[0, 1].map((i) => (
-              <div
-                key={`load-${i}`}
-                className={`h-3 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}
-              >
-                <div className="h-full w-1/2 animate-pulse bg-white/40" />
-              </div>
-            ))}
-          </div>
+      <div className="py-20 flex flex-col items-center gap-6 px-4">
+        {/* Spinner */}
+        <div className="relative h-11 w-11">
+          <div className={`absolute inset-0 rounded-full border-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+          <div className={`absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin`} style={{ animationDuration: '0.8s' }} />
+        </div>
+        {/* Text */}
+        <div className="text-center space-y-1">
+          <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Loading course materials</p>
+          <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Fetching folders from Google Drive…</p>
+        </div>
+        {/* Skeleton rows */}
+        <div className="w-full max-w-xs space-y-2.5">
+          {[72, 56, 64].map((w, i) => (
+            <div key={i} className={`h-2.5 rounded-full animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} style={{ width: `${w}%` }} />
+          ))}
         </div>
       </div>
     );
@@ -386,62 +378,45 @@ export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({
           </div>
         </div>
 
-        {/* Mid/Final Toggle Buttons */}
+        {/* Mid/Final Pill Tabs */}
         {!error && (midFolderId || finalFolderId) && (
           <div className="mb-6">
-            <div className={`flex flex-col sm:inline-flex rounded-xl p-1 gap-2 sm:gap-0 ${
-              isDarkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-gray-100 border border-gray-200'
+            <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border ${
+              isDarkMode
+                ? 'bg-slate-800 border-slate-700 shadow-lg shadow-black/20'
+                : 'bg-white border-slate-300 shadow-md shadow-black/8'
             }`}>
-            <button
-              onClick={() => setActiveTab('mid')}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 w-full sm:w-auto ${
-                activeTab === 'mid'
-                  ? isDarkMode 
-                    ? 'bg-blue-600 text-white shadow-lg' 
-                    : 'bg-white text-blue-600 shadow-lg'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Clock className="h-5 w-5" />
-              Mid-term
-              {midContent.length > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === 'mid'
-                    ? 'bg-blue-500 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {midContent.reduce((sum, f) => sum + f.files.length, 0)}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('final')}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 w-full sm:w-auto ${
-                activeTab === 'final'
-                  ? isDarkMode 
-                    ? 'bg-purple-600 text-white shadow-lg' 
-                    : 'bg-white text-purple-600 shadow-lg'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Clock className="h-5 w-5" />
-              Final
-              {finalContent.length > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === 'final'
-                    ? 'bg-purple-500 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {finalContent.reduce((sum, f) => sum + f.files.length, 0)}
-                </span>
-              )}
-            </button>
+              {(['mid', 'final'] as const).map((t) => {
+                const count = t === 'mid'
+                  ? midContent.reduce((s, f) => s + f.files.length, 0)
+                  : finalContent.reduce((s, f) => s + f.files.length, 0);
+                const isActive = activeTab === t;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setActiveTab(t)}
+                    className={`relative flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-colors duration-150 ${
+                      isActive
+                        ? isDarkMode ? 'bg-white text-slate-900 font-bold shadow-md shadow-white/10' : 'bg-slate-900 text-white font-bold shadow-md shadow-black/20'
+                        : isDarkMode ? 'font-medium text-slate-500 hover:text-slate-300' : 'font-medium text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    {t === 'mid' ? 'Mid-term' : 'Final'}
+                    {count > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                        isActive
+                          ? isDarkMode ? 'bg-slate-900/15 text-slate-700' : 'bg-white/20 text-white'
+                          : 'bg-blue-500 text-white'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
         )}
 
         {/* Error State */}

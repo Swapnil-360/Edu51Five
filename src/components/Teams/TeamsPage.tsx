@@ -102,20 +102,19 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
-      <div className={`sticky top-0 z-20 px-4 py-3 flex items-center gap-3 border-b backdrop-blur ${isDarkMode ? "bg-slate-950/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
-        <button onClick={onClose} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-100 text-slate-600"}`}>
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className={`font-bold flex-1 ${title}`}>Team Building</h1>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-1.5"
-        >
-          <Plus className="w-4 h-4" /> Create Team
-        </button>
+      <div className="max-w-4xl mx-auto px-4 pt-6">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className={`text-xl font-bold ${title}`}>Team Building</h1>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Create Team
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 mt-6">
+      <div className="max-w-4xl mx-auto px-4">
         {/* Pending invitations strip */}
         {invitations.length > 0 && (
           <div className={`rounded-xl border p-4 mb-5 ${isDarkMode ? "bg-blue-900/20 border-blue-700/40" : "bg-blue-50 border-blue-200"}`}>
@@ -154,18 +153,20 @@ export default function TeamsPage({ currentUserId, onClose, onOpenTeam, isDarkMo
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-4">
+        {/* Pill tab row */}
+        <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border mb-4 ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
+            : "bg-white border-slate-300 shadow-md shadow-black/8"
+        }`}>
           {(["discover", "mine"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-5 py-2 rounded-full text-sm transition-colors duration-150 ${
                 tab === t
-                  ? "bg-blue-600 text-white"
-                  : isDarkMode
-                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
+                  : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
               }`}
             >
               {t === "discover" ? "Discover Teams" : `My Teams (${myTeams.length})`}

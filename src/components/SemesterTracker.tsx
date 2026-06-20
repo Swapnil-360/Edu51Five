@@ -100,40 +100,7 @@ const SemesterTracker: React.FC<SemesterTrackerProps> = ({ onClose, isDarkMode =
         : 'bg-gradient-to-br from-slate-50 via-white to-blue-50'
     }`}>
       <div className="h-full overflow-y-auto p-2 sm:p-4">
-        {/* Enhanced Mobile-Responsive Header */}
         <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 p-2 sm:p-0">
-          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
-            {onClose && (
-              <button
-                onClick={onClose}
-                className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
-                  isDarkMode 
-                    ? 'hover:bg-slate-800 text-slate-300' 
-                    : 'hover:bg-slate-100 text-slate-600'
-                }`}
-                title="Back to Dashboard"
-              >
-                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-            )}
-            <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl hover-lift flex-shrink-0 shadow-sm transition-colors duration-300 ${
-              isDarkMode
-                ? 'bg-gradient-to-br from-blue-900 to-indigo-900 border border-blue-700'
-                : 'bg-gradient-to-br from-blue-200 to-indigo-200 border border-blue-300'
-            }`}>
-              <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-blue-600" />
-            </div>
-            <div className="min-w-0">
-              <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-100' : 'text-slate-800'
-              }`}>Semester Tracker</h1>
-              <p className={`text-xs sm:text-sm md:text-base hidden sm:block transition-colors duration-300 ${
-                isDarkMode ? 'text-gray-400' : 'text-slate-600'
-              }`}>BUBT Intake 51 - All Sections</p>
-            </div>
-          </div>
-        </div>
 
         {/* Live Clock */}
         <div className={`rounded-2xl p-6 mb-8 hover-lift shadow-lg transition-colors duration-300 ${

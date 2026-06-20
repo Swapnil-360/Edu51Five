@@ -30,12 +30,15 @@ function NewBadge({ isActive, isDarkMode }: { isActive: boolean; isDarkMode: boo
     <span
       className={`relative overflow-hidden px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none tracking-wide ${
         isActive
-          ? "bg-white/20 text-white"
+          ? isDarkMode
+            ? "bg-emerald-500 text-white"        // dark mode: white pill → green badge
+            : "bg-white/25 text-white"            // light mode: dark pill → white badge
+          : isDarkMode
+          ? "bg-emerald-400 text-slate-900"
           : "bg-emerald-500 text-white"
       }`}
     >
-      {/* shimmer sweep */}
-      <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
       NEW
     </span>
   );
@@ -46,10 +49,12 @@ function SoonBadge({ isActive, isDarkMode }: { isActive: boolean; isDarkMode: bo
     <span
       className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold leading-none tracking-wide border ${
         isActive
-          ? "border-white/30 text-white/70"
+          ? isDarkMode
+            ? "border-slate-500 text-slate-600"  // dark mode: white pill → dark border+text
+            : "border-white/40 text-white/80"     // light mode: dark pill → white border+text
           : isDarkMode
-          ? "border-slate-600 text-slate-400"
-          : "border-slate-300 text-slate-400"
+          ? "border-slate-400 text-slate-300"
+          : "border-slate-400 text-slate-500"
       }`}
     >
       SOON
@@ -102,12 +107,14 @@ const NavTab = ({
         const { width } = ref.current.getBoundingClientRect();
         setPosition({ width, opacity: 1, left: ref.current.offsetLeft });
       }}
-      className={`relative z-10 flex items-center gap-1.5 cursor-pointer select-none px-5 py-2 text-sm font-semibold rounded-full transition-colors duration-150 whitespace-nowrap ${
+      className={`relative z-10 flex items-center gap-1.5 cursor-pointer select-none px-5 py-2 text-sm rounded-full transition-all duration-150 whitespace-nowrap ${
         tab.isActive
-          ? "text-white"
+          ? isDarkMode
+            ? "font-bold text-slate-900"
+            : "font-bold text-white"
           : isDarkMode
-          ? "text-slate-400 hover:text-slate-200"
-          : "text-slate-600 hover:text-slate-900"
+          ? "font-medium text-slate-500 hover:text-slate-300"
+          : "font-medium text-slate-500 hover:text-slate-800"
       }`}
     >
       {tab.badge === "live" && <LiveDot />}
@@ -119,12 +126,9 @@ const NavTab = ({
       {tab.isActive && (
         <motion.span
           layoutId="active-nav-pill"
-          className={`absolute inset-0 rounded-full -z-10 ${
-            isDarkMode
-              ? "bg-slate-100"
-              : "bg-slate-900"
+          className={`absolute inset-0 rounded-full -z-10 shadow-md ${
+            isDarkMode ? "bg-white shadow-white/10" : "bg-slate-900 shadow-black/20"
           }`}
-          style={tab.isActive && !isDarkMode ? { color: "white" } : undefined}
           transition={{ type: "spring", stiffness: 400, damping: 32 }}
         />
       )}

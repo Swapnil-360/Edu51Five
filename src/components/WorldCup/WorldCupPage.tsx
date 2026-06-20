@@ -140,12 +140,7 @@ export function WorldCupPage({ currentUserId, onClose, isDarkMode }: Props) {
       <div className={`sticky top-0 z-10 border-b ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200"}`}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* FIFA WC2026 logo */}
-            <img
-              src="/FIFA-World-Cup-Logo-2026.png"
-              alt="FIFA World Cup 2026"
-              className="w-10 h-10 object-contain"
-            />
+            <img src="/FIFA-World-Cup-Logo-2026.png" alt="FIFA World Cup 2026" className="w-10 h-10 object-contain" />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className={`font-bold text-lg leading-tight ${text}`}>World Cup 2026</h1>
@@ -171,21 +166,15 @@ export function WorldCupPage({ currentUserId, onClose, isDarkMode }: Props) {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {syncing
-              ? <Loader2 className="w-4 h-4 animate-spin text-green-500 mr-1" />
-              : (
-                <button onClick={() => load(true)} title="Refresh scores"
-                  className={`p-1.5 rounded-full ${isDarkMode ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400"}`}>
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-              )
-            }
-            <button onClick={onClose}
-              className={`p-2 rounded-full ${isDarkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}>
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          {syncing
+            ? <Loader2 className="w-4 h-4 animate-spin text-green-500" />
+            : (
+              <button onClick={() => load(true)} title="Refresh scores"
+                className={`p-1.5 rounded-full ${isDarkMode ? "hover:bg-slate-800 text-slate-500 hover:text-slate-300" : "hover:bg-slate-100 text-slate-400"}`}>
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            )
+          }
         </div>
 
         {/* Tabs */}

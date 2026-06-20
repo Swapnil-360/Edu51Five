@@ -700,34 +700,21 @@ export default function CustomRoutine({ onClose, isDarkMode }: CustomRoutineProp
   return (
     <div className={`min-h-screen w-full pb-8 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header */}
-      <div className={`print-hide sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b ${isDarkMode ? 'bg-gray-900/80 backdrop-blur border-gray-800' : 'bg-white/80 backdrop-blur border-gray-200'}`}>
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded ${isDarkMode ? 'bg-purple-900/40' : 'bg-purple-100'}`}>
-            <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`} />
-          </div>
-          <div>
-            <div className="font-semibold text-lg">Custom Routine</div>
-            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Compose personal schedule with overlap handling</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {syncMessage && (
-            <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-              {syncMessage}
-            </span>
-          )}
-          {isSyncing && (
-            <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-              Syncing...
-            </span>
-          )}
-          <button onClick={handleSave} className={`hidden sm:flex items-center gap-1 px-3 py-1.5 rounded ${isDarkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}>
-            <Save className="w-4 h-4" /> Save
-          </button>
-          <button onClick={onClose} className={`p-2 rounded ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`} aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Save action bar — no back button */}
+      <div className={`print-hide sticky top-0 z-10 flex items-center justify-end gap-2 px-4 sm:px-6 py-3 border-b ${isDarkMode ? 'bg-gray-900/80 backdrop-blur border-gray-800' : 'bg-white/80 backdrop-blur border-gray-200'}`}>
+        {syncMessage && (
+          <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+            {syncMessage}
+          </span>
+        )}
+        {isSyncing && (
+          <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+            Syncing...
+          </span>
+        )}
+        <button onClick={handleSave} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${isDarkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}>
+          <Save className="w-4 h-4" /> Save
+        </button>
       </div>
 
       {/* Builder */}
