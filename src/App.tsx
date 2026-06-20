@@ -7710,13 +7710,27 @@ For any queries, contact your course instructors or the department.`,
                   <div className={`flex-1 overflow-hidden min-h-0 flex flex-col relative ${isDarkMode ? "bg-slate-950" : "bg-slate-100"}`}>
                     {/* Loading overlay */}
                     {isViewerLoading && (
-                      <div className={`absolute inset-0 flex flex-col items-center justify-center gap-3 z-20 ${isDarkMode ? "bg-slate-950/90" : "bg-white/90"}`}>
-                        <div className={`w-10 h-10 rounded-full border-[3px] animate-spin ${isDarkMode ? "border-slate-700 border-t-blue-400" : "border-slate-200 border-t-blue-500"}`} />
-                        <p className={`text-sm font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Loading…</p>
+                      <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 ${isDarkMode ? "bg-slate-950/95" : "bg-white/95"}`}>
+                        <div className="flex flex-col items-center gap-5 w-52">
+                          {/* Animated doc icon */}
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                            <div className={`w-6 h-6 rounded-full border-2 border-transparent border-t-blue-500 animate-spin`} style={{ animationDuration: "0.7s" }} />
+                          </div>
+                          {/* Skeleton lines mimicking document content */}
+                          <div className="w-full space-y-2">
+                            {[90, 78, 88, 65, 82].map((w, i) => (
+                              <div
+                                key={i}
+                                className={`h-2 rounded-full animate-pulse ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}
+                                style={{ width: `${w}%`, animationDelay: `${i * 80}ms` }}
+                              />
+                            ))}
+                          </div>
+                          <p className={`text-xs font-medium tracking-wide ${isDarkMode ? "text-slate-600" : "text-slate-400"}`}>
+                            Loading document…
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    {isViewerLoading && !selectedMaterial.type && (
-                      <div className={`w-full h-96 ${isDarkMode ? "bg-slate-900" : "bg-slate-100"}`} />
                     )}
 
                     {/* Video Content */}

@@ -312,22 +312,19 @@ export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({
   };
 
   if (loading) {
+    const sk = isDarkMode ? 'bg-slate-800/70' : 'bg-slate-200/70';
+    const card = isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     return (
-      <div className="py-20 flex flex-col items-center gap-6 px-4">
-        {/* Spinner */}
-        <div className="relative h-11 w-11">
-          <div className={`absolute inset-0 rounded-full border-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} />
-          <div className={`absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin`} style={{ animationDuration: '0.8s' }} />
-        </div>
-        {/* Text */}
-        <div className="text-center space-y-1">
-          <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Loading course materials</p>
-          <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Fetching folders from Google Drive…</p>
-        </div>
-        {/* Skeleton rows */}
-        <div className="w-full max-w-xs space-y-2.5">
-          {[72, 56, 64].map((w, i) => (
-            <div key={i} className={`h-2.5 rounded-full animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} style={{ width: `${w}%` }} />
+      <div className="px-1 pt-2 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`flex items-start gap-3 p-4 rounded-xl border animate-pulse ${card}`}>
+              <div className={`w-9 h-9 rounded-lg flex-shrink-0 ${sk}`} />
+              <div className="flex-1 space-y-2 pt-1">
+                <div className={`h-2.5 rounded-full ${sk}`} style={{ width: `${55 + (i % 3) * 15}%` }} />
+                <div className={`h-2 rounded-full ${sk}`} style={{ width: '35%' }} />
+              </div>
+            </div>
           ))}
         </div>
       </div>

@@ -186,9 +186,22 @@ export const StudentDriveView: React.FC<StudentDriveViewProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader className="w-8 h-8 animate-spin text-blue-600" />
-        <span className="ml-3 text-gray-600">Loading files from Google Drive...</span>
+      <div className="flex justify-center py-10 px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white shadow-sm p-6 flex flex-col items-center gap-4 text-center">
+          <div className="relative h-11 w-11">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-100" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" style={{ animationDuration: '0.8s' }} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Loading course materials</p>
+            <p className="text-xs mt-1 text-slate-400">Fetching files from Google Drive…</p>
+          </div>
+          <div className="w-full space-y-2">
+            {[72, 56, 64].map((w, i) => (
+              <div key={i} className="h-2 rounded-full animate-pulse bg-slate-100" style={{ width: `${w}%`, margin: '0 auto' }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

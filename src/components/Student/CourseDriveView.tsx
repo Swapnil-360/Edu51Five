@@ -229,9 +229,22 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
 
   if (!isLoaded) {
     return (
-      <div className={`p-8 text-center rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-        <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading Google Drive...</p>
+      <div className="flex justify-center py-10 px-4">
+        <div className={`w-full max-w-sm rounded-2xl border p-6 flex flex-col items-center gap-4 text-center ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="relative h-12 w-12">
+            <div className={`absolute inset-0 rounded-full border-2 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`} />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" style={{ animationDuration: '0.8s' }} />
+          </div>
+          <div>
+            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Connecting to Google Drive</p>
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>One-time setup for this session</p>
+          </div>
+          <div className="w-full space-y-2">
+            {[75, 55, 65].map((w, i) => (
+              <div key={i} className={`h-2 rounded-full animate-pulse ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} style={{ width: `${w}%`, margin: '0 auto' }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -453,12 +466,7 @@ export const CourseDriveView: React.FC<CourseDriveViewProps> = ({
             </div>
           ))}
         </div>
-      ) : isLoaded ? null : (
-        <div className="text-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-          <p className={`mt-4 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading...</p>
-        </div>
-      )}
+      ) : isLoaded ? null : null}
     </div>
   );
 };
