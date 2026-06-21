@@ -210,6 +210,7 @@ export function AppNavHeader({
     {
       label: "Resources",
       view: "shared-resources",
+      badge: "new",
       isActive: currentView === "shared-resources",
       onClick: () => requireLogin("shared-resources", "Shared Resources"),
     },
