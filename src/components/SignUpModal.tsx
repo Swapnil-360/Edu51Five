@@ -655,7 +655,7 @@ export function SignUpModal({
                     type="text"
                     value={section}
                     onChange={(e) => setSection(e.target.value)}
-                    placeholder="e.g., Intake 51, Section 5"
+                    placeholder="e.g., Intake 51, Section 2 (AI)"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                       isDarkMode
                         ? "bg-gray-800 border-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"

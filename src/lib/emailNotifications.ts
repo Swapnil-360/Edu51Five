@@ -276,7 +276,7 @@ export function generateEmailHTML(notification: EmailNotification): string {
         <!-- Footer -->
         <div class="footer">
             <p class="footer-text">
-                Stay updated with course materials, exam schedules, and important announcements for Section 5.
+                Stay updated with course materials, exam schedules, and important announcements for Section 2 (AI).
             </p>
             
             <div class="footer-links">
@@ -284,7 +284,7 @@ export function generateEmailHTML(notification: EmailNotification): string {
             </div>
             
             <div class="copyright">
-                © ${currentYear} Edu<span style="color: #ef4444;">51</span>Portal - BUBT Intake 51 Section 5. All rights reserved.<br>
+                © ${currentYear} Edu<span style="color: #ef4444;">51</span>Portal - BUBT Intake 51 Section 2 (AI). All rights reserved.<br>
                 <a href="${baseUrl}" style="color: ${primaryColor}; text-decoration: none;">edu51five.vercel.app</a>
             </div>
         </div>

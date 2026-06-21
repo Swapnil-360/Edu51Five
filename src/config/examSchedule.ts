@@ -1,4 +1,4 @@
-// Final exam schedule for BUBT Intake 51 Section 5
+// Final exam schedule for BUBT Intake 51 Section 2 (AI)
 // All exams are 10:00 AM to 11:30 AM in Room 2710
 
 export const MID_TERM_SCHEDULE = {

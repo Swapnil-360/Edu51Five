@@ -173,7 +173,7 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
           <div className="flex items-end gap-4 mb-6">
             <div className={`w-24 h-24 rounded-full border-4 flex-shrink-0 overflow-hidden animate-pulse ${isDarkMode ? "border-slate-950 bg-slate-700" : "border-slate-100 bg-slate-300"}`}>
               {initialAvatarUrl && (
-                <img src={initialAvatarUrl} alt="" className="w-full h-full object-cover" fetchPriority="high" decoding="async" />
+                <img src={initialAvatarUrl} alt="" className="w-full h-full object-cover" fetchpriority="high" decoding="async" />
               )}
             </div>
             <div className="mb-2 flex-1 space-y-2.5">
@@ -255,7 +255,7 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
           {/* Cover */}
           <div className="relative h-36 sm:h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
             {profile.cover_photo_url && (
-              <img src={profile.cover_photo_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
+              <img src={profile.cover_photo_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" fetchpriority="high" decoding="async" />
             )}
             {isOwn && (
               <button
@@ -278,7 +278,7 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
                     alt={profile.name}
                     className="w-full h-full object-cover"
                     loading="eager"
-                    fetchPriority="high"
+                    fetchpriority="high"
                     decoding="async"
                   />
                 ) : (

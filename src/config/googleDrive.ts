@@ -1,4 +1,4 @@
-// Google Drive folder configuration for BUBT Intake 51 Section 5
+// Google Drive folder configuration for BUBT Intake 51 Section 2 (AI)
 export const GOOGLE_DRIVE_FOLDERS = {
   // Main folder
   main: "https://drive.google.com/drive/folders/1HmjIBbTM8tIlHk7PUepTo7Cffjjg_4pz?usp=drive_link",

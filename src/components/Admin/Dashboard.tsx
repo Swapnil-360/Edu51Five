@@ -103,7 +103,7 @@ export function AdminDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">Manage Courses</h3>
-              <p className="text-gray-400 text-xs sm:text-sm mt-1">Section 5 • Computer Science & Engineering</p>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">Section 2 (AI) • Computer Science & Engineering</p>
             </div>
             <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto">
               <Upload className="w-4 h-4" />

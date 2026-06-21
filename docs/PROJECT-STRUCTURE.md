@@ -64,7 +64,7 @@ Admin is gated by `profiles.is_admin` (no public password page). `isAdmin` is de
 | What | File | Lines |
 |------|------|-------|
 | Feedback modal (categories, subject, message) | `src/components/FeedbackModal.tsx` | — |
-| Footer "Send Feedback" / "Report a Bug" links | `src/App.tsx` | ~4760 |
+| Footer "Send Feedback" link | `src/App.tsx` | ~4760 |
 | Feedback API (submit / list / update status) | `src/lib/api/feedbackApi.ts` | — |
 | Feedback types | `src/types/index.ts` | — |
 | Admin Feedback Inbox (filters, status control) | `src/components/Admin/AdminDashboard.tsx` | — |
@@ -248,6 +248,18 @@ Note: hardcoded midterm/final routine templates and prebuilt insert functions we
 | Push API helpers | `src/lib/pushNotifications.ts` | — |
 | VAPID / subscription logic | `supabase/functions/send-push-notification/` | — |
 | Service worker | `public/sw.js` | — |
+| In-app notification API (mentions, mark-read) | `src/lib/api/notificationsApi.ts` | — |
+| **DB:** `notifications` table + RLS + realtime | migration `20260621_notifications.sql` | — |
+
+---
+
+## Legal Pages
+
+| What | File | Lines |
+|------|------|-------|
+| Terms & Conditions page | `src/App.tsx` | `currentView === "terms"` branch |
+| Privacy Policy page | `src/App.tsx` | `currentView === "privacy"` branch |
+| Footer links (Terms · Privacy) | `src/App.tsx` | footer bottom bar + Support column |
 
 ---
 

@@ -673,7 +673,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="bg-gray-50 px-5 py-3 text-center">
                       <span className="text-blue-700 text-[11px] font-semibold">Visit Platform</span>
                       <div className="text-gray-400 text-[10px] mt-2">
-                        © {new Date().getFullYear()} Edu51Portal - BUBT Intake 51 Section 5.
+                        © {new Date().getFullYear()} Edu51Portal - BUBT Intake 51 Section 2 (AI).
                       </div>
                     </div>
                   </div>

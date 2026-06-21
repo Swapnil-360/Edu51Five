@@ -13,7 +13,7 @@ export interface DaySchedule {
   slots: ClassSlot[];
 }
 
-// Regular Class Schedule (Based on Official Fall 2025 routine - Section 5-5 Intake 51)
+// Regular Class Schedule (Based on Official Fall 2025 routine - Section 2 (AI)-5 Intake 51)
 // B.Sc. Engg. in CSE | Intake: 5-5 | Semester: Fall, 2023 (Updated for Fall 2025)
 // Note: Format - Building 2, Floor-Room. E.g., 2417 = Building 2, 4th Floor, Room 17
 // Room numbers verified from official class routine
@@ -270,11 +270,11 @@ export const getRoutineTitle = (): string => {
   
   switch (routineType) {
     case 'final_exam':
-      return '🎯 Final Examination Schedule - Section 5';
+      return '🎯 Final Examination Schedule - Section 2 (AI)';
     case 'midterm_exam':
-      return '📝 Mid-term Examination Schedule - Section 5';
+      return '📝 Mid-term Examination Schedule - Section 2 (AI)';
     default:
-      return '📚 Section 5 Class Schedule - Summer 2026';
+      return '📚 Section 2 (AI) Class Schedule - Summer 2026';
   }
 };
 
@@ -287,7 +287,7 @@ export const getRoutineDescription = (): string => {
     case 'midterm_exam':
       return 'Mid-term examinations are currently ongoing. Stay focused!';
     default:
-      return 'Section 51-5 | Mid-terms completed - Regular classes resumed | More sections coming soon';
+      return 'Section 2 (AI) | Mid-terms completed - Regular classes resumed | More sections coming soon';
   }
 };
 

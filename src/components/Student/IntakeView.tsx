@@ -12,7 +12,7 @@ export function IntakeView({ onSelectSection, isDarkMode = false }: IntakeViewPr
     { id: '2', name: 'Section 2', courseCount: 7, description: 'Business Administration', accessible: false },
     { id: '3', name: 'Section 3', courseCount: 9, description: 'Electrical & Electronics Engineering', accessible: false },
     { id: '4', name: 'Section 4', courseCount: 6, description: 'Economics', accessible: false },
-    { id: '5', name: 'Section 5', courseCount: 5, description: 'Dept. of CSE', accessible: true },
+    { id: '5', name: 'Section 2 (AI)', courseCount: 5, description: 'Dept. of CSE · AI Major', accessible: true },
   ];
 
   const bg = isDarkMode ? 'bg-slate-950' : 'bg-slate-50';

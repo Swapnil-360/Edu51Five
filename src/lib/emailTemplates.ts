@@ -48,7 +48,7 @@ export function getConfirmSignupTemplate(confirmationUrl: string): string {
           <tr>
             <td style="padding:30px;background-color:#f9fafb;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="margin:0 0 8px 0;color:#6b7280;font-size:13px;">Need help? Contact us at <a href="mailto:support@edu51five.com" style="color:#667eea;text-decoration:none;">support@edu51five.com</a></p>
-              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 5 (CSE)</p>
+              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 2 (AI)</p>
               <p style="margin:8px 0 0 0;color:#9ca3af;font-size:11px;">Bangladesh University of Business & Technology</p>
             </td>
           </tr>
@@ -108,7 +108,7 @@ export function getResetPasswordTemplate(resetUrl: string): string {
           <tr>
             <td style="padding:30px;background-color:#f9fafb;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="margin:0 0 8px 0;color:#6b7280;font-size:13px;">Need help? Contact us at <a href="mailto:support@edu51five.com" style="color:#f59e0b;text-decoration:none;">support@edu51five.com</a></p>
-              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 5 (CSE)</p>
+              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 2 (AI)</p>
               <p style="margin:8px 0 0 0;color:#9ca3af;font-size:11px;">Bangladesh University of Business & Technology</p>
             </td>
           </tr>
@@ -164,7 +164,7 @@ export function getChangeEmailTemplate(confirmUrl: string): string {
           <tr>
             <td style="padding:30px;background-color:#f9fafb;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="margin:0 0 8px 0;color:#6b7280;font-size:13px;">Need help? Contact us at <a href="mailto:support@edu51five.com" style="color:#8b5cf6;text-decoration:none;">support@edu51five.com</a></p>
-              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 5 (CSE)</p>
+              <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Edu<span style="color:#ef4444">51</span>Portal - BUBT Intake 51, Section 2 (AI)</p>
               <p style="margin:8px 0 0 0;color:#9ca3af;font-size:11px;">Bangladesh University of Business & Technology</p>
             </td>
           </tr>

@@ -22,14 +22,16 @@ interface GDriveFolderBrowserProps {
   userMajor: string;
   isDarkMode?: boolean;
   onCourseSelect?: (course: GDriveCourse) => void;
+  onReady?: () => void;
 }
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 
-export const GDriveFolderBrowser: React.FC<GDriveFolderBrowserProps> = ({ 
-  userMajor, 
+export const GDriveFolderBrowser: React.FC<GDriveFolderBrowserProps> = ({
+  userMajor,
   isDarkMode = false,
-  onCourseSelect 
+  onCourseSelect,
+  onReady,
 }) => {
   const [courses, setCourses] = useState<GDriveCourse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,6 +66,7 @@ export const GDriveFolderBrowser: React.FC<GDriveFolderBrowserProps> = ({
 
       console.log('Courses found from Google Drive:', coursesFound);
       setCourses(coursesFound);
+      if (coursesFound.length > 0) onReady?.();
 
       if (coursesFound.length === 0) {
         setError(`No courses found in your folders. Please create course folders in Google Drive.`);

@@ -218,6 +218,7 @@ function App() {
         | "home"
         | "semester"
         | "privacy"
+        | "terms"
         | "custom"
         | "profile"
         | "network"
@@ -413,7 +414,7 @@ function App() {
   const [userProfile, setUserProfile] = useState({
     name: localStorage.getItem("userProfileName") || "Welcome Student",
     section:
-      localStorage.getItem("userProfileSection") || "Intake 51, Section 5",
+      localStorage.getItem("userProfileSection") || "Intake 51, Section 2 (AI)",
     major: localStorage.getItem("userProfileMajor") || "",
     bubtEmail: localStorage.getItem("userProfileBubtEmail") || "",
     notificationEmail:
@@ -1777,7 +1778,7 @@ FOR ALL USING (true) WITH CHECK (true);
         console.log("🏗️ [initializeDefaultNotices] Creating welcome notice...");
         welcomeNotice = {
           id: "welcome-notice",
-          title: "Welcome to Edu51Portal - BUBT Intake 51 Section 5",
+          title: "Welcome to Edu51Portal - BUBT Intake 51 Section 2 (AI)",
           content: `Dear BUBT Intake 51 Students,
 
 Welcome to Edu51Portal, your comprehensive learning platform designed specifically for your academic excellence and exam preparation success!
@@ -1785,7 +1786,7 @@ Welcome to Edu51Portal, your comprehensive learning platform designed specifical
 **Your Exam Success Platform:**
 Complete Study Materials • Past Exam Questions • Real-time Updates
 
-This platform is your centralized hub for all Section 5 (Computer Science & Engineering) resources. Use it regularly to stay ahead in your studies and achieve academic excellence!
+This platform is your centralized hub for all Section 2 (AI) resources. Use it regularly to stay ahead in your studies and achieve academic excellence!
 
 Best of luck with your studies!
 - Edu51Portal Team`,
@@ -2998,8 +2999,8 @@ Best of luck with your studies!
       // Reset to default exam routine notice
       const defaultRoutineNotice: Notice = {
         id: "exam-routine-notice",
-        title: "📅 Midterm Exam Routine - Section 5",
-        content: `Midterm examination schedule for Section 5 (Computer Science & Engineering).
+        title: "📅 Midterm Exam Routine - Section 2 (AI)",
+        content: `Midterm examination schedule for Section 2 (AI).
 
 📋 **Exam Information:**
 • Start Date: Sunday, September 14, 2025
@@ -4234,7 +4235,6 @@ For any queries, contact your course instructors or the department.`,
                           showMajorAccessNotification("error", `Access Denied: This section is for ${def.majorKey} students only. Your major: ${userProfile.major || "Not set"}`);
                           return;
                         }
-                        showMajorAccessNotification("success", `Welcome to ${def.title}!`);
                         goToView(def.view);
                       },
                     }));
@@ -4342,13 +4342,18 @@ For any queries, contact your course instructors or the department.`,
                             </button>
                           </li>
                           <li>
-                            <button onClick={() => setShowFeedbackModal(true)} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
-                              Report a Bug
+                            <button onClick={() => handleEmailClick()} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                              Contact Support
                             </button>
                           </li>
                           <li>
-                            <button onClick={() => handleEmailClick()} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
-                              Contact Support
+                            <button onClick={() => goToView("terms")} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                              Terms &amp; Conditions
+                            </button>
+                          </li>
+                          <li>
+                            <button onClick={() => goToView("privacy")} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-400 hover:text-blue-400" : "text-slate-500 hover:text-blue-600"}`}>
+                              Privacy Policy
                             </button>
                           </li>
                           <li>
@@ -4367,10 +4372,19 @@ For any queries, contact your course instructors or the department.`,
                   </div>
 
                   {/* Bottom bar */}
-                  <div className={`px-6 py-4 border-t flex items-center justify-center transition-colors duration-300 ${isDarkMode ? "border-slate-700/50 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
+                  <div className={`px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors duration-300 ${isDarkMode ? "border-slate-700/50 bg-slate-800/40" : "border-slate-100 bg-slate-50"}`}>
                     <p className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
                       © {new Date().getFullYear()} Edu<span className="text-[#ef4444]">51</span>Portal · BUBT Intake 51 · All rights reserved.
                     </p>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => goToView("terms")} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}>
+                        Terms
+                      </button>
+                      <span className={`text-xs ${isDarkMode ? "text-slate-700" : "text-slate-300"}`}>·</span>
+                      <button onClick={() => goToView("privacy")} className={`text-xs hover:underline underline-offset-2 transition-colors ${isDarkMode ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}>
+                        Privacy
+                      </button>
+                    </div>
                   </div>
                 </footer>
               </div>
@@ -4482,13 +4496,20 @@ For any queries, contact your course instructors or the department.`,
                         userMajor={activeMajor}
                         isDarkMode={isDarkMode}
                         onCourseSelect={(course) => {
-                          // Open course view in website
                           setSelectedDriveCourse({
                             courseCode: course.code,
                             courseName: course.name,
                             folderId: course.folderId,
                             folderLink: course.folderLink,
                           });
+                        }}
+                        onReady={() => {
+                          const title =
+                            activeMajor === "AI" ? "Artificial Intelligence"
+                            : activeMajor === "Software Engineering" ? "Software Engineering"
+                            : activeMajor === "Networking" ? "Networking"
+                            : activeMajor || "your section";
+                          showMajorAccessNotification("success", `Welcome to ${title}!`);
                         }}
                       />
 
@@ -5251,7 +5272,7 @@ For any queries, contact your course instructors or the department.`,
                             isDarkMode ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          Organization: BUBT - Intake 51, Section 5, CSE
+                          Organization: BUBT · Intake 51, Section 2 (AI)
                         </p>
                       </div>
                     </section>
@@ -5280,6 +5301,129 @@ For any queries, contact your course instructors or the department.`,
                 </div>
 
                 {/* Back to Home Button */}
+                <div className="flex justify-center pb-8">
+                  <button
+                    onClick={() => goToView("home")}
+                    className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                      isDarkMode
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                    } shadow-lg hover:shadow-xl transform hover:-translate-y-1`}
+                  >
+                    Back to Home
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Terms & Conditions Page */}
+            {currentView === "terms" && (
+              <div className="space-y-8 max-w-4xl mx-auto">
+                <div className="text-center">
+                  <div className="flex justify-center mb-6">
+                    <div className={`rounded-3xl shadow-xl p-4 transition-colors duration-300 ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
+                      <img src="/image.png" alt="BUBT Logo" className="h-16 w-16 object-contain" />
+                    </div>
+                  </div>
+                  <h1 className={`text-3xl sm:text-4xl font-bold mb-4 transition-colors duration-300 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>
+                    Terms &amp; Conditions
+                  </h1>
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                  </p>
+                </div>
+
+                <div className={`rounded-2xl border shadow-sm transition-colors duration-300 ${isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200"}`}>
+                  <div className="space-y-8 p-6 sm:p-8">
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>1. Acceptance of Terms</h2>
+                      <p className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        By accessing and using Edu51Portal, you accept and agree to be bound by these Terms &amp; Conditions. This platform is exclusively for students, faculty, and staff of BUBT Intake 51, CSE Department. If you do not agree to these terms, please do not use this platform.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>2. Eligibility</h2>
+                      <p className={`leading-relaxed mb-3 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>To use Edu51Portal, you must:</p>
+                      <ul className={`list-disc list-inside space-y-2 ml-4 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        <li>Be enrolled as a student in BUBT Intake 51 (CSE Department) or be affiliated faculty/staff</li>
+                        <li>Provide accurate registration information including your student ID, section, and major</li>
+                        <li>Maintain the confidentiality of your account credentials</li>
+                        <li>Be at least 17 years of age</li>
+                      </ul>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>3. Permitted Use</h2>
+                      <p className={`leading-relaxed mb-3 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>You may use Edu51Portal to:</p>
+                      <ul className={`list-disc list-inside space-y-2 ml-4 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        <li>Access course materials, lecture notes, and academic resources</li>
+                        <li>View and track exam schedules, semester routines, and academic notices</li>
+                        <li>Collaborate with classmates through team features and shared resources</li>
+                        <li>Communicate via team chat and network features for academic purposes</li>
+                        <li>Upload and share study materials relevant to your coursework</li>
+                      </ul>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>4. Prohibited Activities</h2>
+                      <p className={`leading-relaxed mb-3 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>You must not:</p>
+                      <ul className={`list-disc list-inside space-y-2 ml-4 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        <li>Share account credentials or allow unauthorized access to your account</li>
+                        <li>Upload harmful, offensive, or copyrighted content without permission</li>
+                        <li>Use the platform for commercial purposes or spam</li>
+                        <li>Attempt to hack, disrupt, or reverse-engineer any part of the platform</li>
+                        <li>Impersonate another student, faculty member, or staff</li>
+                        <li>Share exam answers or engage in academic dishonesty through the platform</li>
+                      </ul>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>5. Content Ownership</h2>
+                      <p className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        Course materials, notices, and resources uploaded by faculty remain the intellectual property of the respective creators and BUBT. Student-uploaded content remains owned by the student but grants Edu51Portal a non-exclusive license to host and display it to authorized users. The Edu51Portal platform, design, and codebase are the property of the developer.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>6. Account Termination</h2>
+                      <p className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        We reserve the right to suspend or terminate your account if you violate these terms, engage in misconduct, or if you are no longer affiliated with BUBT Intake 51. You may request account deletion at any time by contacting support.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>7. Disclaimer of Warranties</h2>
+                      <p className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        Edu51Portal is provided "as is" for academic use. While we strive for accuracy, we do not guarantee that all course materials, schedules, or notices are error-free. Always verify critical academic information (exam dates, results) through official BUBT channels.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>8. Changes to Terms</h2>
+                      <p className={`leading-relaxed ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        We may update these Terms &amp; Conditions from time to time. Continued use of the platform after changes constitutes acceptance of the new terms. Significant changes will be announced via the platform's notice board.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h2 className={`text-xl font-bold mb-3 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>9. Contact</h2>
+                      <p className={`leading-relaxed mb-3 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        For questions about these Terms &amp; Conditions, contact us at:
+                      </p>
+                      <div className={`p-4 rounded-lg ${isDarkMode ? "bg-gray-700" : "bg-gray-100"}`}>
+                        <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
+                          Email:{" "}
+                          <a href="mailto:edu51five@gmail.com" className="text-blue-500 hover:underline">edu51five@gmail.com</a>
+                        </p>
+                        <p className={`mt-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                          Organization: BUBT · Intake 51, Section 2 (AI)
+                        </p>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+
                 <div className="flex justify-center pb-8">
                   <button
                     onClick={() => goToView("home")}

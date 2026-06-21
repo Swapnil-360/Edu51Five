@@ -183,50 +183,47 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
 
   return (
     <div className={`min-h-screen pb-12 ${pageBg}`}>
-      {/* action bar — no back button, actions only */}
-      {canManage && (
-        <div className="max-w-3xl mx-auto px-4 pt-4 flex justify-end gap-2">
-          <button
-            onClick={() => setShowInvite(true)}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5 shadow-sm"
-          >
-            <UserPlus className="w-4 h-4" /> Invite
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className={`p-2 rounded-xl ${isDarkMode ? "hover:bg-slate-800 text-slate-300 border border-slate-700" : "hover:bg-slate-100 text-slate-600 border border-slate-200"}`}
-            title="Team settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Banner + identity */}
-      <div className="max-w-3xl mx-auto px-4 mt-4 space-y-3">
+      {/* Banner + identity — action buttons live inside banner to save mobile space */}
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 space-y-3">
         <div className={`rounded-2xl border overflow-hidden ${card}`}>
-          {/* Banner (full size) */}
-          <div className="relative h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+          {/* Banner */}
+          <div className="relative h-28 sm:h-36 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
             {team.banner_url && (
               <img src={team.banner_url} alt="" className="w-full h-full object-cover" />
             )}
             {canManage && (
-              <button
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={uploadingBanner}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors"
-                title="Upload cover photo (max 5MB)"
-              >
-                {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-              </button>
+              <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-semibold hover:bg-black/70 transition-colors backdrop-blur-sm"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Invite</span>
+                </button>
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
+                  title="Team settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
+                  title="Upload cover photo (max 5MB)"
+                >
+                  {uploadingBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Identity — logo lifted over the banner, name/meta vertically centered beside it */}
-          <div className="px-5 pb-3 pt-2">
+          {/* Identity */}
+          <div className="px-4 sm:px-5 pb-3 pt-2">
             <div className="flex items-center gap-3">
-              <div className="relative w-16 h-16 flex-shrink-0 -mt-5">
-                <div className={`w-16 h-16 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
+              <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 -mt-5">
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-4 flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg ${isDarkMode ? "border-slate-900" : "border-white"}`}>
                   {team.logo_url ? <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" /> : team.name.charAt(0).toUpperCase()}
                 </div>
                 {canManage && (
@@ -236,12 +233,12 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                     className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
                     title="Upload logo (max 2MB)"
                   >
-                    {uploadingLogo ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
+                    {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Camera className="w-4 h-4 text-white" />}
                   </button>
                 )}
               </div>
-              <div className="min-w-0 -mt-3">
-                <h2 className={`text-lg font-bold truncate ${title}`}>{team.name}</h2>
+              <div className="min-w-0 -mt-2">
+                <h2 className={`text-base sm:text-lg font-bold truncate ${title}`}>{team.name}</h2>
                 <p className={`text-xs ${sub}`}>
                   {TEAM_CATEGORY_LABELS[team.category]} · {members.length}/{team.max_members} members
                 </p>
@@ -316,33 +313,41 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           </div>
         )}
 
-        {/* Tabs — scrollable on mobile */}
-        <div className="w-full overflow-x-auto pb-0.5" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
-          <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border w-max ${
-            isDarkMode
-              ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
-              : "bg-white border-slate-300 shadow-md shadow-black/8"
-          }`}>
-            {([
-              { key: "overview", label: "Overview" },
-              { key: "members", label: `Members (${members.length})` },
-              { key: "chat",    label: "Chat",  icon: <MessageSquare className="w-3.5 h-3.5" /> },
-              { key: "tasks",   label: "Tasks", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
-              { key: "files",   label: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
-            ] as { key: typeof tab; label: string; icon?: React.ReactNode }[]).map(({ key, label, icon }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`px-3 sm:px-4 py-2 rounded-full text-sm transition-colors duration-150 flex items-center gap-1.5 whitespace-nowrap ${
-                  tab === key
-                    ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
-                    : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {icon}{label}
-              </button>
-            ))}
-          </div>
+        {/* Tabs */}
+        <div className={`inline-flex items-center rounded-full p-1 sm:p-1.5 gap-0.5 border ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
+            : "bg-white border-slate-300 shadow-md shadow-black/8"
+        }`}>
+          {([
+            { key: "overview", mobileLabel: "Info",   desktopLabel: "Overview",            icon: null },
+            { key: "members",  mobileLabel: `${members.length}`, desktopLabel: `Members (${members.length})`, icon: null },
+            { key: "chat",     mobileLabel: null,      desktopLabel: "Chat",                icon: <MessageSquare className="w-3.5 h-3.5" /> },
+            { key: "tasks",    mobileLabel: null,      desktopLabel: "Tasks",               icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+            { key: "files",    mobileLabel: null,      desktopLabel: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
+          ] as { key: typeof tab; mobileLabel: string | null; desktopLabel: string; icon: React.ReactNode | null }[]).map(({ key, mobileLabel, desktopLabel, icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              title={desktopLabel}
+              className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition-colors duration-150 flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
+                tab === key
+                  ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
+                  : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {icon && <span className={mobileLabel === null ? "" : "sm:mr-0"}>{icon}</span>}
+              {mobileLabel !== null && (
+                <>
+                  <span className="sm:hidden">{mobileLabel}</span>
+                  <span className="hidden sm:inline">{desktopLabel}</span>
+                </>
+              )}
+              {mobileLabel === null && (
+                <span className="hidden sm:inline">{desktopLabel}</span>
+              )}
+            </button>
+          ))}
         </div>
 
         {tab === "chat" ? (
@@ -403,12 +408,12 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
               return (
                 <div className={`rounded-2xl border p-4 ${card}`}>
                   <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${sub}`}>Team Leads</p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {leads.map((m) => (
                       <button
                         key={m.user_id}
                         onClick={() => m.profile?.username && onViewProfile(m.profile.username)}
-                        className="flex items-center gap-2 group"
+                        className={`flex items-center gap-2.5 p-2 rounded-xl transition-colors group ${isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-slate-50"}`}
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
                           {m.profile?.avatar_url || m.profile?.profile_pic
@@ -416,8 +421,8 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                             : m.profile?.name?.charAt(0)?.toUpperCase() ?? "?"
                           }
                         </div>
-                        <div className="text-left">
-                          <p className={`text-xs font-semibold leading-tight group-hover:underline ${title}`}>{m.profile?.name ?? "User"}</p>
+                        <div className="text-left min-w-0">
+                          <p className={`text-xs font-semibold leading-tight truncate group-hover:underline ${title}`}>{m.profile?.name ?? "User"}</p>
                           <p className={`text-[10px] leading-tight ${m.role === "owner" ? "text-amber-500" : "text-blue-400"}`}>
                             {m.role === "owner" ? "Owner" : "Admin"}
                           </p>
