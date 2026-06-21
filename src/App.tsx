@@ -8312,6 +8312,11 @@ For any queries, contact your course instructors or the department.`,
             onClose={() => goToView("teams")}
             onViewProfile={(username) => goToView("profile", username)}
             isDarkMode={isDarkMode}
+            onViewPreview={(url, name) => {
+              setCurrentFileUrl(url);
+              setCurrentFileName(name);
+              setShowFileViewer(true);
+            }}
           />
         </main>
       )}

@@ -19,6 +19,7 @@ interface Props {
   canManage: boolean;
   isDarkMode: boolean;
   onCountChange?: (count: number) => void;
+  onViewPreview?: (url: string, name: string) => void;
 }
 
 type SortBy = 'newest' | 'oldest' | 'type';
@@ -68,13 +69,37 @@ function mimeMatchesFilter(mime: string, filter: TypeFilter): boolean {
   return true;
 }
 
-function isPreviewable(mime: string): boolean {
-  return mime === 'application/pdf' || mime.startsWith('image/');
+function isPreviewable(mime: string, name?: string): boolean {
+  const m = mime.toLowerCase();
+  const n = name?.toLowerCase() || '';
+  return (
+    m === 'application/pdf' ||
+    m.startsWith('image/') ||
+    m === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    m === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    m === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+    m === 'application/msword' ||
+    m === 'application/vnd.ms-excel' ||
+    m === 'application/vnd.ms-powerpoint' ||
+    n.endsWith('.pdf') ||
+    n.endsWith('.png') ||
+    n.endsWith('.jpg') ||
+    n.endsWith('.jpeg') ||
+    n.endsWith('.webp') ||
+    n.endsWith('.svg') ||
+    n.endsWith('.gif') ||
+    n.endsWith('.doc') ||
+    n.endsWith('.docx') ||
+    n.endsWith('.xls') ||
+    n.endsWith('.xlsx') ||
+    n.endsWith('.ppt') ||
+    n.endsWith('.pptx')
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function TeamFiles({ teamId, currentUserId, isMember, canManage, isDarkMode, onCountChange }: Props) {
+export default function TeamFiles({ teamId, currentUserId, isMember, canManage, isDarkMode, onCountChange, onViewPreview }: Props) {
   const [files, setFiles] = useState<TeamFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -407,7 +432,7 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
                     isDarkMode={isDarkMode}
                     onDelete={() => handleDelete(file)}
                     onToggleVisibility={() => handleToggleVisibility(file)}
-                    onPreview={() => setPreviewFile(file)}
+                    onPreview={() => onViewPreview ? onViewPreview(file.file_url, file.name) : setPreviewFile(file)}
                   />
                 ))}
               </AnimatePresence>
@@ -487,9 +512,23 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
                       className="max-w-full max-h-full object-contain rounded-xl"
                     />
                   </div>
-                ) : previewFile.file_type === 'application/pdf' ? (
+                ) : (previewFile.file_type === 'application/pdf' || previewFile.name.toLowerCase().endsWith('.pdf')) ? (
                   <iframe
                     src={previewFile.file_url}
+                    title={previewFile.name}
+                    className="w-full h-[70vh]"
+                  />
+                ) : (previewFile.file_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                     previewFile.file_type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                     previewFile.file_type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+                     previewFile.name.toLowerCase().endsWith('.doc') ||
+                     previewFile.name.toLowerCase().endsWith('.docx') ||
+                     previewFile.name.toLowerCase().endsWith('.xls') ||
+                     previewFile.name.toLowerCase().endsWith('.xlsx') ||
+                     previewFile.name.toLowerCase().endsWith('.ppt') ||
+                     previewFile.name.toLowerCase().endsWith('.pptx')) ? (
+                  <iframe
+                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewFile.file_url)}`}
                     title={previewFile.name}
                     className="w-full h-[70vh]"
                   />
@@ -607,7 +646,7 @@ function FileCard({
 
       {/* Hover actions */}
       <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {isPreviewable(file.file_type) && (
+        {isPreviewable(file.file_type, file.name) && (
           <button
             onClick={onPreview}
             className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900'}`}

@@ -52,9 +52,10 @@ interface Props {
   onClose: () => void;
   onViewProfile: (username: string) => void;
   isDarkMode: boolean;
+  onViewPreview?: (url: string, name: string) => void;
 }
 
-export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode }: Props) {
+export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile, isDarkMode, onViewPreview }: Props) {
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [announcements, setAnnouncements] = useState<TeamAnnouncement[]>([]);
@@ -384,6 +385,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             canManage={canManage}
             isDarkMode={isDarkMode}
             onCountChange={setFileCount}
+            onViewPreview={onViewPreview}
           />
         ) : tab === "overview" ? (
           <div className="space-y-3">
