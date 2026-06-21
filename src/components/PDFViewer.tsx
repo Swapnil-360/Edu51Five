@@ -11,6 +11,40 @@ interface PDFViewerProps {
   isDarkMode?: boolean;
 }
 
+const getFileType = (name: string, url: string) => {
+  const lowercaseName = name.toLowerCase();
+  const lowercaseUrl = url.toLowerCase();
+  
+  if (
+    lowercaseName.endsWith('.jpg') ||
+    lowercaseName.endsWith('.jpeg') ||
+    lowercaseName.endsWith('.png') ||
+    lowercaseName.endsWith('.gif') ||
+    lowercaseName.endsWith('.webp') ||
+    lowercaseName.endsWith('.svg') ||
+    lowercaseUrl.includes('image/')
+  ) {
+    return 'image';
+  }
+  
+  if (lowercaseName.endsWith('.pdf') || lowercaseUrl.includes('.pdf')) {
+    return 'pdf';
+  }
+  
+  if (
+    lowercaseName.endsWith('.doc') ||
+    lowercaseName.endsWith('.docx') ||
+    lowercaseName.endsWith('.xls') ||
+    lowercaseName.endsWith('.xlsx') ||
+    lowercaseName.endsWith('.ppt') ||
+    lowercaseName.endsWith('.pptx')
+  ) {
+    return 'office';
+  }
+  
+  return 'other';
+};
+
 const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
   fileName,
@@ -24,6 +58,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewerKey, setViewerKey] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  const fileType = getFileType(fileName, fileUrl);
+  let finalUrl = fileUrl;
+  if (fileType === 'office') {
+    finalUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+  }
 
   // Reset state when a new file opens
   useEffect(() => {
@@ -202,19 +242,36 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             </div>
           )}
 
-          {/* iframe */}
-          <iframe
-            key={viewerKey}
-            src={fileUrl}
-            title={fileName}
-            className="pdf-iframe"
-            allow="fullscreen"
-            loading="eager"
-            referrerPolicy="no-referrer-when-downgrade"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox allow-presentation"
-            onLoad={() => setIsLoading(false)}
-            onError={() => { setIsLoading(false); setError(true); }}
-          />
+          {/* Render image preview directly */}
+          {fileType === 'image' && (
+            <div className="w-full h-full flex items-center justify-center p-4 md:p-8 bg-slate-950/5 dark:bg-slate-950/20 overflow-auto">
+              <img
+                src={fileUrl}
+                alt={fileName}
+                className="max-w-full max-h-full object-contain rounded-lg shadow-lg border border-slate-200/10"
+                onLoad={() => setIsLoading(false)}
+                onError={() => {
+                  setIsLoading(false);
+                  setError(true);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Render PDF or Office Document / Web pages inside iframe */}
+          {fileType !== 'image' && (
+            <iframe
+              key={viewerKey}
+              src={finalUrl}
+              title={fileName}
+              className="pdf-iframe"
+              allow="fullscreen"
+              loading="eager"
+              referrerPolicy="no-referrer-when-downgrade"
+              onLoad={() => setIsLoading(false)}
+              onError={() => { setIsLoading(false); setError(true); }}
+            />
+          )}
         </div>
 
         {/* ── Footer ────────────────────────────────────────── */}

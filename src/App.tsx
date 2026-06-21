@@ -95,6 +95,10 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
+  CreditCard,
+  ToggleLeft,
+  HelpCircle,
+  Home,
 } from "lucide-react";
 import ProfilePage from "./components/Profile/ProfilePage";
 import NetworkPage from "./components/Network/NetworkPage";
@@ -3108,8 +3112,10 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Header */}
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-colors duration-300 ${
-          isDarkMode ? "text-white" : "text-gray-900"
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 border-b backdrop-blur-md ${
+          isDarkMode
+            ? "bg-slate-950/80 border-slate-800/50 text-white shadow-lg shadow-black/20"
+            : "bg-white/80 border-slate-200/50 text-gray-900 shadow-sm shadow-slate-100/10"
         }`}
       >
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 relative">
@@ -3492,6 +3498,7 @@ For any queries, contact your course instructors or the department.`,
 
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
+
               {/* World Cup 2026 */}
               <button
                 onClick={() => {
@@ -3511,7 +3518,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-green-900/30 border-gray-700/50 hover:border-green-500/50 text-gray-100"
                     : "hover:bg-green-50 border-gray-200/50 hover:border-green-300 text-gray-900"
-                }`}
+                } ${currentView === "wc26" ? (isDarkMode ? "bg-green-950/40 border-green-600/60" : "bg-green-100/50 border-green-300") : ""}`}
               >
                 <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-green-900/40" : "bg-green-100"}`}>
                   <Trophy className={`w-5 h-5 ${isDarkMode ? "text-green-400" : "text-green-600"}`} />
@@ -3548,7 +3555,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-blue-900/30 border-gray-700/50 hover:border-blue-500/50 text-gray-100"
                     : "hover:bg-blue-50 border-gray-200/50 hover:border-blue-300 text-gray-900"
-                } ${!isLoggedIn ? "opacity-60" : ""}`}
+                } ${!isLoggedIn ? "opacity-60" : ""} ${currentView === "semester" ? (isDarkMode ? "bg-blue-950/40 border-blue-600/60" : "bg-blue-100/50 border-blue-300") : ""}`}
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-blue-900/40" : "bg-blue-100"}`}
@@ -3586,7 +3593,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-emerald-900/30 border-gray-700/50 hover:border-emerald-500/50 text-gray-100"
                     : "hover:bg-emerald-50 border-gray-200/50 hover:border-emerald-300 text-gray-900"
-                } ${!isLoggedIn ? "opacity-60" : ""}`}
+                } ${!isLoggedIn ? "opacity-60" : ""} ${(currentView === "teams" || currentView === "team") ? (isDarkMode ? "bg-emerald-950/40 border-emerald-600/60" : "bg-emerald-100/50 border-emerald-300") : ""}`}
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-emerald-900/40" : "bg-emerald-100"}`}
@@ -3620,7 +3627,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-blue-900/30 border-gray-700/50 hover:border-blue-500/50 text-gray-100"
                     : "hover:bg-blue-50 border-gray-200/50 hover:border-blue-300 text-gray-900"
-                }`}
+                } ${currentView === "shared-resources" ? (isDarkMode ? "bg-blue-950/40 border-blue-600/60" : "bg-blue-100/50 border-blue-300") : ""}`}
               >
                 <div className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-blue-900/40" : "bg-blue-100"}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isDarkMode ? "text-blue-400" : "text-blue-600"}>
@@ -3654,7 +3661,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-sky-900/30 border-gray-700/50 hover:border-sky-500/50 text-gray-100"
                     : "hover:bg-sky-50 border-gray-200/50 hover:border-sky-300 text-gray-900"
-                } ${!isLoggedIn ? "opacity-60" : ""}`}
+                } ${!isLoggedIn ? "opacity-60" : ""} ${currentView === "network" ? (isDarkMode ? "bg-sky-950/40 border-sky-600/60" : "bg-sky-100/50 border-sky-300") : ""}`}
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-sky-900/40" : "bg-sky-100"}`}
@@ -3688,7 +3695,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-amber-900/30 border-gray-700/50 hover:border-amber-500/50 text-gray-100"
                     : "hover:bg-amber-50 border-gray-200/50 hover:border-amber-300 text-gray-900"
-                }`}
+                } ${currentView === "alumni" ? (isDarkMode ? "bg-amber-950/40 border-amber-600/60" : "bg-amber-100/50 border-amber-300") : ""}`}
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-amber-900/40" : "bg-amber-100"}`}
@@ -3733,7 +3740,7 @@ For any queries, contact your course instructors or the department.`,
                   isDarkMode
                     ? "hover:bg-purple-900/30 border-gray-700/50 hover:border-purple-500/50 text-gray-100"
                     : "hover:bg-purple-50 border-gray-200/50 hover:border-purple-300 text-gray-900"
-                } ${!isLoggedIn ? "opacity-60" : ""}`}
+                } ${!isLoggedIn ? "opacity-60" : ""} ${currentView === "custom" ? (isDarkMode ? "bg-purple-950/40 border-purple-600/60" : "bg-purple-100/50 border-purple-300") : ""}`}
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-purple-900/40" : "bg-purple-100"}`}
@@ -8315,6 +8322,11 @@ For any queries, contact your course instructors or the department.`,
           <PublicFilesPage
             isDarkMode={isDarkMode}
             onViewTeam={(teamId) => goToView("team", teamId)}
+            onViewPreview={(url, name) => {
+              setCurrentFileUrl(url);
+              setCurrentFileName(name);
+              setShowFileViewer(true);
+            }}
           />
         </main>
       )}

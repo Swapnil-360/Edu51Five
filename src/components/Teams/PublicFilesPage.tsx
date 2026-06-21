@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { FileText, FileSpreadsheet, ImageIcon, Download, Globe, Search, Users } from 'lucide-react';
+import { FileText, FileSpreadsheet, ImageIcon, Download, Globe, Search, Users, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TeamFile } from '../../types/social';
 import { listPublicFiles, formatFileSize, fileTypeLabel } from '../../lib/api/filesApi';
@@ -9,6 +9,7 @@ type FileFilter = 'all' | 'pdf' | 'doc' | 'sheet' | 'image';
 interface Props {
   isDarkMode: boolean;
   onViewTeam: (teamId: string) => void;
+  onViewPreview: (fileUrl: string, fileName: string) => void;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -43,13 +44,14 @@ const PAGE_SIZE = 40;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function PublicFilesPage({ isDarkMode, onViewTeam }: Props) {
+export default function PublicFilesPage({ isDarkMode, onViewTeam, onViewPreview }: Props) {
   const [files, setFiles] = useState<TeamFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FileFilter>('all');
+
 
   async function load(reset = false) {
     setLoading(true);
@@ -215,31 +217,44 @@ export default function PublicFilesPage({ isDarkMode, onViewTeam }: Props) {
                       </button>
                     )}
 
-                    {/* Uploader + download */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {(file.uploader?.avatar_url || file.uploader?.profile_pic) ? (
-                          <img src={(file.uploader.avatar_url || file.uploader.profile_pic)!} className="w-4 h-4 rounded-full object-cover flex-shrink-0" alt="" />
-                        ) : (
-                          <div className={`w-4 h-4 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                        )}
-                        <span className={`text-[10px] truncate ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>
-                          {file.uploader?.name ?? 'Unknown'}
-                        </span>
-                      </div>
+                    {/* Uploader info row */}
+                    <div className="flex items-center gap-2 mt-1">
+                      {(file.uploader?.avatar_url || file.uploader?.profile_pic) ? (
+                        <img src={(file.uploader.avatar_url || file.uploader.profile_pic)!} className="w-5 h-5 rounded-full object-cover flex-shrink-0" alt="" />
+                      ) : (
+                        <div className={`w-5 h-5 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+                      )}
+                      <span className={`text-[11.5px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Shared by: {file.uploader?.name ?? 'Unknown'}
+                      </span>
+                    </div>
+
+                    {/* Action buttons row */}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <button
+                        onClick={() => onViewPreview(file.file_url, file.name)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                          isDarkMode
+                            ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-650 hover:text-slate-900 border-slate-200'
+                        }`}
+                        title="Preview File"
+                      >
+                        <Eye size={13} /> Preview
+                      </button>
                       <a
                         href={file.file_url}
                         download={file.name}
                         target="_blank"
                         rel="noreferrer"
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors flex-shrink-0 ${
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                           isDarkMode
-                            ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900'
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-500/10'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-sm shadow-blue-600/10'
                         }`}
                         title="Download"
                       >
-                        <Download size={11} /> Download
+                        <Download size={13} /> Download
                       </a>
                     </div>
                   </motion.div>

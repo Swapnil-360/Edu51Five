@@ -600,7 +600,7 @@ function FileCard({
         ) : (
           <div className={`w-4 h-4 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
         )}
-        <span className={`text-[10px] truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+        <span className={`text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
           {file.uploader?.name ?? 'Unknown'} · {relativeDate(file.created_at)}
         </span>
       </div>
