@@ -316,31 +316,33 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           </div>
         )}
 
-        {/* Tabs: Overview | Members | Chat | Tasks — pill nav style */}
-        <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border ${
-          isDarkMode
-            ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
-            : "bg-white border-slate-300 shadow-md shadow-black/8"
-        }`}>
-          {([
-            { key: "overview", label: "Overview" },
-            { key: "members", label: `Members (${members.length})` },
-            { key: "chat",    label: "Chat",  icon: <MessageSquare className="w-3.5 h-3.5" /> },
-            { key: "tasks",   label: "Tasks", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
-            { key: "files",   label: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
-          ] as { key: typeof tab; label: string; icon?: React.ReactNode }[]).map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-4 py-2 rounded-full text-sm transition-colors duration-150 flex items-center gap-1.5 ${
-                tab === key
-                  ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
-                  : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              {icon}{label}
-            </button>
-          ))}
+        {/* Tabs — scrollable on mobile */}
+        <div className="w-full overflow-x-auto pb-0.5" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border w-max ${
+            isDarkMode
+              ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/20"
+              : "bg-white border-slate-300 shadow-md shadow-black/8"
+          }`}>
+            {([
+              { key: "overview", label: "Overview" },
+              { key: "members", label: `Members (${members.length})` },
+              { key: "chat",    label: "Chat",  icon: <MessageSquare className="w-3.5 h-3.5" /> },
+              { key: "tasks",   label: "Tasks", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+              { key: "files",   label: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
+            ] as { key: typeof tab; label: string; icon?: React.ReactNode }[]).map(({ key, label, icon }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-3 sm:px-4 py-2 rounded-full text-sm transition-colors duration-150 flex items-center gap-1.5 whitespace-nowrap ${
+                  tab === key
+                    ? isDarkMode ? "bg-white text-slate-900 font-bold shadow-md shadow-white/10" : "bg-slate-900 text-white font-bold shadow-md shadow-black/20"
+                    : isDarkMode ? "font-medium text-slate-500 hover:text-slate-300" : "font-medium text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                {icon}{label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {tab === "chat" ? (

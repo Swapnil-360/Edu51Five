@@ -208,6 +208,12 @@ export function AppNavHeader({
       onClick: () => requireLogin("network", "My Network"),
     },
     {
+      label: "Resources",
+      view: "shared-resources",
+      isActive: currentView === "shared-resources",
+      onClick: () => requireLogin("shared-resources", "Shared Resources"),
+    },
+    {
       label: "Alumni",
       view: "alumni",
       badge: "soon",
