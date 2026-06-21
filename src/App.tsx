@@ -7866,16 +7866,6 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               </div>
             )}
-
-            {/* PDF Viewer */}
-            <PDFViewer
-              fileUrl={currentFileUrl}
-              fileName={currentFileName}
-              isOpen={showFileViewer}
-              onClose={closeFileViewer}
-              isDarkMode={isDarkMode}
-            />
-
             {/* Material Viewer Modal - Enhanced with Fullscreen, Zoom, Navigation */}
             {showMaterialViewer && selectedMaterial && (
               <div
@@ -8379,6 +8369,15 @@ For any queries, contact your course instructors or the department.`,
           setShowWC26Intro(false);
           localStorage.setItem("wc26_intro_dismissed", "1");
         }}
+      />
+
+      {/* PDF Viewer */}
+      <PDFViewer
+        fileUrl={currentFileUrl}
+        fileName={currentFileName}
+        isOpen={showFileViewer}
+        onClose={closeFileViewer}
+        isDarkMode={isDarkMode}
       />
 
       {/* Feedback Modal — open to anyone (guests + logged-in users) */}
