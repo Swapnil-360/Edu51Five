@@ -271,14 +271,38 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
         <div>
           <h3 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Files</h3>
           <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
             {files.length} {files.length === 1 ? 'file' : 'files'} · max 20 MB each
           </p>
         </div>
-        <div className="flex items-center gap-2">
+      </div>
+
+      {/* Filter & Sort Controls Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap pt-1">
+        {/* Left side: Type filter pills */}
+        {files.length > 0 && (
+          <div className={`flex items-center gap-1 p-0.5 rounded-xl w-fit border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            {TYPE_FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(key)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                  typeFilter === key
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : isDarkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Right side: Sort controls + Upload button */}
+        <div className="flex items-center gap-2 flex-wrap ml-auto sm:ml-0">
           {/* Sort control */}
           <div className={`flex items-center gap-1 p-0.5 rounded-lg border text-[11px] font-bold ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
             <ArrowUpDown size={11} className={`ml-1.5 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`} />
@@ -296,6 +320,7 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
               </button>
             ))}
           </div>
+
           {/* Upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -315,25 +340,6 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
           />
         </div>
       </div>
-
-      {/* Type filter pills */}
-      {files.length > 0 && (
-        <div className={`flex items-center gap-1 p-0.5 rounded-xl w-fit border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-          {TYPE_FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTypeFilter(key)}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                typeFilter === key
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : isDarkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Upload progress queue */}
       <AnimatePresence>
