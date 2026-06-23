@@ -57,26 +57,52 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [error, setError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewerKey, setViewerKey] = useState(0);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const fileType = getFileType(fileName, fileUrl);
   const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
   let finalUrl = fileUrl;
   if (fileType === 'office') {
     finalUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
-  } else if (fileType === 'pdf' && isMobile) {
-    // Android Chrome intercepts PDF iframes with native handler — use Google Docs Viewer instead
-    finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
   }
 
-  // Reset state when a new file opens
+  // For PDFs on mobile: Android Chrome intercepts cross-origin PDF iframe URLs and
+  // shows a native handler. Fetching as a blob and using a blob: URL bypasses this
+  // because blob URLs are treated as same-origin by the browser.
   useEffect(() => {
-    if (isOpen && fileUrl) {
-      setIsLoading(true);
-      setError(false);
-      setViewerKey(k => k + 1);
-    }
-  }, [fileUrl, isOpen]);
+    if (!isOpen || fileType !== 'pdf' || !isMobile) return;
+    let revoked = false;
+    setBlobUrl(null);
+    setIsLoading(true);
+    setError(false);
+    fetch(fileUrl)
+      .then(r => {
+        if (!r.ok) throw new Error('fetch failed');
+        return r.blob();
+      })
+      .then(blob => {
+        if (revoked) return;
+        setBlobUrl(URL.createObjectURL(blob));
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!revoked) { setError(true); setIsLoading(false); }
+      });
+    return () => {
+      revoked = true;
+      setBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
+  }, [fileUrl, fileType, isMobile, isOpen]);
+
+  // Reset state when a new file opens (non-mobile / non-pdf path)
+  useEffect(() => {
+    if (!isOpen || (fileType === 'pdf' && isMobile)) return;
+    setIsLoading(true);
+    setError(false);
+    setViewerKey(k => k + 1);
+  }, [fileUrl, isOpen, fileType, isMobile]);
 
   // Reset fullscreen when closed
   useEffect(() => {
@@ -263,10 +289,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           )}
 
           {/* Render PDF or Office Document / Web pages inside iframe */}
-          {fileType !== 'image' && (
+          {fileType !== 'image' && (fileType !== 'pdf' || !isMobile || blobUrl) && (
             <iframe
               key={viewerKey}
-              src={finalUrl}
+              src={fileType === 'pdf' && isMobile && blobUrl ? blobUrl : finalUrl}
               title={fileName}
               className="pdf-iframe"
               allow="fullscreen"
