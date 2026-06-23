@@ -60,9 +60,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const fileType = getFileType(fileName, fileUrl);
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   let finalUrl = fileUrl;
   if (fileType === 'office') {
     finalUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+  } else if (fileType === 'pdf' && isMobile) {
+    // Android Chrome intercepts PDF iframes with native handler — use Google Docs Viewer instead
+    finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
   }
 
   // Reset state when a new file opens

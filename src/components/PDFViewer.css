@@ -13,8 +13,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* mobile: stack to edges with small padding */
-  padding: 0.5rem;
+  /* safe-area: keeps modal clear of notch / home bar on iOS & Android */
+  padding: max(0.5rem, env(safe-area-inset-top))
+           max(0.5rem, env(safe-area-inset-right))
+           max(0.5rem, env(safe-area-inset-bottom))
+           max(0.5rem, env(safe-area-inset-left));
   overscroll-behavior: none;
   contain: layout style paint;
 }
@@ -201,7 +204,7 @@
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   box-shadow: 0 2px 8px rgba(37,99,235,0.35);
-  display: none; /* hidden on mobile, shown sm+ */
+  display: inline-flex; /* visible on all sizes */
 }
 
 .pdf-btn--primary:hover {
@@ -215,11 +218,11 @@
   box-shadow: 0 2px 8px rgba(59,130,246,0.35);
 }
 
+/* Label hidden on mobile (icon-only), visible sm+ */
 .pdf-btn__label { display: none; }
 
 @media (min-width: 640px) {
-  .pdf-btn--primary { display: inline-flex; }
-  .pdf-btn__label   { display: inline; }
+  .pdf-btn__label { display: inline; }
 }
 
 /* Icon-only button */
@@ -481,7 +484,18 @@
     width: 2rem;
     height: 2rem;
   }
-  .pdf-footer { padding: 0.4rem 0.75rem; }
+  /* Taller footer so the tap target clears the home bar */
+  .pdf-footer {
+    padding: 0.625rem 1rem;
+    padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+  }
+  .pdf-footer__name { font-size: 0.625rem; }
+  .pdf-footer__open {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    background: rgba(59,130,246,0.12);
+  }
 }
 
 /* ── Landscape mobile ─────────────────────────────── */
