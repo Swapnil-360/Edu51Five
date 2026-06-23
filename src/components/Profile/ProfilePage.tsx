@@ -66,49 +66,63 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
 
   const isOwn = !!profile && !!currentUserId && profile.id === currentUserId;
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      let p: SocialProfile | null = null;
-      if (username) {
-        p = await getProfileByUsername(username);
-      } else if (currentUserId) {
-        p = await getProfileById(currentUserId);
-      }
-      const legacyFetch = p && !p.avatar_url ? getLegacyProfilePic(p.id) : Promise.resolve(null);
-      setProfile(p);
-      if (p) {
-        legacyFetch.then((pic) => { if (pic) setLegacyPic(pic); });
-        listEducations(p.id).then(setEducations);
-        listExperiences(p.id).then(setExperiences);
-        if (currentUserId) {
-          listMyConnections(currentUserId).then((conns) => {
-            setConnectionCount(conns.filter((c) => c.status === "accepted").length);
-            if (p && p.id !== currentUserId) {
-              setConnection(
-                conns.find(
-                  (c) => c.requester_id === p!.id || c.addressee_id === p!.id,
-                ) ?? null,
-              );
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.error("ProfilePage load error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        let p: SocialProfile | null = null;
+
+        // Timeout safety — if Supabase hangs, bail after 10 s
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000));
+
+        if (username) {
+          p = await Promise.race([getProfileByUsername(username), timeout]);
+        } else if (currentUserId) {
+          p = await Promise.race([getProfileById(currentUserId), timeout]);
+        }
+
+        if (cancelled) return;
+
+        const legacyFetch = p && !p.avatar_url ? getLegacyProfilePic(p.id) : Promise.resolve(null);
+        setProfile(p);
+
+        if (p) {
+          legacyFetch.then((pic) => { if (!cancelled && pic) setLegacyPic(pic); });
+          listEducations(p.id).then((eds) => { if (!cancelled) setEducations(eds); });
+          listExperiences(p.id).then((exps) => { if (!cancelled) setExperiences(exps); });
+          if (currentUserId) {
+            listMyConnections(currentUserId).then((conns) => {
+              if (cancelled) return;
+              setConnectionCount(conns.filter((c) => c.status === "accepted").length);
+              if (p && p.id !== currentUserId) {
+                setConnection(
+                  conns.find(
+                    (c) => c.requester_id === p!.id || c.addressee_id === p!.id,
+                  ) ?? null,
+                );
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error("ProfilePage load error:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { cancelled = true; };
   }, [username, currentUserId]);
 
   const refreshProfile = async () => {
     if (!profile) return;
-    const p = await getProfileById(profile.id);
+    const p = await Promise.race([
+      getProfileById(profile.id),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000)),
+    ]);
     if (p) setProfile(p);
   };
 
