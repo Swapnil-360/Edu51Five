@@ -12,6 +12,23 @@ import {
   setFileVisibility, formatFileSize, ACCEPTED_MIME,
 } from '../../lib/api/filesApi';
 
+async function downloadFile(url: string, name: string) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objUrl);
+  } catch {
+    window.open(url, '_blank', 'noreferrer');
+  }
+}
+
 interface Props {
   teamId: string;
   currentUserId: string;
@@ -488,17 +505,14 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <a
-                    href={previewFile.file_url}
-                    download={previewFile.name}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => downloadFile(previewFile.file_url, previewFile.name)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                       isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     }`}
                   >
                     <Download size={12} /> Download
-                  </a>
+                  </button>
                   <button
                     onClick={() => setPreviewFile(null)}
                     className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-100 text-slate-400'}`}
@@ -549,15 +563,12 @@ export default function TeamFiles({ teamId, currentUserId, isMember, canManage, 
                         Download the file to open it
                       </p>
                     </div>
-                    <a
-                      href={previewFile.file_url}
-                      download={previewFile.name}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => downloadFile(previewFile.file_url, previewFile.name)}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition-colors"
                     >
                       <Download size={14} /> Download
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
@@ -661,16 +672,13 @@ function FileCard({
             <Eye size={12} />
           </button>
         )}
-        <a
-          href={file.file_url}
-          download={file.name}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          onClick={() => downloadFile(file.file_url, file.name)}
           className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900'}`}
           title="Download"
         >
           <Download size={12} />
-        </a>
+        </button>
         {canDelete && (
           <button
             onClick={onDelete}

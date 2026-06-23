@@ -14,6 +14,23 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+async function downloadFile(url: string, name: string) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objUrl);
+  } catch {
+    window.open(url, '_blank', 'noreferrer');
+  }
+}
+
 function FileIcon({ mime, size = 24 }: { mime: string; size?: number }) {
   if (mime.startsWith('image/')) return <ImageIcon size={size} className="text-blue-500" />;
   if (mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -242,11 +259,8 @@ export default function PublicFilesPage({ isDarkMode, onViewTeam, onViewPreview 
                       >
                         <Eye size={13} /> Preview
                       </button>
-                      <a
-                        href={file.file_url}
-                        download={file.name}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        onClick={() => downloadFile(file.file_url, file.name)}
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                           isDarkMode
                             ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-500/10'
@@ -255,7 +269,7 @@ export default function PublicFilesPage({ isDarkMode, onViewTeam, onViewPreview 
                         title="Download"
                       >
                         <Download size={13} /> Download
-                      </a>
+                      </button>
                     </div>
                   </motion.div>
                 ))}
