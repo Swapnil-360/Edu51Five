@@ -4437,6 +4437,11 @@ For any queries, contact your course instructors or the department.`,
                     </div>
                   </div>
                 )}
+                <Suspense fallback={
+                  <div className="flex justify-center py-16">
+                    <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  </div>
+                }>
                 <>
                   {/* Show individual course view if selected */}
                   {selectedDriveCourse ? (
@@ -4614,6 +4619,7 @@ For any queries, contact your course instructors or the department.`,
                     </>
                   )}
                 </>
+                </Suspense>
               </div>
             )}
 
@@ -4728,13 +4734,19 @@ For any queries, contact your course instructors or the department.`,
                 </div>
 
                 {/* NEW: Direct Google Drive View */}
-                <CourseDriveView
-                  courseCode={selectedCourse.code}
-                  courseName={selectedCourse.name}
-                  examPeriod={selectedExamPeriod}
-                  isDarkMode={isDarkMode}
-                  onFileClick={handleDriveFileClick}
-                />
+                <Suspense fallback={
+                  <div className="flex justify-center py-16">
+                    <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  </div>
+                }>
+                  <CourseDriveView
+                    courseCode={selectedCourse.code}
+                    courseName={selectedCourse.name}
+                    examPeriod={selectedExamPeriod}
+                    isDarkMode={isDarkMode}
+                    onFileClick={handleDriveFileClick}
+                  />
+                </Suspense>
 
                 {loading ? (
                   <div className="text-center py-8">

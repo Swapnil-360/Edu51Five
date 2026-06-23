@@ -414,7 +414,16 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
 
   const handleDelete = async (msg: TeamMessage) => {
     if (!window.confirm("Delete this message?")) return;
-    await deleteMessage(msg.id);
+    // Optimistic: remove immediately so UI responds instantly
+    setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+    const { error } = await deleteMessage(msg.id);
+    if (error) {
+      // Restore on failure
+      setMessages((prev) => {
+        const already = prev.some((m) => m.id === msg.id);
+        return already ? prev : [...prev, msg].sort((a, b) => a.created_at.localeCompare(b.created_at));
+      });
+    }
   };
 
   const handleReact = async (msgId: string, emoji: string) => {

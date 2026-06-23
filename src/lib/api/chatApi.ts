@@ -87,8 +87,9 @@ export async function sendMessage(
   return { ...(data as TeamMessage), sender: profileMap[userId], reactions: [] };
 }
 
-export async function deleteMessage(messageId: string): Promise<void> {
-  await supabase.from("team_messages").delete().eq("id", messageId);
+export async function deleteMessage(messageId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("team_messages").delete().eq("id", messageId);
+  return { error: error?.message ?? null };
 }
 
 /**
