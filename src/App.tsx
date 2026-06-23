@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, startTransition } from "react";
 import { createPortal } from "react-dom";
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from "./lib/supabase";
@@ -10,8 +10,8 @@ import {
   getCourseFiles,
 } from "./config/googleDrive";
 import { getCurrentSemesterStatus } from "./config/semester";
-import SemesterTracker from "./components/SemesterTracker";
-import CustomRoutine from "./components/Student/CustomRoutine.tsx";
+const SemesterTracker = lazy(() => import("./components/SemesterTracker"));
+const CustomRoutine = lazy(() => import("./components/Student/CustomRoutine"));
 import {
   registerServiceWorker,
   requestNotificationPermission,
@@ -48,14 +48,14 @@ import { uploadRoutineAttachment } from "./lib/storage";
 import type { Feedback, FeedbackStatus } from "./types";
 import MarqueeTicker from "./components/MarqueeTicker";
 import { MajorCardStack } from "./components/ui/MajorCardStack";
-import PDFViewer from "./components/PDFViewer";
-import { DirectDriveUpload } from "./components/Admin/DirectDriveUpload";
-import { DriveManager } from "./components/Admin/DriveManager";
-import AdminDashboard from "./components/Admin/AdminDashboard";
-import { StudentDriveView } from "./components/Student/StudentDriveView";
-import { CourseDriveView } from "./components/Student/CourseDriveView";
-import { GDriveFolderBrowser } from "./components/Student/GDriveFolderBrowser";
-import { GDriveCourseView } from "./components/Student/GDriveCourseView";
+const PDFViewer = lazy(() => import("./components/PDFViewer"));
+const DirectDriveUpload = lazy(() => import("./components/Admin/DirectDriveUpload").then(m => ({ default: m.DirectDriveUpload })));
+const DriveManager = lazy(() => import("./components/Admin/DriveManager").then(m => ({ default: m.DriveManager })));
+const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
+const StudentDriveView = lazy(() => import("./components/Student/StudentDriveView").then(m => ({ default: m.StudentDriveView })));
+const CourseDriveView = lazy(() => import("./components/Student/CourseDriveView").then(m => ({ default: m.CourseDriveView })));
+const GDriveFolderBrowser = lazy(() => import("./components/Student/GDriveFolderBrowser").then(m => ({ default: m.GDriveFolderBrowser })));
+const GDriveCourseView = lazy(() => import("./components/Student/GDriveCourseView").then(m => ({ default: m.GDriveCourseView })));
 import {
   FileText,
   Play,
@@ -100,13 +100,13 @@ import {
   HelpCircle,
   Home,
 } from "lucide-react";
-import ProfilePage from "./components/Profile/ProfilePage";
-import NetworkPage from "./components/Network/NetworkPage";
-import TeamsPage from "./components/Teams/TeamsPage";
-import TeamPage from "./components/Teams/TeamPage";
-import PublicFilesPage from "./components/Teams/PublicFilesPage";
-import { WorldCupPage } from "./components/WorldCup/WorldCupPage";
-import { WC26IntroModal } from "./components/WorldCup/WC26IntroModal";
+const ProfilePage = lazy(() => import("./components/Profile/ProfilePage"));
+const NetworkPage = lazy(() => import("./components/Network/NetworkPage"));
+const TeamsPage = lazy(() => import("./components/Teams/TeamsPage"));
+const TeamPage = lazy(() => import("./components/Teams/TeamPage"));
+const PublicFilesPage = lazy(() => import("./components/Teams/PublicFilesPage"));
+const WorldCupPage = lazy(() => import("./components/WorldCup/WorldCupPage").then(m => ({ default: m.WorldCupPage })));
+const WC26IntroModal = lazy(() => import("./components/WorldCup/WC26IntroModal").then(m => ({ default: m.WC26IntroModal })));
 
 interface Course {
   id: string;
@@ -255,7 +255,7 @@ function App() {
       else if (view === "shared-resources") path = "/shared-resources";
       else if (view === "home") path = "/home";
       window.history.pushState({}, "", path);
-      setCurrentView(view);
+      startTransition(() => setCurrentView(view));
     },
     [],
   );
@@ -276,32 +276,32 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path === "/admin") setCurrentView("admin");
-      else if (path === "/section5" || path === "/ai") setCurrentView("ai");
-      else if (path === "/software") setCurrentView("software");
-      else if (path === "/networking") setCurrentView("networking");
-      else if (path === "/semester") setCurrentView("semester");
-      else if (path === "/custom-routine") setCurrentView("custom");
-      else if (path === "/privacy") setCurrentView("privacy");
-      else if (path.startsWith("/course/")) setCurrentView("course");
-      else if (path === "/profile") {
-        setViewedUsername(null);
-        setCurrentView("profile");
-      } else if (path.startsWith("/u/")) {
-        setViewedUsername(decodeURIComponent(path.slice(3)));
-        setCurrentView("profile");
-      } else if (path === "/network") setCurrentView("network");
-      else if (path.startsWith("/teams/")) {
-        setSelectedTeamId(path.slice(7));
-        setCurrentView("team");
-      } else if (path === "/teams") setCurrentView("teams");
-      else if (path === "/alumni") setCurrentView("alumni");
-      else if (path === "/wc26") setCurrentView("wc26");
-      // Always treat root, /home, or empty as home
-      else if (path === "/" || path === "/home" || path === "" || !path)
-        setCurrentView("home");
-      // Fallback: if path is not recognized, force home view
-      else setCurrentView("home");
+      startTransition(() => {
+        if (path === "/admin") setCurrentView("admin");
+        else if (path === "/section5" || path === "/ai") setCurrentView("ai");
+        else if (path === "/software") setCurrentView("software");
+        else if (path === "/networking") setCurrentView("networking");
+        else if (path === "/semester") setCurrentView("semester");
+        else if (path === "/custom-routine") setCurrentView("custom");
+        else if (path === "/privacy") setCurrentView("privacy");
+        else if (path.startsWith("/course/")) setCurrentView("course");
+        else if (path === "/profile") {
+          setViewedUsername(null);
+          setCurrentView("profile");
+        } else if (path.startsWith("/u/")) {
+          setViewedUsername(decodeURIComponent(path.slice(3)));
+          setCurrentView("profile");
+        } else if (path === "/network") setCurrentView("network");
+        else if (path.startsWith("/teams/")) {
+          setSelectedTeamId(path.slice(7));
+          setCurrentView("team");
+        } else if (path === "/teams") setCurrentView("teams");
+        else if (path === "/alumni") setCurrentView("alumni");
+        else if (path === "/wc26") setCurrentView("wc26");
+        else if (path === "/" || path === "/home" || path === "" || !path)
+          setCurrentView("home");
+        else setCurrentView("home");
+      });
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -8235,6 +8235,13 @@ For any queries, contact your course instructors or the department.`,
         </main>
       )}
 
+      {/* ── Lazy-loaded views — Suspense ensures a spinner while chunks download ── */}
+      <Suspense fallback={
+        <div className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 flex items-center justify-center">
+          <div className={`w-10 h-10 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+        </div>
+      }>
+
       {/* Semester Tracker Page */}
       {currentView === "semester" && (
         <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-hidden">
@@ -8379,6 +8386,8 @@ For any queries, contact your course instructors or the department.`,
         onClose={closeFileViewer}
         isDarkMode={isDarkMode}
       />
+
+      </Suspense>{/* end lazy views */}
 
       {/* Feedback Modal — open to anyone (guests + logged-in users) */}
       <FeedbackModal

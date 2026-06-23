@@ -115,20 +115,19 @@ async function attachMemberCounts(teams: Team[]): Promise<Team[]> {
 // ── Members ─────────────────────────────────────────────────────────────────
 
 export async function listTeamMembers(teamId: string): Promise<TeamMember[]> {
+  // Single query — join profiles inline to avoid a second round-trip
   const { data, error } = await supabase
     .from("team_members")
-    .select("*")
+    .select(`*, profiles!user_id(${PROFILE_CARD_COLS},profile_pic)`)
     .eq("team_id", teamId)
     .order("joined_at", { ascending: true });
   if (error || !data) return [];
 
-  const members = data as TeamMember[];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select(`${PROFILE_CARD_COLS},profile_pic`)
-    .in("id", members.map((m) => m.user_id));
-  const byId = new Map(((profiles as any[]) ?? []).map((p) => [p.id, normalizeProfile(p)]));
-  return members.map((m) => ({ ...m, profile: byId.get(m.user_id) }));
+  return (data as any[]).map((row) => ({
+    ...row,
+    profile: row.profiles ? normalizeProfile(row.profiles) : undefined,
+    profiles: undefined,
+  }));
 }
 
 export async function removeMember(teamId: string, userId: string): Promise<{ error: string | null }> {

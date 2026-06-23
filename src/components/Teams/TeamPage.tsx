@@ -419,7 +419,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
                           {m.profile?.avatar_url || m.profile?.profile_pic
-                            ? <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" />
+                            ? <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" loading="lazy" />
                             : m.profile?.name?.charAt(0)?.toUpperCase() ?? "?"
                           }
                         </div>
@@ -515,7 +515,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
                     className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold"
                   >
                     {m.profile?.avatar_url || m.profile?.profile_pic ? (
-                      <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" />
+                      <img src={m.profile.avatar_url || m.profile.profile_pic!} alt="" className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       m.profile?.name?.charAt(0)?.toUpperCase() ?? "?"
                     )}

@@ -35,7 +35,7 @@ export default function TeamCard({ team, isDarkMode, onOpen, action }: Props) {
         <button onClick={() => onOpen(team)} className="block w-full">
           <div className={`h-24 bg-gradient-to-r ${gradientClass}`}>
             {team.banner_url && (
-              <img src={team.banner_url} alt="" className="w-full h-full object-cover" />
+              <img src={team.banner_url} alt="" className="w-full h-full object-cover" loading="lazy" />
             )}
           </div>
         </button>
@@ -45,7 +45,7 @@ export default function TeamCard({ team, isDarkMode, onOpen, action }: Props) {
           className={`absolute bottom-0 left-4 translate-y-1/2 w-14 h-14 rounded-xl overflow-hidden border-[3px] flex items-center justify-center text-xl font-bold text-white bg-gradient-to-br ${gradientClass} ${isDarkMode ? "border-slate-900" : "border-white"} shadow-md`}
         >
           {team.logo_url ? (
-            <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" />
+            <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" loading="lazy" />
           ) : (
             team.name.charAt(0).toUpperCase()
           )}

@@ -23,7 +23,7 @@ export default function UserCard({ profile, isDarkMode, onView, action }: Props)
         className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-violet-600"
       >
         {profile.avatar_url || profile.profile_pic ? (
-          <img src={profile.avatar_url || profile.profile_pic!} alt={profile.name} className="w-full h-full object-cover" />
+          <img src={profile.avatar_url || profile.profile_pic!} alt={profile.name} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <span className="w-full h-full flex items-center justify-center text-lg font-bold text-white">
             {profile.name?.charAt(0)?.toUpperCase() ?? "?"}

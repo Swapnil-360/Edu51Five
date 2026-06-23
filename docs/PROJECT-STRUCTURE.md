@@ -301,6 +301,18 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 
 ---
 
+## Performance
+
+| What | File | Detail |
+|------|------|--------|
+| Vendor chunk splitting | `vite.config.ts` | `manualChunks` splits react / supabase / framer-motion / lucide into separately cached bundles |
+| Lazy-loaded views | `src/App.tsx` | 17 heavy components converted to `React.lazy`; single `<Suspense>` spinner boundary wraps all view branches |
+| `startTransition` on navigation | `src/App.tsx` (`goToView`, popstate handler) | Prevents React 18 "suspended during synchronous input" crash when navigating to a lazy view |
+| `listTeamMembers` join | `src/lib/api/teamsApi.ts` | Single Supabase join query replaces 2 sequential round-trips (N+1 fix) |
+| `loading="lazy"` on images | `TeamCard`, `TeamPage`, `UserCard` | Off-screen avatars/banners deferred until they scroll into view |
+
+---
+
 ## Key Conventions
 
 - **Routing:** state-based (`currentView` string union), no react-router at runtime
