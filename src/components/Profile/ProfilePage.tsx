@@ -68,34 +68,36 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
 
   const load = async () => {
     setLoading(true);
-    let p: SocialProfile | null = null;
-    if (username) {
-      p = await getProfileByUsername(username);
-    } else if (currentUserId) {
-      p = await getProfileById(currentUserId);
-    }
-    // Pre-fetch legacy pic in parallel before setting profile so avatar renders immediately
-    const legacyFetch = p && !p.avatar_url ? getLegacyProfilePic(p.id) : Promise.resolve(null);
-    setProfile(p);
-    setLoading(false);
-    if (!p) return;
-
-    legacyFetch.then((pic) => { if (pic) setLegacyPic(pic); });
-
-    // sections + connection state in parallel (non-blocking for first paint)
-    listEducations(p.id).then(setEducations);
-    listExperiences(p.id).then(setExperiences);
-    if (currentUserId) {
-      listMyConnections(currentUserId).then((conns) => {
-        setConnectionCount(conns.filter((c) => c.status === "accepted").length);
-        if (p && p.id !== currentUserId) {
-          setConnection(
-            conns.find(
-              (c) => c.requester_id === p!.id || c.addressee_id === p!.id,
-            ) ?? null,
-          );
+    try {
+      let p: SocialProfile | null = null;
+      if (username) {
+        p = await getProfileByUsername(username);
+      } else if (currentUserId) {
+        p = await getProfileById(currentUserId);
+      }
+      const legacyFetch = p && !p.avatar_url ? getLegacyProfilePic(p.id) : Promise.resolve(null);
+      setProfile(p);
+      if (p) {
+        legacyFetch.then((pic) => { if (pic) setLegacyPic(pic); });
+        listEducations(p.id).then(setEducations);
+        listExperiences(p.id).then(setExperiences);
+        if (currentUserId) {
+          listMyConnections(currentUserId).then((conns) => {
+            setConnectionCount(conns.filter((c) => c.status === "accepted").length);
+            if (p && p.id !== currentUserId) {
+              setConnection(
+                conns.find(
+                  (c) => c.requester_id === p!.id || c.addressee_id === p!.id,
+                ) ?? null,
+              );
+            }
+          });
         }
-      });
+      }
+    } catch (e) {
+      console.error("ProfilePage load error:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
