@@ -8277,7 +8277,7 @@ For any queries, contact your course instructors or the department.`,
             username={viewedUsername}
             currentUserId={authSession?.user?.id ?? null}
             initialAvatarUrl={viewedUsername ? undefined : (userProfile.avatar_url || undefined)}
-            onOpenAdmin={isAdmin ? () => goToView("admin") : undefined}
+            onOpenAdmin={authSession?.user?.id ? () => goToView("admin") : undefined}
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
           />
