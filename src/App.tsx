@@ -2041,8 +2041,6 @@ Best of luck with your studies!
     setZoomLevel(100);
     setCurrentPage(1);
     setIsFullscreen(false);
-    // Lock body scroll when modal opens
-    document.body.style.overflow = "hidden";
   };
 
   const closeMaterialViewer = () => {
@@ -2051,8 +2049,6 @@ Best of luck with your studies!
     setIsFullscreen(false);
     setZoomLevel(100);
     setCurrentPage(1);
-    // Unlock body scroll when modal closes
-    document.body.style.overflow = "unset";
   };
 
   // Toggle fullscreen mode
@@ -4048,7 +4044,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
       {!["semester","custom","profile","network","teams","team","alumni","wc26"].includes(currentView) && (
-        <main className="pt-[72px] lg:pt-20 min-h-screen overflow-x-hidden">
+        <main className="pt-[72px] lg:pt-20 min-h-screen [overflow-x:clip]">
 
           {/* ── Announcement Banner ── */}
           {showAnnouncementBanner && (
@@ -8266,7 +8262,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Custom Routine Page */}
       {currentView === "custom" && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <CustomRoutine
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
@@ -8276,7 +8272,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Profile Page ── */}
       {currentView === "profile" && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <ProfilePage
             username={viewedUsername}
             currentUserId={authSession?.user?.id ?? null}
@@ -8290,7 +8286,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: My Network ── */}
       {currentView === "network" && authSession?.user?.id && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <NetworkPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}
@@ -8302,7 +8298,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Team Building ── */}
       {currentView === "teams" && authSession?.user?.id && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <TeamsPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}
@@ -8314,7 +8310,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Team Detail ── */}
       {currentView === "team" && selectedTeamId && authSession?.user?.id && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <TeamPage
             teamId={selectedTeamId}
             currentUserId={authSession.user.id}
@@ -8332,7 +8328,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── Shared Resources ── */}
       {currentView === "shared-resources" && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <PublicFilesPage
             isDarkMode={isDarkMode}
             onViewTeam={(teamId) => goToView("team", teamId)}
@@ -8347,7 +8343,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── V2: Alumni Hub (Phase 3 — coming soon) ── */}
       {currentView === "alumni" && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <div className={`h-full flex flex-col items-center justify-center gap-4 px-4 ${isDarkMode ? "bg-slate-950" : "bg-slate-50"}`}>
             <GraduationCap className={`w-14 h-14 ${isDarkMode ? "text-amber-400" : "text-amber-500"}`} />
             <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Alumni Hub</h1>
@@ -8366,7 +8362,7 @@ For any queries, contact your course instructors or the department.`,
 
       {/* ── World Cup 2026 ── */}
       {currentView === "wc26" && authSession?.user?.id && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
           <WorldCupPage
             currentUserId={authSession.user.id}
             onClose={() => goToView("home")}
