@@ -192,6 +192,32 @@ Per-team file sharing with public/private visibility. Members upload; owner/admi
 
 ---
 
+## Study Materials System
+
+Google Drive-backed study material management. Admin manages Drive directly; students browse live Drive content.
+
+| What | File |
+|------|------|
+| Drive API — read (list, icon, size, preview) + write (upload, delete, create folder) | `src/lib/driveApi.ts` |
+| API (Drive config CRUD + Supabase folder/material helpers) | `src/lib/api/studyApi.ts` |
+| Admin panel shell (tabs: Folders & Files / Drive Config) | `src/components/Admin/MaterialManager.tsx` |
+| **Admin Drive panel** — browse & manage Drive: upload, delete, create folders, signed-in Google profile | `src/components/Admin/AdminDrivePanel.tsx` |
+| Google Drive OAuth hook (popup + postMessage, module-level token cache, auto profile fetch) | `src/hooks/useGoogleDriveAuth.ts` |
+| OAuth callback static page (sends postMessage → closes, never loads React/Supabase) | `public/oauth-callback.html` |
+| Student browse view: real-time Google Drive browser | `src/components/Student/GDriveBrowser.tsx` |
+| **DB:** `study_folders` + `study_materials` (Supabase uploads) | migration `20260626000000_study_materials` |
+| **DB:** `study_drive_config` (major → GDrive folder ID mapping) | applied via MCP |
+| **Storage:** `study-materials` bucket (50 MB, public) | migration `20260626000000_study_materials` |
+
+**Admin OAuth:** implicit flow (`response_type=token`) using `window.open()` popup + `postMessage`. Redirect URI is `/oauth-callback.html` (static file) to avoid Supabase's `detectSessionFromUrl` overwriting the main session. Google's COOP header blocks `popup.closed`/`popup.close()` from parent — popup closes itself; parent only listens for `GDRIVE_OAUTH_SUCCESS` message. Scope: `drive openid profile email`.  
+**Admin Drive Config tab:** admin sets GDrive folder ID per major (AI / Software Eng / Networking). No code change needed to update root folders.  
+**Student view:** `GDriveBrowser` fetches live from Google Drive API (`VITE_GOOGLE_API_KEY`) on each navigation — no cache.  
+**Error boundary:** `RootErrorBoundary` in `main.tsx` catches all React render crashes and displays the error + stack trace instead of a blank page.  
+**RLS:** authenticated read; `is_app_admin()` for all writes  
+**Majors:** `'AI'`, `'Software Engineering'`, `'Networking'` (Common removed from admin view)
+
+---
+
 ## Student / Academic Features
 
 | What | File | Lines |
@@ -216,9 +242,8 @@ Per-team file sharing with public/private visibility. Members upload; owner/admi
 | Admin dashboard | `src/components/Admin/AdminDashboard.tsx` | — |
 | Broadcast composer + live email preview | `src/components/Admin/AdminDashboard.tsx` | ~288–435 |
 | Broadcast send handler (push + email) | `src/App.tsx` | ~2442 |
-| Course manager | `src/components/Admin/CourseManager.tsx` | — |
 | File upload | `src/components/Admin/FileUpload.tsx` | — |
-| Drive manager | `src/components/Admin/DriveManager.tsx` | — |
+| Study material manager (admin CRUD) | `src/components/Admin/MaterialManager.tsx` | Major tabs, recursive folder tree, drag-and-drop file upload queue, inline rename/delete with confirm |
 
 ---
 

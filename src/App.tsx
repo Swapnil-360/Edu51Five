@@ -49,13 +49,8 @@ import type { Feedback, FeedbackStatus } from "./types";
 import MarqueeTicker from "./components/MarqueeTicker";
 import { MajorCardStack } from "./components/ui/MajorCardStack";
 const PDFViewer = lazy(() => import("./components/PDFViewer"));
-const DirectDriveUpload = lazy(() => import("./components/Admin/DirectDriveUpload").then(m => ({ default: m.DirectDriveUpload })));
-const DriveManager = lazy(() => import("./components/Admin/DriveManager").then(m => ({ default: m.DriveManager })));
 const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
-const StudentDriveView = lazy(() => import("./components/Student/StudentDriveView").then(m => ({ default: m.StudentDriveView })));
-const CourseDriveView = lazy(() => import("./components/Student/CourseDriveView").then(m => ({ default: m.CourseDriveView })));
-const GDriveFolderBrowser = lazy(() => import("./components/Student/GDriveFolderBrowser").then(m => ({ default: m.GDriveFolderBrowser })));
-const GDriveCourseView = lazy(() => import("./components/Student/GDriveCourseView").then(m => ({ default: m.GDriveCourseView })));
+const GDriveBrowser = lazy(() => import("./components/Student/GDriveBrowser"));
 import {
   FileText,
   Play,
@@ -1612,27 +1607,14 @@ FOR ALL USING (true) WITH CHECK (true);
     }
   };
 
-  // Load courses from Google Drive folders based on user's major
-  // NOTE: This function is now deprecated. Courses are loaded and displayed
-  // by the GDriveFolderBrowser component directly from Google Drive folders.
-  // This function is kept for legacy compatibility but returns empty courses.
   const loadCourses = async () => {
     if (!authSession || !isLoggedIn) {
-      console.log("Authentication required to load courses");
       setCourses([]);
       return;
     }
-
     try {
       setLoading(true);
-
-      // Courses are now managed through Google Drive folders
-      // This function is deprecated and no longer used
       setCourses([]);
-
-      console.log(
-        "✅ GDriveFolderBrowser will handle course loading from Google Drive",
-      );
     } catch (error) {
       console.error("Error loading courses:", error);
       setCourses([]);
@@ -4438,183 +4420,15 @@ For any queries, contact your course instructors or the department.`,
                     <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
                   </div>
                 }>
-                <>
-                  {/* Show individual course view if selected */}
-                  {selectedDriveCourse ? (
-                    <GDriveCourseView
-                      courseCode={selectedDriveCourse.courseCode}
-                      courseName={selectedDriveCourse.courseName}
-                      folderId={selectedDriveCourse.folderId}
-                      folderLink={selectedDriveCourse.folderLink}
-                      onBack={() => setSelectedDriveCourse(null)}
-                      onFileClick={(file) => {
-                        // Open file in modal viewer
-                        const material: Material = {
-                          id: file.id,
-                          title: file.name,
-                          description: `Size: ${formatBytes(file.size || 0)}`,
-                          file_url:
-                            file.webViewLink || file.webContentLink || "",
-                          video_url: null,
-                          type: getMimeTypeCategory(file.mimeType),
-                          course_code: selectedDriveCourse.courseCode,
-                          size: file.size ? formatBytes(file.size) : null,
-                          created_at: new Date().toISOString(),
-                        };
-                        openMaterialViewer(material);
-                      }}
-                      isDarkMode={isDarkMode}
-                    />
-                  ) : (
-                    <>
-                      <div className="text-center">
-                        <div className="relative inline-block mb-6">
-                          <img
-                            src="/image.png"
-                            alt="Edu51Portal Logo"
-                            className="h-20 w-20 mx-auto object-contain"
-                          />
-                          <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
-                        </div>
-                        <h2
-                          className={`text-3xl font-bold mb-4 transition-colors duration-300 ${
-                            isDarkMode ? "text-gray-100" : "text-gray-900"
-                          }`}
-                        >
-                          {activeMajor === "AI"
-                            ? "🤖 AI Section"
-                            : activeMajor === "Software Engineering"
-                              ? "💻 Software Engineering Section"
-                              : activeMajor === "Networking"
-                                ? "🌐 Networking Section"
-                                : "Department of CSE"}{" "}
-                          - Intake 51
-                        </h2>
-                        <p
-                          className={`text-lg transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-700"}`}
-                        >
-                          {activeMajor
-                            ? `${activeMajor} Major`
-                            : "Select your major"}{" "}
-                          • Choose your course to access materials
-                        </p>
-                      </div>
-
-                      <GDriveFolderBrowser
-                        userMajor={activeMajor}
-                        isDarkMode={isDarkMode}
-                        onCourseSelect={(course) => {
-                          setSelectedDriveCourse({
-                            courseCode: course.code,
-                            courseName: course.name,
-                            folderId: course.folderId,
-                            folderLink: course.folderLink,
-                          });
-                        }}
-                        onReady={() => {
-                          const title =
-                            activeMajor === "AI" ? "Artificial Intelligence"
-                            : activeMajor === "Software Engineering" ? "Software Engineering"
-                            : activeMajor === "Networking" ? "Networking"
-                            : activeMajor || "your section";
-                          showMajorAccessNotification("success", `Welcome to ${title}!`);
-                        }}
-                      />
-
-                      {/* Keep this section hidden for database courses - no longer used */}
-                      {courses.length === 0 ? (
-                        <div
-                          className={`text-center py-12 rounded-2xl border ${isDarkMode ? "border-gray-700 bg-gray-800/50 text-gray-300" : "border-gray-200 bg-white text-gray-700"}`}
-                          style={{ display: "none" }}
-                        >
-                          <p className="text-2xl mb-2">📦</p>
-                          <p className="font-semibold text-lg">
-                            No courses available for your major yet.
-                          </p>
-                          <p
-                            className={`text-sm mt-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                          >
-                            Please check back soon or contact admin to add your
-                            courses.
-                          </p>
-                        </div>
-                      ) : (
-                        <div
-                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-                          style={{ display: "none" }}
-                        >
-                          {courses.map((course, index) => {
-                            const colorScheme = getCourseColorScheme(
-                              course.code,
-                              index,
-                            );
-                            return (
-                              <div
-                                key={course.id}
-                                onClick={() => handleCourseClick(course)}
-                                className={`p-6 md:p-8 rounded-2xl shadow-xl border backdrop-blur-sm hover:shadow-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-2 group ${
-                                  isDarkMode
-                                    ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50"
-                                    : `bg-gradient-to-br ${colorScheme.bgGradient} border-white/30 hover:${colorScheme.border}`
-                                }`}
-                              >
-                                <h3
-                                  className={`text-xl md:text-2xl font-bold mb-3 transition-all duration-300 ${
-                                    isDarkMode
-                                      ? "text-gray-100"
-                                      : "text-gray-900"
-                                  }`}
-                                >
-                                  {course.name}
-                                </h3>
-                                <p
-                                  className={`font-semibold mb-3 text-sm md:text-base px-3 py-1 rounded-full inline-block transition-colors duration-300 ${
-                                    isDarkMode
-                                      ? "bg-blue-900/50 text-blue-300"
-                                      : colorScheme.badge
-                                  }`}
-                                >
-                                  {course.code}
-                                </p>
-                                <p
-                                  className={`text-sm md:text-base mb-4 md:mb-6 select-text leading-relaxed transition-colors duration-300 ${
-                                    isDarkMode
-                                      ? "text-gray-300"
-                                      : "text-gray-700"
-                                  }`}
-                                >
-                                  {course.description}
-                                </p>
-                                <p
-                                  className={`text-sm md:text-base font-bold no-select flex items-center group-hover:translate-x-2 transition-transform duration-300 ${
-                                    isDarkMode
-                                      ? "text-blue-400"
-                                      : `text-transparent bg-gradient-to-r ${colorScheme.textGradient} bg-clip-text`
-                                  }`}
-                                >
-                                  Access Materials
-                                  <svg
-                                    className="w-4 h-4 ml-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </svg>
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
+                  <GDriveBrowser
+                    userMajor={activeMajor}
+                    isDarkMode={isDarkMode}
+                    onPreviewFile={(url, name) => {
+                      setCurrentFileUrl(url);
+                      setCurrentFileName(name);
+                      setShowFileViewer(true);
+                    }}
+                  />
                 </Suspense>
               </div>
             )}
@@ -4729,20 +4543,6 @@ For any queries, contact your course instructors or the department.`,
                   </button>
                 </div>
 
-                {/* NEW: Direct Google Drive View */}
-                <Suspense fallback={
-                  <div className="flex justify-center py-16">
-                    <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
-                  </div>
-                }>
-                  <CourseDriveView
-                    courseCode={selectedCourse.code}
-                    courseName={selectedCourse.name}
-                    examPeriod={selectedExamPeriod}
-                    isDarkMode={isDarkMode}
-                    onFileClick={handleDriveFileClick}
-                  />
-                </Suspense>
 
                 {loading ? (
                   <div className="text-center py-8">
@@ -5507,6 +5307,11 @@ For any queries, contact your course instructors or the department.`,
                 onBroadcastPushChange={setBroadcastPush}
                 onSendBroadcast={handleSendBroadcastNotification}
                 isSendingBroadcast={isSendingBroadcast}
+                onPreviewFile={(url, name) => {
+                  setCurrentFileUrl(url);
+                  setCurrentFileName(name);
+                  setShowFileViewer(true);
+                }}
               />
             )}
 
@@ -5919,16 +5724,6 @@ For any queries, contact your course instructors or the department.`,
                     </div>
                   </div>
 
-                  {/* Google Drive Manager - New centralized approach */}
-                  <div
-                    className={`rounded-3xl shadow-xl border backdrop-blur-sm p-4 sm:p-6 md:p-8 transition-colors duration-300 ${
-                      isDarkMode
-                        ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700"
-                        : "bg-gradient-to-br from-orange-50 via-white to-pink-50 border-orange-200"
-                    }`}
-                  >
-                    <DriveManager isDarkMode={isDarkMode} />
-                  </div>
 
                   {/* Courses List - Modern Design - HIDDEN FOR NOW */}
                   {false && (

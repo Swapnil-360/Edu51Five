@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Plus, ChevronDown, ChevronUp, AlertCircle, Link as LinkIcon, Trash2, Edit2, BarChart3, BookOpen, Files, Users, TrendingUp, HardDrive, UsersRound, ShieldCheck, MessageSquare, RefreshCw, Bug, Lightbulb, Sparkles } from 'lucide-react';
-import { DriveManager } from './DriveManager';
+import MaterialManager from './MaterialManager';
 
 interface Notice {
   id: string;
@@ -71,6 +71,7 @@ interface AdminDashboardProps {
   onBroadcastPushChange?: (data: { title: string; body: string; url: string }) => void;
   onSendBroadcast?: () => void;
   isSendingBroadcast?: boolean;
+  onPreviewFile?: (url: string, name: string) => void;
 }
 
 // Supabase free tier storage limit (1 GB)
@@ -124,6 +125,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBroadcastPushChange,
   onSendBroadcast,
   isSendingBroadcast = false,
+  onPreviewFile,
 }) => {
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     courseManagement: false,
@@ -986,62 +988,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* SECTION 5: Google Drive Manager */}
-        <div className={`rounded-xl lg:rounded-2xl shadow-xl border backdrop-blur-sm p-4 sm:p-5 lg:p-6 transition-colors duration-300 ${
-          isDarkMode 
-            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
-            : 'bg-gradient-to-br from-orange-50 via-white to-pink-50 border-orange-200'
-        }`}>
-          <DriveManager isDarkMode={isDarkMode} />
-        </div>
-
-        {/* SECTION 6: Course Management (Collapsed) */}
-        <div className={`rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-6`}>
-          <button
-            onClick={() => toggleSection('courseManagement')}
-            className="w-full flex items-center justify-between"
-          >
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              📚 Course Management
-            </h2>
-            {expandedSections.courseManagement ? (
-              <ChevronUp className="w-5 h-5" />
-            ) : (
-              <ChevronDown className="w-5 h-5" />
-            )}
-          </button>
-          {expandedSections.courseManagement && (
-            <div className={`mt-4 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Course management features available here (hidden for future use)
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* SECTION 7: Material Upload (Collapsed) */}
-        <div className={`rounded-2xl shadow-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 sm:p-6`}>
-          <button
-            onClick={() => toggleSection('materialUpload')}
-            className="w-full flex items-center justify-between"
-          >
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              📤 Material Upload
-            </h2>
-            {expandedSections.materialUpload ? (
-              <ChevronUp className="w-5 h-5" />
-            ) : (
-              <ChevronDown className="w-5 h-5" />
-            )}
-          </button>
-          {expandedSections.materialUpload && (
-            <div className={`mt-4 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Material upload features available here (hidden for future use)
-              </p>
-            </div>
-          )}
-        </div>
+        {/* SECTION 5: Study Material Manager */}
+        {currentUserId && (
+          <MaterialManager
+            isDarkMode={isDarkMode}
+            currentUserId={currentUserId}
+            onPreviewFile={onPreviewFile}
+          />
+        )}
       </div>
     </div>
   );
