@@ -17,10 +17,11 @@
       var token = params.get('access_token');
       var error = params.get('error');
       var expiresIn = params.get('expires_in');
+      var state = params.get('state');
       if (window.opener) {
         window.opener.postMessage(
           token
-            ? { type: 'GDRIVE_OAUTH_SUCCESS', token: token, expiresIn: expiresIn }
+            ? { type: 'GDRIVE_OAUTH_SUCCESS', token: token, expiresIn: expiresIn, state: state }
             : { type: 'GDRIVE_OAUTH_ERROR', error: error || 'Unknown error' },
           window.location.origin
         );

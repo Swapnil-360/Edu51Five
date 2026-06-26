@@ -28,12 +28,15 @@ async function fetchProfile(accessToken: string): Promise<DriveUserProfile | nul
 
 function openAuthPopup(): Promise<string> {
   const redirectUri = `${window.location.origin}${CALLBACK_PATH}`;
+  const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: redirectUri,
     response_type: 'token',
     scope: SCOPE,
     prompt: 'select_account',
+    state,
   });
 
   const w = 520, h = 620;
@@ -64,6 +67,9 @@ function openAuthPopup(): Promise<string> {
     function onMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'GDRIVE_OAUTH_SUCCESS') {
+        if (event.data.state && event.data.state !== state) {
+          settled = true; cleanup(); reject(new Error('State mismatch')); return;
+        }
         settled = true; cleanup(); resolve(event.data.token as string);
       } else if (event.data?.type === 'GDRIVE_OAUTH_ERROR') {
         settled = true; cleanup(); reject(new Error(event.data.error ?? 'OAuth failed'));
