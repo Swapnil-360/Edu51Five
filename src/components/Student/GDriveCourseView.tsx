@@ -1,21 +1,7 @@
-/**
- * Google Drive Course View
- * Displays materials from a Google Drive folder with mid-term/final separation
- * Uses Drive API to fetch files from the course folder with subfolder support
- */
-
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Play, 
-  Eye, 
-  Download, 
-  RefreshCw, 
-  AlertCircle,
-  ChevronLeft,
-  Folder,
-  Clock,
-  ChevronRight
+import {
+  FileText, Play, Eye, Download, RefreshCw, AlertCircle,
+  ChevronLeft, Folder, Loader2, BookOpen, Zap,
 } from 'lucide-react';
 import { getCurrentSemesterStatus } from '../../config/semester';
 
@@ -26,9 +12,7 @@ interface DriveFile {
   size?: number;
   webViewLink?: string;
   webContentLink?: string;
-  thumbnailLink?: string;
   modifiedTime?: string;
-  parentId?: string;
 }
 
 interface DriveFolder {
@@ -49,438 +33,307 @@ interface GDriveCourseViewProps {
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 
-export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({ 
-  courseCode,
-  courseName,
-  folderId,
-  folderLink,
-  onBack,
-  onFileClick,
-  isDarkMode = false
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPeriod, setCurrentPeriod] = useState<'midterm' | 'final' | 'regular'>('regular');
-  const [activeTab, setActiveTab] = useState<'mid' | 'final'>('mid');
-  
-  // Store folder structures
-  const [midFolderId, setMidFolderId] = useState<string>('');
-  const [finalFolderId, setFinalFolderId] = useState<string>('');
-  const [midContent, setMidContent] = useState<DriveFolder[]>([]);
-  const [finalContent, setFinalContent] = useState<DriveFolder[]>([]);
+function cls(...a: (string | false | null | undefined)[]) { return a.filter(Boolean).join(' '); }
 
-  // Get current semester status
+function fmt(bytes?: number) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function fileStyle(mime: string, dk: boolean) {
+  const pairs: [string, string, string][] = [
+    ['pdf',          dk ? 'bg-red-500/12 text-red-400'     : 'bg-red-50 text-red-500',     'pdf'],
+    ['video',        dk ? 'bg-violet-500/12 text-violet-400': 'bg-violet-50 text-violet-500','vid'],
+    ['image',        dk ? 'bg-pink-500/12 text-pink-400'   : 'bg-pink-50 text-pink-500',   'img'],
+    ['presentation', dk ? 'bg-orange-500/12 text-orange-400': 'bg-orange-50 text-orange-500','ppt'],
+    ['powerpoint',   dk ? 'bg-orange-500/12 text-orange-400': 'bg-orange-50 text-orange-500','ppt'],
+  ];
+  for (const [key, cls] of pairs) if (mime.includes(key)) return cls;
+  return dk ? 'bg-blue-500/12 text-blue-400' : 'bg-blue-50 text-blue-500';
+}
+
+function FileIcon({ mime }: { mime: string }) {
+  if (mime.includes('video')) return <Play className="h-3.5 w-3.5" />;
+  if (mime.includes('image')) return <Eye className="h-3.5 w-3.5" />;
+  return <FileText className="h-3.5 w-3.5" />;
+}
+
+export const GDriveCourseView: React.FC<GDriveCourseViewProps> = ({
+  courseCode, courseName, folderId, onBack, onFileClick, isDarkMode = false,
+}) => {
+  const dk = isDarkMode;
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [activeTab, setActiveTab]           = useState<'mid' | 'final'>('mid');
+  const [midFolderId, setMidFolderId]       = useState('');
+  const [finalFolderId, setFinalFolderId]   = useState('');
+  const [midContent, setMidContent]         = useState<DriveFolder[]>([]);
+  const [finalContent, setFinalContent]     = useState<DriveFolder[]>([]);
+  const [isMidPeriod, setIsMidPeriod]       = useState(false);
+
   useEffect(() => {
-    const status = getCurrentSemesterStatus();
-    if (status.currentPhase === 'Mid-term Examinations') {
-      setCurrentPeriod('midterm');
-      setActiveTab('mid');
-    } else if (status.currentPhase === 'Final Examinations') {
-      setCurrentPeriod('final');
-      setActiveTab('final');
-    } else {
-      setCurrentPeriod('regular');
-    }
+    const s = getCurrentSemesterStatus();
+    if (s.currentPhase === 'Mid-term Examinations') { setIsMidPeriod(true); setActiveTab('mid'); }
+    else if (s.currentPhase === 'Final Examinations') setActiveTab('final');
   }, []);
 
-  // Load files from Drive folder
-  useEffect(() => {
-    loadFilesFromDrive();
-  }, [folderId]);
+  useEffect(() => { load(); }, [folderId]);
 
-  const loadFilesFromDrive = async () => {
-    setLoading(true);
-    setError(null);
+  const load = async () => {
+    setLoading(true); setError(null);
     try {
-      // Step 1: Find Mid and Final subfolders
-      const folderQuery = `'${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-      const folderUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-        folderQuery
-      )}&key=${API_KEY}&fields=files(id,name)&pageSize=100`;
-
-      console.log('🔍 Searching for Mid/Final folders in:', courseName);
-
-      const folderResponse = await fetch(folderUrl);
-      if (!folderResponse.ok) {
-        throw new Error(`Drive API error: ${folderResponse.statusText}`);
-      }
-
-      const folderData = await folderResponse.json();
-      const folders = folderData.files || [];
-
-      console.log(`📁 Found ${folders.length} folders:`, folders.map((f: any) => f.name));
-
-      // Find Mid and Final folders (case-insensitive)
-      const midFolder = folders.find((f: any) => f.name.toLowerCase().includes('mid'));
-      const finalFolder = folders.find((f: any) => f.name.toLowerCase().includes('final'));
-
-      if (midFolder) {
-        setMidFolderId(midFolder.id);
-        await loadFolderContent(midFolder.id, 'mid');
-      }
-
-      if (finalFolder) {
-        setFinalFolderId(finalFolder.id);
-        await loadFolderContent(finalFolder.id, 'final');
-      }
-
-      if (!midFolder && !finalFolder) {
-        setError('No Mid or Final folders found. Please create "Mid" and "Final" folders in the course folder.');
-      } else {
-        // Check after a brief delay to allow state to update
-        setTimeout(() => {
-          const midTotal = midContent.reduce((sum, f) => sum + f.files.length, 0);
-          const finalTotal = finalContent.reduce((sum, f) => sum + f.files.length, 0);
-          console.log(`📊 Final count - Mid: ${midTotal} files, Final: ${finalTotal} files`);
-        }, 500);
-      }
-    } catch (err) {
-      console.error('❌ Error loading files from Drive:', err);
-      setError('Failed to load course materials. Please check your connection.');
-    } finally {
-      setLoading(false);
-    }
+      const q = encodeURIComponent(`'${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&key=${API_KEY}&fields=files(id,name)&pageSize=100`);
+      if (!res.ok) throw new Error();
+      const { files = [] } = await res.json();
+      const midF   = files.find((f: any) => f.name.toLowerCase().includes('mid'));
+      const finalF = files.find((f: any) => f.name.toLowerCase().includes('final'));
+      if (midF)   { setMidFolderId(midF.id);     await loadContent(midF.id, 'mid'); }
+      if (finalF) { setFinalFolderId(finalF.id); await loadContent(finalF.id, 'final'); }
+      if (!midF && !finalF) setError('No Mid or Final folders found inside this course folder.');
+    } catch {
+      setError('Failed to load materials. Please check your connection.');
+    } finally { setLoading(false); }
   };
 
-  const loadFolderContent = async (parentFolderId: string, type: 'mid' | 'final') => {
+  const loadContent = async (parentId: string, type: 'mid' | 'final') => {
     try {
-      // Step 1: Get all subfolders
-      const subfoldersQuery = `'${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-      const subfoldersUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-        subfoldersQuery
-      )}&key=${API_KEY}&fields=files(id,name)&pageSize=100&orderBy=name`;
-
-      const subfoldersResponse = await fetch(subfoldersUrl);
-      const subfoldersData = await subfoldersResponse.json();
-      const subfolders = subfoldersData.files || [];
-
-      // Step 2: Get files directly in the parent folder
-      const filesQuery = `'${parentFolderId}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`;
-      const filesUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-        filesQuery
-      )}&key=${API_KEY}&fields=files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,modifiedTime)&pageSize=100&orderBy=name`;
-
-      const filesResponse = await fetch(filesUrl);
-      const filesData = await filesResponse.json();
-      const rootFiles = filesData.files || [];
-
-      console.log(`📂 ${type.toUpperCase()}: Found ${subfolders.length} subfolders and ${rootFiles.length} root files`);
-
-      // Step 3: For each subfolder, get its files
-      const folderContents: DriveFolder[] = [];
-
-      // Add root files as "General" folder if any
-      if (rootFiles.length > 0) {
-        folderContents.push({
-          id: parentFolderId,
-          name: '📚 General Materials',
-          files: rootFiles
-        });
+      const [sfRes, rfRes] = await Promise.all([
+        fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`)}&key=${API_KEY}&fields=files(id,name)&pageSize=100&orderBy=name`),
+        fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${parentId}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`)}&key=${API_KEY}&fields=files(id,name,mimeType,size,webViewLink,webContentLink)&pageSize=100&orderBy=name`),
+      ]);
+      const subfolders = (await sfRes.json()).files ?? [];
+      const rootFiles  = (await rfRes.json()).files ?? [];
+      const result: DriveFolder[] = [];
+      if (rootFiles.length) result.push({ id: parentId, name: 'General Materials', files: rootFiles });
+      for (const sf of subfolders) {
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${sf.id}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`)}&key=${API_KEY}&fields=files(id,name,mimeType,size,webViewLink,webContentLink)&pageSize=100&orderBy=name`);
+        const files = (await r.json()).files ?? [];
+        if (files.length) result.push({ id: sf.id, name: sf.name, files });
       }
-
-      // Load files from each subfolder
-      for (const subfolder of subfolders) {
-        const subFilesQuery = `'${subfolder.id}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`;
-        const subFilesUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-          subFilesQuery
-        )}&key=${API_KEY}&fields=files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,modifiedTime)&pageSize=100&orderBy=name`;
-
-        console.log(`🔍 Fetching files from: ${subfolder.name} (ID: ${subfolder.id})`);
-        
-        const subFilesResponse = await fetch(subFilesUrl);
-        
-        if (!subFilesResponse.ok) {
-          console.error(`❌ Failed to fetch from ${subfolder.name}:`, subFilesResponse.statusText);
-          continue;
-        }
-        
-        const subFilesData = await subFilesResponse.json();
-        const subFiles = subFilesData.files || [];
-
-        console.log(`  ✅ ${subfolder.name}: ${subFiles.length} files found`, 
-          subFiles.length > 0 ? subFiles.map((f: any) => f.name) : 'No files');
-
-        if (subFiles.length > 0) {
-          folderContents.push({
-            id: subfolder.id,
-            name: subfolder.name,
-            files: subFiles
-          });
-        }
-      }
-
-      // Update state based on type
-      if (type === 'mid') {
-        setMidContent(folderContents);
-      } else {
-        setFinalContent(folderContents);
-      }
-
-    } catch (err) {
-      console.error(`Error loading ${type} folder content:`, err);
-    }
+      if (type === 'mid') setMidContent(result);
+      else setFinalContent(result);
+    } catch { /* silent */ }
   };
 
-  // Get file icon based on mime type
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType.includes('pdf')) {
-      return <FileText className="h-5 w-5" />;
-    } else if (mimeType.includes('video')) {
-      return <Play className="h-5 w-5" />;
-    } else if (mimeType.includes('image')) {
-      return <Eye className="h-5 w-5" />;
-    }
-    return <FileText className="h-5 w-5" />;
-  };
+  const content    = activeTab === 'mid' ? midContent : finalContent;
+  const totalFiles = content.reduce((s, f) => s + f.files.length, 0);
+  const midCount   = midContent.reduce((s, f) => s + f.files.length, 0);
+  const finalCount = finalContent.reduce((s, f) => s + f.files.length, 0);
+  const hasTabs    = !error && (!!midFolderId || !!finalFolderId);
 
-  // Format file size
-  const formatFileSize = (bytes?: number): string => {
-    if (!bytes) return 'Unknown size';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  // Render folder section with files
-  const renderFolderSection = (folder: DriveFolder) => {
-    if (folder.files.length === 0) return null;
-
-    return (
-      <div key={folder.id} className="mb-6">
-        <div className={`flex items-center gap-2 mb-3 pb-2 border-b ${
-          isDarkMode ? 'border-gray-700' : 'border-gray-200'
-        }`}>
-          <Folder className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-          <h4 className={`font-semibold text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-            {folder.name}
-          </h4>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-            isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'
-          }`}>
-            {folder.files.length} files
-          </span>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {folder.files.map((file) => (
-            <div
-              key={file.id}
-              onClick={() => onFileClick?.(file)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-102 ${
-                isDarkMode
-                  ? 'bg-gray-800/50 border-gray-700/50 hover:border-blue-500/50 hover:shadow-lg'
-                  : 'bg-white border-gray-200 hover:border-blue-500 hover:shadow-lg'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg flex-shrink-0 ${
-                  isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-50 text-blue-600'
-                }`}>
-                  {getFileIcon(file.mimeType)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h5 className={`font-semibold text-sm mb-1 line-clamp-2 ${
-                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                  }`}>
-                    {file.name}
-                  </h5>
-                  <p className={`text-xs ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onFileClick?.(file);
-                  }}
-                  className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                    isDarkMode
-                      ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200'
-                      : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Eye className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  if (loading) {
-    const sk = isDarkMode ? 'bg-slate-800/70' : 'bg-slate-200/70';
-    const card = isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
-    return (
-      <div className="px-1 pt-2 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className={`flex items-start gap-3 p-4 rounded-xl border animate-pulse ${card}`}>
-              <div className={`w-9 h-9 rounded-lg flex-shrink-0 ${sk}`} />
-              <div className="flex-1 space-y-2 pt-1">
-                <div className={`h-2.5 rounded-full ${sk}`} style={{ width: `${55 + (i % 3) * 15}%` }} />
-                <div className={`h-2 rounded-full ${sk}`} style={{ width: '35%' }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const currentContent = activeTab === 'mid' ? midContent : finalContent;
-  const totalFiles = currentContent.reduce((sum, folder) => sum + folder.files.length, 0);
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <Loader2 className={cls('h-6 w-6 animate-spin', dk ? 'text-slate-500' : 'text-slate-400')} />
+      <p className={cls('text-xs', dk ? 'text-slate-500' : 'text-slate-400')}>Loading materials…</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={onBack}
-            className={`flex items-center gap-2 mb-4 px-4 py-2 rounded-lg transition-colors ${
-              isDarkMode
-                ? 'hover:bg-gray-800 text-gray-300 hover:text-gray-100'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <ChevronLeft className="h-5 w-5" />
-            Back to Courses
-          </button>
+    <div className="space-y-5">
 
-          <div className={`p-6 rounded-2xl border ${
-            isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'
-          }`}>
-            <h1 className={`text-3xl font-bold mb-2 ${
-              isDarkMode ? 'text-gray-100' : 'text-gray-900'
-            }`}>
-              {courseName}
-            </h1>
-            <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+      {/* Back */}
+      <button
+        onClick={onBack}
+        className={cls(
+          'inline-flex items-center gap-1.5 text-sm font-medium transition-colors',
+          dk ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800',
+        )}
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to Courses
+      </button>
+
+      {/* Course header card */}
+      <div className={cls(
+        'relative rounded-xl border overflow-hidden',
+        dk ? 'bg-slate-800/60 border-slate-700/70' : 'bg-white border-slate-200',
+      )}>
+        {/* Top accent line */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
+
+        <div className="p-5 sm:p-6 flex items-start gap-4">
+          <div className={cls('flex-shrink-0 p-2.5 rounded-lg mt-0.5', dk ? 'bg-slate-700' : 'bg-slate-100')}>
+            <BookOpen className={cls('h-5 w-5', dk ? 'text-slate-300' : 'text-slate-600')} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={cls('text-[11px] font-semibold tracking-widest uppercase mb-1', dk ? 'text-slate-500' : 'text-slate-400')}>
               {courseCode}
             </p>
-            
-            {/* Current Period Badge */}
-            {currentPeriod !== 'regular' && (
-              <div className="mt-4 flex items-center gap-2">
-                <Clock className="h-5 w-5 text-orange-500" />
-                <span className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-700">
-                  {currentPeriod === 'midterm' ? 'Mid-term Period' : 'Final Exam Period'}
-                </span>
+            <h1 className={cls('text-lg sm:text-xl font-bold leading-snug', dk ? 'text-slate-100' : 'text-slate-900')}>
+              {courseName}
+            </h1>
+            {isMidPeriod && (
+              <div className={cls(
+                'mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold',
+                dk ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-50 text-amber-700',
+              )}>
+                <Zap className="h-3 w-3" />
+                Mid-term Period Active
               </div>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Mid/Final Pill Tabs */}
-        {!error && (midFolderId || finalFolderId) && (
-          <div className="mb-6">
-            <div className={`inline-flex items-center rounded-full p-1.5 gap-0.5 border ${
-              isDarkMode
-                ? 'bg-slate-800 border-slate-700 shadow-lg shadow-black/20'
-                : 'bg-white border-slate-300 shadow-md shadow-black/8'
-            }`}>
-              {(['mid', 'final'] as const).map((t) => {
-                const count = t === 'mid'
-                  ? midContent.reduce((s, f) => s + f.files.length, 0)
-                  : finalContent.reduce((s, f) => s + f.files.length, 0);
-                const isActive = activeTab === t;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTab(t)}
-                    className={`relative flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-colors duration-150 ${
-                      isActive
-                        ? isDarkMode ? 'bg-white text-slate-900 font-bold shadow-md shadow-white/10' : 'bg-slate-900 text-white font-bold shadow-md shadow-black/20'
-                        : isDarkMode ? 'font-medium text-slate-500 hover:text-slate-300' : 'font-medium text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Clock className="h-3.5 w-3.5" />
-                    {t === 'mid' ? 'Mid-term' : 'Final'}
-                    {count > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
-                        isActive
-                          ? isDarkMode ? 'bg-slate-900/15 text-slate-700' : 'bg-white/20 text-white'
-                          : 'bg-blue-500 text-white'
-                      }`}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className={`rounded-xl p-6 mb-8 ${
-            isDarkMode ? 'bg-yellow-900/20 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-200'
-          }`}>
-            <div className="flex items-start gap-3">
-              <AlertCircle className={`h-6 w-6 flex-shrink-0 ${
-                isDarkMode ? 'text-yellow-400' : 'text-yellow-600'
-              }`} />
-              <div>
-                <h3 className={`font-semibold ${isDarkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>
-                  {error}
-                </h3>
+      {/* Tab bar — clean underline style */}
+      {hasTabs && (
+        <div className={cls('border-b', dk ? 'border-slate-700' : 'border-slate-200')}>
+          <div className="flex gap-0">
+            {(['mid', 'final'] as const).map(t => {
+              const count  = t === 'mid' ? midCount : finalCount;
+              const active = activeTab === t;
+              return (
                 <button
-                  onClick={loadFilesFromDrive}
-                  className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                    isDarkMode
-                      ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                      : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                  }`}
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  className={cls(
+                    'relative flex items-center gap-2 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-150 focus:outline-none',
+                    active
+                      ? dk ? 'text-slate-100' : 'text-slate-900'
+                      : dk ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600',
+                  )}
                 >
-                  <RefreshCw className="h-4 w-4" />
-                  Try Again
+                  {t === 'mid' ? 'Mid-term' : 'Final'}
+                  {count > 0 && (
+                    <span className={cls(
+                      'px-1.5 py-0.5 rounded text-[10px] font-bold leading-none tabular-nums',
+                      active
+                        ? dk ? 'bg-violet-500/25 text-violet-300' : 'bg-violet-100 text-violet-700'
+                        : dk ? 'bg-slate-700 text-slate-500' : 'bg-slate-100 text-slate-400',
+                    )}>
+                      {count}
+                    </span>
+                  )}
+                  {/* Active underline */}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-violet-500" />
+                  )}
                 </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Materials Content */}
-        {!error && currentContent.length > 0 && (
-          <div className={`rounded-2xl border p-6 ${
-            isDarkMode ? 'bg-gray-800/30 border-gray-700' : 'bg-white border-gray-200'
-          }`}>
-            {currentContent.map(folder => renderFolderSection(folder))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!error && totalFiles === 0 && (midFolderId || finalFolderId) && (
-          <div className={`text-center py-12 rounded-2xl border ${
-            isDarkMode ? 'border-gray-700 bg-gray-800/50 text-gray-300' : 'border-gray-200 bg-white text-gray-700'
-          }`}>
-            <Folder className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="font-semibold text-lg">No files in {activeTab === 'mid' ? 'Mid-term' : 'Final'} folder yet</p>
-            <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {currentContent.length > 0 
-                ? `Found ${currentContent.length} subfolder(s) but no files inside. Please add files to the folders.`
-                : 'Folder exists but contains no subfolders or files. Please add study materials.'
-              }
-            </p>
-            <button
-              onClick={loadFilesFromDrive}
-              className={`mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2 ${
-                isDarkMode
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
+      {/* Error */}
+      {error && (
+        <div className={cls(
+          'rounded-xl p-4 border flex items-start gap-3',
+          dk ? 'bg-amber-950/20 border-amber-900/40' : 'bg-amber-50 border-amber-200',
+        )}>
+          <AlertCircle className={cls('h-4 w-4 flex-shrink-0 mt-0.5', dk ? 'text-amber-400' : 'text-amber-600')} />
+          <div>
+            <p className={cls('text-sm mb-2', dk ? 'text-amber-300' : 'text-amber-800')}>{error}</p>
+            <button onClick={load} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors">
+              <RefreshCw className="h-3 w-3" /> Retry
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Material sections */}
+      {!error && content.length > 0 && (
+        <div className="space-y-4">
+          {content.map(folder => (
+            <div key={folder.id} className={cls('rounded-xl border overflow-hidden', dk ? 'border-slate-700/60' : 'border-slate-200')}>
+
+              {/* Folder header */}
+              <div className={cls(
+                'flex items-center gap-2.5 px-4 py-3 border-b',
+                dk ? 'bg-slate-800/80 border-slate-700/60' : 'bg-slate-50 border-slate-200',
+              )}>
+                <Folder className={cls('h-3.5 w-3.5 flex-shrink-0', dk ? 'text-slate-500' : 'text-slate-400')} />
+                <span className={cls('text-sm font-semibold', dk ? 'text-slate-300' : 'text-slate-700')}>{folder.name}</span>
+                <span className={cls(
+                  'ml-auto text-[10px] font-semibold tabular-nums px-2 py-0.5 rounded',
+                  dk ? 'bg-slate-700 text-slate-500' : 'bg-slate-200 text-slate-500',
+                )}>
+                  {folder.files.length}
+                </span>
+              </div>
+
+              {/* File list */}
+              <div className={cls('divide-y', dk ? 'divide-slate-700/60' : 'divide-slate-100')}>
+                {folder.files.map(file => {
+                  const accent = fileStyle(file.mimeType, dk);
+                  return (
+                    <div
+                      key={file.id}
+                      onClick={() => onFileClick?.(file)}
+                      className={cls(
+                        'group flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-100',
+                        dk ? 'hover:bg-slate-700/40' : 'hover:bg-slate-50',
+                      )}
+                    >
+                      {/* Type indicator */}
+                      <div className={cls('flex-shrink-0 p-1.5 rounded-md', accent)}>
+                        <FileIcon mime={file.mimeType} />
+                      </div>
+
+                      {/* File info */}
+                      <div className="flex-1 min-w-0">
+                        <p className={cls('text-sm font-medium truncate', dk ? 'text-slate-200' : 'text-slate-800')}>
+                          {file.name}
+                        </p>
+                        {file.size && (
+                          <p className={cls('text-[11px] mt-0.5', dk ? 'text-slate-600' : 'text-slate-400')}>{fmt(file.size)}</p>
+                        )}
+                      </div>
+
+                      {/* Actions — always visible on mobile, hover-reveal on desktop */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={e => { e.stopPropagation(); onFileClick?.(file); }}
+                          className={cls(
+                            'p-1.5 rounded-md transition-colors',
+                            dk ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200',
+                          )}
+                          title="Preview"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <a
+                          href={file.webContentLink ?? file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`}
+                          target="_blank" rel="noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className={cls(
+                            'p-1.5 rounded-md transition-colors',
+                            dk ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200',
+                          )}
+                          title="Open in Drive"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!error && totalFiles === 0 && (midFolderId || finalFolderId) && (
+        <div className={cls(
+          'rounded-xl border p-10 text-center',
+          dk ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200',
+        )}>
+          <Folder className={cls('h-10 w-10 mx-auto mb-3 opacity-25', dk ? 'text-slate-400' : 'text-slate-600')} />
+          <p className={cls('text-sm font-medium mb-1', dk ? 'text-slate-400' : 'text-slate-600')}>
+            No files in {activeTab === 'mid' ? 'Mid-term' : 'Final'} folder yet
+          </p>
+          <p className={cls('text-xs mb-4', dk ? 'text-slate-600' : 'text-slate-400')}>Materials will appear once uploaded to Drive</p>
+          <button onClick={load} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors">
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

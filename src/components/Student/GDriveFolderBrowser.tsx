@@ -1,11 +1,5 @@
-/**
- * Google Drive Folders Browser
- * Displays folders from Google Drive as courses
- * Each folder in Common + Major folders = 1 Course
- */
-
 import React, { useState, useEffect } from 'react';
-import { Folder, RefreshCw, AlertCircle } from 'lucide-react';
+import { AlertCircle, ChevronRight, Loader2, BookOpen } from 'lucide-react';
 import { COURSE_FOLDER_LINKS } from '../../config/courseFolders';
 
 interface GDriveCourse {
@@ -27,218 +21,143 @@ interface GDriveFolderBrowserProps {
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 
+// Subtle, refined accent per major — only used for the left border stripe and icon
+const MAJOR_ACCENT: Record<string, { color: string; label: string }> = {
+  'AI':                   { color: '#8b5cf6', label: 'AI' },
+  'Software Engineering': { color: '#3b82f6', label: 'SE' },
+  'Networking':           { color: '#10b981', label: 'NET' },
+  'Common':               { color: '#f59e0b', label: 'CSE' },
+};
+
+function cls(...a: (string | false | null | undefined)[]) { return a.filter(Boolean).join(' '); }
+
 export const GDriveFolderBrowser: React.FC<GDriveFolderBrowserProps> = ({
-  userMajor,
-  isDarkMode = false,
-  onCourseSelect,
-  onReady,
+  userMajor, isDarkMode: dk = false, onCourseSelect, onReady,
 }) => {
   const [courses, setCourses] = useState<GDriveCourse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCoursesFromDrive();
-  }, [userMajor]);
+  useEffect(() => { loadCourses(); }, [userMajor]);
 
-  const loadCoursesFromDrive = async () => {
-    setLoading(true);
-    setError(null);
+  const loadCourses = async () => {
+    setLoading(true); setError(null);
     try {
-      const coursesFound: GDriveCourse[] = [];
-
-      // Load major-specific folder first
+      const found: GDriveCourse[] = [];
       const majorFolder = COURSE_FOLDER_LINKS[userMajor as keyof typeof COURSE_FOLDER_LINKS];
-      if (majorFolder && majorFolder.folderId) {
-        const majorCourses = await listFoldersInFolder(majorFolder.folderId, userMajor);
-        coursesFound.push(...majorCourses);
+      if (majorFolder?.folderId) found.push(...await listFolders(majorFolder.folderId, userMajor));
+      if (!(majorFolder as any)?.skipCommon) {
+        const common = COURSE_FOLDER_LINKS['Common'];
+        if (common?.folderId) found.push(...await listFolders(common.folderId, 'Common'));
       }
-
-      // Only load Common folder if the major doesn't have its own standalone folder
-      const skipCommon = (majorFolder as any)?.skipCommon === true;
-      if (!skipCommon) {
-        const commonFolder = COURSE_FOLDER_LINKS['Common'];
-        if (commonFolder && commonFolder.folderId) {
-          const commonCourses = await listFoldersInFolder(commonFolder.folderId, 'Common');
-          coursesFound.push(...commonCourses);
-        }
-      }
-
-      console.log('Courses found from Google Drive:', coursesFound);
-      setCourses(coursesFound);
-      if (coursesFound.length > 0) onReady?.();
-
-      if (coursesFound.length === 0) {
-        setError(`No courses found in your folders. Please create course folders in Google Drive.`);
-      }
-    } catch (err) {
-      console.error('Error loading courses from Drive:', err);
-      setError('Failed to load courses from Google Drive. Please check your API key.');
+      setCourses(found);
+      if (found.length > 0) onReady?.();
+      if (found.length === 0) setError('No courses found in your Google Drive folder.');
+    } catch {
+      setError('Failed to load courses. Please check your connection.');
     } finally {
       setLoading(false);
     }
   };
 
-  const listFoldersInFolder = async (
-    parentFolderId: string,
-    sourceFolder: string
-  ): Promise<GDriveCourse[]> => {
+  const listFolders = async (parentId: string, source: string): Promise<GDriveCourse[]> => {
     try {
-      // Query: find all folders in the parent folder
-      const query = `'${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-        query
-      )}&key=${API_KEY}&fields=files(id,name,webViewLink)&pageSize=50`;
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Drive API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const folderItems = data.files || [];
-
-      console.log(`Found ${folderItems.length} courses in ${sourceFolder} folder`);
-
-      return folderItems.map((folder: any) => ({
-        id: folder.id,
-        name: folder.name,
-        code: folder.name.split(' ')[0] || folder.name, // Extract course code from name
-        description: `${sourceFolder} Course`,
-        folderId: folder.id,
-        folderLink: folder.webViewLink,
-        major: sourceFolder
+      const q = encodeURIComponent(`'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&key=${API_KEY}&fields=files(id,name,webViewLink)&pageSize=50`);
+      if (!res.ok) throw new Error();
+      const { files = [] } = await res.json();
+      return files.map((f: any) => ({
+        id: f.id, name: f.name,
+        code: f.name.split('(')[0].trim(),
+        description: `${source} Course`,
+        folderId: f.id, folderLink: f.webViewLink, major: source,
       }));
-    } catch (error) {
-      console.error(`Error listing folders in ${sourceFolder}:`, error);
-      return [];
-    }
+    } catch { return []; }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 mx-auto ${
-          isDarkMode ? 'border-blue-400' : 'border-blue-600'
-        }`}></div>
-        <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Loading courses from Google Drive...
-        </p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <Loader2 className={cls('h-6 w-6 animate-spin', dk ? 'text-slate-500' : 'text-slate-400')} />
+      <p className={cls('text-sm', dk ? 'text-slate-500' : 'text-slate-400')}>Loading courses…</p>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-red-900/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
-        <div className="flex items-start gap-3">
-          <AlertCircle className={`h-6 w-6 flex-shrink-0 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-          <div>
-            <h3 className={`font-semibold ${isDarkMode ? 'text-red-200' : 'text-red-800'}`}>
-              Unable to Load Courses
-            </h3>
-            <p className={`mt-1 text-sm ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>
-              {error}
-            </p>
-            <button
-              onClick={loadCoursesFromDrive}
-              className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isDarkMode
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+  if (error) return (
+    <div className={cls('rounded-xl p-5 border flex items-start gap-3', dk ? 'bg-red-950/20 border-red-900/40' : 'bg-red-50 border-red-200')}>
+      <AlertCircle className={cls('h-4 w-4 mt-0.5 flex-shrink-0', dk ? 'text-red-400' : 'text-red-500')} />
+      <div>
+        <p className={cls('text-sm mb-2', dk ? 'text-red-300' : 'text-red-700')}>{error}</p>
+        <button onClick={loadCourses} className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors">Retry</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (courses.length === 0) {
-    return (
-      <div className={`text-center py-12 rounded-2xl border ${
-        isDarkMode ? 'border-gray-700 bg-gray-800/50 text-gray-300' : 'border-gray-200 bg-white text-gray-700'
-      }`}>
-        <p className="text-2xl mb-2">📂</p>
-        <p className="font-semibold text-lg">No courses available in your folders.</p>
-        <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Create course folders in your Google Drive folders to see them here.
-        </p>
-      </div>
-    );
-  }
+  if (courses.length === 0) return (
+    <div className={cls('rounded-xl border p-10 text-center', dk ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200')}>
+      <BookOpen className={cls('h-10 w-10 mx-auto mb-3 opacity-20', dk ? 'text-slate-300' : 'text-slate-700')} />
+      <p className={cls('text-sm font-medium', dk ? 'text-slate-400' : 'text-slate-500')}>No courses available yet</p>
+    </div>
+  );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {courses.map((course) => (
-        <div
-          key={course.id}
-          className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
-            isDarkMode
-              ? 'bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-gray-700/50 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20'
-              : 'bg-gradient-to-br from-white to-gray-50 border-gray-200 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10'
-          }`}
-          onClick={() => onCourseSelect?.(course)}
-        >
-          {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          <div className="relative z-10">
-            <div className="flex items-start gap-4 mb-4">
-              <div className={`p-3 rounded-xl transition-all duration-300 ${
-                isDarkMode 
-                  ? 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20' 
-                  : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'
-              }`}>
-                <Folder className="h-8 w-8" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className={`font-bold text-xl mb-2 group-hover:text-blue-500 transition-colors ${
-                  isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                }`}>
-                  {course.name}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    isDarkMode
-                      ? 'bg-blue-500/20 text-blue-300'
-                      : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {course.code}
-                  </span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {courses.map((course) => {
+        const accent = MAJOR_ACCENT[course.major] ?? MAJOR_ACCENT['Common'];
+        return (
+          <button
+            key={course.id}
+            onClick={() => onCourseSelect?.(course)}
+            className={cls(
+              'group relative text-left rounded-xl border overflow-hidden transition-all duration-200',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+              dk
+                ? 'bg-slate-800/70 border-slate-700/80 hover:border-slate-600 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/30'
+                : 'bg-white border-slate-200 hover:border-slate-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/80',
+            )}
+          >
+            {/* Left accent stripe */}
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: accent.color }} />
+
+            <div className="pl-5 pr-5 pt-5 pb-4">
+              {/* Top row: icon + badges */}
+              <div className="flex items-center justify-between mb-4">
+                <div
+                  className="flex items-center justify-center w-9 h-9 rounded-lg"
+                  style={{ background: `${accent.color}18` }}
+                >
+                  <BookOpen className="h-4 w-4" style={{ color: accent.color }} />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={cls('px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide', dk ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500')}>CSE</span>
                   {course.major !== 'Common' && (
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      isDarkMode
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}>
-                      {course.major}
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide" style={{ background: `${accent.color}20`, color: accent.color }}>
+                      {accent.label}
                     </span>
                   )}
                 </div>
               </div>
-            </div>
 
-            <p className={`text-sm mb-4 leading-relaxed ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              {course.description}
-            </p>
+              {/* Course name — plain, no gradient */}
+              <h3 className={cls('font-semibold text-[15px] leading-snug mb-1.5 group-hover:text-[var(--accent)] transition-colors duration-150', dk ? 'text-slate-100' : 'text-slate-900')}
+                style={{ '--accent': accent.color } as React.CSSProperties}
+              >
+                {course.name}
+              </h3>
 
-            {/* Access indicator */}
-            <div className={`flex items-center gap-2 text-sm font-medium group-hover:gap-3 transition-all ${
-              isDarkMode ? 'text-blue-400' : 'text-blue-600'
-            }`}>
-              <span>View Materials</span>
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <p className={cls('text-xs mb-4', dk ? 'text-slate-500' : 'text-slate-400')}>{course.description}</p>
+
+              {/* Divider */}
+              <div className={cls('h-px mb-3', dk ? 'bg-slate-700/60' : 'bg-slate-100')} />
+
+              {/* CTA */}
+              <div className={cls('flex items-center justify-between text-xs font-medium', dk ? 'text-slate-400' : 'text-slate-500')}>
+                <span>View Materials</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-150" />
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 };

@@ -25,6 +25,11 @@ export default function GDriveBrowser({ userMajor, isDarkMode: dk, onPreviewFile
   const defaultMajor = (MAJORS.find(m => m.value === userMajor)?.value ?? null) as StudyMajor;
   const [activeMajor, setActiveMajor] = useState<StudyMajor>(defaultMajor);
 
+  // Only show the user's own major tab (+ Common); show all tabs only when major is unset
+  const visibleMajors = userMajor
+    ? MAJORS.filter(m => m.value === userMajor || m.value === null)
+    : MAJORS;
+
   const [rootFolderId, setRootFolderId] = useState<string | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
 
@@ -111,7 +116,7 @@ export default function GDriveBrowser({ userMajor, isDarkMode: dk, onPreviewFile
 
       {/* Major tabs */}
       <div className={cls('flex gap-1 px-4 py-3 border-b overflow-x-auto', border, dk ? 'bg-slate-800/20' : 'bg-slate-50/50')}>
-        {MAJORS.map(m => (
+        {visibleMajors.map(m => (
           <button
             key={String(m.value)}
             onClick={() => { setActiveMajor(m.value); }}
