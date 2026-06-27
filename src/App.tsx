@@ -50,7 +50,7 @@ import MarqueeTicker from "./components/MarqueeTicker";
 import { MajorCardStack } from "./components/ui/MajorCardStack";
 const PDFViewer = lazy(() => import("./components/PDFViewer"));
 const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
-const GDriveBrowser = lazy(() => import("./components/Student/GDriveBrowser"));
+const StudyMaterials = lazy(() => import("./components/Student/StudyMaterials"));
 import {
   FileText,
   Play,
@@ -4420,7 +4420,7 @@ For any queries, contact your course instructors or the department.`,
                     <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
                   </div>
                 }>
-                  <GDriveBrowser
+                  <StudyMaterials
                     userMajor={activeMajor}
                     isDarkMode={isDarkMode}
                     onPreviewFile={(url, name) => {
