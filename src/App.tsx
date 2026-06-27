@@ -50,7 +50,8 @@ import MarqueeTicker from "./components/MarqueeTicker";
 import { MajorCardStack } from "./components/ui/MajorCardStack";
 const PDFViewer = lazy(() => import("./components/PDFViewer"));
 const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
-const StudyMaterials = lazy(() => import("./components/Student/StudyMaterials"));
+const GDriveFolderBrowser = lazy(() => import("./components/Student/GDriveFolderBrowser").then(m => ({ default: m.GDriveFolderBrowser })));
+const GDriveCourseView = lazy(() => import("./components/Student/GDriveCourseView").then(m => ({ default: m.GDriveCourseView })));
 import {
   FileText,
   Play,
@@ -4420,15 +4421,70 @@ For any queries, contact your course instructors or the department.`,
                     <div className={`w-8 h-8 rounded-full border-4 border-t-blue-500 animate-spin ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
                   </div>
                 }>
-                  <StudyMaterials
-                    userMajor={activeMajor}
-                    isDarkMode={isDarkMode}
-                    onPreviewFile={(url, name) => {
-                      setCurrentFileUrl(url);
-                      setCurrentFileName(name);
-                      setShowFileViewer(true);
-                    }}
-                  />
+                  <>
+                  {selectedDriveCourse ? (
+                    <GDriveCourseView
+                      courseCode={selectedDriveCourse.courseCode}
+                      courseName={selectedDriveCourse.courseName}
+                      folderId={selectedDriveCourse.folderId}
+                      folderLink={selectedDriveCourse.folderLink}
+                      onBack={() => setSelectedDriveCourse(null)}
+                      onFileClick={(file) => {
+                        const material: Material = {
+                          id: file.id,
+                          title: file.name,
+                          description: `Size: ${formatBytes(file.size || 0)}`,
+                          file_url: file.webViewLink || file.webContentLink || "",
+                          video_url: null,
+                          type: getMimeTypeCategory(file.mimeType),
+                          course_code: selectedDriveCourse.courseCode,
+                          size: file.size ? formatBytes(file.size) : null,
+                          created_at: new Date().toISOString(),
+                        };
+                        openMaterialViewer(material);
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  ) : (
+                    <>
+                      <div className="text-center">
+                        <div className="relative inline-block mb-6">
+                          <img src="/image.png" alt="Edu51Portal Logo" className="h-20 w-20 mx-auto object-contain" />
+                          <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 blur-lg"></div>
+                        </div>
+                        <h2 className={`text-3xl font-bold mb-4 transition-colors duration-300 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}>
+                          {activeMajor === "AI" ? "🤖 AI Section"
+                            : activeMajor === "Software Engineering" ? "💻 Software Engineering Section"
+                            : activeMajor === "Networking" ? "🌐 Networking Section"
+                            : "Department of CSE"}{" "}- Intake 51
+                        </h2>
+                        <p className={`text-lg transition-colors duration-300 ${isDarkMode ? "text-gray-400" : "text-gray-700"}`}>
+                          {activeMajor ? `${activeMajor} Major` : "Select your major"}{" "}• Choose your course to access materials
+                        </p>
+                      </div>
+                      <GDriveFolderBrowser
+                        userMajor={activeMajor}
+                        isDarkMode={isDarkMode}
+                        onCourseSelect={(course) => {
+                          setSelectedDriveCourse({
+                            courseCode: course.code,
+                            courseName: course.name,
+                            folderId: course.folderId,
+                            folderLink: course.folderLink,
+                          });
+                        }}
+                        onReady={() => {
+                          const title =
+                            activeMajor === "AI" ? "Artificial Intelligence"
+                            : activeMajor === "Software Engineering" ? "Software Engineering"
+                            : activeMajor === "Networking" ? "Networking"
+                            : activeMajor || "your section";
+                          showMajorAccessNotification("success", `Welcome to ${title}!`);
+                        }}
+                      />
+                    </>
+                  )}
+                  </>
                 </Suspense>
               </div>
             )}
