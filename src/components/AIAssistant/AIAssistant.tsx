@@ -4,15 +4,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Sparkles } from "lucide-react";
 import { sendChatMessage, type ChatTurn } from "../../lib/api/aiChatApi";
 
-// Isolated portal root — appended once to <body>, outside any flex/transform ancestor
+// Full-viewport fixed overlay — position:absolute children are always viewport-anchored,
+// bypassing any body flex/transform context that breaks position:fixed on Android Chrome.
 function getPortalRoot(): HTMLElement {
   let el = document.getElementById("ai-assistant-portal");
   if (!el) {
     el = document.createElement("div");
     el.id = "ai-assistant-portal";
-    // zero-size, pointer-events off so it never captures clicks by itself
-    el.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;z-index:9999;pointer-events:none;";
-    document.body.appendChild(el);
+    el.style.cssText = [
+      "position:fixed",
+      "top:0", "left:0", "right:0", "bottom:0",
+      "width:100%", "height:100%",
+      "z-index:9999",
+      "pointer-events:none",
+      "overflow:hidden",
+    ].join(";");
+    document.documentElement.appendChild(el); // attach to <html>, not flex <body>
   }
   return el;
 }
@@ -130,8 +137,9 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
     }
   };
 
-  // Panel and button each have their own position:fixed so they never depend
-  // on a parent's size or layout mode (flex, grid, etc.)
+  // Using absolute positioning inside the full-viewport fixed overlay.
+  // This is bulletproof on Android Chrome where position:fixed children
+  // of a flex body are unreliable.
   const BTN_SIZE = 56;
   const BTN_RIGHT = 24;
   const BTN_BOTTOM = 24;
@@ -149,14 +157,13 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             style={{
-              position: "fixed",
+              position: "absolute",
               bottom: PANEL_BOTTOM,
               right: PANEL_RIGHT,
               width: 340,
               maxWidth: "calc(100vw - 48px)",
               height: 480,
               maxHeight: "calc(100vh - 140px)",
-              zIndex: 9999,
               pointerEvents: "auto",
             }}
           >
@@ -210,7 +217,7 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
                   </div>
                   <div>
                     <p className={cls("text-[13px] font-semibold leading-tight", dk ? "text-white" : "text-slate-900")}>
-                      Edu51 Assistant
+                      Edu51Portal Assistant
                     </p>
                     <p className={cls("text-[10.5px]", dk ? "text-slate-500" : "text-slate-400")}>
                       Platform help & study questions
@@ -329,12 +336,11 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
         whileHover={{ scale: 1.07 }}
         whileTap={{ scale: 0.92 }}
         style={{
-          position: "fixed",
+          position: "absolute",
           bottom: BTN_BOTTOM,
           right: BTN_RIGHT,
           width: BTN_SIZE,
           height: BTN_SIZE,
-          zIndex: 9999,
           pointerEvents: "auto",
         }}
       >
@@ -352,7 +358,7 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
         />
         <button
           onClick={() => setOpen((v) => !v)}
-          title="Edu51 Assistant"
+          title="Edu51Portal Assistant"
           className="relative w-full h-full rounded-full text-white border-2 border-white/20 flex items-center justify-center shadow-xl transition-opacity hover:opacity-90"
           style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
         >
