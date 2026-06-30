@@ -204,14 +204,17 @@ Google Drive-backed study material management. Admin manages Drive directly; stu
 | **Admin Drive panel** — browse & manage Drive: upload, delete, create folders, signed-in Google profile | `src/components/Admin/AdminDrivePanel.tsx` |
 | Google Drive OAuth hook (popup + postMessage, module-level token cache, auto profile fetch) | `src/hooks/useGoogleDriveAuth.ts` |
 | OAuth callback static page (sends postMessage → closes, never loads React/Supabase) | `public/oauth-callback.html` |
-| Student browse view: real-time Google Drive browser | `src/components/Student/GDriveBrowser.tsx` |
+| Admin-only raw Drive browser (full folder tree, used inside admin panel) | `src/components/Student/GDriveBrowser.tsx` |
+| **Student course list** — course cards per major, left-accent design, reads `courseFolders.ts` | `src/components/Student/GDriveFolderBrowser.tsx` |
+| **Student course detail** — Mid/Final underline tabs, file list w/ preview & download | `src/components/Student/GDriveCourseView.tsx` |
+| Static major → Drive root folder ID map (incl. `skipCommon` flag for AI) | `src/config/courseFolders.ts` |
 | **DB:** `study_folders` + `study_materials` (Supabase uploads) | migration `20260626000000_study_materials` |
 | **DB:** `study_drive_config` (major → GDrive folder ID mapping) | applied via MCP |
 | **Storage:** `study-materials` bucket (50 MB, public) | migration `20260626000000_study_materials` |
 
 **Admin OAuth:** implicit flow (`response_type=token`) using `window.open()` popup + `postMessage`. Redirect URI is `/oauth-callback.html` (static file) to avoid Supabase's `detectSessionFromUrl` overwriting the main session. Google's COOP header blocks `popup.closed`/`popup.close()` from parent — popup closes itself; parent only listens for `GDRIVE_OAUTH_SUCCESS` message. Scope: `drive openid profile email`.  
 **Admin Drive Config tab:** admin sets GDrive folder ID per major (AI / Software Eng / Networking). No code change needed to update root folders.  
-**Student view:** `GDriveBrowser` fetches live from Google Drive API (`VITE_GOOGLE_API_KEY`) on each navigation — no cache.  
+**Student flow:** `GDriveFolderBrowser` lists course folders for the student's major (+ Common unless `skipCommon`) → selecting a course opens `GDriveCourseView`, which finds Mid/Final subfolders and lists files with preview/download. Both fetch live from the Google Drive API (`VITE_GOOGLE_API_KEY`) on each navigation — no cache. `GDriveBrowser` (raw folder tree) is admin-only, reachable only from the admin panel.  
 **Error boundary:** `RootErrorBoundary` in `main.tsx` catches all React render crashes and displays the error + stack trace instead of a blank page.  
 **RLS:** authenticated read; `is_app_admin()` for all writes  
 **Majors:** `'AI'`, `'Software Engineering'`, `'Networking'` (Common removed from admin view)
@@ -314,6 +317,7 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `20260618120000_team_tasks` | `team_tasks` table + RLS (Kanban board) |
 | `team_tasks_realtime` | Add `team_tasks` to `supabase_realtime` publication |
 | `team_tasks_priority` | Add `priority` column (`low`/`medium`/`high`) to `team_tasks` |
+| `20260630000000_lock_down_public_write_rls` | Lock `materials`/`courses`/`users` writes to `is_app_admin()` — previously any anon/authenticated client could insert/update/delete these tables directly via the REST API |
 
 ---
 
@@ -335,6 +339,19 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `startTransition` on navigation | `src/App.tsx` (`goToView`, popstate handler) | Prevents React 18 "suspended during synchronous input" crash when navigating to a lazy view |
 | `listTeamMembers` join | `src/lib/api/teamsApi.ts` | Single Supabase join query replaces 2 sequential round-trips (N+1 fix) |
 | `loading="lazy"` on images | `TeamCard`, `TeamPage`, `UserCard` | Off-screen avatars/banners deferred until they scroll into view |
+
+---
+
+## Security & Deployment
+
+| What | File | Detail |
+|------|------|--------|
+| Security headers (CSP frame-ancestors, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy) | `vercel.json` | Applied to all routes via Vercel `headers` config |
+| SEO sitemap + crawl rules | `public/sitemap.xml`, `public/robots.txt` | Submitted to Google Search Console |
+| Production env vars | Vercel dashboard (Project → Settings → Environment Variables) | `.env.production` is gitignored — never committed; all `VITE_*` keys live in Vercel only |
+| RLS lockdown: `materials`/`courses`/`users` | migration `20260630000000_lock_down_public_write_rls` | These tables previously allowed public (anon+authenticated) INSERT/UPDATE/DELETE with no auth check — locked to `is_app_admin()` |
+
+**Known limitation:** `custom_routines` table still has fully public RLS (`USING (true)` on all commands) because it's keyed by an anonymous `localStorage` device ID, not `auth.uid()` — there's no Supabase-auth identity to scope a policy against without changing the feature's design (it intentionally works for logged-out users).
 
 ---
 
