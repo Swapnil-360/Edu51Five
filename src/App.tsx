@@ -4053,7 +4053,7 @@ For any queries, contact your course instructors or the department.`,
                 {/* Clickable text area */}
                 <button
                   onClick={() => setBannerExpanded((v) => !v)}
-                  className="flex items-start gap-3 min-w-0 text-left group flex-1"
+                  className="flex items-start gap-3 min-w-0 text-left group flex-1 outline-none focus:outline-none"
                   aria-expanded={bannerExpanded}
                 >
                   {/* Pulse dot */}
