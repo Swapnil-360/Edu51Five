@@ -67,7 +67,7 @@ function SlideNav({ tabs, isDarkMode }: SlideNavProps) {
 
   return (
     <ul
-      className={`relative flex items-center rounded-full px-2 py-2 gap-0.5 border transition-colors duration-300 ${
+      className={`relative flex items-center rounded-full px-1.5 py-1.5 gap-0.5 border transition-colors duration-300 ${
         isDarkMode
           ? "bg-slate-800 border-slate-700 shadow-lg shadow-black/30"
           : "bg-white border-slate-300 shadow-md shadow-black/8"
@@ -107,7 +107,7 @@ const NavTab = ({
         const { width } = ref.current.getBoundingClientRect();
         setPosition({ width, opacity: 1, left: ref.current.offsetLeft });
       }}
-      className={`relative z-10 flex items-center gap-1.5 cursor-pointer select-none px-5 py-2 text-sm rounded-full transition-all duration-150 whitespace-nowrap ${
+      className={`relative z-10 flex items-center gap-1.5 cursor-pointer select-none px-3.5 py-1.5 text-sm rounded-full transition-all duration-150 whitespace-nowrap ${
         tab.isActive
           ? isDarkMode
             ? "font-bold text-slate-900"
@@ -146,7 +146,7 @@ const Cursor = ({
   <motion.li
     animate={position}
     transition={{ type: "spring", stiffness: 350, damping: 30 }}
-    className={`absolute z-0 h-9 rounded-full pointer-events-none ${
+    className={`absolute z-0 h-8 rounded-full pointer-events-none ${
       isDarkMode ? "bg-slate-700/70" : "bg-slate-100"
     }`}
   />
@@ -181,7 +181,7 @@ export function AppNavHeader({
 
   const tabs: NavTab[] = [
     {
-      label: "World Cup '26",
+      label: "WC '26",
       view: "wc26",
       badge: "live",
       isActive: currentView === "wc26",

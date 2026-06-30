@@ -52,6 +52,7 @@ const PDFViewer = lazy(() => import("./components/PDFViewer"));
 const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
 const GDriveFolderBrowser = lazy(() => import("./components/Student/GDriveFolderBrowser").then(m => ({ default: m.GDriveFolderBrowser })));
 const GDriveCourseView = lazy(() => import("./components/Student/GDriveCourseView").then(m => ({ default: m.GDriveCourseView })));
+const AIAssistant = lazy(() => import("./components/AIAssistant/AIAssistant").then(m => ({ default: m.AIAssistant })));
 import {
   FileText,
   Play,
@@ -360,8 +361,9 @@ function App() {
   const [showSetNewPasswordModal, setShowSetNewPasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showAnnouncementBanner, setShowAnnouncementBanner] = useState<boolean>(
-    () => localStorage.getItem("edu51five_banner_v2_dismissed") !== "true"
+    () => localStorage.getItem("edu51five_banner_update1_dismissed") !== "true"
   );
+  const [bannerExpanded, setBannerExpanded] = useState(false);
   const [isEditingNotice, setIsEditingNotice] = useState(false);
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -3162,8 +3164,23 @@ For any queries, contact your course instructors or the department.`,
                 </span>
               </button>
 
-              {/* Desktop: sliding pill nav */}
-              <nav className="hidden lg:flex">
+              {/* Desktop: home icon + sliding pill nav */}
+              <nav className="hidden lg:flex items-center gap-2">
+                <button
+                  onClick={() => goToView("home")}
+                  title="Home"
+                  className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 flex-shrink-0 ${
+                    currentView === "home"
+                      ? isDarkMode
+                        ? "bg-white text-slate-900 border-white"
+                        : "bg-slate-900 text-white border-slate-900"
+                      : isDarkMode
+                      ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                      : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50 shadow-sm"
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                </button>
                 <AppNavHeader
                   currentView={currentView}
                   isDarkMode={isDarkMode}
@@ -4032,29 +4049,45 @@ For any queries, contact your course instructors or the department.`,
           {/* ── Announcement Banner ── */}
           {showAnnouncementBanner && (
             <div className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-start justify-between gap-3">
+                {/* Clickable text area */}
+                <button
+                  onClick={() => setBannerExpanded((v) => !v)}
+                  className="flex items-start gap-3 min-w-0 text-left group flex-1"
+                  aria-expanded={bannerExpanded}
+                >
                   {/* Pulse dot */}
-                  <span className="relative flex-shrink-0 h-2.5 w-2.5">
+                  <span className="relative flex-shrink-0 h-2.5 w-2.5 mt-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
                   </span>
-                  <p className="text-sm font-medium truncate">
-                    <span className="font-bold mr-1.5">Coming Soon —</span>
-                    <span className="opacity-90">Edu<span className="text-[#ef4444]">51</span>Portal v2 is on the way with major new features, built by team </span>
-                    <span className="font-semibold">Core We 5</span>
-                    <span className="opacity-90">. Launching within </span>
-                    <span className="font-semibold underline underline-offset-2 decoration-white/50">2 weeks</span>
-                    <span className="opacity-90">. Stay tuned!</span>
+                  <p className="text-sm font-medium leading-snug">
+                    {bannerExpanded ? (
+                      <>
+                        <span className="font-bold">Update in progress.</span>
+                        <span className="opacity-90"> We're actively building and improving Edu<span className="text-[#fca5a5]">51</span>Portal. New features and design updates ship regularly, so things might look a little different each time you visit. Stick around — this is just getting started. Built with care by </span>
+                        <span className="font-semibold underline underline-offset-2 decoration-white/60">CoreWe-5</span>
+                        <span className="opacity-90"> 🚀</span>
+                        <span className="ml-2 text-xs opacity-60 group-hover:opacity-100 transition-opacity">(tap to collapse)</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold">Update in progress</span>
+                        <span className="opacity-90"> · Edu<span className="text-[#fca5a5]">51</span>Portal is evolving with new features regularly. Built by </span>
+                        <span className="font-semibold">CoreWe-5</span>
+                        <span className="opacity-60 text-xs ml-1.5">tap for more</span>
+                      </>
+                    )}
                   </p>
-                </div>
+                </button>
+                {/* Dismiss */}
                 <button
                   onClick={() => {
                     setShowAnnouncementBanner(false);
-                    localStorage.setItem("edu51five_banner_v2_dismissed", "true");
+                    localStorage.setItem("edu51five_banner_update1_dismissed", "true");
                   }}
                   aria-label="Dismiss announcement"
-                  className="flex-shrink-0 p-1 rounded-md hover:bg-white/20 transition-colors"
+                  className="flex-shrink-0 p-1 mt-0.5 rounded-md hover:bg-white/20 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -8391,6 +8424,12 @@ For any queries, contact your course instructors or the department.`,
           setShowChangeEmailModal(true);
         }}
       />
+
+      {isLoggedIn && authSession?.user?.id && (
+        <Suspense fallback={null}>
+          <AIAssistant isDarkMode={isDarkMode} userId={authSession.user.id} />
+        </Suspense>
+      )}
     </div>
   );
 }

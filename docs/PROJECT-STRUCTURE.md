@@ -318,6 +318,7 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | `team_tasks_realtime` | Add `team_tasks` to `supabase_realtime` publication |
 | `team_tasks_priority` | Add `priority` column (`low`/`medium`/`high`) to `team_tasks` |
 | `20260630000000_lock_down_public_write_rls` | Lock `materials`/`courses`/`users` writes to `is_app_admin()` — previously any anon/authenticated client could insert/update/delete these tables directly via the REST API |
+| `20260701000000_ai_chat_usage` | `ai_chat_usage` table — per-user daily message counter for AI Assistant rate-limiting |
 
 ---
 
@@ -327,6 +328,32 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 |----------|---------|---------|
 | `sync-wc26-matches` | On-demand (client throttled) | Fetch & upsert WC2026 matches from football-data.org |
 | `send-push-notification` | DB trigger / admin action | Send Web Push to subscribed users |
+| `send-email-notification` | Admin action | Send transactional/broadcast emails via Brevo |
+| `send-password-reset` | User action | Send password reset email |
+| `exam-reminder` | Scheduled / admin | Send exam reminder notifications |
+| `ai-chat` | On-demand (chat widget) | Verifies caller JWT, enforces 30 msg/day rate limit via `ai_chat_usage`, proxies to Gemini 2.5 Flash — current version: v5 |
+
+---
+
+## AI Assistant
+
+Floating chat widget (bottom-right, logged-in students only) for platform-navigation help and general academic Q&A, backed by Gemini's free tier.
+
+| What | File |
+|------|------|
+| Chat widget (toggle button + panel) | `src/components/AIAssistant/AIAssistant.tsx` |
+| Client API wrapper (`supabase.functions.invoke('ai-chat', ...)`) | `src/lib/api/aiChatApi.ts` |
+| Edge function — JWT verification, rate limiting, Gemini proxy | `supabase/functions/ai-chat/index.ts` |
+| **DB:** `ai_chat_usage` (daily message counter per user) | migration `20260701000000_ai_chat_usage` |
+| **Secret:** `GEMINI_API_KEY` | Supabase Edge Function secrets (dashboard) — never in client env |
+
+**Design:** glowing violet/indigo toggle button (`w-14 h-14 rounded-full`) with framer-motion icon swap; panel rendered via `createPortal` into a dedicated `#ai-assistant-portal` div appended to `<body>` (avoids scroll issues caused by `body { display:flex }` and ancestor `transform` from framer-motion). Panel uses independent `position:fixed` inline styles — not Tailwind classes — to guarantee positioning across all browsers. Panel: `w-340px`, `height:480px`, `max-height:calc(100vh-140px)`. Violet/indigo gradient matches platform palette.  
+**Auth:** `verify_jwt: true` at the Supabase platform level (rejects unauthenticated before function runs) *and* internal `supabase.auth.getUser()` verification — defense in depth, since this endpoint burns shared free-tier quota.  
+**Rate limit:** 30 messages/user/day tracked in `ai_chat_usage` (service-role client bypasses RLS for writes). Students can `SELECT` their own row only.  
+**History:** `sessionStorage` only (key: `edu51five_ai_chat_{userId}`) — resets per browser tab, zero server-side retention. Welcome message is always overwritten from the constant on load so stale cached text never shows.  
+**Model:** `gemini-2.5-flash` (free tier). `gemini-2.0-flash` was tried first but has `limit:0` quota on this API key project.  
+**System prompt:** hardcoded in the edge function — scoped to all BUBT Intake 51 sections/majors, describes all platform features, instructs 1–3 sentence replies, human tone, no assignment/exam solutions.  
+**Scope:** all Intake 51 students across all sections (not Section 5 only — updated in edge function v5).
 
 ---
 
@@ -352,6 +379,22 @@ All migrations in chronological order under `supabase/migrations/`. Key ones:
 | RLS lockdown: `materials`/`courses`/`users` | migration `20260630000000_lock_down_public_write_rls` | These tables previously allowed public (anon+authenticated) INSERT/UPDATE/DELETE with no auth check — locked to `is_app_admin()` |
 
 **Known limitation:** `custom_routines` table still has fully public RLS (`USING (true)` on all commands) because it's keyed by an anonymous `localStorage` device ID, not `auth.uid()` — there's no Supabase-auth identity to scope a policy against without changing the feature's design (it intentionally works for logged-out users).
+
+---
+
+## Announcement Banner
+
+Top-of-page dismissible banner shown on the home/main views (not inside fullscreen views like Teams, Semester, etc.).
+
+| What | File | Detail |
+|------|------|--------|
+| Banner state + dismiss | `src/App.tsx` | `showAnnouncementBanner` (useState, initialised from `localStorage`), `bannerExpanded` (useState) |
+| Dismiss key | `localStorage` | `edu51five_banner_update1_dismissed` — bump the key name to force the banner to reappear for all users after a content update |
+| Expand/collapse | click on text area | Collapsed: single-line summary with "tap for more". Expanded: full message. Tap again to collapse. |
+| Dismiss (X) | button right side | Sets localStorage key + hides banner for the session |
+
+**Current message (update1):** "Update in progress · Edu51Portal is evolving with new features regularly. Built by CoreWe-5" (collapsed) / full expanded version explains regular updates, design changes, team name CoreWe-5.  
+**Team name:** CoreWe-5 (not "Core We 5" or "Core We-5").
 
 ---
 
