@@ -4,6 +4,7 @@ interface MarqueeTickerProps {
 
 const features = [
     { label: "World Cup '26 — Team Challenges & Leaderboard" },
+    { label: 'AI Study Assistant — Ask anything, anytime' },
     { label: 'Semester Progress Tracker' },
     { label: 'Team Building & Kanban Board' },
     { label: 'Student Network & Connections' },

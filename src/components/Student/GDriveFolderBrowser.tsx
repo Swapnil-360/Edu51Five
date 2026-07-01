@@ -21,12 +21,12 @@ interface GDriveFolderBrowserProps {
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || '';
 
-// Subtle, refined accent per major — only used for the left border stripe and icon
+// Bamboo Teal — earthy, muted tones per major for left border stripe and icon
 const MAJOR_ACCENT: Record<string, { color: string; label: string }> = {
-  'AI':                   { color: '#8b5cf6', label: 'AI' },
-  'Software Engineering': { color: '#3b82f6', label: 'SE' },
-  'Networking':           { color: '#10b981', label: 'NET' },
-  'Common':               { color: '#f59e0b', label: 'CSE' },
+  'AI':                   { color: '#4e7d7a', label: 'AI' },   // teal primary
+  'Software Engineering': { color: '#5c7d8a', label: 'SE' },   // muted blue-slate
+  'Networking':           { color: '#4a8c6e', label: 'NET' },  // muted forest green
+  'Common':               { color: '#8a7040', label: 'CSE' },  // warm sand
 };
 
 function cls(...a: (string | false | null | undefined)[]) { return a.filter(Boolean).join(' '); }

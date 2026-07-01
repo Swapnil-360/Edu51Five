@@ -48,6 +48,7 @@ import { uploadRoutineAttachment } from "./lib/storage";
 import type { Feedback, FeedbackStatus } from "./types";
 import MarqueeTicker from "./components/MarqueeTicker";
 import { MajorCardStack } from "./components/ui/MajorCardStack";
+import { Tiles } from "./components/ui/tiles";
 const PDFViewer = lazy(() => import("./components/PDFViewer"));
 const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
 const GDriveFolderBrowser = lazy(() => import("./components/Student/GDriveFolderBrowser").then(m => ({ default: m.GDriveFolderBrowser })));
@@ -3049,7 +3050,7 @@ For any queries, contact your course instructors or the department.`,
     <div
       className={`min-h-screen transition-colors duration-300 ${
         isDarkMode
-          ? "bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800"
+          ? "bg-[#0e1312]"
           : "bg-white"
       }`}
     >
@@ -4044,11 +4045,12 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
       {!["semester","custom","profile","network","teams","team","alumni","wc26"].includes(currentView) && (
-        <main className="pt-[72px] lg:pt-20 min-h-screen [overflow-x:clip]">
+        <main className="relative pt-[72px] lg:pt-20 min-h-screen [overflow-x:clip]">
+          {currentView === "home" && isDarkMode && <Tiles isDarkMode={isDarkMode} />}
 
           {/* ── Announcement Banner ── */}
           {showAnnouncementBanner && (
-            <div className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white">
+            <div className={`relative z-10 w-full text-white ${isDarkMode ? "bg-[#151b1a] border-b border-[#2c3b3a]" : "bg-[#4e7d7a]"}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-start justify-between gap-3">
                 {/* Clickable text area */}
                 <button
@@ -4100,7 +4102,7 @@ For any queries, contact your course instructors or the department.`,
           <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-4 sm:py-5 lg:py-6">
             {/* Home Page */}
             {currentView === "home" && (
-              <div className="space-y-6 sm:space-y-8 md:space-y-10 w-full">
+              <div className="relative z-10 space-y-6 sm:space-y-8 md:space-y-10 w-full">
                 {/* Welcome Hero Section */}
                 <div className="text-center pt-3 pb-1 sm:pt-5 sm:pb-2">
                   {/* Logo */}
@@ -4348,6 +4350,7 @@ For any queries, contact your course instructors or the department.`,
                           <li>Academic Resource Hub</li>
                           <li>Exam Routines & Notices</li>
                           <li>Course Materials & Tracker</li>
+                          <li>AI Study Assistant</li>
                         </ul>
                       </div>
 

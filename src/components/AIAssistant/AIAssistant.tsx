@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { X, Send, Sparkles, BrainCircuit } from "lucide-react";
+import { AstronautIcon } from "../ui/animated-cosmic-icons";
 import { sendChatMessage, type ChatTurn } from "../../lib/api/aiChatApi";
 
-// Full-viewport fixed overlay — position:absolute children are always viewport-anchored,
-// bypassing any body flex/transform context that breaks position:fixed on Android Chrome.
 function getPortalRoot(): HTMLElement {
   let el = document.getElementById("ai-assistant-portal");
   if (!el) {
@@ -19,7 +18,7 @@ function getPortalRoot(): HTMLElement {
       "pointer-events:none",
       "overflow:hidden",
     ].join(";");
-    document.documentElement.appendChild(el); // attach to <html>, not flex <body>
+    document.documentElement.appendChild(el);
   }
   return el;
 }
@@ -46,13 +45,21 @@ const WELCOME: Message = {
   text: "Hey! Ask me anything about the platform or your coursework — I'll keep it brief.",
 };
 
-const TypingIndicator = () => (
-  <div className="flex items-center gap-1.5 px-4 py-3 rounded-2xl rounded-bl-sm w-fit bg-white/[0.06] border border-white/[0.07]">
+// Platform primary — Claude Bamboo Teal accent
+const BLUE = "#4e7d7a";
+const BLUE_DARK = "#3d6361";
+
+const TypingIndicator = ({ dk }: { dk: boolean }) => (
+  <div className={cls(
+    "flex items-center gap-1.5 px-4 py-3 rounded-2xl rounded-bl-sm w-fit border",
+    dk ? "bg-[#212d2b] border-[#2c3b3a]" : "bg-slate-100 border-slate-200"
+  )}>
     {[0, 1, 2].map((d) => (
       <motion.span
         key={d}
-        className="w-1.5 h-1.5 rounded-full bg-violet-400"
-        animate={{ scale: [1, 1.4, 1], opacity: [0.35, 1, 0.35] }}
+        className="w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: BLUE }}
+        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 1, 0.4] }}
         transition={{ duration: 0.85, repeat: Infinity, delay: d * 0.17 }}
       />
     ))}
@@ -137,14 +144,11 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
     }
   };
 
-  // Using absolute positioning inside the full-viewport fixed overlay.
-  // This is bulletproof on Android Chrome where position:fixed children
-  // of a flex body are unreliable.
   const BTN_SIZE = 56;
   const BTN_RIGHT = 24;
   const BTN_BOTTOM = 24;
   const PANEL_RIGHT = 24;
-  const PANEL_BOTTOM = BTN_BOTTOM + BTN_SIZE + 14; // 14px gap above button
+  const PANEL_BOTTOM = BTN_BOTTOM + BTN_SIZE + 14;
 
   return createPortal(
     <>
@@ -167,88 +171,95 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
               pointerEvents: "auto",
             }}
           >
-            {/* Ambient glow behind panel */}
-            <div
-              style={{
-                position: "absolute",
-                inset: -12,
-                borderRadius: 24,
-                background: "linear-gradient(135deg,#7c3aed,#4f46e5,#2563eb)",
-                opacity: 0.18,
-                filter: "blur(28px)",
-                pointerEvents: "none",
-              }}
-            />
+            {/* Subtle glow — barely visible, just enough depth */}
+            <div style={{
+              position: "absolute",
+              inset: -10,
+              borderRadius: 26,
+              background: `radial-gradient(ellipse at bottom right, ${BLUE}22, transparent 70%)`,
+              pointerEvents: "none",
+            }} />
 
             {/* Panel */}
             <div
-              className={cls(
-                "relative w-full h-full rounded-2xl flex flex-col overflow-hidden border",
-                dk ? "bg-[#0c0e1c] border-white/[0.08]" : "bg-white border-violet-200/50",
-              )}
               style={{
-                boxShadow: "0 20px 56px rgba(79,70,229,0.2), 0 0 0 1px rgba(124,58,237,0.12)",
+                position: "relative",
+                width: "100%",
+                height: "100%",
+                borderRadius: 20,
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                backgroundColor: dk ? "#151b1a" : "#ffffff",
+                border: `1px solid ${dk ? "#2c3b3a" : "#e2e8f0"}`,
+                boxShadow: dk
+                  ? "0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px #2c3b3a"
+                  : "0 24px 48px rgba(0,0,0,0.12), 0 0 0 1px #e2e8f0",
               }}
             >
               {/* Header */}
-              <div
-                className={cls(
-                  "flex items-center justify-between px-4 py-3 border-b flex-shrink-0",
-                  dk ? "border-white/[0.07]" : "border-violet-100/70",
-                )}
-                style={{
-                  background: dk
-                    ? "linear-gradient(90deg,rgba(124,58,237,0.08),rgba(79,70,229,0.05),rgba(37,99,235,0.08))"
-                    : "linear-gradient(90deg,rgba(124,58,237,0.05),rgba(79,70,229,0.03))",
-                }}
-              >
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderBottom: `1px solid ${dk ? "#2c3b3a" : "#f1f5f9"}`,
+                backgroundColor: dk ? "#212d2b" : "#f8fafc",
+                flexShrink: 0,
+              }}>
                 <div className="flex items-center gap-2.5">
                   <div className="relative">
                     <div
                       className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                      style={{ background: `linear-gradient(135deg,${BLUE},${BLUE_DARK})` }}
                     >
-                      <Sparkles className="w-4 h-4 text-white" />
+                      <BrainCircuit className="w-4 h-4 text-white" />
                     </div>
                     <span
                       className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2"
-                      style={{ borderColor: dk ? "#0c0e1c" : "#ffffff" }}
+                      style={{ borderColor: dk ? "#212d2b" : "#f8fafc" }}
                     />
                   </div>
                   <div>
-                    <p className={cls("text-[13px] font-semibold leading-tight", dk ? "text-white" : "text-slate-900")}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: dk ? "#e9ecec" : "#0f172a", lineHeight: 1.2 }}>
                       Edu51Portal Assistant
                     </p>
-                    <p className={cls("text-[10.5px]", dk ? "text-slate-500" : "text-slate-400")}>
-                      Platform help & study questions
+                    <p style={{ fontSize: 10.5, color: dk ? "#93a5a4" : "#94a3b8" }}>
+                      Powered by Gemini
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setOpen(false)}
-                  className={cls(
-                    "flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
-                    dk ? "text-slate-500 hover:text-slate-300 hover:bg-white/[0.07]" : "text-slate-400 hover:text-slate-700 hover:bg-violet-50",
-                  )}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                  style={{ color: dk ? "#93a5a4" : "#94a3b8" }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = dk ? "#2c3b3a" : "#f1f5f9";
+                    (e.currentTarget as HTMLButtonElement).style.color = dk ? "#e9ecec" : "#334155";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color = dk ? "#93a5a4" : "#94a3b8";
+                  }}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               {/* Messages */}
-              <div ref={listRef} className="flex-1 overflow-y-auto px-3.5 py-3 space-y-2.5 min-h-0">
+              <div ref={listRef} className="flex-1 overflow-y-auto min-h-0" style={{ padding: "14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
                 {messages.length === 1 && messages[0] === WELCOME && (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
                     <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2.5"
-                      style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
+                      style={{ background: `linear-gradient(135deg,${BLUE},${BLUE_DARK})` }}
                     >
                       <Sparkles className="w-6 h-6 text-white" />
                     </div>
-                    <p className={cls("text-[12px] font-medium mb-1", dk ? "text-slate-300" : "text-slate-700")}>
+                    <p style={{ fontSize: 12, fontWeight: 500, color: dk ? "#e9ecec" : "#334155", marginBottom: 4 }}>
                       Ask me anything
                     </p>
-                    <p className={cls("text-[11px] max-w-[180px] leading-relaxed", dk ? "text-slate-600" : "text-slate-400")}>
+                    <p style={{ fontSize: 11, color: dk ? "#93a5a4" : "#94a3b8", maxWidth: 180, lineHeight: 1.5 }}>
                       Platform navigation or coursework — I've got you.
                     </p>
                   </div>
@@ -260,24 +271,23 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.16 }}
-                    className={cls("flex", m.role === "user" ? "justify-end" : "justify-start")}
+                    style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
                   >
                     <div
-                      className={cls(
-                        "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-[12.5px] leading-relaxed whitespace-pre-wrap break-words",
-                        m.role === "user"
-                          ? "text-white rounded-br-sm"
+                      style={{
+                        maxWidth: "82%",
+                        padding: "9px 13px",
+                        borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                        fontSize: 12.5,
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        ...(m.role === "user"
+                          ? { background: `linear-gradient(135deg,${BLUE},${BLUE_DARK})`, color: "#ffffff" }
                           : dk
-                          ? "text-slate-200 rounded-bl-sm border border-white/[0.07]"
-                          : "text-slate-800 rounded-bl-sm border border-slate-200/60",
-                      )}
-                      style={
-                        m.role === "user"
-                          ? { background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }
-                          : dk
-                          ? { background: "rgba(255,255,255,0.055)" }
-                          : { background: "#f4f5f9" }
-                      }
+                          ? { background: "#212d2b", color: "#e9ecec", border: "1px solid #2c3b3a" }
+                          : { background: "#f1f5f9", color: "#1e293b", border: "1px solid #e2e8f0" }),
+                      }}
                     >
                       {m.text}
                     </div>
@@ -285,19 +295,22 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
                 ))}
 
                 {loading && (
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
-                    <TypingIndicator />
+                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                    <TypingIndicator dk={dk} />
                   </motion.div>
                 )}
               </div>
 
               {/* Input */}
-              <div
-                className={cls(
-                  "flex items-end gap-2 px-3 py-3 border-t flex-shrink-0",
-                  dk ? "border-white/[0.07]" : "border-violet-100/60",
-                )}
-              >
+              <div style={{
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 8,
+                padding: "10px 12px",
+                borderTop: `1px solid ${dk ? "#2c3b3a" : "#f1f5f9"}`,
+                backgroundColor: dk ? "#151b1a" : "#ffffff",
+                flexShrink: 0,
+              }}>
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -309,23 +322,29 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask a question…"
                   rows={1}
-                  style={{ maxHeight: 96 }}
-                  className={cls(
-                    "flex-1 resize-none px-3.5 py-2.5 rounded-xl text-[12.5px] border outline-none transition-colors",
-                    dk
-                      ? "bg-white/[0.055] border-white/[0.08] text-slate-100 placeholder-slate-600 focus:border-violet-500/40"
-                      : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-violet-400/50",
-                  )}
+                  className="flex-1 resize-none rounded-xl outline-none transition-colors"
+                  style={{
+                    maxHeight: 96,
+                    padding: "9px 13px",
+                    fontSize: 12.5,
+                    backgroundColor: dk ? "#212d2b" : "#f8fafc",
+                    border: `1px solid ${dk ? "#2c3b3a" : "#e2e8f0"}`,
+                    color: dk ? "#e9ecec" : "#0f172a",
+                  }}
+                  onFocus={e => { e.target.style.borderColor = BLUE; }}
+                  onBlur={e => { e.target.style.borderColor = dk ? "#2c3b3a" : "#e2e8f0"; }}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || loading}
-                  className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl text-white disabled:opacity-25 disabled:cursor-not-allowed transition-all active:scale-95"
-                  style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                  className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl text-white transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ background: `linear-gradient(135deg,${BLUE},${BLUE_DARK})` }}
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
+
+
             </div>
           </motion.div>
         )}
@@ -345,22 +364,26 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
         }}
       >
         {/* Glow */}
-        <div
-          style={{
-            position: "absolute",
-            inset: -8,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
-            opacity: 0.38,
-            filter: "blur(14px)",
-            pointerEvents: "none",
-          }}
-        />
+        <div style={{
+          position: "absolute",
+          inset: -10,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${BLUE}55, transparent 70%)`,
+          filter: "blur(10px)",
+          pointerEvents: "none",
+        }} />
+
         <button
           onClick={() => setOpen((v) => !v)}
           title="Edu51Portal Assistant"
-          className="relative w-full h-full rounded-full text-white border-2 border-white/20 flex items-center justify-center shadow-xl transition-opacity hover:opacity-90"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+          className="relative w-full h-full rounded-full flex items-center justify-center shadow-lg transition-opacity hover:opacity-90"
+          style={{
+            background: dk
+              ? `linear-gradient(145deg,#151b1a,#212d2b)`
+              : "#ffffff",
+            border: `2px solid ${dk ? "#2c3b3a" : "#4e7d7a"}`,
+            boxShadow: `0 4px 20px rgba(78,125,122,0.3)`,
+          }}
         >
           <AnimatePresence mode="wait" initial={false}>
             {open ? (
@@ -368,14 +391,14 @@ export function AIAssistant({ isDarkMode: dk, userId }: Props) {
                 initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }}
                 exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.16 }}
               >
-                <X className="w-5 h-5" />
+                <X className={cls("w-5 h-5", dk ? "text-[#e9ecec]" : "text-slate-600")} />
               </motion.span>
             ) : (
               <motion.span key="msg"
                 initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }}
                 exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.16 }}
               >
-                <MessageCircle className="w-5 h-5" />
+                <AstronautIcon size={26} strokeColor={dk ? "#94A3B8" : "#334155"} />
               </motion.span>
             )}
           </AnimatePresence>

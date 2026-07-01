@@ -22,8 +22,8 @@ export default {
     themes: [
       {
         edu51: {
-          'primary': '#2563eb',
-          'primary-focus': '#1d4ed8',
+          'primary': '#4e7d7a',
+          'primary-focus': '#3d6361',
           'primary-content': '#ffffff',
 
           'secondary': '#7c3aed',
