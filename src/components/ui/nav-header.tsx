@@ -181,6 +181,12 @@ export function AppNavHeader({
 
   const tabs: NavTab[] = [
     {
+      label: "Home",
+      view: "home",
+      isActive: currentView === "home",
+      onClick: () => goToView("home"),
+    },
+    {
       label: "WC '26",
       view: "wc26",
       badge: "live",

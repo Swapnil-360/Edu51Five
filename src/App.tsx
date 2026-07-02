@@ -3180,23 +3180,8 @@ For any queries, contact your course instructors or the department.`,
                 </span>
               </button>
 
-              {/* Desktop: home icon + sliding pill nav */}
-              <nav className="hidden lg:flex items-center gap-2">
-                <button
-                  onClick={() => goToView("home")}
-                  title="Home"
-                  className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-200 flex-shrink-0 ${
-                    currentView === "home"
-                      ? isDarkMode
-                        ? "bg-white text-slate-900 border-white"
-                        : "bg-slate-900 text-white border-slate-900"
-                      : isDarkMode
-                      ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
-                      : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50 shadow-sm"
-                  }`}
-                >
-                  <Home className="h-4 w-4" />
-                </button>
+              {/* Desktop: sliding pill nav */}
+              <nav className="hidden lg:flex items-center">
                 <AppNavHeader
                   currentView={currentView}
                   isDarkMode={isDarkMode}

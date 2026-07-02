@@ -250,7 +250,7 @@ export default function ProfilePage({ username, currentUserId, initialAvatarUrl,
   const ConnectIcon = !connection ? UserPlus : connection.status === "accepted" ? UserCheck : connection.addressee_id === currentUserId ? UserCheck : UserX;
 
   return (
-    <div className={`min-h-screen pb-12 ${pageBg}`}>
+    <div className={`min-h-screen pb-32 md:pb-20 ${pageBg}`}>
       <style>{`
         @keyframes flagWave { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.15)} }
         @keyframes wcPop    { 0%{transform:scale(1) rotate(0deg)} 30%{transform:scale(1.35) rotate(-10deg)} 60%{transform:scale(1.3) rotate(8deg)} 80%{transform:scale(1.2) rotate(-4deg)} 100%{transform:scale(1.25) rotate(0deg)} }
