@@ -3056,35 +3056,50 @@ For any queries, contact your course instructors or the department.`,
     >
       {/* Major Access Notification Toast */}
       {majorAccessMessage && createPortal(
-        <div className="fixed top-20 inset-x-0 z-[200] flex justify-center px-3 pointer-events-none animate-fade-in-down">
+        <div className="fixed top-24 right-4 sm:right-6 left-4 sm:left-auto z-[200] flex justify-end pointer-events-none animate-fade-in-down max-w-sm w-full ml-auto">
           <div
-            className={`pointer-events-auto w-full max-w-md rounded-xl shadow-2xl p-3 sm:p-4 border flex items-start gap-3 ${
+            className={`pointer-events-auto w-full rounded-xl shadow-2xl p-4 border flex items-start gap-3.5 transition-all duration-300 border-l-4 ${
+              isDarkMode
+                ? "bg-slate-800 border-slate-700 text-slate-100 shadow-black/50"
+                : "bg-white border-slate-200 text-slate-900 shadow-slate-200/50"
+            } ${
               majorAccessMessage.type === "error"
-                ? "bg-red-50 border-red-200"
+                ? "border-l-rose-500"
                 : majorAccessMessage.type === "success"
-                  ? "bg-blue-50 border-blue-200"
-                  : "bg-slate-50 border-slate-200"
+                  ? "border-l-emerald-500"
+                  : "border-l-teal-500"
             }`}
           >
             {/* Icon — shape differentiates, not just color */}
             {majorAccessMessage.type === "error" ? (
-              <AlertCircle className="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5" />
+              <AlertCircle className="flex-shrink-0 w-5 h-5 text-rose-500 mt-0.5" />
             ) : majorAccessMessage.type === "success" ? (
-              <CheckCircle className="flex-shrink-0 w-5 h-5 text-blue-600 mt-0.5" />
+              <CheckCircle className="flex-shrink-0 w-5 h-5 text-emerald-500 mt-0.5" />
             ) : (
-              <Info className="flex-shrink-0 w-5 h-5 text-slate-500 mt-0.5" />
+              <Info className={`flex-shrink-0 w-5 h-5 mt-0.5 ${isDarkMode ? "text-teal-400" : "text-teal-600"}`} />
             )}
             <div className="flex-1 min-w-0">
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${
-                majorAccessMessage.type === "error" ? "text-red-500" : majorAccessMessage.type === "success" ? "text-blue-500" : "text-slate-400"
+                majorAccessMessage.type === "error"
+                  ? "text-rose-500"
+                  : majorAccessMessage.type === "success"
+                    ? "text-emerald-500"
+                    : isDarkMode ? "text-teal-400" : "text-teal-600"
               }`}>
                 {majorAccessMessage.type === "error" ? "Error" : majorAccessMessage.type === "success" ? "Success" : "Notice"}
               </p>
-              <p className="font-medium text-xs sm:text-sm leading-snug break-words text-slate-800">
+              <p className={`font-semibold text-xs sm:text-sm leading-snug break-words ${
+                isDarkMode ? "text-slate-100" : "text-slate-800"
+              }`}>
                 {majorAccessMessage.message}
               </p>
             </div>
-            <button onClick={() => setMajorAccessMessage(null)} className="flex-shrink-0 text-slate-400 hover:text-slate-600 mt-0.5">
+            <button
+              onClick={() => setMajorAccessMessage(null)}
+              className={`flex-shrink-0 mt-0.5 transition-colors ${
+                isDarkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
               <X className="h-4 w-4" />
             </button>
           </div>

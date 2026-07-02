@@ -684,7 +684,7 @@ export function SignUpModal({
                   >
                     <option value="">Select your major</option>
                     <option value="AI">Artificial Intelligence</option>
-                    <option value="Software">Software Engineering</option>
+                    <option value="Software Engineering">Software Engineering</option>
                     <option value="Networking">Computer Networking</option>
                   </select>
                 </div>
