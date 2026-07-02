@@ -229,7 +229,7 @@ Google Drive-backed study material management. Admin manages Drive directly; stu
 | Section view | `src/components/Student/SectionView.tsx` | — |
 | Course view | `src/components/Student/CourseView.tsx` | — |
 | Semester tracker | `src/components/SemesterTracker.tsx` | — |
-| Custom routine | `src/components/Student/CustomRoutine.tsx` | — |
+| Custom routine | `src/components/Student/CustomRoutine.tsx` | Modern redesign (2026-07-02): 280px form sidebar + colorful timetable grid. Per-day accent headers (Sun=sky, Mon=violet, Tue=amber, Wed=emerald, Thu=rose) as compact pills in a sticky row. Fixed-height grid (440px) with percentage-based absolute positioning for cards. Time column shows hour ranges ("8–9 AM"). Full-width break overlay spanning all columns. Notes column (right, `minmax(140px, 190px)`) with editable per-slot textareas persisted to `localStorage`. Download via `window.print()`. Syncs to `user_routines` table (auth-scoped). All logic unchanged (overlap detection, 3hr lab auto-split, RLS). |
 | Exam materials dashboard | `src/components/Student/ExamMaterialsDashboard.tsx` | — |
 | PDF viewer | `src/components/PDFViewer.tsx` + `PDFViewer.css` | Fullscreen-capable modal with dark/light mode, entry animation, loading/error states, responsive sizing via CSS (`dvh`, `min()`), no emojis — fully keyboard and touch accessible |
 | Material viewer modal | `src/App.tsx` (~line 7789) | Inline modal opened via `openMaterialViewer(material)` from GDriveCourseView. Redesigned 2026-06-20: backdrop blur, color-coded file type icons, gradient header, dark/light aware, `pdf-scale-in` entry animation. |
@@ -378,7 +378,7 @@ Floating chat widget (bottom-right, logged-in students only) for platform-naviga
 | Production env vars | Vercel dashboard (Project → Settings → Environment Variables) | `.env.production` is gitignored — never committed; all `VITE_*` keys live in Vercel only |
 | RLS lockdown: `materials`/`courses`/`users` | migration `20260630000000_lock_down_public_write_rls` | These tables previously allowed public (anon+authenticated) INSERT/UPDATE/DELETE with no auth check — locked to `is_app_admin()` |
 
-**Known limitation:** `custom_routines` table still has fully public RLS (`USING (true)` on all commands) because it's keyed by an anonymous `localStorage` device ID, not `auth.uid()` — there's no Supabase-auth identity to scope a policy against without changing the feature's design (it intentionally works for logged-out users).
+| Custom routine storage | migration `20260702000000_user_routines` | Replaced anonymous device-UUID `custom_routines` table with auth-scoped `user_routines` (`user_id` references `auth.users`). Full RLS: users read/write only their own rows. Old table dropped. |
 
 ---
 

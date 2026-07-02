@@ -8308,10 +8308,11 @@ For any queries, contact your course instructors or the department.`,
 
       {/* Custom Routine Page */}
       {currentView === "custom" && (
-        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-y-contain">
+        <main className="fixed top-[72px] lg:top-20 inset-x-0 bottom-0 z-40 overflow-hidden">
           <CustomRoutine
             onClose={() => goToView("home")}
             isDarkMode={isDarkMode}
+            userId={authSession?.user?.id}
           />
         </main>
       )}
