@@ -3511,6 +3511,35 @@ For any queries, contact your course instructors or the department.`,
             {/* Menu Items */}
             <div className="flex-1 p-3 sm:p-4 space-y-2 sm:space-y-3">
 
+              {/* Home */}
+              <button
+                onClick={() => {
+                  goToView("home");
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg transition-all duration-300 border ${
+                  isDarkMode
+                    ? "hover:bg-slate-800/50 border-gray-700/50 hover:border-slate-600/50 text-gray-100"
+                    : "hover:bg-slate-100/50 border-gray-200/50 hover:border-slate-300 text-gray-900"
+                } ${currentView === "home" ? (isDarkMode ? "bg-slate-800/80 border-slate-700" : "bg-slate-100 border-slate-300") : ""}`}
+              >
+                <div
+                  className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}
+                >
+                  <Home
+                    className={`w-5 h-5 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}
+                  />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-semibold text-sm">Home</p>
+                  <p
+                    className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    Main Dashboard
+                  </p>
+                </div>
+              </button>
+
               {/* World Cup 2026 */}
               <button
                 onClick={() => {
