@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { FileText, FileSpreadsheet, ImageIcon, Download, Globe, Search, Users, Eye } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { TeamFile } from '../../types/social';
 import { listPublicFiles, formatFileSize, fileTypeLabel } from '../../lib/api/filesApi';
 
@@ -178,15 +178,13 @@ export default function PublicFilesPage({ isDarkMode, onViewTeam, onViewPreview 
           </div>
         ) : (
           <>
-            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <AnimatePresence>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {displayed.map((file, idx) => (
                   <motion.div
                     key={file.id}
-                    layout
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(idx * 0.03, 0.2), duration: 0.25 }}
+                    transition={{ delay: Math.min(idx * 0.025, 0.15), duration: 0.2 }}
                     className={`group flex flex-col gap-3 p-4 rounded-2xl border transition-shadow hover:shadow-md ${
                       isDarkMode ? 'border-slate-800 bg-slate-900 hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
@@ -273,8 +271,7 @@ export default function PublicFilesPage({ isDarkMode, onViewTeam, onViewPreview 
                     </div>
                   </motion.div>
                 ))}
-              </AnimatePresence>
-            </motion.div>
+            </div>
 
             {/* Load more */}
             {hasMore && (

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, startTransition } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from "./lib/supabase";
 import { Notice } from "./types";
@@ -253,6 +254,8 @@ function App() {
       else if (view === "shared-resources") path = "/shared-resources";
       else if (view === "home") path = "/home";
       window.history.pushState({}, "", path);
+      // Dismiss any lingering toast when navigating away
+      if (!["ai", "section5"].includes(view)) setMajorAccessMessage(null);
       startTransition(() => setCurrentView(view));
     },
     [],
@@ -436,13 +439,15 @@ function App() {
     message: string;
   } | null>(null);
 
-  // Helper to show major access messages
+  const _toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const _welcomeShown = useRef(false);
   const showMajorAccessNotification = (
     type: "error" | "success" | "info",
     message: string,
   ) => {
+    if (_toastTimer.current) clearTimeout(_toastTimer.current);
     setMajorAccessMessage({ type, message });
-    setTimeout(() => setMajorAccessMessage(null), 4000);
+    _toastTimer.current = setTimeout(() => setMajorAccessMessage(null), type === "error" ? 4000 : 2000);
   };
 
   useEffect(() => {
@@ -3180,7 +3185,7 @@ For any queries, contact your course instructors or the department.`,
                 </span>
               </button>
 
-              {/* Desktop: sliding pill nav */}
+              {/* Desktop: sliding pill nav with home icon as first tab */}
               <nav className="hidden lg:flex items-center">
                 <AppNavHeader
                   currentView={currentView}
@@ -3422,7 +3427,7 @@ For any queries, contact your course instructors or the department.`,
                 </div>
               )}
 
-              {/* Notification Bell */}
+              {/* Notification Bell + Popover */}
               {isLoggedIn && (
                 <div className="relative">
                   <button
@@ -3441,6 +3446,128 @@ For any queries, contact your course instructors or the department.`,
                       </span>
                     )}
                   </button>
+
+                  <AnimatePresence>
+                    {showNoticePanel && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                        className={`notification-panel absolute right-0 mt-2 w-80 max-h-[420px] overflow-y-auto rounded-xl shadow-xl z-[120] ${
+                          isDarkMode
+                            ? "bg-[#0e1312]/95 backdrop-blur-md border border-[#2c3b3a]"
+                            : "bg-white/95 backdrop-blur-md border border-slate-200 shadow-slate-300/40"
+                        }`}
+                      >
+                        {/* Header */}
+                        <div className={`sticky top-0 flex items-center justify-between px-4 py-3 border-b ${isDarkMode ? "border-[#2c3b3a] bg-[#0e1312]/90 backdrop-blur-md" : "border-slate-100 bg-white/90 backdrop-blur-md"}`}>
+                          <div className="flex items-center gap-2">
+                            <h3 className={`text-sm font-semibold ${isDarkMode ? "text-[#e9ecec]" : "text-slate-900"}`}>Notifications</h3>
+                            {(getUnreadNoticeCount() + mentionNotifications.length) > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">
+                                {getUnreadNoticeCount() + mentionNotifications.length}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {mentionNotifications.length > 0 && authSession?.user?.id && (
+                              <button
+                                onClick={() => { markAllNotificationsRead(authSession.user.id); setMentionNotifications([]); }}
+                                className={`text-xs px-2 py-1 rounded-lg transition-colors ${isDarkMode ? "text-[#93a5a4] hover:text-[#e9ecec] hover:bg-[#212d2b]" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}
+                              >
+                                Mark all read
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setShowNoticePanel(false)}
+                              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${isDarkMode ? "text-[#93a5a4] hover:bg-[#212d2b] hover:text-[#e9ecec]" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        {notices.length === 0 && emergencyAlerts.length === 0 && emergencyLinks.length === 0 && mentionNotifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-10 gap-3 px-6 text-center">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-[#212d2b]" : "bg-slate-100"}`}>
+                              <Bell className={`h-6 w-6 ${isDarkMode ? "text-[#93a5a4]" : "text-slate-400"}`} />
+                            </div>
+                            <p className={`font-semibold text-sm ${isDarkMode ? "text-[#e9ecec]" : "text-slate-700"}`}>All caught up</p>
+                            <p className={`text-xs ${isDarkMode ? "text-[#93a5a4]" : "text-slate-400"}`}>No new notifications right now.</p>
+                          </div>
+                        ) : (
+                          <div className={`divide-y ${isDarkMode ? "divide-[#2c3b3a]" : "divide-gray-100"}`}>
+                            {mentionNotifications.map((n, idx) => (
+                              <motion.button
+                                key={n.id}
+                                initial={{ opacity: 0, x: 20, filter: "blur(10px)" }}
+                                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                                transition={{ duration: 0.25, delay: idx * 0.05 }}
+                                onClick={() => { markNotificationRead(n.id); setMentionNotifications((prev) => prev.filter((x) => x.id !== n.id)); setShowNoticePanel(false); if (n.team_id) { setSelectedTeamId(n.team_id); goToView("team", n.team_id); } }}
+                                className={`w-full flex gap-3 px-4 py-3.5 text-left transition-colors ${isDarkMode ? "hover:bg-amber-900/20 bg-amber-950/10" : "hover:bg-amber-50 bg-amber-50/70"}`}
+                              >
+                                <div className="w-7 h-7 rounded-full flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold">
+                                  {n.actor_name?.charAt(0)?.toUpperCase() ?? "@"}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5 text-amber-500">Mentioned you</p>
+                                  <p className={`text-xs font-medium leading-snug ${isDarkMode ? "text-[#e9ecec]" : "text-slate-800"}`}>{n.title}</p>
+                                  {n.body && <p className={`text-[11px] mt-0.5 truncate ${isDarkMode ? "text-[#93a5a4]" : "text-slate-500"}`}>"{n.body}"</p>}
+                                </div>
+                              </motion.button>
+                            ))}
+                            {emergencyAlerts.map((alert) => (
+                              <div key={alert.id} className={`flex gap-3 px-4 py-3.5 transition-colors ${isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-red-50"}`}>
+                                <span className="text-base flex-shrink-0">🚨</span>
+                                <div className="min-w-0">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5 text-red-500">Emergency</p>
+                                  <p className={`text-xs leading-snug ${isDarkMode ? "text-[#e9ecec]" : "text-slate-800"}`}>{alert.message}</p>
+                                </div>
+                              </div>
+                            ))}
+                            {emergencyLinks.map((link) => (
+                              <div key={link.id} onClick={() => { if (link.url) window.open(link.url, "_blank"); }} className={`flex gap-3 px-4 py-3.5 cursor-pointer transition-colors ${isDarkMode ? "hover:bg-slate-800/60" : "hover:bg-purple-50"}`}>
+                                <span className="text-base flex-shrink-0">🔗</span>
+                                <div className="min-w-0">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5 text-purple-500">Important Link</p>
+                                  <p className={`text-xs font-medium ${isDarkMode ? "text-[#e9ecec]" : "text-slate-800"}`}>{link.title}</p>
+                                  {link.url && <p className={`text-[11px] mt-0.5 truncate ${isDarkMode ? "text-[#93a5a4]" : "text-slate-400"}`}>{link.url}</p>}
+                                </div>
+                              </div>
+                            ))}
+                            {activeNotices.map((notice, idx) => {
+                              const isUnread = !unreadNotices.includes(notice.id);
+                              const emoji = notice.category === "exam" ? "📚" : notice.category === "event" ? "🎉" : notice.category === "academic" ? "🎓" : notice.category === "information" ? "ℹ️" : notice.category === "random" ? "🎲" : "🔔";
+                              return (
+                                <motion.div
+                                  key={notice.id}
+                                  initial={{ opacity: 0, x: 20, filter: "blur(10px)" }}
+                                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                                  transition={{ duration: 0.25, delay: idx * 0.05 }}
+                                  onClick={() => { handleNoticeClick(notice); markNoticeAsRead(notice.id); setShowNoticePanel(false); }}
+                                  className={`relative flex gap-3 px-4 py-3.5 cursor-pointer transition-colors ${isDarkMode ? "hover:bg-[#212d2b]" : "hover:bg-slate-50"} ${isUnread ? (isDarkMode ? "bg-blue-950/30" : "bg-blue-50/60") : ""}`}
+                                >
+                                  {isUnread && <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                                  <span className="text-base flex-shrink-0">{emoji}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <p className={`text-xs font-semibold line-clamp-2 leading-snug ${isDarkMode ? "text-[#e9ecec]" : "text-slate-900"}`}>{notice.title}</p>
+                                      {notice.priority === "urgent" && <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white animate-pulse">URGENT</span>}
+                                    </div>
+                                    <p className={`text-[10px] mt-1 ${isDarkMode ? "text-[#93a5a4]" : "text-slate-400"}`}>
+                                      {new Date(notice.created_at).toLocaleDateString("en-BD", { month: "short", day: "numeric" })}
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -3889,8 +4016,8 @@ For any queries, contact your course instructors or the department.`,
         </>
       )}
 
-      {/* Notification Sidebar - Right Side */}
-      {showNoticePanel && (
+      {/* Notification Sidebar - removed, replaced by inline popover on bell button */}
+      {false && (
         <>
           {/* Overlay */}
           <div
@@ -4073,7 +4200,8 @@ For any queries, contact your course instructors or the department.`,
       )}
 
       {/* Main Content - Enhanced Mobile Responsive Design */}
-      {!["semester","custom","profile","network","teams","team","alumni","wc26"].includes(currentView) && (
+      {/* Also mounts when a modal is open in a feature view — modal is fixed inset-0 so home content stays hidden beneath it */}
+      {(!["semester","custom","profile","network","teams","team","alumni","wc26"].includes(currentView) || showNoticeModal || showMaterialViewer) && (
         <main className="relative pt-[72px] lg:pt-20 min-h-screen [overflow-x:clip]">
           {currentView === "home" && isDarkMode && <Tiles isDarkMode={isDarkMode} />}
 
@@ -4539,6 +4667,8 @@ For any queries, contact your course instructors or the department.`,
                           });
                         }}
                         onReady={() => {
+                          if (_welcomeShown.current) return;
+                          _welcomeShown.current = true;
                           const title =
                             activeMajor === "AI" ? "Artificial Intelligence"
                             : activeMajor === "Software Engineering" ? "Software Engineering"

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Home } from "lucide-react";
 
 type BadgeType = "live" | "new" | "soon";
 
@@ -9,6 +10,7 @@ interface NavTab {
   badge?: BadgeType;
   onClick: () => void;
   isActive: boolean;
+  icon?: React.ReactNode;
 }
 
 interface SlideNavProps {
@@ -117,10 +119,14 @@ const NavTab = ({
           : "font-medium text-slate-500 hover:text-slate-800"
       }`}
     >
-      {tab.badge === "live" && <LiveDot />}
-      <span>{tab.label}</span>
-      {tab.badge === "new" && <NewBadge isActive={tab.isActive} isDarkMode={isDarkMode} />}
-      {tab.badge === "soon" && <SoonBadge isActive={tab.isActive} isDarkMode={isDarkMode} />}
+      {tab.icon ? tab.icon : (
+        <>
+          {tab.badge === "live" && <LiveDot />}
+          <span>{tab.label}</span>
+          {tab.badge === "new" && <NewBadge isActive={tab.isActive} isDarkMode={isDarkMode} />}
+          {tab.badge === "soon" && <SoonBadge isActive={tab.isActive} isDarkMode={isDarkMode} />}
+        </>
+      )}
 
       {/* Active filled pill */}
       {tab.isActive && (
@@ -183,6 +189,7 @@ export function AppNavHeader({
     {
       label: "Home",
       view: "home",
+      icon: <Home className="h-4 w-4" />,
       isActive: currentView === "home",
       onClick: () => goToView("home"),
     },

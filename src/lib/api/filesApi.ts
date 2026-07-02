@@ -1,7 +1,11 @@
 import { supabase } from '../supabase';
 import type { TeamFile } from '../../types/social';
 
-const PROFILE_COLS = 'id,username,name,avatar_url,profile_pic,headline';
+const PROFILE_COLS = 'id,name,avatar_url,profile_pic';
+
+// Module-level cache for the public files feed (5-minute TTL)
+let _publicFilesCache: { data: TeamFile[]; ts: number } | null = null;
+const PUBLIC_FILES_TTL = 5 * 60 * 1000;
 
 export async function listTeamFiles(teamId: string): Promise<TeamFile[]> {
   const { data, error } = await supabase
@@ -14,14 +18,24 @@ export async function listTeamFiles(teamId: string): Promise<TeamFile[]> {
 }
 
 export async function listPublicFiles(limit = 40, offset = 0): Promise<TeamFile[]> {
+  // Serve from cache for first-page requests (avoids round-trip on tab revisit)
+  if (offset === 0 && _publicFilesCache && Date.now() - _publicFilesCache.ts < PUBLIC_FILES_TTL) {
+    return _publicFilesCache.data;
+  }
   const { data, error } = await supabase
     .from('team_files')
-    .select(`*, uploader:profiles!uploader_id(${PROFILE_COLS}), team:teams!team_id(id,name,logo_url)`)
+    .select(`id,name,file_url,file_type,file_size,created_at,team_id,uploader_id,visibility,uploader:profiles!uploader_id(${PROFILE_COLS}),team:teams!team_id(id,name,logo_url)`)
     .eq('visibility', 'public')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
   if (error) { console.error('listPublicFiles', error); return []; }
-  return (data ?? []) as TeamFile[];
+  const result = (data ?? []) as TeamFile[];
+  if (offset === 0) _publicFilesCache = { data: result, ts: Date.now() };
+  return result;
+}
+
+export function invalidatePublicFilesCache() {
+  _publicFilesCache = null;
 }
 
 export async function uploadTeamFile(
