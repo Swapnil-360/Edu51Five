@@ -70,6 +70,7 @@ function renderMessageContent(
   memberNames: string[],
   myName: string | null,
   isOwn: boolean,
+  dark: boolean,
 ): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let i = 0;
@@ -83,13 +84,16 @@ function renderMessageContent(
       const rest = text.slice(i + 1);
       if (rest.toLowerCase().startsWith("everyone")) {
         flush();
+        let mentionClass = "";
+        if (isOwn) {
+          mentionClass = "text-blue-100 underline decoration-blue-200/50";
+        } else if (dark) {
+          mentionClass = "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold px-1.5 py-0.5 rounded";
+        } else {
+          mentionClass = "bg-amber-100 text-amber-900 border border-amber-200/60 font-bold px-1.5 py-0.5 rounded";
+        }
         nodes.push(
-          <span
-            key={`m${key++}`}
-            className={`font-semibold rounded px-0.5 ${
-              isOwn ? "text-blue-100 underline decoration-blue-200/50" : "bg-amber-400/30 text-amber-200"
-            }`}
-          >
+          <span key={`m${key++}`} className={mentionClass}>
             @everyone
           </span>
         );
@@ -100,17 +104,22 @@ function renderMessageContent(
       if (matched) {
         flush();
         const isMe = !!myName && matched.toLowerCase() === myName.toLowerCase();
+        let mentionClass = "";
+        if (isOwn) {
+          mentionClass = "text-blue-100 underline decoration-blue-200/50";
+        } else if (isMe) {
+          mentionClass = dark
+            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold px-1.5 py-0.5 rounded"
+            : "bg-amber-100 text-amber-900 border border-amber-200/60 font-bold px-1.5 py-0.5 rounded";
+        } else {
+          mentionClass = dark
+            ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold px-1.5 py-0.5 rounded"
+            : "bg-blue-50 text-blue-700 border border-blue-100 font-semibold px-1.5 py-0.5 rounded";
+        }
         nodes.push(
-          <span
-            key={`m${key++}`}
-            className={`font-semibold rounded px-0.5 ${
-              isMe
-                ? "bg-amber-400/30 text-amber-200"
-                : isOwn ? "text-blue-100 underline decoration-blue-200/50" : "text-blue-500"
-            }`}
-          >
+          <span key={`m${key++}`} className={mentionClass}>
             @{matched}
-          </span>,
+          </span>
         );
         i += 1 + matched.length;
         continue;
@@ -588,7 +597,7 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
                 {/* Bubble (with Messenger-style reaction badge anchored to bottom corner) */}
                 <div className="relative">
                   <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words whitespace-pre-wrap ${isOwn ? msgOwn : msgOther} ${isOwn ? "rounded-br-sm" : "rounded-bl-sm"} ${msg.reactions && msg.reactions.length > 0 ? "mb-2.5" : ""}`}>
-                    {renderMessageContent(msg.content, memberNames, myName, isOwn)}
+                    {renderMessageContent(msg.content, memberNames, myName, isOwn, dark)}
                     <span className={`text-[10px] ml-2 opacity-60 align-baseline`}>{formatTime(msg.created_at)}</span>
                   </div>
 

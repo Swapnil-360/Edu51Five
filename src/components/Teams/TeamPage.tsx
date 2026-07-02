@@ -43,6 +43,7 @@ import TeamChat from "./TeamChat";
 import TeamTasksBoard from "./TeamTasksBoard";
 import TeamFiles from "./TeamFiles";
 import { uploadImage } from "../../lib/storage";
+import { supabase } from "../../lib/supabase";
 
 type Tab = "overview" | "members" | "chat" | "tasks" | "files";
 
@@ -72,10 +73,74 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [fileCount, setFileCount] = useState(0);
+  const [hasUnreadMention, setHasUnreadMention] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const myMembership = members.find((m) => m.user_id === currentUserId);
+
+  const checkUnreadMentions = async () => {
+    try {
+      const { data } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("team_id", teamId)
+        .eq("type", "mention")
+        .eq("read", false)
+        .limit(1);
+      setHasUnreadMention(data && data.length > 0);
+    } catch (e) {
+      console.error("Error checking mentions:", e);
+    }
+  };
+
+  const markMentionsAsRead = async () => {
+    try {
+      await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("user_id", currentUserId)
+        .eq("team_id", teamId)
+        .eq("type", "mention")
+        .eq("read", false);
+      setHasUnreadMention(false);
+    } catch (e) {
+      console.error("Error marking mentions as read:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUserId || !teamId) return;
+
+    checkUnreadMentions();
+
+    const channel = supabase
+      .channel(`team-mentions-${teamId}-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        () => {
+          checkUnreadMentions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [teamId, currentUserId]);
+
+  useEffect(() => {
+    if (tab === "chat") {
+      markMentionsAsRead();
+    }
+  }, [tab]);
   const myRole = myMembership?.role ?? null;
   const canManage = myRole === "owner" || myRole === "admin";
   const isMember = !!myMembership;
@@ -323,7 +388,22 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
           {([
             { key: "overview", mobileLabel: "Info",   desktopLabel: "Overview",            icon: null },
             { key: "members",  mobileLabel: `${members.length}`, desktopLabel: `Members (${members.length})`, icon: null },
-            { key: "chat",     mobileLabel: null,      desktopLabel: "Chat",                icon: <MessageSquare className="w-3.5 h-3.5" /> },
+            {
+              key: "chat",
+              mobileLabel: null,
+              desktopLabel: "Chat",
+              icon: (
+                <div className="relative">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  {hasUnreadMention && (
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                  )}
+                  {hasUnreadMention && (
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-red-500" />
+                  )}
+                </div>
+              ),
+            },
             { key: "tasks",    mobileLabel: null,      desktopLabel: "Tasks",               icon: <LayoutGrid className="w-3.5 h-3.5" /> },
             { key: "files",    mobileLabel: null,      desktopLabel: fileCount > 0 ? `Files (${fileCount})` : "Files", icon: <Paperclip className="w-3.5 h-3.5" /> },
           ] as { key: typeof tab; mobileLabel: string | null; desktopLabel: string; icon: React.ReactNode | null }[]).map(({ key, mobileLabel, desktopLabel, icon }) => (
