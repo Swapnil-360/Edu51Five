@@ -393,7 +393,7 @@ export default function TeamPage({ teamId, currentUserId, onClose, onViewProfile
             <div className="grid grid-cols-3 gap-2">
               {[
                 { label: "Members", value: members.length, color: "text-blue-500" },
-                { label: "Updates", value: announcements.length, color: "text-orange-500" },
+                { label: "Announcement", value: announcements.length, color: "text-orange-500" },
                 { label: "Files", value: fileCount, color: "text-violet-500" },
               ].map(({ label, value, color }) => (
                 <div key={label} className={`rounded-2xl border p-3 text-center ${card}`}>

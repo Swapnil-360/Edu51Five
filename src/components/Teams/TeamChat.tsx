@@ -81,6 +81,21 @@ function renderMessageContent(
   while (i < text.length) {
     if (text[i] === "@") {
       const rest = text.slice(i + 1);
+      if (rest.toLowerCase().startsWith("everyone")) {
+        flush();
+        nodes.push(
+          <span
+            key={`m${key++}`}
+            className={`font-semibold rounded px-0.5 ${
+              isOwn ? "text-blue-100 underline decoration-blue-200/50" : "bg-amber-400/30 text-amber-200"
+            }`}
+          >
+            @everyone
+          </span>
+        );
+        i += 9;
+        continue;
+      }
       const matched = memberNames.find((n) => rest.toLowerCase().startsWith(n.toLowerCase()));
       if (matched) {
         flush();
@@ -106,6 +121,13 @@ function renderMessageContent(
   }
   flush();
   return nodes;
+}
+
+interface MentionItem {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  isEveryone?: boolean;
 }
 
 interface Props {
@@ -159,12 +181,29 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
     [members],
   );
 
-  const mentionCandidates = useMemo(() => {
+  const mentionCandidates = useMemo<MentionItem[]>(() => {
     const q = mentionQuery.toLowerCase();
-    return members
+    
+    const everyoneItem: MentionItem = {
+      id: "everyone",
+      name: "everyone",
+      avatarUrl: null,
+      isEveryone: true,
+    };
+
+    const memberItems: MentionItem[] = members
       .filter((m) => m.user_id !== currentUserId && m.profile?.name)
-      .filter((m) => !q || m.profile!.name.toLowerCase().includes(q))
-      .slice(0, 6);
+      .map((m) => ({
+        id: m.user_id,
+        name: m.profile!.name,
+        avatarUrl: m.profile!.avatar_url || m.profile!.profile_pic || null,
+      }));
+
+    const filtered = [everyoneItem, ...memberItems].filter((item) =>
+      item.name.toLowerCase().includes(q)
+    );
+
+    return filtered.slice(0, 6);
   }, [members, mentionQuery, currentUserId]);
 
   const myName = memberMap[currentUserId]?.name ?? null;
@@ -314,8 +353,10 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
       // Fire mention notifications (non-blocking, best-effort)
       const senderName = memberMap[currentUserId]?.name ?? "Someone";
       const preview = trimmed.length > 100 ? trimmed.slice(0, 97) + "…" : trimmed;
+      const isMentionEveryone = trimmed.toLowerCase().includes("@everyone");
       const mentionedMembers = members.filter((m) => {
         if (m.user_id === currentUserId || !m.profile?.name) return false;
+        if (isMentionEveryone) return true;
         const name = m.profile.name.trim();
         return new RegExp(`@${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s|$)`, "i").test(trimmed);
       });
@@ -331,7 +372,9 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
         });
         supabase.functions.invoke("send-push-notification", {
           body: {
-            title: `${senderName} mentioned you in ${teamName}`,
+            title: isMentionEveryone
+              ? `${senderName} mentioned everyone in ${teamName}`
+              : `${senderName} mentioned you in ${teamName}`,
             body: preview,
             url: `/teams/${teamId}`,
             targetUserId: mu.user_id,
@@ -398,7 +441,7 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        insertMention(mentionCandidates[mentionIndex].profile!.name);
+        insertMention(mentionCandidates[mentionIndex].name);
         return;
       }
       if (e.key === "Escape") {
@@ -660,19 +703,25 @@ export default function TeamChat({ teamId, teamName, currentUserId, isMember, is
           <div className={`absolute bottom-full left-3 mb-2 w-64 max-h-56 overflow-y-auto rounded-xl shadow-xl z-20 p-1 ${dark ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-200"}`}>
             <div className={`px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${sub}`}>Mention a member</div>
             {mentionCandidates.map((m, idx) => {
-              const name = m.profile!.name;
-              const av = m.profile!.avatar_url || m.profile!.profile_pic || null;
               return (
                 <button
-                  key={m.user_id}
-                  onClick={() => insertMention(name)}
+                  key={m.id}
+                  onClick={() => insertMention(m.name)}
                   onMouseEnter={() => setMentionIndex(idx)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
                     idx === mentionIndex ? (dark ? "bg-slate-700" : "bg-slate-100") : ""
                   }`}
                 >
-                  <AvatarCircle name={name} avatarUrl={av} isOwn={false} />
-                  <span className={`text-sm truncate ${dark ? "text-slate-200" : "text-slate-700"}`}>{name}</span>
+                  {m.isEveryone ? (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs ring-2 ring-slate-700/30">
+                      📣
+                    </div>
+                  ) : (
+                    <AvatarCircle name={m.name} avatarUrl={m.avatarUrl} isOwn={false} />
+                  )}
+                  <span className={`text-sm truncate ${m.isEveryone ? "font-bold text-blue-500" : (dark ? "text-slate-200" : "text-slate-700")}`}>
+                    {m.isEveryone ? "@everyone" : m.name}
+                  </span>
                 </button>
               );
             })}
